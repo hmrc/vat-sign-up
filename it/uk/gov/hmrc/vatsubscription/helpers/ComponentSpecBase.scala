@@ -39,6 +39,8 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
   val mockUrl = s"http://$mockHost:$mockPort"
 
   def config: Map[String, String] = Map(
+    "microservice.services.base.host" -> mockHost,
+    "microservice.services.base.port" -> mockPort,
     "microservice.services.auth.host" -> mockHost,
     "microservice.services.auth.port" -> mockPort,
     "microservice.services.agent-client-relationships.host" -> mockHost,
@@ -99,6 +101,6 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
     )
   }
 
-  def buildClient(path: String) = ws.url(s"http://localhost:$port/vat-subscription$path").withFollowRedirects(false)
+  def buildClient(path: String) = ws.url(s"http://localhost:$port/vat-sign-up$path").withFollowRedirects(false)
 
 }

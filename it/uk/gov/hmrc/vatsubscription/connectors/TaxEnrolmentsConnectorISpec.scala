@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.vatsubscription.connectors
 
+import play.api.http.Status._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsubscription.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsubscription.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsubscription.helpers.servicemocks.TaxEnrolmentsStub
 import uk.gov.hmrc.vatsubscription.httpparsers.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
-import play.api.http.Status._
-import uk.gov.hmrc.http.HeaderCarrier
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
 
