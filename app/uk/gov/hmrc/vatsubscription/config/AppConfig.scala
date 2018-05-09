@@ -66,6 +66,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   lazy val vatSubscriptionUrl: String = baseUrl("vat-subscription")
 
+  lazy val baseUrl: String = baseUrl("base")
+
   lazy val emailUrl: String = baseUrl("email")
 
   lazy val sendEmailUrl: String = s"$emailUrl/hmrc/email"
