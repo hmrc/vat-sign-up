@@ -28,7 +28,7 @@ import uk.gov.hmrc.vatsubscription.config.mocks.MockConfig
 import uk.gov.hmrc.vatsubscription.connectors.mocks.{MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsubscription.helpers.TestConstants._
 import uk.gov.hmrc.vatsubscription.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpFailure
-import uk.gov.hmrc.vatsubscription.httpparsers.{InvalidVatNumber => _, VatNumberNotFound => _, _}
+import uk.gov.hmrc.vatsubscription.httpparsers._
 import uk.gov.hmrc.vatsubscription.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsubscription.models.{MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}
 import uk.gov.hmrc.vatsubscription.service.mocks.monitoring.MockAuditService

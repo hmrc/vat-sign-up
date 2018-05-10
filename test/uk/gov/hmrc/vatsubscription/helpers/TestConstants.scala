@@ -20,7 +20,7 @@ import java.util.UUID
 
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.vatsubscription.config.Constants._
-import uk.gov.hmrc.vatsubscription.models.{CustomerDetails, MTDfBMandated, VatCustomerInformation}
+import uk.gov.hmrc.vatsubscription.models.CustomerDetails
 import uk.gov.hmrc.vatsubscription.utils.controllist.ControlListInformationParser.ControlListInformationIndices._
 
 
@@ -46,8 +46,6 @@ object TestConstants {
     Some("testLastName"),
     Some("testOrganisationName"),
     Some("testTradingName"))
-
-  val testCustomerInformation = VatCustomerInformation(MTDfBMandated, testCustomerDetails)
 
   object ControlList {
     val allFalse: String = "1" * CONTROL_INFORMATION_STRING_LENGTH
