@@ -32,6 +32,7 @@ import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,34 +46,33 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
                                         auditService: AuditService
                                        )(implicit ec: ExecutionContext) {
 
-  def submitSignUpRequest(vatNumber: String, enrolments: Enrolments)(implicit hc: HeaderCarrier, request: Request[_]): Future[SignUpRequestSubmissionResponse] = {
-
-    val optAgentReferenceNumber: Option[String] =
-      enrolments getEnrolment AgentEnrolmentKey flatMap {
-        agentEnrolment =>
-          agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
-      }
+  def submitSignUpRequest(vatNumber: String,
+                          enrolments: Enrolments
+                         )(implicit hc: HeaderCarrier,
+                           request: Request[_]): Future[SignUpRequestSubmissionResponse] = {
+    val optAgentReferenceNumber = enrolments.agentReferenceNumber
+    val isDelegated = optAgentReferenceNumber.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
-      case Some(SubscriptionRequest(_, Some(companyNumber), None, Some(emailAddress), identityVerified)) if optAgentReferenceNumber.isDefined || identityVerified =>
+      case Some(SubscriptionRequest(_, Some(companyNumber), None, Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
         val result = for {
           emailAddressVerified <- isEmailAddressVerified(emailAddress)
           safeId <- registerCompany(vatNumber, companyNumber, optAgentReferenceNumber)
           _ <- signUp(safeId, vatNumber, emailAddress, emailAddressVerified, optAgentReferenceNumber)
           _ <- registerEnrolment(vatNumber, safeId)
           _ <- deleteRecord(vatNumber)
-          _ <- saveTemporarySubscriptionData(vatNumber, emailAddress)
+          _ <- saveTemporarySubscriptionData(vatNumber, emailAddress, isDelegated)
         } yield SignUpRequestSubmitted
 
         result.value
-      case Some(SubscriptionRequest(_, None, Some(nino), Some(emailAddress), identityVerified)) if optAgentReferenceNumber.isDefined || identityVerified =>
+      case Some(SubscriptionRequest(_, None, Some(nino), Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
         val result = for {
           emailAddressVerified <- isEmailAddressVerified(emailAddress)
           safeId <- registerIndividual(vatNumber, nino, optAgentReferenceNumber)
           _ <- signUp(safeId, vatNumber, emailAddress, emailAddressVerified, optAgentReferenceNumber)
           _ <- registerEnrolment(vatNumber, safeId)
           _ <- deleteRecord(vatNumber)
-          _ <- saveTemporarySubscriptionData(vatNumber, emailAddress)
+          _ <- saveTemporarySubscriptionData(vatNumber, emailAddress, isDelegated)
         } yield SignUpRequestSubmitted
 
         result.value
@@ -159,10 +159,10 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
     }
   }
 
-  private def saveTemporarySubscriptionData(vatNumber: String, email: String):
+  private def saveTemporarySubscriptionData(vatNumber: String, email: String, isDelegated: Boolean):
   EitherT[Future, SignUpRequestSubmissionFailure, StoreTemporarySubscriptionDataSuccess.type] = {
     val saveEmail: Future[Either[SignUpRequestSubmissionFailure, StoreTemporarySubscriptionDataSuccess.type]] =
-      emailRequestRepository.upsertEmail(vatNumber, email).map(_ => Right(StoreTemporarySubscriptionDataSuccess))
+      emailRequestRepository.upsertEmail(vatNumber, email, isDelegated).map(_ => Right(StoreTemporarySubscriptionDataSuccess))
     EitherT(saveEmail) leftMap {
       _ => DeleteRecordFailure
     }

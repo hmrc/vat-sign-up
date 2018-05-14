@@ -78,7 +78,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
-                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail)(mock[UpdateWriteResult])
+                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
@@ -100,7 +100,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
-                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail)(mock[UpdateWriteResult])
+                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
@@ -205,7 +205,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = false)(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
-                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail)(mock[UpdateWriteResult])
+                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
@@ -295,7 +295,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
-                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail)(mock[UpdateWriteResult])
+                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = false)(mock[UpdateWriteResult])
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
@@ -318,7 +318,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
-                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail)(mock[UpdateWriteResult])
+                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = false)(mock[UpdateWriteResult])
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 

@@ -17,27 +17,35 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.models.SubscriptionState
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{DelegatedSubscription, EmailRequestDataNotFound, EmailServiceFailure, NotificationSent}
+
+import scala.concurrent.ExecutionContext
 
 @Singleton
-class TaxEnrolmentsCallbackController @Inject()()
+class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService: SubscriptionNotificationService
+                                               )(implicit ec: ExecutionContext)
   extends BaseController {
 
   val stateKey = "state"
 
-  def taxEnrolmentsCallback(vatNumber: String): Action[JsValue] =
-    Action(parse.json) {
-      implicit req =>
-        Logger.warn(s"taxEnrolmentsCallback($vatNumber)${req.body.toString()}")
-        // todo parse when we send email
-        //val state = (req.body \ stateKey).as[String]
+  def taxEnrolmentsCallback(vatNumber: String): Action[JsValue] = Action.async(parse.json) {
+    implicit req =>
+      Logger.warn(s"taxEnrolmentsCallback($vatNumber)${req.body.toString()}")
+      val state = (req.body \ stateKey).as[SubscriptionState]
 
-        NoContent
-    }
+      subscriptionNotificationService.sendEmailNotification(vatNumber, state) map {
+        case Right(NotificationSent) => NoContent
+        case Left(EmailRequestDataNotFound) => PreconditionFailed
+        case Left(EmailServiceFailure) => BadGateway
+        case Left(DelegatedSubscription) => NoContent
+      }
+  }
 }
 
 

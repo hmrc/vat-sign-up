@@ -21,12 +21,14 @@ import java.time.Instant
 import play.api.libs.json.{Json, OFormat}
 
 case class EmailRequest(vatNumber: String,
-                        email: String)
+                        email: String,
+                        isDelegated: Boolean)
 
 object EmailRequest {
 
   val idKey = "_id"
   val emailKey = "email"
+  val delegatedKey = "isDelegated"
   val creationTimestampKey = "creationTimestamp"
 
   val mongoFormat: OFormat[EmailRequest] = OFormat(
@@ -34,11 +36,13 @@ object EmailRequest {
       for {
         vatNumber <- (json \ idKey).validate[String]
         email <- (json \ emailKey).validate[String]
-      } yield EmailRequest(vatNumber, email),
+        isDelegated <- (json \ delegatedKey).validate[Boolean]
+      } yield EmailRequest(vatNumber, email, isDelegated),
     emailRequest =>
       Json.obj(
         idKey -> emailRequest.vatNumber,
         emailKey -> emailRequest.email,
+        delegatedKey -> emailRequest.isDelegated,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli)
       )
   )

@@ -42,10 +42,10 @@ class EmailRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     implicitly[Format[String]]
   ) {
 
-  def upsertEmail(vatNumber: String, email: String): Future[UpdateWriteResult] = {
+  def upsertEmail(vatNumber: String, email: String, isDelegated: Boolean): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
-      update = EmailRequest(vatNumber, email),
+      update = EmailRequest(vatNumber, email, isDelegated),
       upsert = true
     )(implicitly[Writer[JsObject]], EmailRequest.mongoFormat, implicitly[ExecutionContext])
   }
