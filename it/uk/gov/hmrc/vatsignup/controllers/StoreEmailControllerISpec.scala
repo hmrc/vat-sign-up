@@ -16,31 +16,19 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub.stubVerifyEmail
-import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 
+class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-class StoreEmailControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
-
-  val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
   val delegatedContinueUrl = app.injector.instanceOf[AppConfig].delegatedVerifyEmailContinueUrl
   val principalContinueUrl = app.injector.instanceOf[AppConfig].principalVerifyEmailContinueUrl
-
-  override def beforeEach: Unit = {
-    super.beforeEach()
-    await(repo.drop)
-  }
 
   "PUT /subscription-request/vat-number/:vrn/email" when {
     "the vat number exists" when {
@@ -50,7 +38,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with BeforeAndAfterEac
             "return OK with the verification state" in {
               stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
-              await(repo.upsertVatNumber(testVatNumber))
+              await(submissionRequestRepo.upsertVatNumber(testVatNumber))
               stubVerifyEmail(testEmail, delegatedContinueUrl)(CREATED)
 
               val res = put(s"/subscription-request/vat-number/$testVatNumber/email")(Json.obj("email" -> testEmail))
@@ -65,7 +53,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with BeforeAndAfterEac
             "return OK with the verification state" in {
               stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
 
-              await(repo.upsertVatNumber(testVatNumber))
+              await(submissionRequestRepo.upsertVatNumber(testVatNumber))
               stubVerifyEmail(testEmail, principalContinueUrl)(CREATED)
 
               val res = put(s"/subscription-request/vat-number/$testVatNumber/email")(Json.obj("email" -> testEmail))
@@ -81,7 +69,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with BeforeAndAfterEac
           "return OK with the verification state as true" in {
             stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
 
-            await(repo.upsertVatNumber(testVatNumber))
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber))
             stubVerifyEmail(testEmail, principalContinueUrl)(CONFLICT)
 
             val res = put(s"/subscription-request/vat-number/$testVatNumber/email")(Json.obj("email" -> testEmail))

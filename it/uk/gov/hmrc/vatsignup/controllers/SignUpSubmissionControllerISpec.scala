@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
@@ -25,20 +24,13 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.RegistrationStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.SignUpStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub._
-import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
+import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository, TestSubmissionRequestRepository}
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest
-import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SignUpSubmissionControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
-  override def beforeEach: Unit = {
-    super.beforeEach()
-    await(repo.drop)
-  }
-
-  private val repo = app.injector.instanceOf[SubscriptionRequestRepository]
-
+class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatchers
+ with TestSubmissionRequestRepository with TestEmailRequestRepository {
   "/subscription-request/vat-number/:vatNumber/submit" when {
     "the user is a delegate and" when {
       "all downstream services behave as expected" should {
@@ -55,7 +47,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with BeforeAndAf
           stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(repo.insert(testSubscriptionRequest))
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
 
           res should have(
@@ -77,7 +69,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with BeforeAndAf
           stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(repo.insert(testSubscriptionRequest))
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
 
           res should have(
@@ -103,7 +95,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with BeforeAndAf
           stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(repo.insert(testSubscriptionRequest))
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
 
           res should have(
@@ -126,7 +118,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with BeforeAndAf
           stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(repo.insert(testSubscriptionRequest))
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
 
           res should have(

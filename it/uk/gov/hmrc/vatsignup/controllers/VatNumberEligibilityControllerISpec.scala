@@ -29,7 +29,6 @@ import uk.gov.hmrc.vatsignup.models.MTDfBVoluntary
 
 class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
 
-
   "/subscription-request/vat-number/:vatNumber/mtdfb-eligibility" when {
     "the user does not exist on ETMP" when {
       "the user is eligible" should {

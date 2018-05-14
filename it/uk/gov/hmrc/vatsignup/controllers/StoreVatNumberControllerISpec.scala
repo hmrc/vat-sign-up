@@ -18,7 +18,6 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import java.util.UUID
 
-import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
@@ -31,18 +30,8 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
 import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, NonMTDfB}
-import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-class StoreVatNumberControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
-
-  val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    await(repo.drop)
-  }
+class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
   "PUT /subscription-request/vat-number" when {
     "the user is an agent" should {
