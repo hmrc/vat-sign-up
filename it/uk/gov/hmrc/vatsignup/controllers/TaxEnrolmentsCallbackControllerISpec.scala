@@ -21,22 +21,19 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailStub
-import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
+import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
-import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
-
-  val repo: EmailRequestRepository = app.injector.instanceOf[EmailRequestRepository]
+class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers with TestEmailRequestRepository {
 
   "/subscription-request/vat-number/callback" when {
     "callback is successful" should {
       "return NO_CONTENT with the status" in {
 
-        await(repo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
+        await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
         EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(NO_CONTENT)
 

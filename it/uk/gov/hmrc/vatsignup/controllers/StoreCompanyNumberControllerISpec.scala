@@ -16,29 +16,19 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class StoreCompanyNumberControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
-
-  val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
-
-  override def beforeEach: Unit = {
-    super.beforeEach()
-    await(repo.drop)
-  }
+class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
   "PUT /subscription-request/:vrn/company-number" should {
     "if vat number exists return no content when the company number has been stored successfully" in {
       stubAuth(OK, successfulAuthResponse())
 
-      await(repo.upsertVatNumber(testVatNumber))
+      await(submissionRequestRepo.upsertVatNumber(testVatNumber))
 
       val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
 
