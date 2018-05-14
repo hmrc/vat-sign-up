@@ -30,7 +30,8 @@ class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with
 
   private val testEmailRequest = EmailRequest(
     vatNumber = testVatNumber,
-    email = testEmail
+    email = testEmail,
+    isDelegated = true
   )
 
   override def beforeEach: Unit = {
@@ -41,7 +42,7 @@ class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with
   "upsertEmail" should {
     "insert the subscription request where there is not already one" in {
       val res = for {
-        _ <- repo.upsertEmail(testVatNumber, testEmail)
+        _ <- repo.upsertEmail(testVatNumber, testEmail, isDelegated = true)
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -50,8 +51,8 @@ class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with
 
     "replace the previous data when one already exists" in {
       val res = for {
-        _ <- repo.insert(EmailRequest(testVatNumber, testEmail))
-        _ <- repo.upsertEmail(testVatNumber, testEmail)
+        _ <- repo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false))
+        _ <- repo.upsertEmail(testVatNumber, testEmail, isDelegated = true)
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -63,14 +64,14 @@ class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with
   "deleteRecord" should {
     "delete the entry stored against the vrn" in {
       val res = for {
-        _ <- repo.upsertEmail(testVatNumber, testEmail)
+        _ <- repo.upsertEmail(testVatNumber, testEmail, isDelegated = true)
         inserted <- repo.findById(testVatNumber)
         _ <- repo.deleteRecord(testVatNumber)
         postDelete <- repo.findById(testVatNumber)
       } yield (inserted, postDelete)
 
       val (inserted, postDelete) = await(res)
-      inserted should contain(EmailRequest(testVatNumber, testEmail))
+      inserted should contain(EmailRequest(testVatNumber, testEmail, isDelegated = true))
       postDelete shouldBe None
     }
   }

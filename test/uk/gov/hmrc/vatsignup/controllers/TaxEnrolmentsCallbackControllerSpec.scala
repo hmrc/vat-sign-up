@@ -16,27 +16,60 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import org.scalatest.mockito.MockitoSugar
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.testVatNumber
+import uk.gov.hmrc.vatsignup.models.SubscriptionState._
+import uk.gov.hmrc.vatsignup.service.mocks.MockSubscriptionNotificationService
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockitoSugar {
+class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscriptionNotificationService {
 
   object TestTaxEnrolmentsCallbackController
-    extends TaxEnrolmentsCallbackController()
+    extends TaxEnrolmentsCallbackController(mockSubscriptionNotificationService)
 
-  val testRequest: FakeRequest[JsValue] = FakeRequest().withBody(Json.obj(TestTaxEnrolmentsCallbackController.stateKey -> "nnn"))
+  def testRequest(subscriptionState: String): FakeRequest[JsValue] =
+    FakeRequest().withBody(Json.obj(TestTaxEnrolmentsCallbackController.stateKey -> subscriptionState))
 
-  "taxEnrolmentsCallback" should {
-    "return NO_CONTENT when successful" in {
-      val res: Future[Result] = TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest)
-      status(res) shouldBe NO_CONTENT
+  "taxEnrolmentsCallback" when {
+    "the subscription notification service returns NotificationSent" should {
+      "return NO_CONTENT" in {
+        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Right(NotificationSent)))
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        status(res) shouldBe NO_CONTENT
+      }
+    }
+    "the subscription notification service returns EmailRequestDataNotFound" should {
+      "return PRECONDITION_FAILED" in {
+        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Left(EmailRequestDataNotFound)))
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        status(res) shouldBe PRECONDITION_FAILED
+      }
+    }
+
+    "the subscription notification service returns EmailServiceFailure" should {
+      "return PRECONDITION_FAILED" in {
+        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Left(EmailServiceFailure)))
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        status(res) shouldBe BAD_GATEWAY
+      }
+    }
+
+    "the subscription notification service returns DelegatedSubscription" should {
+      "return PRECONDITION_FAILED" in {
+        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Left(DelegatedSubscription)))
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        status(res) shouldBe NO_CONTENT
+      }
     }
   }
 

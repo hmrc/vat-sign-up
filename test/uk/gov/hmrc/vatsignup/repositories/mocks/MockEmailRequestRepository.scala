@@ -20,10 +20,12 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
+import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait MockEmailRequestRepository extends MockitoSugar with BeforeAndAfterEach {
   this: Suite =>
@@ -34,9 +36,19 @@ trait MockEmailRequestRepository extends MockitoSugar with BeforeAndAfterEach {
 
   val mockEmailRequestRepository: EmailRequestRepository = mock[EmailRequestRepository]
 
-  def mockUpsertEmailAfterSubscription(vatNumber: String, email: String)(response: Future[UpdateWriteResult]): Unit =
-    when(mockEmailRequestRepository.upsertEmail(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(email)))
-      .thenReturn(response)
+  def mockUpsertEmailAfterSubscription(vatNumber: String, email: String, isDelegated: Boolean)(response: Future[UpdateWriteResult]): Unit =
+    when(mockEmailRequestRepository.upsertEmail(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(email),
+      ArgumentMatchers.eq(isDelegated)
+    )) thenReturn response
 
-
+  def mockFindEmailRequestById(vatNumber: String)(response: Future[Option[EmailRequest]]): Unit = {
+    when(mockEmailRequestRepository.findById(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.any[ReadPreference]
+    )(
+      ArgumentMatchers.any[ExecutionContext]
+    )) thenReturn response
+  }
 }
