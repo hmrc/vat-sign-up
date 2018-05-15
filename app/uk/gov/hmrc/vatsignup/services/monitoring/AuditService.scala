@@ -35,7 +35,7 @@ class AuditService @Inject()(configuration: Configuration,
   private lazy val appName: String = configuration.getString("appName")
     .getOrElse(throw new Exception(s"Missing configuration key: appName"))
 
-  def audit[A](dataSource: AuditModel)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[_]): Unit =
+  def audit(dataSource: AuditModel)(implicit hc: HeaderCarrier, ec: ExecutionContext, request: Request[_]): Unit =
     auditConnector.sendEvent(toDataEvent(appName, dataSource, request.path))
 
   def toDataEvent(appName: String, auditModel: AuditModel, path: String)(implicit hc: HeaderCarrier): DataEvent = {
