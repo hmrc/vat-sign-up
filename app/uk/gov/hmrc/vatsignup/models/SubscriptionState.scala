@@ -24,11 +24,11 @@ sealed trait SubscriptionState
 object SubscriptionState {
 
   case object Success extends SubscriptionState {
-    val jsonName = "SUCCESS"
+    val jsonName = "SUCCEEDED"
   }
 
   case object Failure extends SubscriptionState {
-    val jsonName = "FAILURE"
+    val jsonName = "ERROR"
   }
 
   implicit object SubscriptionStateJsonReads extends Reads[SubscriptionState] {

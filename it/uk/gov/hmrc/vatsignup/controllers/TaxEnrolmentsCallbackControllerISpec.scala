@@ -37,7 +37,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
         EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(NO_CONTENT)
 
-        val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCESS"))
+        val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
         res should have(
           httpStatus(NO_CONTENT)
         )
