@@ -41,9 +41,9 @@ class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService:
 
       subscriptionNotificationService.sendEmailNotification(vatNumber, state) map {
         case Right(NotificationSent) => NoContent
+        case Right(DelegatedSubscription) => NoContent
         case Left(EmailRequestDataNotFound) => PreconditionFailed
         case Left(EmailServiceFailure) => BadGateway
-        case Left(DelegatedSubscription) => NoContent
       }
   }
 }

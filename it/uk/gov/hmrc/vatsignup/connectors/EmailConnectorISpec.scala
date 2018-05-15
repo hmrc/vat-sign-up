@@ -33,7 +33,7 @@ class EmailConnectorISpec extends ComponentSpecBase {
   "registerEnrolment" when {
     "Tax Enrolments returns a successful response" should {
       "return a SuccessfulTaxEnrolment" in {
-        EmailStub.stubSendEmail(testEmail, testEmailTemplate)(NO_CONTENT)
+        EmailStub.stubSendEmail(testEmail, testEmailTemplate)(ACCEPTED)
 
         val res = connector.sendEmail(testEmail, testEmailTemplate)
 

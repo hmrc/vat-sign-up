@@ -61,19 +61,4 @@ class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with
     }
   }
 
-  "deleteRecord" should {
-    "delete the entry stored against the vrn" in {
-      val res = for {
-        _ <- repo.upsertEmail(testVatNumber, testEmail, isDelegated = true)
-        inserted <- repo.findById(testVatNumber)
-        _ <- repo.deleteRecord(testVatNumber)
-        postDelete <- repo.findById(testVatNumber)
-      } yield (inserted, postDelete)
-
-      val (inserted, postDelete) = await(res)
-      inserted should contain(EmailRequest(testVatNumber, testEmail, isDelegated = true))
-      postDelete shouldBe None
-    }
-  }
-
 }

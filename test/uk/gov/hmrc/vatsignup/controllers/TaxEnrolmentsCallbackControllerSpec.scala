@@ -64,8 +64,8 @@ class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscription
     }
 
     "the subscription notification service returns DelegatedSubscription" should {
-      "return PRECONDITION_FAILED" in {
-        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Left(DelegatedSubscription)))
+      "return NO_CONTENT" in {
+        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Right(DelegatedSubscription)))
 
         val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
         status(res) shouldBe NO_CONTENT

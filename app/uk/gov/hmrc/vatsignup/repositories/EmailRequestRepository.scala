@@ -50,9 +50,6 @@ class EmailRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     )(implicitly[Writer[JsObject]], EmailRequest.mongoFormat, implicitly[ExecutionContext])
   }
 
-  def deleteRecord(vatNumber: String): Future[WriteResult] =
-    removeById(vatNumber)
-
   private lazy val ttlIndex = Index(
     Seq((creationTimestampKey, IndexType(Ascending.value))),
     name = Some("emailRequestExpires"),
