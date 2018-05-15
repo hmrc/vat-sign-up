@@ -40,8 +40,7 @@ class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService:
       val state = (req.body \ stateKey).as[SubscriptionState]
 
       subscriptionNotificationService.sendEmailNotification(vatNumber, state) map {
-        case Right(NotificationSent) => NoContent
-        case Right(DelegatedSubscription) => NoContent
+        case Right(_) => NoContent
         case Left(EmailRequestDataNotFound) => PreconditionFailed
         case Left(EmailServiceFailure) => BadGateway
       }
