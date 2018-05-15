@@ -35,7 +35,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
         await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-        EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(NO_CONTENT)
+        EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(ACCEPTED)
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
         res should have(

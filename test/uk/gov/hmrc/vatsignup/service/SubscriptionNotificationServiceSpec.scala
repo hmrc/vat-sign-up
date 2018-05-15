@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.service
 
 import play.api.http.Status.BAD_REQUEST
+import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailConnector
@@ -48,7 +49,8 @@ class SubscriptionNotificationServiceSpec extends UnitSpec with MockEmailRequest
             "return NotificationSent" in {
               val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
+              mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
               mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Right(EmailQueued)))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
@@ -60,6 +62,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec with MockEmailRequest
               val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
               mockSendEmail(testEmail, principalFailureEmailTemplate)(Future.successful(Right(EmailQueued)))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
@@ -84,9 +87,11 @@ class SubscriptionNotificationServiceSpec extends UnitSpec with MockEmailRequest
           val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
 
           mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+          mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+
           val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-          res shouldBe Left(DelegatedSubscription)
+          res shouldBe Right(DelegatedSubscription)
         }
       }
     }

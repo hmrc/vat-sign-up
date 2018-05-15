@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status.NO_CONTENT
+import play.api.http.Status.ACCEPTED
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object SendEmailHttpParser {
@@ -25,7 +25,7 @@ object SendEmailHttpParser {
   implicit object SendEmailHttpReads extends HttpReads[SendEmailResponse] {
     override def read(method: String, url: String, response: HttpResponse): SendEmailResponse =
       response.status match {
-        case NO_CONTENT => Right(EmailQueued)
+        case ACCEPTED => Right(EmailQueued)
         case status => Left(SendEmailFailure(status, response.body))
       }
   }

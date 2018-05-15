@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.SubscriptionState
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
 import org.mockito.Mockito._
-import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{NotificationFailure, NotificationSent}
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{NotificationFailure, NotificationSent, NotificationSuccess}
 
 import scala.concurrent.Future
 
@@ -40,7 +40,7 @@ trait MockSubscriptionNotificationService extends MockitoSugar with BeforeAndAft
 
   def mockSendEmailNotification(vatNumber: String,
                                 subscriptionState: SubscriptionState
-                               )(response: Future[Either[NotificationFailure, NotificationSent.type]]): Unit =
+                               )(response: Future[Either[NotificationFailure, NotificationSuccess]]): Unit =
     when(mockSubscriptionNotificationService.sendEmailNotification(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(subscriptionState)

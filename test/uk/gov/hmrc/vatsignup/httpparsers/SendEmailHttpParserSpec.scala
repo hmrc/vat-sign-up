@@ -29,7 +29,7 @@ class SendEmailHttpParserSpec extends UnitSpec {
   "SendEmailHttpReads" when {
     "read" should {
       "parse a NO_CONTENT as EmailQueued" in {
-        val httpResponse = HttpResponse(NO_CONTENT)
+        val httpResponse = HttpResponse(ACCEPTED)
 
         read(testHttpVerb, testUri, httpResponse) shouldBe Right(EmailQueued)
       }

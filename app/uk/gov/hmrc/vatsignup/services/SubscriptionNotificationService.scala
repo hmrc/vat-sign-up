@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EmailConnector
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
@@ -35,33 +36,38 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                                                )(implicit ec: ExecutionContext) {
   def sendEmailNotification(vatNumber: String,
                             subscriptionState: SubscriptionState
-                           )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSent.type]] = {
+                           )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     for {
       emailRequest <- getEmailRequest(vatNumber)
-      _ <- sendEmail(emailRequest.email, subscriptionState, emailRequest.isDelegated)
-    } yield NotificationSent
+      notificationResult <- sendEmail(emailRequest.email, subscriptionState, emailRequest.isDelegated)
+      _ <- deleteEmailRequest(vatNumber)
+    } yield notificationResult
   }.value
 
   private def getEmailRequest(vatNumber: String
-                             )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, EmailRequest] =
+                             ): EitherT[Future, NotificationFailure, EmailRequest] =
     EitherT.fromOptionF(emailRequestRepository.findById(vatNumber), EmailRequestDataNotFound)
+
+  private def deleteEmailRequest(vatNumber: String): EitherT[Future, NotificationFailure, WriteResult] =
+    EitherT.liftF(emailRequestRepository.removeById(vatNumber))
 
 
   private def sendEmail(emailAddress: String,
                         subscriptionState: SubscriptionState,
                         isDelegated: Boolean
-                       )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, SendEmailHttpParser.EmailQueued.type] = {
+                       )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
     if (isDelegated) {
-      EitherT.leftT(DelegatedSubscription)
+      EitherT.rightT(DelegatedSubscription)
     } else {
       val emailTemplate = subscriptionState match {
         case Success => principalSuccessEmailTemplate
         case Failure => principalFailureEmailTemplate
       }
 
-      EitherT(emailConnector.sendEmail(emailAddress, emailTemplate)) leftMap {
-        _ => EmailServiceFailure
-      }
+      EitherT(emailConnector.sendEmail(emailAddress, emailTemplate)) bimap(
+        _ => EmailServiceFailure,
+        _ => NotificationSent
+      )
     }
   }
 }
@@ -70,14 +76,16 @@ object SubscriptionNotificationService {
   val principalSuccessEmailTemplate = "mtdfb_vat_principal_sign_up_successful"
   val principalFailureEmailTemplate = "mtdfb_vat_principal_sign_up_failure"
 
-  case object NotificationSent
+  sealed trait NotificationSuccess
+
+  case object NotificationSent extends NotificationSuccess
+
+  case object DelegatedSubscription extends NotificationSuccess
 
   sealed trait NotificationFailure
 
   case object EmailRequestDataNotFound extends NotificationFailure
 
   case object EmailServiceFailure extends NotificationFailure
-
-  case object DelegatedSubscription extends NotificationFailure
 
 }

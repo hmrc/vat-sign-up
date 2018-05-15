@@ -21,7 +21,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.ReadPreference
-import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
+import reactivemongo.api.commands.{UpdateWriteResult, WriteConcern, WriteResult}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 
@@ -47,6 +47,15 @@ trait MockEmailRequestRepository extends MockitoSugar with BeforeAndAfterEach {
     when(mockEmailRequestRepository.findById(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.any[ReadPreference]
+    )(
+      ArgumentMatchers.any[ExecutionContext]
+    )) thenReturn response
+  }
+
+  def mockRemoveEmailRequest(vatNumber:String)(response: Future[WriteResult]): Unit = {
+    when(mockEmailRequestRepository.removeById(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.any[WriteConcern]
     )(
       ArgumentMatchers.any[ExecutionContext]
     )) thenReturn response
