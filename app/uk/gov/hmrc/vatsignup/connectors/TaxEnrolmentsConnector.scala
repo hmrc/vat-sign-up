@@ -33,7 +33,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
                                        applicationConfig: AppConfig) {
 
   private def taxEnrolmentsCallbackUrl(vatNumber: String) =
-    s"${applicationConfig.baseUrl}/vat-subscription/subscription-request/vat-number/$vatNumber/callback"
+    s"${applicationConfig.baseUrl}/vat-sign-up/subscription-request/vat-number/$vatNumber/callback"
 
   def registerEnrolment(vatNumber: String, safeId: String)
                        (implicit hc: HeaderCarrier): Future[TaxEnrolmentsResponse] = {

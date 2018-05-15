@@ -28,7 +28,7 @@ object TaxEnrolmentsStub extends WireMockMethods {
     s"/tax-enrolments/subscriptions/$vatNumber/subscriber"
 
   private def taxEnrolmentsCallbackUrl(vatNumber: String) =
-    s"$mockUrl/vat-subscription/subscription-request/vat-number/$vatNumber/callback"
+    s"$mockUrl/vat-sign-up/subscription-request/vat-number/$vatNumber/callback"
 
   def stubRegisterEnrolment(vatNumber: String, safeId: String)(status: Int): Unit = {
 
