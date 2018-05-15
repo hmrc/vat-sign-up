@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.controllers
 import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
+import uk.gov.hmrc.vatsignup.config.featureswitch.EmailNotification
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailStub
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository}
@@ -32,6 +33,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
   "/subscription-request/vat-number/callback" when {
     "callback is successful" should {
       "return NO_CONTENT with the status" in {
+        enable(EmailNotification)
 
         await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 

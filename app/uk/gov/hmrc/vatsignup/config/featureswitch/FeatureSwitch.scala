@@ -29,6 +29,7 @@ object FeatureSwitch {
   val switches: Set[FeatureSwitch] = Set(
     MTDEligibilityCheck,
     AlreadySubscribedCheck,
+    EmailNotification,
     StubDESFeature
   )
 
@@ -58,4 +59,9 @@ object AlreadySubscribedCheck extends FeatureSwitch {
 object StubDESFeature extends FeatureSwitch {
   val displayName = s"Use stub for DES connection"
   val name = s"$prefix.stub-des"
+}
+
+object EmailNotification extends FeatureSwitch {
+  val displayName = s"Send notification e-mail on tax enrolments callback"
+  val name = s"$prefix.email-notification"
 }

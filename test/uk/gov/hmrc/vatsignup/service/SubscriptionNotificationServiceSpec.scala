@@ -16,10 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import com.github.tomakehurst.wiremock.core.WireMockApp
 import play.api.http.Status.BAD_REQUEST
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.featureswitch.EmailNotification
+import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailConnector
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
@@ -32,75 +35,100 @@ import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SubscriptionNotificationServiceSpec extends UnitSpec with MockEmailRequestRepository with MockEmailConnector {
+class SubscriptionNotificationServiceSpec extends UnitSpec
+  with MockEmailRequestRepository
+  with MockEmailConnector
+  with MockConfig {
 
   object TestSubscriptionNotificationService extends SubscriptionNotificationService(
     mockEmailRequestRepository,
-    mockEmailConnector
+    mockEmailConnector,
+    mockConfig
   )
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   "sendEmailNotification" when {
-    "the email request exists in the database" when {
-      "the subscription request was for a principal user" when {
-        "the e-mail request is successful" when {
-          "the subscription was successful" should {
-            "return NotificationSent" in {
-              val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
+    "the EmailNotification feature is enabled" when {
+      "the email request exists in the database" when {
+        "the subscription request was for a principal user" when {
+          "the e-mail request is successful" when {
+            "the subscription was successful" should {
+              "return NotificationSent" in {
+                enable(EmailNotification)
 
-              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-              mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-              mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Right(EmailQueued)))
-              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+                val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
-              res shouldBe Right(NotificationSent)
+                mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
+                mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+                mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Right(EmailQueued)))
+                val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+
+                res shouldBe Right(NotificationSent)
+              }
+            }
+            "the subscription failed" should {
+              "return NotificationSent" in {
+                enable(EmailNotification)
+
+                val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
+
+                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+                mockSendEmail(testEmail, principalFailureEmailTemplate)(Future.successful(Right(EmailQueued)))
+                val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
+
+                res shouldBe Right(NotificationSent)
+              }
             }
           }
-          "the subscription failed" should {
-            "return NotificationSent" in {
+          "the e-mail request fails" should {
+            "return EmailServiceFailure" in {
+              enable(EmailNotification)
+
               val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-              mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-              mockSendEmail(testEmail, principalFailureEmailTemplate)(Future.successful(Right(EmailQueued)))
-              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
+              mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-              res shouldBe Right(NotificationSent)
+              res shouldBe Left(EmailServiceFailure)
             }
           }
         }
-        "the e-mail request fails" should {
-          "return EmailServiceFailure" in {
-            val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
+        "the subscription request was for a delegated user" when {
+          "return DelegatedSubscription" in {
+            enable(EmailNotification)
+
+            val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
 
             mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-            mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+            mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+
             val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-            res shouldBe Left(EmailServiceFailure)
+            res shouldBe Right(DelegatedSubscription)
           }
         }
       }
-      "the subscription request was for a delegated user" when {
-        "return DelegatedSubscription" in {
-          val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
+      "the e-mail request does not exist in the database" should {
+        "return EmailRequestDataNotFound" in {
+          enable(EmailNotification)
 
-          mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-          mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-
+          mockFindEmailRequestById(testVatNumber)(None)
           val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-          res shouldBe Right(DelegatedSubscription)
+          res shouldBe Left(EmailRequestDataNotFound)
         }
       }
     }
-    "the e-mail request does not exist in the database" should {
-      "return EmailRequestDataNotFound" in {
-        mockFindEmailRequestById(testVatNumber)(None)
+    "the EmailNotification feature is disabled" should {
+      "return FeatureSwitchDisabled" in {
+        disable(EmailNotification)
+
         val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-        res shouldBe Left(EmailRequestDataNotFound)
+        res shouldBe Right(FeatureSwitchDisabled)
       }
     }
   }

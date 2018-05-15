@@ -21,8 +21,9 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.featureswitch.EmailNotification
 import uk.gov.hmrc.vatsignup.connectors.EmailConnector
-import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
@@ -32,17 +33,23 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailRequestRepository,
-                                                emailConnector: EmailConnector
+                                                emailConnector: EmailConnector,
+                                                appConfig: AppConfig
                                                )(implicit ec: ExecutionContext) {
   def sendEmailNotification(vatNumber: String,
                             subscriptionState: SubscriptionState
                            )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
-    for {
-      emailRequest <- getEmailRequest(vatNumber)
-      notificationResult <- sendEmail(emailRequest.email, subscriptionState, emailRequest.isDelegated)
-      _ <- deleteEmailRequest(vatNumber)
-    } yield notificationResult
-  }.value
+    if(appConfig.isEnabled(EmailNotification)) {
+      (for {
+        emailRequest <- getEmailRequest(vatNumber)
+        notificationResult <- sendEmail(emailRequest.email, subscriptionState, emailRequest.isDelegated)
+        _ <- deleteEmailRequest(vatNumber)
+      } yield notificationResult).value
+    }
+    else {
+      Future.successful(Right(FeatureSwitchDisabled))
+    }
+  }
 
   private def getEmailRequest(vatNumber: String
                              ): EitherT[Future, NotificationFailure, EmailRequest] =
@@ -77,6 +84,8 @@ object SubscriptionNotificationService {
   val principalFailureEmailTemplate = "mtdfb_vat_principal_sign_up_failure"
 
   sealed trait NotificationSuccess
+
+  case object FeatureSwitchDisabled extends NotificationSuccess
 
   case object NotificationSent extends NotificationSuccess
 
