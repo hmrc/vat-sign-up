@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data._
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{BadGatewayException, HeaderCarrier, InternalServerException}
@@ -30,6 +31,7 @@ import uk.gov.hmrc.vatsignup.httpparsers._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
+import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -109,13 +111,20 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
             isSuccess = true
           ))
           (optBusinessPostcode, optVatRegistrationDate) match {
-            case (Some(enteredPostcode), Some(enteredVatRegistrationDate)) =>
-              if (((enteredPostcode filterNot(_.isWhitespace)) equalsIgnoreCase (businessPostcode filterNot(_.isWhitespace)))
-                && (enteredVatRegistrationDate == vatRegistrationDate)) {
-                Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
-              } else {
-                Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
-              }
+            case (Some(enteredPostCode), Some(enteredVatRegistrationDate)) =>
+              val knownFactsMatched =
+                (enteredPostCode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
+                  (enteredVatRegistrationDate == vatRegistrationDate)
+              auditService.audit(KnownFactsAuditModel(
+                vatNumber = vatNumber,
+                enteredPostCode = enteredPostCode,
+                enteredVatRegistrationDate = enteredVatRegistrationDate,
+                desPostCode = businessPostcode,
+                desVatRegistrationDate = vatRegistrationDate,
+                matched = knownFactsMatched
+              ))
+              if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+              else Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
             case _ =>
               Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
           }
