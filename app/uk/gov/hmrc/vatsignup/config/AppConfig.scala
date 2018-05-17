@@ -42,6 +42,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   lazy val desAuthorisationToken: String = s"Bearer ${loadConfig("microservice.services.des.authorisation-token")}"
   lazy val desEnvironmentHeader: (String, String) =
     "Environment" -> loadConfig("microservice.services.des.environment")
+
   def registerWithMultipleIdentifiersUrl: String = s"$desUrl/cross-regime/register/VATC"
 
   lazy val authenticatorUrl: String = baseUrl("authenticator")
@@ -64,7 +65,9 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   lazy val emailTimeToLiveSeconds: Long = loadConfig("mongodb.email.emailTimeToLiveSeconds").toLong
 
-  lazy val vatSubscriptionUrl: String = baseUrl("vat-subscription")
+  def vatSubscriptionUrl: String =
+    if (isEnabled(featureswitch.StubDESFeature)) desUrl
+    else baseUrl("vat-subscription")
 
   lazy val baseUrl: String = baseUrl("base")
 
