@@ -30,7 +30,8 @@ object FeatureSwitch {
     MTDEligibilityCheck,
     AlreadySubscribedCheck,
     EmailNotification,
-    StubDESFeature
+    StubDESFeature,
+    StubAgentServicesFeature
   )
 
   def apply(str: String): FeatureSwitch =
@@ -59,6 +60,11 @@ object AlreadySubscribedCheck extends FeatureSwitch {
 object StubDESFeature extends FeatureSwitch {
   val displayName = s"Use stub for DES connection"
   val name = s"$prefix.stub-des"
+}
+
+object StubAgentServicesFeature extends FeatureSwitch {
+  val displayName = s"Use stub for Agent Services connection"
+  val name = s"$prefix.stub-agent-services"
 }
 
 object EmailNotification extends FeatureSwitch {

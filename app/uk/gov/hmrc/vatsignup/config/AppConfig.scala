@@ -29,7 +29,11 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   private def loadConfig(key: String) = runModeConfiguration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
 
-  lazy val agentClientRelationshipUrl: String = baseUrl("agent-client-relationships") + "/agent-client-relationships"
+  lazy val agentClientRelationshipUrl: String =
+    loadConfig(
+      if (isEnabled(featureswitch.StubDESFeature)) "microservice.services.agent-client-relationships.stub-url"
+      else "microservice.services.agent-client-relationships.url"
+    ) + "/agent-client-relationships"
 
   lazy val taxEnrolmentsUrl: String = baseUrl("tax-enrolments") + "/tax-enrolments"
 
