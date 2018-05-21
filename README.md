@@ -19,22 +19,6 @@ You will need [sbt](http://www.scala-sbt.org/)
    `sm --start VAT_SIGN_UP_ALL -f`
 
 
-3) **Clone the frontend service:**
-
-  - SSH
-
-    `git clone git@github.com:hmrc/vat-sign-up-frontend.git`
-
-  - HTTPS
-
-    `git clone https://github.com/hmrc/vat-sign-up-frontend.git`
-
-
-4) **Start the frontend service:**
-
-   `sbt "run 9566" -Dapplication.router=testOnlyDoNotUseInAppConf.Routes`
-
-
 5) **Clone the protected service:**
 
   - SSH
@@ -47,6 +31,8 @@ You will need [sbt](http://www.scala-sbt.org/)
 
 
 6) **Start the protected service:**
+   
+   `sm --stop VAT_SIGN_UP`
 
    `sbt "run 9572" -Dapplication.router=testOnlyDoNotUseInAppConf.Routes`
 
