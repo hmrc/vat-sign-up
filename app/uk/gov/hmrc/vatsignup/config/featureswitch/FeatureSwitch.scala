@@ -32,7 +32,6 @@ object FeatureSwitch {
     EmailNotification,
     StubDESFeature,
     StubAgentServicesFeature,
-    StubDESFeature,
     StubIncorporationInformationFeature
   )
 
