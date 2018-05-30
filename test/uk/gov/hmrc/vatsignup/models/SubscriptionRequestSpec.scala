@@ -27,6 +27,7 @@ class SubscriptionRequestSpec extends UnitSpec {
       idKey -> testVatNumber,
       companyNumberKey -> testCompanyNumber,
       ninoKey -> testNino,
+      ninoSourceKey -> UserEntered,
       emailKey -> testEmail,
       identityVerifiedKey -> true
     )
@@ -35,6 +36,7 @@ class SubscriptionRequestSpec extends UnitSpec {
       vatNumber = testVatNumber,
       companyNumber = Some(testCompanyNumber),
       nino = Some(testNino),
+      ninoSource = Some(UserEntered),
       email = Some(testEmail),
       identityVerified = true
     )
@@ -54,11 +56,34 @@ class SubscriptionRequestSpec extends UnitSpec {
       val noCompanyNumber = testModel.copy(companyNumber = None)
       SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noCompanyNumber)).get shouldBe noCompanyNumber
 
-      val noNino = testModel.copy(nino = None)
+      val noNino = testModel.copy(nino = None, ninoSource = None)
       SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noNino)).get shouldBe noNino
 
       val onlyVat = testModel.copy(companyNumber = None, email = None)
       SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(onlyVat)).get shouldBe onlyVat
+    }
+
+    "return nino source correctly" when {
+      "nino is specified infer nino source as UserEntered if it is unspecified" in {
+        val noNino = testModel.copy(ninoSource = None)
+        val result = SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noNino)).get
+        result.nino shouldBe Some(testNino)
+        result.ninoSource shouldBe Some(UserEntered)
+      }
+
+      "nino is unspecified set nino source to None even if it is unspecified" in {
+        val noNino = testModel.copy(nino = None)
+        val result = SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noNino)).get
+        result.nino shouldBe None
+        result.ninoSource shouldBe None
+      }
+
+      "both nino and nino source are specified return them" in {
+        val noNino = testModel.copy(ninoSource = Some(IRSA))
+        val result = SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noNino)).get
+        result.nino shouldBe Some(testNino)
+        result.ninoSource shouldBe Some(IRSA)
+      }
     }
   }
 

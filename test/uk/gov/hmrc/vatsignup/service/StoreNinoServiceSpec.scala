@@ -20,7 +20,6 @@ import java.time.LocalDate
 import java.util.UUID
 
 import org.scalatest.EitherValues
-import play.api.mvc.Request
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
@@ -30,14 +29,14 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthenticatorConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.UserDetailsModel
 import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatchingAuditModel
+import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class StoreNinoServiceSpec
   extends UnitSpec with MockAuthenticatorConnector with MockSubscriptionRequestRepository with MockAuditService with EitherValues {
@@ -63,55 +62,83 @@ class StoreNinoServiceSpec
   )
 
   "storeNino" when {
-    "user is matched" should {
+    "Nino source is user entered" when {
+      "user is matched" should {
+        "store the record and return StoreNinoSuccess" in {
+          mockMatchUserMatched(testUserDetails)
+          mockUpsertNino(testVatNumber, testNino, UserEntered)(Future.successful(mock[UpdateWriteResult]))
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, agentUser, UserEntered)
+          await(res) shouldBe Right(StoreNinoSuccess)
+
+          verifyAudit(UserMatchingAuditModel(testUserDetails, Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
+        }
+      }
+
+      "user is not matched" should {
+        "return NoMatchFoundFailure" in {
+          mockMatchUserNotMatched(testUserDetails)
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          await(res) shouldBe Left(NoMatchFoundFailure)
+
+          verifyAudit(UserMatchingAuditModel(testUserDetails, None, isSuccess = false))
+        }
+      }
+
+      "calls to user matching failed" should {
+        "return AuthenticatorFailure" in {
+          mockMatchUserFailure(testUserDetails)
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          await(res) shouldBe Left(AuthenticatorFailure)
+        }
+      }
+
+      "the VAT number is not in mongo" should {
+        "return NinoDatabaseFailureNoVATNumber" in {
+          mockMatchUserMatched(testUserDetails)
+          mockUpsertNino(testVatNumber, testNino, UserEntered)(Future.failed(new NoSuchElementException))
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
+        }
+      }
+
+      "calls to mongo failed" should {
+        "return NinoDatabaseFailure" in {
+          mockMatchUserMatched(testUserDetails)
+          mockUpsertNino(testVatNumber, testNino, UserEntered)(Future.failed(new Exception))
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          await(res) shouldBe Left(NinoDatabaseFailure)
+        }
+      }
+    }
+
+    "Nino source is IRSA" when {
       "store the record and return StoreNinoSuccess" in {
-        mockMatchUserMatched(testUserDetails)
-        mockUpsertNino(testVatNumber, testNino)(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertNino(testVatNumber, testNino, IRSA)(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, agentUser)
+        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
         await(res) shouldBe Right(StoreNinoSuccess)
-
-        verifyAudit(UserMatchingAuditModel(testUserDetails, Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
       }
-    }
+      "the VAT number is not in mongo" should {
+        "return NinoDatabaseFailureNoVATNumber" in {
+          mockUpsertNino(testVatNumber, testNino, IRSA)(Future.failed(new NoSuchElementException))
 
-    "user is not matched" should {
-      "return NoMatchFoundFailure" in {
-        mockMatchUserNotMatched(testUserDetails)
-
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser)
-        await(res) shouldBe Left(NoMatchFoundFailure)
-
-        verifyAudit(UserMatchingAuditModel(testUserDetails, None, isSuccess = false))
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
+          await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
+        }
       }
-    }
 
-    "calls to user matching failed" should {
-      "return AuthenticatorFailure" in {
-        mockMatchUserFailure(testUserDetails)
+      "calls to mongo failed" should {
+        "return NinoDatabaseFailure" in {
+          mockUpsertNino(testVatNumber, testNino, IRSA)(Future.failed(new Exception))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser)
-        await(res) shouldBe Left(AuthenticatorFailure)
-      }
-    }
-
-    "the VAT number is not in mongo" should {
-      "return NinoDatabaseFailureNoVATNumber" in {
-        mockMatchUserMatched(testUserDetails)
-        mockUpsertNino(testVatNumber, testNino)(Future.failed(new NoSuchElementException))
-
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser)
-        await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
-      }
-    }
-
-    "calls to mongo failed" should {
-      "return NinoDatabaseFailure" in {
-        mockMatchUserMatched(testUserDetails)
-        mockUpsertNino(testVatNumber, testNino)(Future.failed(new Exception))
-
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser)
-        await(res) shouldBe Left(NinoDatabaseFailure)
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
+          await(res) shouldBe Left(NinoDatabaseFailure)
+        }
       }
     }
   }

@@ -20,67 +20,98 @@ import java.time.LocalDate
 import java.util.UUID
 
 import play.api.http.Status._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthenticatorStub._
-import uk.gov.hmrc.vatsignup.models.UserDetailsModel
+import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
+import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
-  lazy val requestBody: UserDetailsModel = UserDetailsModel(
-    UUID.randomUUID().toString,
-    UUID.randomUUID().toString,
-    LocalDate.now(),
-    testNino
-  )
-
-  "PUT /subscription-request/:vrn/nino" should {
-    "if vat number exists return no content when the nino has been stored successfully" in {
-      stubAuth(OK, successfulAuthResponse())
-      stubMatchUser(requestBody)(matched = true)
-
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber))
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
-
-      res should have(
-        httpStatus(NO_CONTENT),
-        emptyBody
+  "PUT /subscription-request/:vrn/nino" when {
+    "nino source is not supplied" should {
+      lazy val requestBody: UserDetailsModel = UserDetailsModel(
+        UUID.randomUUID().toString,
+        UUID.randomUUID().toString,
+        LocalDate.now(),
+        testNino
       )
+      "if vat number exists return no content when the nino has been stored successfully" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubMatchUser(requestBody)(matched = true)
+
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+
+        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(UserEntered)
+      }
+
+      "if the user is not matched in CID then return FORBIDDEN" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubMatchUser(requestBody)(matched = false)
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+
+        res should have(
+          httpStatus(FORBIDDEN)
+        )
+      }
+
+
+      "if the vat number does not already exist then return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubMatchUser(requestBody)(matched = true)
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+      }
+
+      "return BAD_REQUEST when the json is invalid" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(Json.obj())
+
+        res should have(
+          httpStatus(BAD_REQUEST)
+        )
+      }
     }
-
-    "if the user is not matched in CID then return FORBIDDEN" in {
-      stubAuth(OK, successfulAuthResponse())
-      stubMatchUser(requestBody)(matched = false)
-
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
-
-      res should have(
-        httpStatus(FORBIDDEN)
+    "nino source is supplied" should {
+      val userDetails: UserDetailsModel = UserDetailsModel(
+        UUID.randomUUID().toString,
+        UUID.randomUUID().toString,
+        LocalDate.now(),
+        testNino
       )
-    }
 
+      lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSA.toString))
 
-    "if the vat number does not already exist then return NOT_FOUND" in {
-      stubAuth(OK, successfulAuthResponse())
-      stubMatchUser(requestBody)(matched = true)
+      "if vat number exists return no content when the nino has been stored successfully" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubMatchUser(userDetails)(matched = true)
 
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
 
-      res should have(
-        httpStatus(NOT_FOUND)
-      )
-    }
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
 
-    "return BAD_REQUEST when the json is invalid" in {
-      stubAuth(OK, successfulAuthResponse())
-
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(Json.obj())
-
-      res should have(
-        httpStatus(BAD_REQUEST)
-      )
+        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(IRSA)
+      }
     }
   }
 

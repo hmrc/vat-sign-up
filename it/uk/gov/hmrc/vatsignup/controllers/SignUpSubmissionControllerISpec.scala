@@ -25,7 +25,7 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.RegistrationStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.SignUpStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository, TestSubmissionRequestRepository}
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest
+import uk.gov.hmrc.vatsignup.models.{SubscriptionRequest, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -38,6 +38,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             nino = Some(testNino),
+            ninoSource = Some(UserEntered),
             email = Some(testEmail)
           )
 
@@ -85,6 +86,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             nino = Some(testNino),
+            ninoSource = Some(UserEntered),
             email = Some(testEmail),
             identityVerified = true
           )

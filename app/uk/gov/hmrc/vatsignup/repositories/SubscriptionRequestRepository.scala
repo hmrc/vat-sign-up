@@ -28,8 +28,9 @@ import reactivemongo.play.json.JSONSerializationPack.Writer
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest
+import uk.gov.hmrc.vatsignup.models.{NinoSource, SubscriptionRequest}
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
+import uk.gov.hmrc.vatsignup.models.NinoSource._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -67,7 +68,8 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
       update = Json.obj("$set" -> Json.obj(
         companyNumberKey -> companyNumber
       ), "$unset" -> Json.obj(
-        ninoKey -> ""
+        ninoKey -> "",
+        ninoSourceKey -> ""
       )),
       upsert = false
     ).filter(_.n == 1)
@@ -75,11 +77,12 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
   def upsertEmail(vatNumber: String, email: String): Future[UpdateWriteResult] =
     upsert(vatNumber, emailKey, email)
 
-  def upsertNino(vatNumber: String, nino: String): Future[UpdateWriteResult] =
+  def upsertNino(vatNumber: String, nino: String, ninoSource: NinoSource): Future[UpdateWriteResult] =
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
       update = Json.obj("$set" -> Json.obj(
         ninoKey -> nino,
+        ninoSourceKey -> ninoSource,
         identityVerifiedKey -> false
       ), "$unset" -> Json.obj(
         companyNumberKey -> ""

@@ -23,7 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, Suite}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.models.UserDetailsModel
+import uk.gov.hmrc.vatsignup.models.{NinoSource, UserDetailsModel}
 import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.Future
@@ -40,12 +40,14 @@ trait MockStoreNinoService extends MockitoSugar with BeforeAndAfterEach {
 
   def mockStoreNino(vatNumber: String,
                     userDetails: UserDetailsModel,
-                    enrolments: Enrolments
+                    enrolments: Enrolments,
+                    ninoSource: NinoSource
                    )(response: Future[Either[StoreNinoFailure, StoreNinoSuccess.type]]): Unit = {
     when(mockStoreNinoService.storeNino(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(userDetails),
-      ArgumentMatchers.any[Enrolments]
+      ArgumentMatchers.any[Enrolments],
+      ArgumentMatchers.eq(ninoSource)
     )(ArgumentMatchers.any[HeaderCarrier],
       ArgumentMatchers.any[Request[_]])) thenReturn response
   }
