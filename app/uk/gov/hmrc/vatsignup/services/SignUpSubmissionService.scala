@@ -23,7 +23,7 @@ import cats.implicits._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EmailVerificationConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.{EmailNotVerified, EmailVerified, RegisterWithMultipleIdsSuccess, SuccessfulTaxEnrolment}
-import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, IRSA, SubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.{EmailRequestRepository, SubscriptionRequestRepository}
 import SignUpSubmissionService._
 import play.api.mvc.Request
@@ -54,7 +54,7 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
     val isDelegated = optAgentReferenceNumber.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
-      case Some(SubscriptionRequest(_, Some(companyNumber), None, Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
+      case Some(SubscriptionRequest(_, Some(companyNumber), None, _, Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
         val result = for {
           emailAddressVerified <- isEmailAddressVerified(emailAddress)
           safeId <- registerCompany(vatNumber, companyNumber, optAgentReferenceNumber)
@@ -65,7 +65,7 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
         } yield SignUpRequestSubmitted
 
         result.value
-      case Some(SubscriptionRequest(_, None, Some(nino), Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
+      case Some(SubscriptionRequest(_, None, Some(nino), Some(ninoSource), Some(emailAddress), identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
         val result = for {
           emailAddressVerified <- isEmailAddressVerified(emailAddress)
           safeId <- registerIndividual(vatNumber, nino, optAgentReferenceNumber)

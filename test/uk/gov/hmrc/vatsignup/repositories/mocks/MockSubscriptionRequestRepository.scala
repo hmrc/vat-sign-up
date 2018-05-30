@@ -22,7 +22,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest
+import uk.gov.hmrc.vatsignup.models.{NinoSource, SubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,8 +48,8 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
     when(mockSubscriptionRequestRepository.upsertEmail(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(email)))
       .thenReturn(response)
 
-  def mockUpsertNino(vatNumber: String, nino: String)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertNino(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(nino)))
+  def mockUpsertNino(vatNumber: String, nino: String, ninoSource: NinoSource)(response: Future[UpdateWriteResult]): Unit =
+    when(mockSubscriptionRequestRepository.upsertNino(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(nino), ArgumentMatchers.eq(ninoSource)))
       .thenReturn(response)
 
   def mockUpsertIdentityVerified(vatNumber: String)(response: Future[UpdateWriteResult]): Unit =
