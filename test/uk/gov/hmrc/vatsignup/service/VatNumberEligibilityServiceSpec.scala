@@ -28,6 +28,7 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpFailure
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}

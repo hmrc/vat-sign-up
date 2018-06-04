@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreCompanyNumberService
-import uk.gov.hmrc.vatsignup.services.{CompanyNumberDatabaseFailure, StoreCompanyNumberSuccess, CompanyNumberDatabaseFailureNoVATNumber}
+import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService.{CompanyNumberDatabaseFailure, StoreCompanyNumberSuccess, CompanyNumberDatabaseFailureNoVATNumber}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

@@ -22,10 +22,9 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.AuthenticatorConnector
-import uk.gov.hmrc.vatsignup.httpparsers.MatchUserHttpParser.MatchUserResponse
-import uk.gov.hmrc.vatsignup.models.UserDetailsModel
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.UserMatchFailureResponseModel
+import uk.gov.hmrc.vatsignup.httpparsers.MatchUserHttpParser.{MatchUserResponse, UserMatchFailureResponseModel}
+import uk.gov.hmrc.vatsignup.models.UserDetailsModel
 
 import scala.concurrent.Future
 

@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, MTDEligibilityCheck}
 import uk.gov.hmrc.vatsignup.connectors.{KnownFactsAndControlListInformationConnector, MandationStatusConnector}
-import uk.gov.hmrc.vatsignup.httpparsers.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber, MtdEligible, MtdIneligible}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber, MtdEligible, MtdIneligible}
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
@@ -105,6 +105,7 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
 }
 
 object VatNumberEligibilityService {
+
   type VatNumberEligibility = Either[VatNumberEligibilityFailure, VatNumberEligible.type]
 
   case object VatNumberEligible

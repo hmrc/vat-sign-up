@@ -30,12 +30,13 @@ object GetEmailVerificationStateHttpParser {
         case status => Left(GetEmailVerificationStateErrorResponse(status, response.body))
       }
   }
+
+  sealed trait EmailVerificationState
+
+  case object EmailVerified extends EmailVerificationState
+
+  case object EmailNotVerified extends EmailVerificationState
+
+  case class GetEmailVerificationStateErrorResponse(status: Int, body: String)
+
 }
-
-sealed trait EmailVerificationState
-
-case object EmailVerified extends EmailVerificationState
-
-case object EmailNotVerified extends EmailVerificationState
-
-case class GetEmailVerificationStateErrorResponse(status: Int, body: String)

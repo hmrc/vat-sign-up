@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.NinoSource._
 import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreNinoService
-import uk.gov.hmrc.vatsignup.services._
+import uk.gov.hmrc.vatsignup.services.StoreNinoService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

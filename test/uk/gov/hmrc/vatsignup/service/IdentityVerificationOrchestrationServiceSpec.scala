@@ -19,16 +19,16 @@ package uk.gov.hmrc.vatsignup.service
 import org.scalatest.EitherValues
 import play.api.http.Status._
 import reactivemongo.api.commands.UpdateWriteResult
+import uk.gov.hmrc.auth.core.ConfidenceLevel._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers
-import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerified
+import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerificationHttpParser._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.IdentityVerificationOrchestrationService.{IdentityNotVerified, IdentityVerificationConnectionFailure, IdentityVerificationDatabaseFailure}
 import uk.gov.hmrc.vatsignup.services._
-import uk.gov.hmrc.auth.core.ConfidenceLevel._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -73,7 +73,7 @@ class IdentityVerificationOrchestrationServiceSpec extends UnitSpec with EitherV
 
       "Identity verification returned not verified" should {
         "return IdentityNotVerified" in {
-          mockGetIdentityVerificationOutcome(testToken)(Future.successful(Right(httpparsers.IdentityNotVerified(""))))
+          mockGetIdentityVerificationOutcome(testToken)(Future.successful(Right(httpparsers.IdentityVerificationHttpParser.IdentityNotVerified(""))))
 
           val res = TestIdentityVerificationOrchestrationService.updateIdentityVerificationState(testVatNumber, testToken, L0)
 
@@ -83,7 +83,7 @@ class IdentityVerificationOrchestrationServiceSpec extends UnitSpec with EitherV
 
       "Identity verification returned not verified" should {
         "return IdentityVerificationConnectionFailure" in {
-          mockGetIdentityVerificationOutcome(testToken)(Future.successful(Left(httpparsers.IdentityVerificationOutcomeErrorResponse(BAD_REQUEST, ""))))
+          mockGetIdentityVerificationOutcome(testToken)(Future.successful(Left(httpparsers.IdentityVerificationHttpParser.IdentityVerificationOutcomeErrorResponse(BAD_REQUEST, ""))))
 
           val res = TestIdentityVerificationOrchestrationService.updateIdentityVerificationState(testVatNumber, testToken, L0)
 

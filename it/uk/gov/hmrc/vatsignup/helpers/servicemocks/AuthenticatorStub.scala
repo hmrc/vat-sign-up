@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.{UserMatchFailureResponseModel, UserMatchUnexpectedError}
+import uk.gov.hmrc.vatsignup.httpparsers.MatchUserHttpParser.{UserMatchFailureResponseModel, UserMatchUnexpectedError}
 import uk.gov.hmrc.vatsignup.models.UserDetailsModel
 
 object AuthenticatorStub extends WireMockMethods {
