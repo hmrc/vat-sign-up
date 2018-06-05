@@ -23,9 +23,10 @@ import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
 import uk.gov.hmrc.vatsignup.models.{NinoSource, UserDetailsModel, UserEntered}
-import uk.gov.hmrc.vatsignup.services._
-import NinoSource.ninoSourceFrontEndKey
+import uk.gov.hmrc.vatsignup.services.StoreNinoService
+import uk.gov.hmrc.vatsignup.services.StoreNinoService._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,7 +45,7 @@ class StoreNinoController @Inject()(val authConnector: AuthConnector,
           enrolments =>
             req.body.validate[UserDetailsModel] match {
               case JsSuccess(userDetails, _) =>
-                val ninoSource = (req.body \ ninoSourceFrontEndKey) .validate[NinoSource].getOrElse(UserEntered)
+                val ninoSource = (req.body \ ninoSourceFrontEndKey).validate[NinoSource].getOrElse(UserEntered)
                 storeNinoService.storeNino(vatNumber, userDetails, enrolments, ninoSource) map {
                   case Right(StoreNinoSuccess) => NoContent
                   case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")

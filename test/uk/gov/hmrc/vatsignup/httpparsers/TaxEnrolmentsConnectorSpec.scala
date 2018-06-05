@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.httpparsers
 import play.api.http.Status.{BAD_REQUEST, NO_CONTENT}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.TaxEnrolmentsHttpReads
+import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
 
 class TaxEnrolmentsConnectorSpec extends UnitSpec {
   val testHttpVerb = "PUT"

@@ -32,18 +32,18 @@ object IdentityVerificationHttpParser {
       lazy val code = (response.json \ "result").as[String]
 
       response.status match {
-        case OK => if(code == SuccessCode) Right(IdentityVerified) else Right(IdentityNotVerified(code))
+        case OK => if (code == SuccessCode) Right(IdentityVerified) else Right(IdentityNotVerified(code))
         case status => Left(IdentityVerificationOutcomeErrorResponse(status, response.body))
       }
     }
   }
+
+  sealed trait IdentityVerificationOutcome
+
+  case object IdentityVerified extends IdentityVerificationOutcome
+
+  case class IdentityNotVerified(code: String) extends IdentityVerificationOutcome
+
+  case class IdentityVerificationOutcomeErrorResponse(status: Int, body: String)
+
 }
-
-
-sealed trait IdentityVerificationOutcome
-
-case object IdentityVerified extends IdentityVerificationOutcome
-
-case class IdentityNotVerified(code: String) extends IdentityVerificationOutcome
-
-case class IdentityVerificationOutcomeErrorResponse(status: Int, body: String)

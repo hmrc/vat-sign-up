@@ -24,7 +24,8 @@ import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.{NinoSource, UserDetailsModel}
-import uk.gov.hmrc.vatsignup.services._
+import uk.gov.hmrc.vatsignup.services.StoreNinoService
+import uk.gov.hmrc.vatsignup.services.StoreNinoService._
 
 import scala.concurrent.Future
 

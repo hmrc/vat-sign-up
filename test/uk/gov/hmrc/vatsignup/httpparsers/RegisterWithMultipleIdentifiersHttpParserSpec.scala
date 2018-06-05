@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import uk.gov.hmrc.play.test.UnitSpec
-import RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdentifiersHttpReads.read
 import org.scalatest.EitherValues
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants.Des._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdentifiersHttpReads.read
+import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 
 class RegisterWithMultipleIdentifiersHttpParserSpec extends UnitSpec with EitherValues {
   "RegisterWithMultipleIdentifiersHttpReads#read" when {

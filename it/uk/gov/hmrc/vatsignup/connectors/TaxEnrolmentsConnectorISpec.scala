@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub
-import uk.gov.hmrc.vatsignup.httpparsers.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
+import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
 
 class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
 

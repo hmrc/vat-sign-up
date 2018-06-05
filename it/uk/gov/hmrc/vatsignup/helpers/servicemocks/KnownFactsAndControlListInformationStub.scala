@@ -17,11 +17,10 @@
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, OK}
-import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.ControlList
-import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.{MtdEligible, MtdIneligible}
+import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.{ControlList, _}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{MtdEligible, MtdIneligible}
 
 object KnownFactsAndControlListInformationStub extends WireMockMethods {
 

@@ -24,7 +24,7 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{mandationStatusBody, stubGetMandationStatus}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
-import uk.gov.hmrc.vatsignup.httpparsers.{MtdEligible, MtdIneligible}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{MtdEligible, MtdIneligible}
 import uk.gov.hmrc.vatsignup.models.MTDfBVoluntary
 
 class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {

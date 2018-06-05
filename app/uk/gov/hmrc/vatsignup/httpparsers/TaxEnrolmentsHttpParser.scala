@@ -30,10 +30,8 @@ object TaxEnrolmentsHttpParser {
       }
   }
 
+  case object SuccessfulTaxEnrolment
+
+  case class FailedTaxEnrolment(status: Int)
+
 }
-
-
-case object SuccessfulTaxEnrolment
-
-case class FailedTaxEnrolment(status: Int)
-

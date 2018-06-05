@@ -22,7 +22,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.MatchUserHttpParser.MatchUserHttpReads
+import uk.gov.hmrc.vatsignup.httpparsers.MatchUserHttpParser._
 
 class MatchUserHttpParserSpec extends UnitSpec with EitherValues {
   "MatchUserHttpReads" when {

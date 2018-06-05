@@ -41,23 +41,23 @@ object MatchUserHttpParser {
       }
   }
 
-}
+  case class UserMatchSuccessResponseModel(nino: String)
 
-case class UserMatchSuccessResponseModel(nino: String)
+  object UserMatchSuccessResponseModel {
+    implicit val format: OFormat[UserMatchSuccessResponseModel] = Json.format[UserMatchSuccessResponseModel]
+  }
 
-object UserMatchSuccessResponseModel {
-  implicit val format: OFormat[UserMatchSuccessResponseModel] = Json.format[UserMatchSuccessResponseModel]
-}
+  case class UserMatchFailureResponseModel(errors: String)
 
-case class UserMatchFailureResponseModel(errors: String)
+  object UserMatchUnexpectedError extends UserMatchFailureResponseModel("Internal error: unexpected result from matching")
 
-object UserMatchUnexpectedError extends UserMatchFailureResponseModel("Internal error: unexpected result from matching")
+  object UserMatchFailureResponseModel {
+    implicit val format: OFormat[UserMatchFailureResponseModel] = Json.format[UserMatchFailureResponseModel]
 
-object UserMatchFailureResponseModel {
-  implicit val format: OFormat[UserMatchFailureResponseModel] = Json.format[UserMatchFailureResponseModel]
+    def apply(response: HttpResponse): UserMatchFailureResponseModel =
+      UserMatchFailureResponseModel(s"status: ${response.status} body: ${response.body}")
 
-  def apply(response: HttpResponse): UserMatchFailureResponseModel =
-    UserMatchFailureResponseModel(s"status: ${response.status} body: ${response.body}")
+    def apply(jsError: JsError): UserMatchFailureResponseModel = UserMatchFailureResponseModel(jsError.errors.toString)
+  }
 
-  def apply(jsError: JsError): UserMatchFailureResponseModel = UserMatchFailureResponseModel(jsError.errors.toString)
 }

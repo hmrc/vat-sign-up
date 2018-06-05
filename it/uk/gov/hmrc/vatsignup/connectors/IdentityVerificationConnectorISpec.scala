@@ -20,7 +20,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.testJourneyLink
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.IdentityVerificationStub._
-import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerified
+import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerificationHttpParser.IdentityVerified
 
 class IdentityVerificationConnectorISpec extends ComponentSpecBase {
 

@@ -33,6 +33,7 @@ import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatching
 import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
+import uk.gov.hmrc.vatsignup.services.StoreNinoService._
 import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
