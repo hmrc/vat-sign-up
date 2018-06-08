@@ -22,7 +22,6 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
@@ -33,39 +32,37 @@ import uk.gov.hmrc.vatsignup.services.StoreEmailService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with MockStoreEmailService {
+class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnector with MockStoreEmailService {
 
-  object TestStoreEmailController
-    extends StoreEmailController(mockAuthConnector, mockStoreEmailService)
+  object TestStoreTransactionEmailController extends StoreTransactionEmailController(mockAuthConnector, mockStoreEmailService)
 
   implicit private val system: ActorSystem = ActorSystem()
   implicit private val materializer: ActorMaterializer = ActorMaterializer()
 
-  "storeEmail" when {
-    "the e-mail address has been stored correctly" should {
-      "return OK with the email verification state" in {
-        val emailVerified = true
+  "storeTransactionEmail" should {
+      "return OK with 'true' email verification state" in {
 
-        mockAuthRetrieveAgentEnrolment()
-        mockStoreEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Right(StoreEmailSuccess(emailVerified))))
+        mockAuthorise()(Future.successful())
+
+        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Right(StoreEmailSuccess(true))))
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
+        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(EmailVerifiedKey -> emailVerified)
+        jsonBodyOf(res) shouldBe Json.obj(EmailVerifiedKey -> true)
       }
-    }
 
     "if vat number doesn't exist" should {
       "return NOT_FOUND" in {
-        mockAuthRetrieveAgentEnrolment()
-        mockStoreEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Left(EmailDatabaseFailureNoVATNumber)))
+        mockAuthorise()(Future.successful())
+
+        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailDatabaseFailureNoVATNumber)))
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
+        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
 
         status(res) shouldBe NOT_FOUND
       }
@@ -73,16 +70,32 @@ class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with Mock
 
     "the e-mail storage has failed" should {
       "return INTERNAL_SERVER_ERROR" in {
-        mockAuthRetrieveAgentEnrolment()
-        mockStoreEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Left(EmailDatabaseFailure)))
+        mockAuthorise()(Future.successful())
+
+        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailDatabaseFailure)))
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
+        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
 
         status(res) shouldBe INTERNAL_SERVER_ERROR
       }
     }
+
+    "the call to email verification has failed" should {
+      "return BAD_GATEWAY" in {
+        mockAuthorise()(Future.successful())
+
+        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailVerificationFailure)))
+
+        val request = FakeRequest() withBody testEmail
+
+        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
+
+        status(res) shouldBe BAD_GATEWAY
+      }
+    }
+
   }
 
 }
