@@ -62,6 +62,13 @@ class StoreEmailService @Inject()(subscriptionRequestRepository: SubscriptionReq
           Left(EmailDatabaseFailure)
       }
   }
+
+
+  //TODO Stubbed implm.
+  def storeTransactionEmail(vatNumber: String, emailAddress: String)
+                           (implicit hc: HeaderCarrier): Future[Either[StoreEmailFailure, StoreEmailSuccess]] = {
+   Future(Right(StoreEmailSuccess(true)))
+  }
 }
 
 object StoreEmailService {
