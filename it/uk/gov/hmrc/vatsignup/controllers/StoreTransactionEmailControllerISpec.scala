@@ -27,16 +27,63 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub.stubVeri
 
 class StoreTransactionEmailControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
-  "PUT /subscription-request/vat-number/:vatNumber/transaction-email" should {
-    "return OK with 'true' verification state" in {
-      stubAuth(OK, successfulAuthResponse())
+  val agentContinueUrl: String = app.injector.instanceOf[AppConfig].agentVerifyEmailContinueUrl
 
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
+  "PUT /subscription-request/vat-number/:vatNumber/transaction-email" when {
+    "the vat number exists" when {
+      "the email verification request has been sent successfully" when {
+        "return OK with the verification state as false" in {
+          stubAuth(OK, successfulAuthResponse())
 
-      res should have(
-        httpStatus(OK),
-        jsonBodyAs(Json.obj(EmailVerifiedKey -> true))
-      )
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+          stubVerifyEmail(testEmail, agentContinueUrl)(CREATED)
+
+          val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(EmailVerifiedKey -> false))
+          )
+        }
+      }
+      "the email has already been verified" should {
+        "return OK with the verification state as true" in {
+          stubAuth(OK, successfulAuthResponse())
+
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+          stubVerifyEmail(testEmail, agentContinueUrl)(CONFLICT)
+
+          val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(EmailVerifiedKey -> true))
+          )
+        }
+      }
+    }
+    "the vat number does not exist" should {
+      "return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+      }
+    }
+    "the json is invalid" should {
+      "return BAD_REQUEST" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj())
+
+        res should have(
+          httpStatus(BAD_REQUEST)
+        )
+      }
     }
   }
+
 }
