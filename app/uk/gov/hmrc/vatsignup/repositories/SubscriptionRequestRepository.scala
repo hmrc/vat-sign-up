@@ -77,6 +77,9 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
   def upsertEmail(vatNumber: String, email: String): Future[UpdateWriteResult] =
     upsert(vatNumber, emailKey, email)
 
+  def upsertTransactionEmail(vatNumber: String, transactionEmail: String): Future[UpdateWriteResult] =
+    upsert(vatNumber, transactionEmailKey, transactionEmail)
+
   def upsertNino(vatNumber: String, nino: String, ninoSource: NinoSource): Future[UpdateWriteResult] =
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
