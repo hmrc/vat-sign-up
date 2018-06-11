@@ -42,12 +42,12 @@ object RegisterWithMultipleIdentifiersHttpParser {
     }
   }
 
+  case class RegisterWithMultipleIdsSuccess(safeId: String)
+
+  sealed trait RegisterWithMultipleIdsFailure
+
+  case class InvalidJsonResponse(jsError: JsError) extends RegisterWithMultipleIdsFailure
+
+  case class RegisterWithMultipleIdsErrorResponse(status: Int, body: String) extends RegisterWithMultipleIdsFailure
+
 }
-
-case class RegisterWithMultipleIdsSuccess(safeId: String)
-
-sealed trait RegisterWithMultipleIdsFailure
-
-case class InvalidJsonResponse(jsError: JsError) extends RegisterWithMultipleIdsFailure
-
-case class RegisterWithMultipleIdsErrorResponse(status: Int, body: String) extends RegisterWithMultipleIdsFailure

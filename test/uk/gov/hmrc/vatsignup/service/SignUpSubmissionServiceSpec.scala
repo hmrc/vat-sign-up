@@ -18,22 +18,24 @@ package uk.gov.hmrc.vatsignup.service
 
 import org.scalatest.EitherValues
 import play.api.http.Status._
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.connectors.mocks.{MockCustomerSignUpConnector, MockEmailVerificationConnector, MockRegistrationConnector, MockTaxEnrolmentsConnector}
-import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers._
-import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseFailure, CustomerSignUpResponseSuccess, SubscriptionRequest}
-import uk.gov.hmrc.vatsignup.repositories.mocks.{MockEmailRequestRepository, MockSubscriptionRequestRepository}
-import uk.gov.hmrc.vatsignup.services._
-import SignUpSubmissionService._
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.connectors.mocks.{MockCustomerSignUpConnector, MockEmailVerificationConnector, MockRegistrationConnector, MockTaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
+import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
+import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
+import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
+import uk.gov.hmrc.vatsignup.repositories.mocks.{MockEmailRequestRepository, MockSubscriptionRequestRepository}
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
+import uk.gov.hmrc.vatsignup.services.SignUpSubmissionService._
+import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -69,6 +71,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   val testSubscriptionRequest = SubscriptionRequest(
                     vatNumber = testVatNumber,
                     nino = Some(testNino),
+                    ninoSource = Some(UserEntered),
                     email = Some(testEmail)
                   )
 
@@ -84,7 +87,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                   res.right.value shouldBe SignUpRequestSubmitted
 
-                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber,None, Some(TestConstants.testNino),
+                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, None, Some(TestConstants.testNino),
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
                 }
                 "return a SignUpRequestSubmitted for a company sign up" in {
@@ -266,7 +269,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
             Future.successful(None)
           )
 
-          val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber,enrolments))
+          val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
           res.left.value shouldBe InsufficientData
         }
@@ -285,6 +288,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   val testSubscriptionRequest = SubscriptionRequest(
                     vatNumber = testVatNumber,
                     nino = Some(testNino),
+                    ninoSource = Some(UserEntered),
                     email = Some(testEmail),
                     identityVerified = true
                   )
@@ -301,7 +305,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                   res.right.value shouldBe SignUpRequestSubmitted
 
-                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber,None, Some(TestConstants.testNino), None, isSuccess = true))
+                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, None, Some(TestConstants.testNino), None, isSuccess = true))
                   verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = true))
                 }
                 "return a SignUpRequestSubmitted for a company sign up" in {
@@ -347,7 +351,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                   res.left.value shouldBe EnrolmentFailure
 
-                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,  None, isSuccess = true))
+                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None, None, isSuccess = true))
                   verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = true))
                 }
               }
@@ -371,7 +375,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                 res.left.value shouldBe SignUpFailure
 
                 verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None, None, isSuccess = true))
-                verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true,  None, isSuccess = false))
+                verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = false))
               }
             }
           }
@@ -419,7 +423,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
             res.left.value shouldBe UnVerifiedPrincipalEmailFailure
 
-            verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,  None, isSuccess = true))
+            verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None, None, isSuccess = true))
           }
         }
         "the email verification request fails" should {
@@ -464,22 +468,70 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
         }
       }
 
-      "identity not verified" should {
-        "return an InsufficientData error" in {
-          val incompleteSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
-            email = Some(testEmail),
-            identityVerified = false
-          )
+      "identity not verified" when {
+        "the entity is company" should {
+          "return an InsufficientData error" in {
+            val incompleteSubscriptionRequest = SubscriptionRequest(
+              vatNumber = testVatNumber,
+              companyNumber = Some(testCompanyNumber),
+              email = Some(testEmail),
+              identityVerified = false
+            )
 
-          mockFindById(testVatNumber)(
-            Future.successful(Some(incompleteSubscriptionRequest))
-          )
+            mockFindById(testVatNumber)(
+              Future.successful(Some(incompleteSubscriptionRequest))
+            )
 
-          val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
+            val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
-          res.left.value shouldBe InsufficientData
+            res.left.value shouldBe InsufficientData
+          }
+        }
+        "the entity is individual and" when {
+          "the nino is user entered" should {
+            "return an InsufficientData error" in {
+              val incompleteSubscriptionRequest = SubscriptionRequest(
+                vatNumber = testVatNumber,
+                nino = Some(testNino),
+                ninoSource = Some(UserEntered),
+                email = Some(testEmail),
+                identityVerified = false
+              )
+
+              mockFindById(testVatNumber)(
+                Future.successful(Some(incompleteSubscriptionRequest))
+              )
+
+              val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
+
+              res.left.value shouldBe InsufficientData
+            }
+          }
+          "the nino is retrieved via IR-SA" should {
+            "proceed to sign up normally" in {
+              val completeSubscriptionRequest = SubscriptionRequest(
+                vatNumber = testVatNumber,
+                nino = Some(testNino),
+                ninoSource = Some(IRSA),
+                email = Some(testEmail),
+                identityVerified = false
+              )
+
+              mockFindById(testVatNumber)(
+                Future.successful(Some(completeSubscriptionRequest))
+              )
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+              mockRegisterIndividual(testVatNumber, testNino)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
+              mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+              mockDeleteRecord(testVatNumber)(mock[WriteResult])
+              mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = false)(mock[UpdateWriteResult])
+
+              val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+            }
+          }
         }
       }
 

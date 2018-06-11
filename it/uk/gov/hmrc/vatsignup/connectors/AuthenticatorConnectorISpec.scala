@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthenticatorStub
-import uk.gov.hmrc.vatsignup.httpparsers.UserMatchUnexpectedError
+import uk.gov.hmrc.vatsignup.httpparsers.MatchUserHttpParser.UserMatchUnexpectedError
 import uk.gov.hmrc.vatsignup.models.UserDetailsModel
 
 class AuthenticatorConnectorISpec extends ComponentSpecBase {

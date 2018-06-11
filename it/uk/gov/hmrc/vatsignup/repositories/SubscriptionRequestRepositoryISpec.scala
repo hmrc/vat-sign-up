@@ -20,10 +20,9 @@ import java.util.UUID
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import reactivemongo.core.errors.DatabaseException
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest
+import uk.gov.hmrc.vatsignup.models.{SubscriptionRequest, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -67,7 +66,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "replace the previous data when one already exists" in {
       val res = for {
-        _ <- repo.insert(SubscriptionRequest(testVatNumber, Some(testCompanyNumber), Some(testNino), Some(testEmail), identityVerified = true))
+        _ <- repo.insert(SubscriptionRequest(testVatNumber, Some(testCompanyNumber), Some(testNino), Some(UserEntered), Some(testEmail), identityVerified = true))
         _ <- repo.upsertVatNumber(testVatNumber)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -108,7 +107,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "delete the nino if it already exists" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber)
-        _ <- repo.upsertNino(testVatNumber, testNino)
+        _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         withNino <- repo.findById(testVatNumber)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
         withoutNino <- repo.findById(testVatNumber)
@@ -116,7 +115,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
       val (withNino, withoutNino) = await(res)
 
-      withNino should contain(testSubscriptionRequest.copy(nino = Some(testNino), companyNumber = None))
+      withNino should contain(testSubscriptionRequest.copy(nino = Some(testNino), ninoSource = Some(UserEntered), companyNumber = None))
       withoutNino should contain(testSubscriptionRequest)
     }
 
@@ -171,15 +170,55 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     }
   }
 
-  "upsertNino" should {
+  "upsertTransactionEmail" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
-      nino = Some(testNino)
+      transactionEmail = Some(testEmail)
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
       val res = for {
-        _ <- repo.upsertNino(testVatNumber, testNino)
+        _ <- repo.upsertTransactionEmail(testVatNumber, testEmail)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      intercept[NoSuchElementException] {
+        await(res)
+      }
+    }
+
+    "update the subscription request where there isn't already a transaction email stored" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertTransactionEmail(testVatNumber, testEmail)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(testSubscriptionRequest)
+    }
+
+    "replace an existing stored transaction email" in {
+      val newEmail = UUID.randomUUID().toString
+      val res = for {
+        _ <- repo.insert(testSubscriptionRequest)
+        _ <- repo.upsertTransactionEmail(testVatNumber, newEmail)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(SubscriptionRequest(testVatNumber, transactionEmail = Some(newEmail)))
+    }
+  }
+
+  "upsertNino" should {
+    val testSubscriptionRequest = SubscriptionRequest(
+      vatNumber = testVatNumber,
+      nino = Some(testNino),
+      ninoSource = Some(UserEntered)
+    )
+
+    "throw NoSuchElementException where the vat number doesn't exist" in {
+      val res = for {
+        _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -191,7 +230,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "update the subscription request where there isn't already a nino stored" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber)
-        _ <- repo.upsertNino(testVatNumber, testNino)
+        _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -203,13 +242,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         _ <- repo.upsertVatNumber(testVatNumber)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
         withCompanyNumber <- repo.findById(testVatNumber)
-        _ <- repo.upsertNino(testVatNumber, testNino)
+        _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         withoutCompanyNumber <- repo.findById(testVatNumber)
       } yield (withCompanyNumber, withoutCompanyNumber)
 
       val (withCompanyNumber, withoutCompanyNumber) = await(res)
 
-      withCompanyNumber should contain(testSubscriptionRequest.copy(companyNumber = Some(testCompanyNumber), nino = None))
+      withCompanyNumber should contain(testSubscriptionRequest.copy(companyNumber = Some(testCompanyNumber), nino = None, ninoSource = None))
       withoutCompanyNumber should contain(testSubscriptionRequest)
     }
 
@@ -218,13 +257,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         _ <- repo.upsertVatNumber(testVatNumber)
         _ <- repo.upsertIdentityVerified(testVatNumber)
         identityVerified <- repo.findById(testVatNumber)
-        _ <- repo.upsertNino(testVatNumber, testNino)
+        _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         identityNotVerified <- repo.findById(testVatNumber)
       } yield (identityVerified, identityNotVerified)
 
       val (identityVerified, identityNotVerified) = await(res)
 
-      identityVerified should contain(testSubscriptionRequest.copy(identityVerified = true, nino = None))
+      identityVerified should contain(testSubscriptionRequest.copy(identityVerified = true, nino = None, ninoSource = None))
       identityNotVerified should contain(testSubscriptionRequest)
     }
 
@@ -233,11 +272,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       val newNino = UUID.randomUUID().toString
       val res = for {
         _ <- repo.insert(testSubscriptionRequest)
-        _ <- repo.upsertNino(testVatNumber, newNino)
+        _ <- repo.upsertNino(testVatNumber, newNino, UserEntered)
         model <- repo.findById(testVatNumber)
       } yield model
 
-      await(res) should contain(SubscriptionRequest(testVatNumber, nino = Some(newNino)))
+      await(res) should contain(SubscriptionRequest(testVatNumber, nino = Some(newNino), ninoSource = Some(UserEntered)))
     }
   }
 

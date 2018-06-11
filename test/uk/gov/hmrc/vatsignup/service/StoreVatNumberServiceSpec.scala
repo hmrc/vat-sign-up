@@ -32,7 +32,7 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber, MtdEligible, MtdIneligible}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber, MtdEligible, MtdIneligible}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
@@ -258,7 +258,7 @@ class StoreVatNumberServiceSpec
 
     "the user has a fresh cred" when {
 
-      def call = TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, Some(testPostCode filterNot(_.isWhitespace)), Some(testDateOfRegistration))
+      def call = TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, Some(testPostCode filterNot (_.isWhitespace)), Some(testDateOfRegistration))
 
       "the vat number is not already subscribed for MTD-VAT" when {
         "the vat number is stored successfully" should {

@@ -23,7 +23,7 @@ import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest.emailKey
+import uk.gov.hmrc.vatsignup.models.SubscriptionRequest.transactionEmailKey
 import uk.gov.hmrc.vatsignup.services.StoreEmailService.{EmailDatabaseFailure, EmailDatabaseFailureNoVATNumber, EmailVerificationFailure, StoreEmailSuccess}
 import uk.gov.hmrc.vatsignup.services._
 
@@ -36,11 +36,11 @@ class StoreTransactionEmailController @Inject()(val authConnector: AuthConnector
   extends BaseController with AuthorisedFunctions {
 
   def storeTransactionEmail(vatNumber: String): Action[String] =
-    Action.async(parse.json((JsPath \ emailKey).read[String])) {
+    Action.async(parse.json((JsPath \ transactionEmailKey).read[String])) {
       implicit req =>
         authorised() {
-          val email = req.body
-          storeEmailService.storeTransactionEmail(vatNumber, email) map {
+          val transactionEmail = req.body
+          storeEmailService.storeTransactionEmail(vatNumber, transactionEmail) map {
             case Right(StoreEmailSuccess(emailVerified)) =>
               Ok(Json.obj(
                 EmailVerifiedKey -> emailVerified

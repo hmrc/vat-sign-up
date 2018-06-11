@@ -2,7 +2,7 @@
 
 POST        /subscription-request/vat-number                                         @uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController.storeVatNumber
 PUT         /subscription-request/vat-number/:vatNumber/company-number               @uk.gov.hmrc.vatsignup.controllers.StoreCompanyNumberController.storeCompanyNumber(vatNumber: String)
-PUT         /subscription-request/vat-number/:vatNumber/email                        @uk.gov.hmrc.vatsignup.controllers.StoreClientEmailController.storeClientEmail(vatNumber: String)
+PUT         /subscription-request/vat-number/:vatNumber/email                        @uk.gov.hmrc.vatsignup.controllers.StoreEmailController.storeEmail(vatNumber: String)
 PUT         /subscription-request/vat-number/:vatNumber/transaction-email            @uk.gov.hmrc.vatsignup.controllers.StoreTransactionEmailController.storeTransactionEmail(vatNumber: String)
 PUT         /subscription-request/vat-number/:vatNumber/nino                         @uk.gov.hmrc.vatsignup.controllers.StoreNinoController.storeNino(vatNumber: String)
 POST        /subscription-request/vat-number/:vatNumber/submit                       @uk.gov.hmrc.vatsignup.controllers.SignUpSubmissionController.submitSignUpRequest(vatNumber: String)

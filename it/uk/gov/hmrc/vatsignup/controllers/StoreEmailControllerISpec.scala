@@ -25,7 +25,7 @@ import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub.stubVerifyEmail
 
-class StoreClientEmailControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
+class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
   val delegatedContinueUrl = app.injector.instanceOf[AppConfig].delegatedVerifyEmailContinueUrl
   val principalContinueUrl = app.injector.instanceOf[AppConfig].principalVerifyEmailContinueUrl

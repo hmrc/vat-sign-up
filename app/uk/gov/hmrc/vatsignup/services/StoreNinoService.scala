@@ -21,10 +21,10 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.AuthenticatorConnector
-import uk.gov.hmrc.vatsignup.models.UserDetailsModel
 import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.vatsignup.connectors.AuthenticatorConnector
 import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatchingAuditModel
+import uk.gov.hmrc.vatsignup.models.{IRSA, NinoSource, UserDetailsModel, UserEntered}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
@@ -36,8 +36,9 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
                                  auditService: AuditService
                                 )(implicit ec: ExecutionContext) {
 
+  import StoreNinoService._
 
-  def storeNino(vatNumber: String, userDetailsModel: UserDetailsModel, enrolments: Enrolments)
+  def storeNino(vatNumber: String, userDetailsModel: UserDetailsModel, enrolments: Enrolments, ninoSource: NinoSource)
                (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreNinoFailure, StoreNinoSuccess.type]] = {
 
     val optAgentReferenceNumber: Option[String] =
@@ -46,9 +47,14 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
           agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
       }
 
-    matchUser(userDetailsModel, optAgentReferenceNumber) flatMap {
-      case Right(nino) => storeNinoToMongo(vatNumber, nino)
-      case Left(failure) => Future.successful(Left(failure))
+    ninoSource match {
+      case IRSA =>
+        storeNinoToMongo(vatNumber, userDetailsModel.nino, IRSA)
+      case UserEntered =>
+        matchUser(userDetailsModel, optAgentReferenceNumber) flatMap {
+          case Right(nino) => storeNinoToMongo(vatNumber, nino, UserEntered)
+          case Left(failure) => Future.successful(Left(failure))
+        }
     }
   }
 
@@ -66,8 +72,8 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
       case _ => Left(AuthenticatorFailure)
     }
 
-  private def storeNinoToMongo(vatNumber: String, nino: String): Future[Either[MongoFailure, StoreNinoSuccess.type]] =
-    subscriptionRequestRepository.upsertNino(vatNumber, nino) map {
+  private def storeNinoToMongo(vatNumber: String, nino: String, ninoSource: NinoSource): Future[Either[MongoFailure, StoreNinoSuccess.type]] =
+    subscriptionRequestRepository.upsertNino(vatNumber, nino, ninoSource) map {
       _ => Right(StoreNinoSuccess)
     } recover {
       case e: NoSuchElementException => Left(NinoDatabaseFailureNoVATNumber)
@@ -76,18 +82,22 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
 
 }
 
-case object StoreNinoSuccess
+object StoreNinoService {
 
-sealed trait StoreNinoFailure
+  case object StoreNinoSuccess
 
-sealed trait UserMatchingFailure extends StoreNinoFailure
+  sealed trait StoreNinoFailure
 
-sealed trait MongoFailure extends StoreNinoFailure
+  sealed trait UserMatchingFailure extends StoreNinoFailure
 
-case object AuthenticatorFailure extends UserMatchingFailure
+  sealed trait MongoFailure extends StoreNinoFailure
 
-case object NoMatchFoundFailure extends UserMatchingFailure
+  case object AuthenticatorFailure extends UserMatchingFailure
 
-case object NinoDatabaseFailure extends MongoFailure
+  case object NoMatchFoundFailure extends UserMatchingFailure
 
-case object NinoDatabaseFailureNoVATNumber extends MongoFailure
+  case object NinoDatabaseFailure extends MongoFailure
+
+  case object NinoDatabaseFailureNoVATNumber extends MongoFailure
+
+}

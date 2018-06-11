@@ -20,17 +20,18 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data._
 import cats.implicits._
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EmailVerificationConnector, RegistrationConnector, TaxEnrolmentsConnector}
-import uk.gov.hmrc.vatsignup.httpparsers.{EmailNotVerified, EmailVerified, RegisterWithMultipleIdsSuccess, SuccessfulTaxEnrolment}
-import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, SubscriptionRequest}
-import uk.gov.hmrc.vatsignup.repositories.{EmailRequestRepository, SubscriptionRequestRepository}
-import SignUpSubmissionService._
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EmailVerificationConnector, RegistrationConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.{EmailNotVerified, EmailVerified}
+import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
+import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
+import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, IRSA, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.repositories.{EmailRequestRepository, SubscriptionRequestRepository}
+import uk.gov.hmrc.vatsignup.services.SignUpSubmissionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
@@ -54,7 +55,7 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
     val isDelegated = optAgentReferenceNumber.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
-      case Some(SubscriptionRequest(_, Some(companyNumber), None, Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
+      case Some(SubscriptionRequest(_, Some(companyNumber), None, _, Some(emailAddress), _, identityVerified)) if isDelegated || identityVerified =>
         val result = for {
           emailAddressVerified <- isEmailAddressVerified(emailAddress)
           safeId <- registerCompany(vatNumber, companyNumber, optAgentReferenceNumber)
@@ -65,7 +66,7 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
         } yield SignUpRequestSubmitted
 
         result.value
-      case Some(SubscriptionRequest(_, None, Some(nino), Some(emailAddress), identityVerified)) if isDelegated || identityVerified =>
+      case Some(SubscriptionRequest(_, None, Some(nino), Some(ninoSource), Some(emailAddress), _, identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
         val result = for {
           emailAddressVerified <- isEmailAddressVerified(emailAddress)
           safeId <- registerIndividual(vatNumber, nino, optAgentReferenceNumber)

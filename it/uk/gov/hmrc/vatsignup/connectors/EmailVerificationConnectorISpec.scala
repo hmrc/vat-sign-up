@@ -23,7 +23,7 @@ import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
 import uk.gov.hmrc.vatsignup.httpparsers.CreateEmailVerificationRequestHttpParser.EmailVerificationRequestSent
-import uk.gov.hmrc.vatsignup.httpparsers.EmailVerified
+import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.EmailVerified
 
 class EmailVerificationConnectorISpec extends ComponentSpecBase {
 

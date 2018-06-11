@@ -58,16 +58,16 @@ object KnownFactsAndControlListInformationHttpParser {
     }
   }
 
+  case class MtdEligible(businessPostcode: String, vatRegistrationDate: String)
+
+  sealed trait KnownFactsAndControlListInformationFailure
+
+  case class MtdIneligible(ineligibilityReasons: NonEmptyList[String]) extends KnownFactsAndControlListInformationFailure
+
+  case object KnownFactsInvalidVatNumber extends KnownFactsAndControlListInformationFailure
+
+  case object ControlListInformationVatNumberNotFound extends KnownFactsAndControlListInformationFailure
+
+  case class UnexpectedKnownFactsAndControlListInformationFailure(status: Int, body: String) extends KnownFactsAndControlListInformationFailure
+
 }
-
-case class MtdEligible(businessPostcode: String, vatRegistrationDate: String)
-
-sealed trait KnownFactsAndControlListInformationFailure
-
-case class MtdIneligible(ineligibilityReasons: NonEmptyList[String]) extends KnownFactsAndControlListInformationFailure
-
-case object KnownFactsInvalidVatNumber extends KnownFactsAndControlListInformationFailure
-
-case object ControlListInformationVatNumberNotFound extends KnownFactsAndControlListInformationFailure
-
-case class UnexpectedKnownFactsAndControlListInformationFailure(status: Int, body: String) extends KnownFactsAndControlListInformationFailure

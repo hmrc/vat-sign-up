@@ -21,15 +21,13 @@ import akka.stream.ActorMaterializer
 import play.api.http.Status._
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
+import uk.gov.hmrc.auth.core.ConfidenceLevel.L200
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerified
+import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerificationHttpParser.IdentityVerified
 import uk.gov.hmrc.vatsignup.service.mocks.MockIdentityVerificationOrchestrationService
-import uk.gov.hmrc.vatsignup.services.IdentityVerificationOrchestrationService.
-{IdentityNotVerified, IdentityVerificationConnectionFailure, IdentityVerificationDatabaseFailure}
-import uk.gov.hmrc.auth.core.ConfidenceLevel.L200
+import uk.gov.hmrc.vatsignup.services.IdentityVerificationOrchestrationService.{IdentityNotVerified, IdentityVerificationConnectionFailure, IdentityVerificationDatabaseFailure}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

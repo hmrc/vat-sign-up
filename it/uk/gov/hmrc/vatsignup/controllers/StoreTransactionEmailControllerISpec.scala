@@ -31,7 +31,7 @@ class StoreTransactionEmailControllerISpec extends ComponentSpecBase with Custom
     "return OK with 'true' verification state" in {
       stubAuth(OK, successfulAuthResponse())
 
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("email" -> testEmail))
+      val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
 
       res should have(
         httpStatus(OK),

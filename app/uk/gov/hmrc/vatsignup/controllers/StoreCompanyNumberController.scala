@@ -23,7 +23,8 @@ import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest.companyNumberKey
-import uk.gov.hmrc.vatsignup.services.{CompanyNumberDatabaseFailure, StoreCompanyNumberService, StoreCompanyNumberSuccess, CompanyNumberDatabaseFailureNoVATNumber}
+import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService
+import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService.{CompanyNumberDatabaseFailure, CompanyNumberDatabaseFailureNoVATNumber, StoreCompanyNumberSuccess}
 
 import scala.concurrent.ExecutionContext
 

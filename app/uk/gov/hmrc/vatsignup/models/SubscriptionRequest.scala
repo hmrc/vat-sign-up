@@ -20,10 +20,14 @@ import java.time.Instant
 
 import play.api.libs.json.{Json, OFormat}
 
+import NinoSource._
+
 case class SubscriptionRequest(vatNumber: String,
                                companyNumber: Option[String] = None,
                                nino: Option[String] = None,
+                               ninoSource: Option[NinoSource] = None,
                                email: Option[String] = None,
+                               transactionEmail: Option[String] = None,
                                identityVerified: Boolean = false)
 
 object SubscriptionRequest {
@@ -34,7 +38,9 @@ object SubscriptionRequest {
   val idKey = "_id"
   val companyNumberKey = "companyNumber"
   val ninoKey = "nino"
+  val ninoSourceKey = "ninoSource"
   val emailKey = "email"
+  val transactionEmailKey = "transactionEmail"
   val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
 
@@ -44,15 +50,25 @@ object SubscriptionRequest {
         vatNumber <- (json \ idKey).validate[String]
         companyNumber <- (json \ companyNumberKey).validateOpt[String]
         nino <- (json \ ninoKey).validateOpt[String]
+        ninoSource <- (json \ ninoSourceKey).validateOpt[NinoSource].map { source =>
+          (nino, source) match {
+            case (Some(_), None) => Some(UserEntered)
+            case (Some(_), Some(_)) => source
+            case (_, _) => None
+          }
+        }
         email <- (json \ emailKey).validateOpt[String]
+        transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
-      } yield SubscriptionRequest(vatNumber, companyNumber, nino, email, identityVerified),
+      } yield SubscriptionRequest(vatNumber, companyNumber, nino, ninoSource, email, transactionEmail, identityVerified),
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
         companyNumberKey -> subscriptionRequest.companyNumber,
         ninoKey -> subscriptionRequest.nino,
+        ninoSourceKey -> subscriptionRequest.ninoSource,
         emailKey -> subscriptionRequest.email,
+        transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli)
       )

@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.RegistrationStub
-import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdsSuccess
+import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 
 class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
   private lazy val registrationConnector: RegistrationConnector = app.injector.instanceOf[RegistrationConnector]

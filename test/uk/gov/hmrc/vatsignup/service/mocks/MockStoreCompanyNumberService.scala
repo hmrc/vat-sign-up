@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService._
 import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.Future

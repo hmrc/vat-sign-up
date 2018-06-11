@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import cats.data._
-import cats.implicits._
 import javax.inject.{Inject, Singleton}
 
+import cats.data._
+import cats.implicits._
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{BadGatewayException, HeaderCarrier, InternalServerException}
@@ -27,7 +27,7 @@ import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, MTDEligibilityCheck}
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, KnownFactsAndControlListInformationConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
-import uk.gov.hmrc.vatsignup.httpparsers._
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._

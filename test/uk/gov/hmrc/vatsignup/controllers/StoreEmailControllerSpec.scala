@@ -33,10 +33,10 @@ import uk.gov.hmrc.vatsignup.services.StoreEmailService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreClientEmailControllerSpec extends UnitSpec with MockAuthConnector with MockStoreEmailService {
+class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with MockStoreEmailService {
 
-  object TestStoreClientEmailController
-    extends StoreClientEmailController(mockAuthConnector, mockStoreEmailService)
+  object TestStoreEmailController
+    extends StoreEmailController(mockAuthConnector, mockStoreEmailService)
 
   implicit private val system: ActorSystem = ActorSystem()
   implicit private val materializer: ActorMaterializer = ActorMaterializer()
@@ -51,7 +51,7 @@ class StoreClientEmailControllerSpec extends UnitSpec with MockAuthConnector wit
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreClientEmailController.storeClientEmail(testVatNumber)(request))
+        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
 
         status(res) shouldBe OK
         jsonBodyOf(res) shouldBe Json.obj(EmailVerifiedKey -> emailVerified)
@@ -65,7 +65,7 @@ class StoreClientEmailControllerSpec extends UnitSpec with MockAuthConnector wit
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreClientEmailController.storeClientEmail(testVatNumber)(request))
+        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
 
         status(res) shouldBe NOT_FOUND
       }
@@ -78,7 +78,7 @@ class StoreClientEmailControllerSpec extends UnitSpec with MockAuthConnector wit
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreClientEmailController.storeClientEmail(testVatNumber)(request))
+        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
 
         status(res) shouldBe INTERNAL_SERVER_ERROR
       }

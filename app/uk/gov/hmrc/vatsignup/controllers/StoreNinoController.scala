@@ -18,15 +18,17 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.libs.json.JsPath
+import play.api.libs.json.{JsSuccess, JsValue}
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.models.UserDetailsModel
-import uk.gov.hmrc.vatsignup.services._
+import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
+import uk.gov.hmrc.vatsignup.models.{NinoSource, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.services.StoreNinoService
+import uk.gov.hmrc.vatsignup.services.StoreNinoService._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreNinoController @Inject()(val authConnector: AuthConnector,
@@ -34,18 +36,24 @@ class StoreNinoController @Inject()(val authConnector: AuthConnector,
                                    )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
-  def storeNino(vatNumber: String): Action[UserDetailsModel] =
-    Action.async(parse.json(JsPath.read[UserDetailsModel])) {
+  def storeNino(vatNumber: String): Action[JsValue] =
+    Action.async(parse.json) {
       implicit req =>
+        // TODO spike 1) handle cases where first name last name and dob may not be returned from cid (in future)
+        // TODO spike 2) in the IR-SA flow, orchestrate or verify the nino using IR-SA
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-            val userDetails = req.body
-            storeNinoService.storeNino(vatNumber, userDetails, enrolments) map {
-              case Right(StoreNinoSuccess) => NoContent
-              case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")
-              case Left(NoMatchFoundFailure) => Forbidden
-              case Left(NinoDatabaseFailureNoVATNumber) => NotFound
-              case Left(NinoDatabaseFailure) => InternalServerError("calls to mongo failed")
+            req.body.validate[UserDetailsModel] match {
+              case JsSuccess(userDetails, _) =>
+                val ninoSource = (req.body \ ninoSourceFrontEndKey).validate[NinoSource].getOrElse(UserEntered)
+                storeNinoService.storeNino(vatNumber, userDetails, enrolments, ninoSource) map {
+                  case Right(StoreNinoSuccess) => NoContent
+                  case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")
+                  case Left(NoMatchFoundFailure) => Forbidden
+                  case Left(NinoDatabaseFailureNoVATNumber) => NotFound
+                  case Left(NinoDatabaseFailure) => InternalServerError("calls to mongo failed")
+                }
+              case _ => Future.successful(BadRequest(req.body))
             }
         }
     }

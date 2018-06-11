@@ -31,12 +31,12 @@ import uk.gov.hmrc.vatsignup.services._
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class StoreClientEmailController @Inject()(val authConnector: AuthConnector,
-                                           storeEmailService: StoreEmailService
+class StoreEmailController @Inject()(val authConnector: AuthConnector,
+                                     storeEmailService: StoreEmailService
                                     )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
-  def storeClientEmail(vatNumber: String): Action[String] =
+  def storeEmail(vatNumber: String): Action[String] =
     Action.async(parse.json((JsPath \ emailKey).read[String])) {
       implicit req =>
         authorised().retrieve(Retrievals.allEnrolments) {

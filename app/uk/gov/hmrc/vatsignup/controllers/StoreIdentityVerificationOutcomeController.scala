@@ -23,7 +23,7 @@ import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerified
+import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerificationHttpParser.IdentityVerified
 import uk.gov.hmrc.vatsignup.services.IdentityVerificationOrchestrationService
 import uk.gov.hmrc.vatsignup.services.IdentityVerificationOrchestrationService.{IdentityNotVerified, IdentityVerificationConnectionFailure, IdentityVerificationDatabaseFailure}
 

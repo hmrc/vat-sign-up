@@ -20,9 +20,8 @@ import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EmailStub, TaxEnrolmentsStub}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailStub
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
-import uk.gov.hmrc.vatsignup.httpparsers.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
 
 class EmailConnectorISpec extends ComponentSpecBase {
 

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject,Singleton}
+import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import cats.implicits._
@@ -24,7 +24,7 @@ import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.IdentityVerificationConnector
 import uk.gov.hmrc.vatsignup.httpparsers
-import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerified
+import uk.gov.hmrc.vatsignup.httpparsers.IdentityVerificationHttpParser.IdentityVerified
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,7 +53,7 @@ class IdentityVerificationOrchestrationService @Inject()(subscriptionRequestRepo
     EitherT(if (confidenceLevel < ConfidenceLevel.L200) {
       identityVerificationConnector.getIdentityVerificationOutcome(journeyLink) map {
         case Right(IdentityVerified) => Right(IdentityVerified)
-        case Right(httpparsers.IdentityNotVerified(_)) => Left(IdentityNotVerified)
+        case Right(httpparsers.IdentityVerificationHttpParser.IdentityNotVerified(_)) => Left(IdentityNotVerified)
         case _ => Left(IdentityVerificationConnectionFailure)
       }
     } else {

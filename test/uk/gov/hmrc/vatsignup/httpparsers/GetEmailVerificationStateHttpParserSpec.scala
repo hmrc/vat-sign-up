@@ -21,6 +21,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.GetEmailVerificationStateHttpReads.read
+import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 
 class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues {
   "GetEmailVerifiedHttpReads#read" when {
@@ -47,7 +48,7 @@ class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues
     "the response status is INTERNAL_SERVER_ERROR" should {
       "return an InvalidJsonResponse" in {
         val httpResponse = HttpResponse(
-            responseStatus = INTERNAL_SERVER_ERROR
+          responseStatus = INTERNAL_SERVER_ERROR
         )
 
         read("", "", httpResponse).left.value shouldBe GetEmailVerificationStateErrorResponse(INTERNAL_SERVER_ERROR, httpResponse.body)
