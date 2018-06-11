@@ -29,6 +29,7 @@ class SubscriptionRequestSpec extends UnitSpec {
       ninoKey -> testNino,
       ninoSourceKey -> UserEntered,
       emailKey -> testEmail,
+      transactionEmailKey -> testEmail,
       identityVerifiedKey -> true
     )
 
@@ -38,6 +39,7 @@ class SubscriptionRequestSpec extends UnitSpec {
       nino = Some(testNino),
       ninoSource = Some(UserEntered),
       email = Some(testEmail),
+      transactionEmail = Some(testEmail),
       identityVerified = true
     )
 
