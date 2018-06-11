@@ -63,6 +63,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   lazy val delegatedVerifyEmailContinueUrl = s"$frontendBaseUrl/vat-through-software/sign-up/client/email-verified"
 
+  lazy val agentVerifyEmailContinueUrl = s"$frontendBaseUrl/vat-through-software/sign-up/client/you-have-verified-your-email"
+
   lazy val identityVerificationFrontendUrl: String = baseUrl("identity-verification-frontend")
 
   lazy val timeToLiveSeconds: Long = loadConfig("mongodb.timeToLiveSeconds").toLong
