@@ -23,14 +23,14 @@ import cats.implicits._
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EmailVerificationConnector, RegistrationConnector, TaxEnrolmentsConnector}
-import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.{EmailNotVerified, EmailVerified}
+import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
 import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, IRSA, SubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.{EmailRequestRepository, SubscriptionRequestRepository}
+import uk.gov.hmrc.vatsignup.services.EmailRequirementService.{Email, EmailNotSupplied, GetEmailVerificationFailure, UnVerifiedEmail}
 import uk.gov.hmrc.vatsignup.services.SignUpSubmissionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
@@ -40,7 +40,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SignUpSubmissionService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                         emailRequestRepository: EmailRequestRepository,
-                                        emailVerificationConnector: EmailVerificationConnector,
+                                        emailRequirementService: EmailRequirementService,
                                         customerSignUpConnector: CustomerSignUpConnector,
                                         registrationConnector: RegistrationConnector,
                                         taxEnrolmentsConnector: TaxEnrolmentsConnector,
@@ -55,22 +55,24 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
     val isDelegated = optAgentReferenceNumber.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
-      case Some(SubscriptionRequest(_, Some(companyNumber), None, _, Some(emailAddress), _, identityVerified)) if isDelegated || identityVerified =>
+      case Some(SubscriptionRequest(_, Some(companyNumber), None, _, principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || identityVerified =>
         val result = for {
-          emailAddressVerified <- isEmailAddressVerified(emailAddress)
+          email <- checkEmailVerification(principalEmailAddress, transactionEmailAddress, isDelegated)
+          (emailAddress, isVerified) = (email.address, email.isVerified)
           safeId <- registerCompany(vatNumber, companyNumber, optAgentReferenceNumber)
-          _ <- signUp(safeId, vatNumber, emailAddress, emailAddressVerified, optAgentReferenceNumber)
+          _ <- signUp(safeId, vatNumber, emailAddress, isVerified, optAgentReferenceNumber)
           _ <- registerEnrolment(vatNumber, safeId)
           _ <- deleteRecord(vatNumber)
           _ <- saveTemporarySubscriptionData(vatNumber, emailAddress, isDelegated)
         } yield SignUpRequestSubmitted
 
         result.value
-      case Some(SubscriptionRequest(_, None, Some(nino), Some(ninoSource), Some(emailAddress), _, identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
+      case Some(SubscriptionRequest(_, None, Some(nino), Some(ninoSource), principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
         val result = for {
-          emailAddressVerified <- isEmailAddressVerified(emailAddress)
+          email <- checkEmailVerification(principalEmailAddress, transactionEmailAddress, isDelegated)
+          (emailAddress, isVerified) = (email.address, email.isVerified)
           safeId <- registerIndividual(vatNumber, nino, optAgentReferenceNumber)
-          _ <- signUp(safeId, vatNumber, emailAddress, emailAddressVerified, optAgentReferenceNumber)
+          _ <- signUp(safeId, vatNumber, emailAddress, isVerified, optAgentReferenceNumber)
           _ <- registerEnrolment(vatNumber, safeId)
           _ <- deleteRecord(vatNumber)
           _ <- saveTemporarySubscriptionData(vatNumber, emailAddress, isDelegated)
@@ -82,14 +84,13 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
     }
   }
 
-  private def isEmailAddressVerified(emailAddress: String
-                                    )(implicit hc: HeaderCarrier): EitherT[Future, SignUpRequestSubmissionFailure, Boolean] =
-    EitherT(emailVerificationConnector.getEmailVerificationState(emailAddress)) bimap( {
-      _ => EmailVerificationFailure
-    }, {
-      case EmailVerified => true
-      case EmailNotVerified => false
-    })
+  private def checkEmailVerification(optPrincipalEmail: Option[String], optTransactionEmail: Option[String], isDelegated: Boolean)(implicit hc: HeaderCarrier)
+  : EitherT[Future, SignUpRequestSubmissionFailure, Email] =
+    EitherT(emailRequirementService.checkRequirements(optPrincipalEmail, optTransactionEmail, isDelegated)) leftMap {
+      case EmailNotSupplied => InsufficientData
+      case GetEmailVerificationFailure => EmailVerificationFailure
+      case UnVerifiedEmail => EmailVerificationRequired
+    }
 
   private def registerCompany(vatNumber: String,
                               companyNumber: String,
@@ -129,20 +130,17 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
                      emailAddressVerified: Boolean,
                      agentReferenceNumber: Option[String]
                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, CustomerSignUpResponseSuccess.type] =
-    if (agentReferenceNumber.isDefined || emailAddressVerified)
-      EitherT(customerSignUpConnector.signUp(safeId, vatNumber, emailAddress, emailAddressVerified)) bimap( {
-        _ => {
-          auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, false))
-          SignUpFailure
-        }
-      }, {
-        customerSignUpSuccess => {
-          auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, true))
-          customerSignUpSuccess
-        }
-      })
-    else EitherT.leftT(UnVerifiedPrincipalEmailFailure)
-
+    EitherT(customerSignUpConnector.signUp(safeId, vatNumber, emailAddress, emailAddressVerified)) bimap( {
+      _ => {
+        auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, isSuccess = false))
+        SignUpFailure
+      }
+    }, {
+      customerSignUpSuccess => {
+        auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, isSuccess = true))
+        customerSignUpSuccess
+      }
+    })
 
   private def registerEnrolment(vatNumber: String,
                                 safeId: String
@@ -186,7 +184,7 @@ object SignUpSubmissionService {
 
   case object EmailVerificationFailure extends SignUpRequestSubmissionFailure
 
-  case object UnVerifiedPrincipalEmailFailure extends SignUpRequestSubmissionFailure
+  case object EmailVerificationRequired extends SignUpRequestSubmissionFailure
 
   case object SignUpFailure extends SignUpRequestSubmissionFailure
 
