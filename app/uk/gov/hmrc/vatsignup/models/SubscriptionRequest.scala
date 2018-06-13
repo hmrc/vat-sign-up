@@ -27,6 +27,7 @@ case class SubscriptionRequest(vatNumber: String,
                                nino: Option[String] = None,
                                ninoSource: Option[NinoSource] = None,
                                email: Option[String] = None,
+                               transactionEmail: Option[String] = None,
                                identityVerified: Boolean = false)
 
 object SubscriptionRequest {
@@ -39,6 +40,7 @@ object SubscriptionRequest {
   val ninoKey = "nino"
   val ninoSourceKey = "ninoSource"
   val emailKey = "email"
+  val transactionEmailKey = "transactionEmail"
   val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
 
@@ -56,8 +58,9 @@ object SubscriptionRequest {
           }
         }
         email <- (json \ emailKey).validateOpt[String]
+        transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
-      } yield SubscriptionRequest(vatNumber, companyNumber, nino, ninoSource, email, identityVerified),
+      } yield SubscriptionRequest(vatNumber, companyNumber, nino, ninoSource, email, transactionEmail, identityVerified),
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
@@ -65,6 +68,7 @@ object SubscriptionRequest {
         ninoKey -> subscriptionRequest.nino,
         ninoSourceKey -> subscriptionRequest.ninoSource,
         emailKey -> subscriptionRequest.email,
+        transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli)
       )

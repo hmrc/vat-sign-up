@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.services
 
 import java.util.NoSuchElementException
-import javax.inject.{Inject,Singleton}
+import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -45,23 +45,49 @@ class StoreEmailService @Inject()(subscriptionRequestRepository: SubscriptionReq
       appConfig.principalVerifyEmailContinueUrl
     }
 
-      subscriptionRequestRepository.upsertEmail(vatNumber, emailAddress) flatMap {
-        _ =>
-          emailVerificationConnector.createEmailVerificationRequest(emailAddress, continueUrl) map {
-            case Right(EmailVerificationRequestSent) =>
-              Right(StoreEmailSuccess(emailVerified = false))
-            case Right(EmailAlreadyVerified) =>
-              Right(StoreEmailSuccess(emailVerified = true))
-            case _ =>
-              Left(EmailVerificationFailure)
-          }
-      } recover {
-        case e: NoSuchElementException =>
-          Left(EmailDatabaseFailureNoVATNumber)
-        case _ =>
-          Left(EmailDatabaseFailure)
-      }
+    subscriptionRequestRepository.upsertEmail(vatNumber, emailAddress) flatMap {
+      _ =>
+        emailVerificationConnector.createEmailVerificationRequest(emailAddress, continueUrl) map {
+          case Right(EmailVerificationRequestSent) =>
+            Right(StoreEmailSuccess(emailVerified = false))
+          case Right(EmailAlreadyVerified) =>
+            Right(StoreEmailSuccess(emailVerified = true))
+          case _ =>
+            Left(EmailVerificationFailure)
+        }
+    } recover {
+      case e: NoSuchElementException =>
+        Left(EmailDatabaseFailureNoVATNumber)
+      case _ =>
+        Left(EmailDatabaseFailure)
+    }
   }
+
+
+  def storeTransactionEmail(vatNumber: String,
+                            emailAddress: String)
+                           (implicit hc: HeaderCarrier): Future[Either[StoreEmailFailure, StoreEmailSuccess]] = {
+
+    val continueUrl = appConfig.agentVerifyEmailContinueUrl
+
+    subscriptionRequestRepository.upsertTransactionEmail(vatNumber, emailAddress) flatMap {
+      _ =>
+        emailVerificationConnector.createEmailVerificationRequest(emailAddress, continueUrl) map {
+          case Right(EmailVerificationRequestSent) =>
+            Right(StoreEmailSuccess(emailVerified = false))
+          case Right(EmailAlreadyVerified) =>
+            Right(StoreEmailSuccess(emailVerified = true))
+          case _ =>
+            Left(EmailVerificationFailure)
+        }
+    } recover {
+      case e: NoSuchElementException =>
+        Left(EmailDatabaseFailureNoVATNumber)
+      case _ =>
+        Left(EmailDatabaseFailure)
+    }
+  }
+
 }
 
 object StoreEmailService {

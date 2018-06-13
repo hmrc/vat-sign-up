@@ -170,6 +170,45 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     }
   }
 
+  "upsertTransactionEmail" should {
+    val testSubscriptionRequest = SubscriptionRequest(
+      vatNumber = testVatNumber,
+      transactionEmail = Some(testEmail)
+    )
+
+    "throw NoSuchElementException where the vat number doesn't exist" in {
+      val res = for {
+        _ <- repo.upsertTransactionEmail(testVatNumber, testEmail)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      intercept[NoSuchElementException] {
+        await(res)
+      }
+    }
+
+    "update the subscription request where there isn't already a transaction email stored" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertTransactionEmail(testVatNumber, testEmail)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(testSubscriptionRequest)
+    }
+
+    "replace an existing stored transaction email" in {
+      val newEmail = UUID.randomUUID().toString
+      val res = for {
+        _ <- repo.insert(testSubscriptionRequest)
+        _ <- repo.upsertTransactionEmail(testVatNumber, newEmail)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(SubscriptionRequest(testVatNumber, transactionEmail = Some(newEmail)))
+    }
+  }
+
   "upsertNino" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,

@@ -48,9 +48,11 @@ class EmailRequirementService @Inject()(emailVerificationConnector: EmailVerific
         isVerified(email)
       }
       case None => optPrincipalEmail match {
-        case Some(email) => isVerified(email) map {
-          case Left(UnVerifiedEmail) => Right(Email(email, isVerified = false))
-          case other => other
+        case Some(email) => {
+          val result = for {
+            emailVerified <- isEmailAddressVerified(email)
+          } yield Email(email, emailVerified)
+          result.value
         }
         case None => Future.successful(Left(EmailNotSupplied))
       }
@@ -65,7 +67,7 @@ class EmailRequirementService @Inject()(emailVerificationConnector: EmailVerific
       emailVerified <- isEmailAddressVerified(emailAddress)
       emailOrchestrationResponse <- {
         EitherT.fromEither(if (emailVerified) Right(Email(emailAddress, emailVerified))
-        else Left(UnVerifiedEmail)): EitherT[Future,InsufficientEmailRequirement, Email]
+        else Left(UnVerifiedEmail)): EitherT[Future, InsufficientEmailRequirement, Email]
       }
     } yield emailOrchestrationResponse
     result.value

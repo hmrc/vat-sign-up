@@ -48,6 +48,10 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
     when(mockSubscriptionRequestRepository.upsertEmail(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(email)))
       .thenReturn(response)
 
+  def upsertTransactionEmail(vatNumber: String, email: String)(response: Future[UpdateWriteResult]): Unit =
+    when(mockSubscriptionRequestRepository.upsertTransactionEmail(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(email)))
+      .thenReturn(response)
+
   def mockUpsertNino(vatNumber: String, nino: String, ninoSource: NinoSource)(response: Future[UpdateWriteResult]): Unit =
     when(mockSubscriptionRequestRepository.upsertNino(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(nino), ArgumentMatchers.eq(ninoSource)))
       .thenReturn(response)
