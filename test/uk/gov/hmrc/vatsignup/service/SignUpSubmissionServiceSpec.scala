@@ -77,9 +77,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                   mockRegisterIndividual(testVatNumber, testNino)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
                   mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
@@ -99,9 +99,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                   mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
                   mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
@@ -112,7 +112,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                   verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
-                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true,
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true),
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
                 }
               }
@@ -125,9 +125,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                   mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Left(FailedTaxEnrolment(BAD_REQUEST))))
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
@@ -136,7 +136,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                   verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
-                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true,
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true),
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
                 }
               }
@@ -150,9 +150,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                 )
 
                 mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                 mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
+                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
 
                 val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
@@ -160,7 +160,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                 verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,
                   Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
-                verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true,
+                verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true),
                   Some(TestConstants.testAgentReferenceNumber), isSuccess = false))
               }
             }
@@ -176,7 +176,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
               mockFindById(testVatNumber)(
                 Future.successful(Some(testSubscriptionRequest))
               )
-              mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true))))
+              mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
               mockRegisterCompany(testVatNumber, testCompanyNumber)(
                 Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
               )
@@ -190,7 +190,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
             }
           }
         }
-        "the email verification request returns that the email is not verified" when {
+        "transaction email is not present and principal email is not verified" when {
           "the registration request is successful" when {
             "the sign up request is successful" when {
               "the enrolment call is successful" should {
@@ -202,9 +202,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = false))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = false, shouldSubmit = true))))
                   mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = false)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(false))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
                   mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
@@ -215,7 +215,39 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
 
                   verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
-                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, false,
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(false),
+                    Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
+                }
+              }
+            }
+          }
+        }
+        "transaction email is present and transaction email is verified" when {
+          "the registration request is successful" when {
+            "the sign up request is successful" when {
+              "the enrolment call is successful" should {
+                "not submit the email when calling sign up" in {
+                  val testSubscriptionRequest = SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    companyNumber = Some(testCompanyNumber),
+                    transactionEmail = Some(testEmail)
+                  )
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockCheckRequirements(None, Some(testEmail), isDelegated = true)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = false))))
+                  mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
+                  mockSignUp(testSafeId, testVatNumber, None, emailVerified = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+                  mockDeleteRecord(testVatNumber)(mock[WriteResult])
+                  mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
+
+                  val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
+
+                  res.right.value shouldBe SignUpRequestSubmitted
+
+                  verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None,
+                    Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, None, None,
                     Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
                 }
               }
@@ -292,9 +324,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                   mockRegisterIndividual(testVatNumber, testNino)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
                   mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = false)(mock[UpdateWriteResult])
@@ -304,7 +336,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   res.right.value shouldBe SignUpRequestSubmitted
 
                   verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, None, Some(TestConstants.testNino), None, isSuccess = true))
-                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = true))
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true), None, isSuccess = true))
                 }
                 "return a SignUpRequestSubmitted for a company sign up" in {
                   val testSubscriptionRequest = SubscriptionRequest(
@@ -315,9 +347,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                   mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
                   mockDeleteRecord(testVatNumber)(mock[WriteResult])
                   mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = false)(mock[UpdateWriteResult])
@@ -327,7 +359,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   res.right.value shouldBe SignUpRequestSubmitted
 
                   verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None, None, isSuccess = true))
-                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = true))
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true), None, isSuccess = true))
                 }
               }
               "the enrolment call fails" should {
@@ -340,9 +372,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                  mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                   mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                  mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                  mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
                   mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Left(FailedTaxEnrolment(BAD_REQUEST))))
 
                   val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
@@ -350,7 +382,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                   res.left.value shouldBe EnrolmentFailure
 
                   verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None, None, isSuccess = true))
-                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = true))
+                  verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true), None, isSuccess = true))
                 }
               }
             }
@@ -364,16 +396,16 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
                 )
 
                 mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true))))
+                mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
                 mockRegisterCompany(testVatNumber, testCompanyNumber)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
+                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
 
                 val res = await(TestSignUpSubmissionService.submitSignUpRequest(testVatNumber, enrolments))
 
                 res.left.value shouldBe SignUpFailure
 
                 verifyAudit(RegisterWithMultipleIDsAuditModel(TestConstants.testVatNumber, Some(TestConstants.testCompanyNumber), None, None, isSuccess = true))
-                verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, TestConstants.testEmail, true, None, isSuccess = false))
+                verifyAudit(SignUpAuditModel(TestConstants.testSafeId, TestConstants.testVatNumber, Some(TestConstants.testEmail), Some(true), None, isSuccess = false))
               }
             }
           }
@@ -389,7 +421,7 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
               mockFindById(testVatNumber)(
                 Future.successful(Some(testSubscriptionRequest))
               )
-              mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true))))
+              mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
               mockRegisterCompany(testVatNumber, testCompanyNumber)(
                 Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
               )
@@ -511,9 +543,9 @@ class SignUpSubmissionServiceSpec extends UnitSpec with EitherValues
               mockFindById(testVatNumber)(
                 Future.successful(Some(completeSubscriptionRequest))
               )
-              mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true))))
+              mockCheckRequirements(Some(testEmail), None, isDelegated = false)(Future.successful(Right(Email(testEmail, isVerified = true, shouldSubmit = true))))
               mockRegisterIndividual(testVatNumber, testNino)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-              mockSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+              mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(Future.successful(Right(CustomerSignUpResponseSuccess)))
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
               mockDeleteRecord(testVatNumber)(mock[WriteResult])
               mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = false)(mock[UpdateWriteResult])

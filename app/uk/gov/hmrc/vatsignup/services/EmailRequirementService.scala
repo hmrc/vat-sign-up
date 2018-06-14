@@ -31,29 +31,25 @@ import scala.concurrent.{ExecutionContext, Future}
 class EmailRequirementService @Inject()(emailVerificationConnector: EmailVerificationConnector)
                                        (implicit ec: ExecutionContext) {
 
-
+  // todo change the return type to transaction and sign up email
   def checkRequirements(optPrincipalEmail: Option[String], optTransactionEmail: Option[String], isDelegated: Boolean)(implicit hc: HeaderCarrier):
   Future[Either[InsufficientEmailRequirement, Email]] = {
 
     lazy val checkPrincipal = optPrincipalEmail match {
-      case Some(email) => {
-        isVerified(email)
-      }
+      case Some(email) =>
+        isVerified(email, shouldSubmit = true)
       case None => Future.successful(Left(EmailNotSupplied))
     }
 
-
     lazy val checkAgent = optTransactionEmail match {
-      case Some(email) => {
-        isVerified(email)
-      }
+      case Some(email) =>
+        isVerified(email, shouldSubmit = false)
       case None => optPrincipalEmail match {
-        case Some(email) => {
+        case Some(email) =>
           val result = for {
             emailVerified <- isEmailAddressVerified(email)
-          } yield Email(email, emailVerified)
+          } yield Email(email, emailVerified, shouldSubmit = true)
           result.value
-        }
         case None => Future.successful(Left(EmailNotSupplied))
       }
     }
@@ -61,12 +57,12 @@ class EmailRequirementService @Inject()(emailVerificationConnector: EmailVerific
     if (isDelegated) checkAgent else checkPrincipal
   }
 
-  private def isVerified(emailAddress: String)(implicit hc: HeaderCarrier): Future[Either[InsufficientEmailRequirement, Email]] = {
+  private def isVerified(emailAddress: String, shouldSubmit: Boolean)(implicit hc: HeaderCarrier): Future[Either[InsufficientEmailRequirement, Email]] = {
 
     val result = for {
       emailVerified <- isEmailAddressVerified(emailAddress)
       emailOrchestrationResponse <- {
-        EitherT.fromEither(if (emailVerified) Right(Email(emailAddress, emailVerified))
+        EitherT.fromEither(if (emailVerified) Right(Email(emailAddress, emailVerified, shouldSubmit))
         else Left(UnVerifiedEmail)): EitherT[Future, InsufficientEmailRequirement, Email]
       }
     } yield emailOrchestrationResponse
@@ -86,7 +82,7 @@ class EmailRequirementService @Inject()(emailVerificationConnector: EmailVerific
 
 object EmailRequirementService {
 
-  case class Email(address: String, isVerified: Boolean)
+  case class Email(address: String, isVerified: Boolean, shouldSubmit: Boolean)
 
   trait InsufficientEmailRequirement
 

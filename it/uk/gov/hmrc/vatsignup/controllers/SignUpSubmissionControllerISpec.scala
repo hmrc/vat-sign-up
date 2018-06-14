@@ -45,7 +45,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -67,7 +67,29 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
+        "transaction email should not be sent to sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            companyNumber = Some(testCompanyNumber),
+            transactionEmail = Some(testEmail)
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, None, None)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -80,6 +102,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         }
       }
     }
+
     "the user is principal and" when {
       "all downstream services behave as expected" should {
         "return NO_CONTENT for individual sign up" in {
@@ -94,7 +117,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -117,7 +140,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -131,4 +154,5 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
       }
     }
   }
+
 }

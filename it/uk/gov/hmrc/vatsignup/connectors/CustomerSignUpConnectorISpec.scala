@@ -30,9 +30,9 @@ class CustomerSignUpConnectorISpec extends ComponentSpecBase {
   "customerSignUp" should {
     "add the additional headers to des" in {
       implicit val hc = HeaderCarrier()
-      stubSignUp(testSafeId, testVatNumber, testEmail, emailVerified = true)(OK)
+      stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
 
-      val res = connector.signUp(testSafeId, testVatNumber, testEmail, emailVerified = true)
+      val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))
 
       await(res) shouldBe Right(CustomerSignUpResponseSuccess)
     }
