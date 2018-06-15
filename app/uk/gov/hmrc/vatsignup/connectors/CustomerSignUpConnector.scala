@@ -36,8 +36,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
 
   import CustomerSignUpConnector._
 
-
-  def signUp(safeId: String, vatNumber: String, email: String, emailVerified: Boolean
+  def signUp(safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean]
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
     val headerCarrier = hc
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
@@ -60,23 +59,29 @@ object CustomerSignUpConnector {
 
   import uk.gov.hmrc.vatsignup.config.Constants.Des._
 
-  private[connectors] def buildRequest(safeId: String, vatNumber: String, email: String, emailVerified: Boolean): JsObject = {
+  private[connectors] def buildRequest(safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean]): JsObject = {
     Json.obj(
       "signUpRequest" -> Json.obj(
         "identification" ->
           Json.arr(
             Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
             Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
-          ),
-        "additionalInformation" ->
-          Json.arr(
-            Json.obj(
-              "typeOfField" -> emailKey,
-              "fieldContents" -> email,
-              "infoVerified" -> emailVerified
-            )
-          )
-      )
+          ))
+        .++(
+          (email, emailVerified) match {
+            case (Some(address), Some(isVerified)) =>
+              Json.obj("additionalInformation" ->
+                Json.arr(
+                  Json.obj(
+                    "typeOfField" -> emailKey,
+                    "fieldContents" -> address,
+                    "infoVerified" -> isVerified
+                  )
+                )
+              )
+            case _ => Json.obj()
+          }
+        )
     )
   }
 

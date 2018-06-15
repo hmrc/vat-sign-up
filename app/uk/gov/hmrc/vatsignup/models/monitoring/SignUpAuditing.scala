@@ -24,8 +24,8 @@ object SignUpAuditing {
 
   case class SignUpAuditModel(safeId: String,
                               vatNumber: String,
-                              emailAddress: String,
-                              emailAddressVerified: Boolean,
+                              emailAddress: Option[String],
+                              emailAddressVerified: Option[Boolean],
                               agentReferenceNumber: Option[String],
                               isSuccess: Boolean) extends AuditModel {
 
@@ -33,12 +33,13 @@ object SignUpAuditing {
     override val detail: Map[String, String] = Map(
       "safeId" -> Some(safeId),
       "vatNumber" -> Some(vatNumber),
-      "emailAddress" -> Some(emailAddress),
-      "emailAddressVerified" -> Some(emailAddressVerified.toString),
+      "emailAddress" -> emailAddress,
+      "emailAddressVerified" -> emailAddressVerified.map(_.toString),
       "agentReferenceNumber" -> agentReferenceNumber,
       "isSuccess" -> Some(s"$isSuccess")
     ).collect { case (key, Some(value)) => key -> value }
 
     override val auditType: String = signUpAuditType
   }
+
 }

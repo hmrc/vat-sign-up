@@ -26,7 +26,7 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
   "CustomerSignUpConnector" should {
     import CustomerSignUpConnector._
     "convert the request into the correct DES format" in {
-      val requestJson = buildRequest(testSafeId, testVatNumber, testEmail, emailVerified = true)
+      val requestJson = buildRequest(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))
       val expectedJson = Json.parse(
         s"""
            |{
@@ -46,6 +46,28 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |        "typeOfField": "EMAIL",
            |        "fieldContents": "$testEmail",
            |        "infoVerified": true
+           |      }
+           |    ]
+           |  }
+           |}
+        """.stripMargin
+      )
+      requestJson shouldBe expectedJson
+    }
+    "convert the request into the correct DES format when email is not defined" in {
+      val requestJson = buildRequest(testSafeId, testVatNumber, None, emailVerified = None)
+      val expectedJson = Json.parse(
+        s"""
+           |{
+           |  "signUpRequest": {
+           |    "identification": [
+           |      {
+           |        "idType": "SAFEID",
+           |        "idValue": "$testSafeId"
+           |      },
+           |     {
+           |        "idType": "VRN",
+           |        "idValue": "$testVatNumber"
            |      }
            |    ]
            |  }

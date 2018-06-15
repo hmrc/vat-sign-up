@@ -37,8 +37,8 @@ trait MockCustomerSignUpConnector extends MockitoSugar with BeforeAndAfterEach {
 
   def mockSignUp(safeId: String,
                  vatNumber: String,
-                 email: String,
-                 emailVerified: Boolean
+                 email: Option[String],
+                 emailVerified: Option[Boolean]
                 )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),

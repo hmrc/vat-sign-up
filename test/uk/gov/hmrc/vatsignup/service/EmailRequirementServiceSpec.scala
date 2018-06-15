@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.service
 
 import org.scalatest.EitherValues
+import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks._
@@ -24,7 +25,7 @@ import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.{EmailNotVerified, EmailVerified, GetEmailVerificationStateErrorResponse}
 import uk.gov.hmrc.vatsignup.services.EmailRequirementService.{Email, EmailNotSupplied, GetEmailVerificationFailure, UnVerifiedEmail}
 import uk.gov.hmrc.vatsignup.services._
-import play.api.http.Status._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -45,7 +46,7 @@ class EmailRequirementServiceSpec extends UnitSpec with EitherValues with MockEm
         "return email and verification state" in {
           mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
           val res = TestEmailRequirementService.checkRequirements(Some(testEmail), None, false)
-          await(res) shouldBe Right(Email(testEmail, true))
+          await(res) shouldBe Right(Email(testEmail, isVerified = true, shouldSubmit = true))
 
         }
       }
@@ -75,7 +76,7 @@ class EmailRequirementServiceSpec extends UnitSpec with EitherValues with MockEm
           "return email and verification state" in {
             mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
             val res = TestEmailRequirementService.checkRequirements(None, Some(testEmail), true)
-            await(res) shouldBe Right(Email(testEmail, true))
+            await(res) shouldBe Right(Email(testEmail, isVerified = true, shouldSubmit = false))
 
           }
         }
@@ -104,7 +105,7 @@ class EmailRequirementServiceSpec extends UnitSpec with EitherValues with MockEm
             "return email and verification state" in {
               mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
               val res = TestEmailRequirementService.checkRequirements(Some(testEmail), None, true)
-              await(res) shouldBe Right(Email(testEmail, true))
+              await(res) shouldBe Right(Email(testEmail, isVerified = true, shouldSubmit = true))
 
             }
           }
@@ -113,7 +114,7 @@ class EmailRequirementServiceSpec extends UnitSpec with EitherValues with MockEm
             "return email and failed verification state " in {
               mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
               val res = TestEmailRequirementService.checkRequirements(Some(testEmail), None, true)
-              await(res) shouldBe Right(Email(testEmail, false))
+              await(res) shouldBe Right(Email(testEmail, isVerified = false, shouldSubmit = true))
 
             }
           }

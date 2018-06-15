@@ -58,24 +58,26 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
       case Some(SubscriptionRequest(_, Some(companyNumber), None, _, principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || identityVerified =>
         val result = for {
           email <- checkEmailVerification(principalEmailAddress, transactionEmailAddress, isDelegated)
-          (emailAddress, isVerified) = (email.address, email.isVerified)
+          transactionEmail = email.address
+          (signUpEmail, isSignupVerified) = if (email.shouldSubmit) (Some(email.address), Some(email.isVerified)) else (None, None)
           safeId <- registerCompany(vatNumber, companyNumber, optAgentReferenceNumber)
-          _ <- signUp(safeId, vatNumber, emailAddress, isVerified, optAgentReferenceNumber)
+          _ <- signUp(safeId, vatNumber, signUpEmail, isSignupVerified, optAgentReferenceNumber)
           _ <- registerEnrolment(vatNumber, safeId)
           _ <- deleteRecord(vatNumber)
-          _ <- saveTemporarySubscriptionData(vatNumber, emailAddress, isDelegated)
+          _ <- saveTemporarySubscriptionData(vatNumber, transactionEmail, isDelegated)
         } yield SignUpRequestSubmitted
 
         result.value
       case Some(SubscriptionRequest(_, None, Some(nino), Some(ninoSource), principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
         val result = for {
           email <- checkEmailVerification(principalEmailAddress, transactionEmailAddress, isDelegated)
-          (emailAddress, isVerified) = (email.address, email.isVerified)
+          transactionEmail = email.address
+          (signUpEmail, isSignupVerified) = if (email.shouldSubmit) (Some(email.address), Some(email.isVerified)) else (None, None)
           safeId <- registerIndividual(vatNumber, nino, optAgentReferenceNumber)
-          _ <- signUp(safeId, vatNumber, emailAddress, isVerified, optAgentReferenceNumber)
+          _ <- signUp(safeId, vatNumber, signUpEmail, isSignupVerified, optAgentReferenceNumber)
           _ <- registerEnrolment(vatNumber, safeId)
           _ <- deleteRecord(vatNumber)
-          _ <- saveTemporarySubscriptionData(vatNumber, emailAddress, isDelegated)
+          _ <- saveTemporarySubscriptionData(vatNumber, transactionEmail, isDelegated)
         } yield SignUpRequestSubmitted
 
         result.value
@@ -126,8 +128,8 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
 
   private def signUp(safeId: String,
                      vatNumber: String,
-                     emailAddress: String,
-                     emailAddressVerified: Boolean,
+                     emailAddress: Option[String],
+                     emailAddressVerified: Option[Boolean],
                      agentReferenceNumber: Option[String]
                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, CustomerSignUpResponseSuccess.type] =
     EitherT(customerSignUpConnector.signUp(safeId, vatNumber, emailAddress, emailAddressVerified)) bimap( {
