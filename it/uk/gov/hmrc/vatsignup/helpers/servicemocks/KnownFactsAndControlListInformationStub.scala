@@ -20,7 +20,6 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, OK}
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.{ControlList, _}
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{MtdEligible, MtdIneligible}
 
 object KnownFactsAndControlListInformationStub extends WireMockMethods {
 
@@ -32,16 +31,16 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
       )
     ).thenReturn(status = status, body = body)
 
-  def stubGetKnownFactsAndControlListInformation(vatNumber: String, response: MtdEligible): Unit = {
+  def stubGetKnownFactsAndControlListInformation(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
     val body = Json.obj(
-      "postcode" -> response.businessPostcode,
-      "dateOfReg" -> response.vatRegistrationDate,
+      "postcode" -> businessPostcode,
+      "dateOfReg" -> vatRegistrationDate,
       "controlListInformation" -> ControlList.eligible
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
 
-  def stubGetKnownFactsAndControlListInformation(vatNumber: String, response: MtdIneligible.type): Unit = {
+  def stubIneligibleControlListInformation(vatNumber: String): Unit = {
     val body = Json.obj(
       "postcode" -> testPostCode,
       "dateOfReg" -> testDateOfRegistration,

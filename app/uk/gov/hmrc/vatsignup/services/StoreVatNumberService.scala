@@ -18,6 +18,7 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 
+import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.implicits._
 import play.api.mvc.Request
@@ -102,39 +103,42 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                optVatRegistrationDate: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess.type] =
     if (appConfig.isEnabled(MTDEligibilityCheck)) {
-      EitherT[Future, KnownFactsAndControlListInformationFailure, MtdEligible](
+      EitherT[Future, KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation](
         knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber: String)
       ).transform[StoreVatNumberFailure, EligibilitySuccess.type] {
-        case Right(MtdEligible(businessPostcode, vatRegistrationDate)) =>
-          auditService.audit(ControlListAuditModel(
-            vatNumber = vatNumber,
-            isSuccess = true
-          ))
-          (optBusinessPostcode, optVatRegistrationDate) match {
-            case (Some(enteredPostCode), Some(enteredVatRegistrationDate)) =>
-              val knownFactsMatched =
-                (enteredPostCode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
-                  (enteredVatRegistrationDate == vatRegistrationDate)
-              auditService.audit(KnownFactsAuditModel(
+        case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlListInformation)) =>
+          controlListInformation.validate(appConfig.eligibilityConfig) match {
+            case Valid(_) =>
+              auditService.audit(ControlListAuditModel(
                 vatNumber = vatNumber,
-                enteredPostCode = enteredPostCode,
-                enteredVatRegistrationDate = enteredVatRegistrationDate,
-                desPostCode = businessPostcode,
-                desVatRegistrationDate = vatRegistrationDate,
-                matched = knownFactsMatched
+                isSuccess = true
               ))
-              if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
-              else Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
-            case _ =>
-              Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+              (optBusinessPostcode, optVatRegistrationDate) match {
+                case (Some(enteredPostCode), Some(enteredVatRegistrationDate)) =>
+                  val knownFactsMatched =
+                    (enteredPostCode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
+                      (enteredVatRegistrationDate == vatRegistrationDate)
+                  auditService.audit(KnownFactsAuditModel(
+                    vatNumber = vatNumber,
+                    enteredPostCode = enteredPostCode,
+                    enteredVatRegistrationDate = enteredVatRegistrationDate,
+                    desPostCode = businessPostcode,
+                    desVatRegistrationDate = vatRegistrationDate,
+                    matched = knownFactsMatched
+                  ))
+                  if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+                  else Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
+                case _ =>
+                  Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+              }
+            case Invalid(ineligibilityReasons) =>
+              auditService.audit(ControlListAuditModel(
+                vatNumber = vatNumber,
+                isSuccess = false,
+                failureReasons = ineligibilityReasons.toList
+              ))
+              Left(Ineligible)
           }
-        case Left(MtdIneligible(ineligibleReasons)) =>
-          auditService.audit(ControlListAuditModel(
-            vatNumber = vatNumber,
-            isSuccess = false,
-            failureReasons = ineligibleReasons.toList
-          ))
-          Left(Ineligible)
         case Left(ControlListInformationVatNumberNotFound) =>
           auditService.audit(ControlListAuditModel(
             vatNumber = vatNumber,

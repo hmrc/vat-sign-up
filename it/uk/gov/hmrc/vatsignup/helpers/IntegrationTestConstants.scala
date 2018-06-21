@@ -19,6 +19,8 @@ package uk.gov.hmrc.vatsignup.helpers
 import java.util.UUID
 
 import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.vatsignup.models.ControlListInformation
+import uk.gov.hmrc.vatsignup.models.ControlListInformation.{Company, Stagger1}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser.ControlListInformationIndices._
 
 object IntegrationTestConstants {
@@ -34,6 +36,13 @@ object IntegrationTestConstants {
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
+
+  val eligibleModel: ControlListInformation = ControlListInformation(
+    false, false, false, false, false, false,
+    false, false, false, false, false, false,
+    Stagger1, false, false, false, Company,
+    false, false, false, false
+  )
 
   object ControlList {
     val allFalse: String = "1" * CONTROL_INFORMATION_STRING_LENGTH

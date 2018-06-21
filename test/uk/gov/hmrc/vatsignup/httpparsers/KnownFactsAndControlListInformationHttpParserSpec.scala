@@ -44,7 +44,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
             )
           )
 
-          read(testMethod, testUrl, testResponse) shouldBe Right(MtdEligible(testPostCode, testDateOfRegistration))
+          read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, testControlListInformation))
         }
       }
 

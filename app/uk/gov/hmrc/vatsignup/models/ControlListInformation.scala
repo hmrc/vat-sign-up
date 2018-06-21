@@ -20,7 +20,8 @@ import cats._
 import cats.data.Validated._
 import cats.data.{NonEmptyList, Validated}
 import cats.implicits._
-import uk.gov.hmrc.vatsignup.models.ControlListInformation._
+import uk.gov.hmrc.vatsignup.config.EligibilityConfig
+import uk.gov.hmrc.vatsignup.models.ControlListInformation.{Group, _}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListIneligibilityMessages._
 
 case class ControlListInformation(belowVatThreshold: Boolean,
@@ -46,34 +47,46 @@ case class ControlListInformation(belowVatThreshold: Boolean,
                                   mossTrader: Boolean
                                  ) {
   // scalastyle:off cyclomatic.complexity
-  def validate: ValidatedType = {
+  def validate(eligibilityConfig: EligibilityConfig): ValidatedType = {
     Monoid.combineAll(List(
-      if (missingReturns) ineligible(missingReturnsMessage) else eligible,
-      if (centralAssessments) ineligible(centralAssessmentsMessage) else eligible,
-      if (criminalInvestigationInhibits) ineligible(criminalInvestigationInhibitsMessage) else eligible,
-      if (compliancePenaltiesOrSurcharges) ineligible(compliancePenaltiesOrSurchargesMessage) else eligible,
-      if (insolvency) ineligible(insolvencyMessage) else eligible,
-      if (deRegOrDeath) ineligible(deRegOrDeathMessage) else eligible,
-      if (debtMigration) ineligible(debtMigrationMessage) else eligible,
-      if (directDebit) ineligible(directDebitMessage) else eligible,
-      if (euSalesOrPurchases) ineligible(euSalesOrPurchasesMessage) else eligible,
-      if (largeBusiness) ineligible(largeBusinessMessage) else eligible,
-      if (missingTrader) ineligible(missingTraderMessage) else eligible,
+      if (!eligibilityConfig.permitBelowVatThreshold && belowVatThreshold) ineligible(belowVatThresholdMessage) else eligible,
+      if (!eligibilityConfig.permitMissingReturns && missingReturns) ineligible(missingReturnsMessage) else eligible,
+      if (!eligibilityConfig.permitCentralAssessments && centralAssessments) ineligible(centralAssessmentsMessage) else eligible,
+      if (!eligibilityConfig.permitCriminalInvestigationInhibits && criminalInvestigationInhibits) ineligible(criminalInvestigationInhibitsMessage) else eligible,
+      if (!eligibilityConfig.permitCompliancePenaltiesOrSurcharges && compliancePenaltiesOrSurcharges) ineligible(compliancePenaltiesOrSurchargesMessage) else eligible,
+      if (!eligibilityConfig.permitInsolvency && insolvency) ineligible(insolvencyMessage) else eligible,
+      if (!eligibilityConfig.permitDeRegOrDeath && deRegOrDeath) ineligible(deRegOrDeathMessage) else eligible,
+      if (!eligibilityConfig.permitDebtMigration && debtMigration) ineligible(debtMigrationMessage) else eligible,
+      if (!eligibilityConfig.permitDirectDebit && directDebit) ineligible(directDebitMessage) else eligible,
+      if (!eligibilityConfig.permitEuSalesOrPurchases && euSalesOrPurchases) ineligible(euSalesOrPurchasesMessage) else eligible,
+      if (!eligibilityConfig.permitLargeBusiness && largeBusiness) ineligible(largeBusinessMessage) else eligible,
+      if (!eligibilityConfig.permitMissingTrader && missingTrader) ineligible(missingTraderMessage) else eligible,
       staggerType match {
-        case AnnualStagger | MonthlyStagger => ineligible(invalidStaggerTypeMessage(staggerType))
-        case _ => eligible
+        case AnnualStagger if eligibilityConfig.permitAnnualStagger => eligible
+        case MonthlyStagger if eligibilityConfig.permitMonthlyStagger => eligible
+        case Stagger1 if eligibilityConfig.permitStagger1 => eligible
+        case Stagger2 if eligibilityConfig.permitStagger2 => eligible
+        case Stagger3 if eligibilityConfig.permitStagger3 => eligible
+        case _ => ineligible(invalidStaggerTypeMessage(staggerType))
       },
-      if (nonStandardTaxPeriod) ineligible(nonStandardTaxPeriodMessage) else eligible,
-      if (overseasTrader) ineligible(overseasTraderMessage) else eligible,
-      if (poaTrader) ineligible(poaTraderMessage) else eligible,
+      if (!eligibilityConfig.permitNonStandardTaxPeriod && nonStandardTaxPeriod) ineligible(nonStandardTaxPeriodMessage) else eligible,
+      if (!eligibilityConfig.permitOverseasTrader && overseasTrader) ineligible(overseasTraderMessage) else eligible,
+      if (!eligibilityConfig.permitPoaTrader && poaTrader) ineligible(poaTraderMessage) else eligible,
       entityType match {
-        case SoleTrader | Company => eligible
-        case entity => ineligible(invalidEntityTypeMessage(entity))
+        case Company if eligibilityConfig.permitCompany => eligible
+        case Division if eligibilityConfig.permitDivision => eligible
+        case Group if eligibilityConfig.permitGroup => eligible
+        case Partnership if eligibilityConfig.permitPartnership => eligible
+        case PublicCorporation if eligibilityConfig.permitPublicCorporation => eligible
+        case SoleTrader if eligibilityConfig.permitSoleTrader => eligible
+        case LocalAuthority if eligibilityConfig.permitLocalAuthority => eligible
+        case NonProfitMakingBody if eligibilityConfig.permitNonProfit => eligible
+        case _ => ineligible(invalidEntityTypeMessage(entityType))
       },
-      if (dificTrader) ineligible(dificTraderMessage) else eligible,
-      if (anythingUnderAppeal) ineligible(anythingUnderAppealMessage) else eligible,
-      if (repaymentTrader) ineligible(repaymentTraderMessage) else eligible,
-      if (mossTrader) ineligible(mossTraderMessage) else eligible
+      if (!eligibilityConfig.permitDificTrader && dificTrader) ineligible(dificTraderMessage) else eligible,
+      if (!eligibilityConfig.permitAnythingUnderAppeal && anythingUnderAppeal) ineligible(anythingUnderAppealMessage) else eligible,
+      if (!eligibilityConfig.permitRepaymentTrader && repaymentTrader) ineligible(repaymentTraderMessage) else eligible,
+      if (!eligibilityConfig.permitMossTrader && mossTrader) ineligible(mossTraderMessage) else eligible
     ))
   }
 

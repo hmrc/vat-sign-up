@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.service
 import java.util.UUID
 
 import cats.data.NonEmptyList
+import cats.data.Validated.Invalid
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -32,7 +33,7 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber, MtdEligible, MtdIneligible}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
@@ -78,7 +79,7 @@ class StoreVatNumberServiceSpec
 
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-                mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode, testDateOfRegistration))))
+                mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
                 mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
@@ -94,7 +95,7 @@ class StoreVatNumberServiceSpec
 
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-                mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode, testDateOfRegistration))))
+                mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
                 mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
@@ -138,7 +139,7 @@ class StoreVatNumberServiceSpec
               enable(MTDEligibilityCheck)
 
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
-              mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode, testDateOfRegistration))))
+              mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
               mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
@@ -153,14 +154,25 @@ class StoreVatNumberServiceSpec
             enable(AlreadySubscribedCheck)
             enable(MTDEligibilityCheck)
 
+            val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
+              testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
+            )
+            import ControlListInformation.eligible
+            val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
+            assert(failures != eligible)
+            val ineligibilityReasons = failures match {
+              case Invalid(err) => err.toList
+            }
+
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Left(MtdIneligible(NonEmptyList.one("")))))
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testIneligible)))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
             res shouldBe Left(Ineligible)
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, ineligibilityReasons))
           }
         }
         "the MTDEligibilityCheck feature switch is turned off" should {
@@ -267,7 +279,7 @@ class StoreVatNumberServiceSpec
             enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode, testDateOfRegistration))))
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
             mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
@@ -280,14 +292,21 @@ class StoreVatNumberServiceSpec
             enable(AlreadySubscribedCheck)
             enable(MTDEligibilityCheck)
 
-            val ineligibilityReason1 = "reason1"
-            val ineligibilityReason2 = "reason2"
+            val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
+              testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
+            )
+            import ControlListInformation.eligible
+            val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
+            assert(failures != eligible)
+            val ineligibilityReasons = failures match {
+              case Invalid(err) => err.toList
+            }
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Left(MtdIneligible(NonEmptyList(ineligibilityReason1, List(ineligibilityReason2))))))
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testIneligible)))
 
             val res = await(call)
-            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ineligibilityReason1, ineligibilityReason2)))
+            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = ineligibilityReasons))
             res shouldBe Left(Ineligible)
           }
         }
@@ -323,7 +342,9 @@ class StoreVatNumberServiceSpec
             enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode.drop(1), testDateOfRegistration))))
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(
+              Right(testKnownFactsAndControlListInformation.copy(businessPostcode = testKnownFactsAndControlListInformation.businessPostcode.drop(1)))
+            ))
 
             val res = await(call)
             res shouldBe Left(KnownFactsMismatch)
@@ -335,7 +356,7 @@ class StoreVatNumberServiceSpec
             enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode, testDateOfRegistration))))
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
             mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
 
             val res = await(call)
@@ -368,7 +389,7 @@ class StoreVatNumberServiceSpec
           enable(AlreadySubscribedCheck)
 
           mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-          mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(MtdEligible(testPostCode, testDateOfRegistration))))
+          mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
           mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
 
           intercept[InternalServerException](await(call))

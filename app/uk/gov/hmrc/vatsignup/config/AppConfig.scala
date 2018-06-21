@@ -84,4 +84,43 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   def mandationStatusUrl(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/mandation-status"
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
+
+  private def loadEligibilityConfig(key: String): Boolean =
+    runModeConfiguration.getBoolean(s"control-list.eligible.$key").getOrElse(throw new Exception(s"Missing eligibility configuration key: $key"))
+
+  def eligibilityConfig: EligibilityConfig = EligibilityConfig(
+    permitBelowVatThreshold = loadEligibilityConfig("below_vat_threshold"),
+    permitAnnualStagger = loadEligibilityConfig("annual_stagger"),
+    permitMissingReturns = loadEligibilityConfig("missing_returns"),
+    permitCentralAssessments = loadEligibilityConfig("central_assessments"),
+    permitCriminalInvestigationInhibits = loadEligibilityConfig("criminal_investigation_inhibits"),
+    permitCompliancePenaltiesOrSurcharges = loadEligibilityConfig("compliance_penalties_or_surcharges"),
+    permitInsolvency = loadEligibilityConfig("insolvency"),
+    permitDeRegOrDeath = loadEligibilityConfig("dereg_or_death"),
+    permitDebtMigration = loadEligibilityConfig("debt_migration"),
+    permitDirectDebit = loadEligibilityConfig("direct_debit"),
+    permitEuSalesOrPurchases = loadEligibilityConfig("eu_sales_or_purchases"),
+    permitLargeBusiness = loadEligibilityConfig("large_business"),
+    permitMissingTrader = loadEligibilityConfig("missing_trader"),
+    permitMonthlyStagger = loadEligibilityConfig("monthly_stagger"),
+    permitNonStandardTaxPeriod = loadEligibilityConfig("none_standard_tax_period"),
+    permitOverseasTrader = loadEligibilityConfig("overseas_trader"),
+    permitPoaTrader = loadEligibilityConfig("poa_trader"),
+    permitStagger1 = loadEligibilityConfig("stagger_1"),
+    permitStagger2 = loadEligibilityConfig("stagger_2"),
+    permitStagger3 = loadEligibilityConfig("stagger_3"),
+    permitCompany = loadEligibilityConfig("company"),
+    permitDivision = loadEligibilityConfig("division"),
+    permitGroup = loadEligibilityConfig("group"),
+    permitPartnership = loadEligibilityConfig("partnership"),
+    permitPublicCorporation = loadEligibilityConfig("public_corporation"),
+    permitSoleTrader = loadEligibilityConfig("sole_trader"),
+    permitLocalAuthority = loadEligibilityConfig("local_authority"),
+    permitNonProfit = loadEligibilityConfig("non_profit"),
+    permitDificTrader = loadEligibilityConfig("dific_trader"),
+    permitAnythingUnderAppeal = loadEligibilityConfig("anything_under_appeal"),
+    permitRepaymentTrader = loadEligibilityConfig("repayment_trader"),
+    permitMossTrader = loadEligibilityConfig("oss_trader")
+  )
+
 }
