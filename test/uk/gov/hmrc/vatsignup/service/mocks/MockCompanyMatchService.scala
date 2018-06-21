@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vatsignup.connectors.mocks
+package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.reset
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import uk.gov.hmrc.vatsignup.connectors.GetCtReferenceConnector
-import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.GetCtReferenceResponse
+import org.scalatest.mockito.MockitoSugar
+import uk.gov.hmrc.vatsignup.services.CompanyMatchService
 import org.mockito.Mockito._
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.services.CompanyMatchService.CheckCompanyMatchResponse
 
 import scala.concurrent.Future
 
-trait MockGetCtReferenceConnector extends BeforeAndAfterEach with MockitoSugar {
+trait MockCompanyMatchService extends BeforeAndAfterEach with MockitoSugar {
   this: Suite =>
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockGetCtReferenceConnector)
+    reset(mockCompanyMatchService)
   }
 
-  val mockGetCtReferenceConnector: GetCtReferenceConnector = mock[GetCtReferenceConnector]
+  val mockCompanyMatchService: CompanyMatchService = mock[CompanyMatchService]
 
-  def mockGetCtReference(companyNumber: String)(response: Future[GetCtReferenceResponse]): Unit =
-    when(mockGetCtReferenceConnector.getCtReference(
-      ArgumentMatchers.eq(companyNumber)
+  def mockCheckCompanyMatch(companyNumber: String, ctReference: String)(response: Future[CheckCompanyMatchResponse]): Unit = {
+    when(mockCompanyMatchService.checkCompanyMatch(
+      ArgumentMatchers.eq(companyNumber),
+      ArgumentMatchers.eq(ctReference)
     )(ArgumentMatchers.any[HeaderCarrier])
     ) thenReturn response
+  }
 }
