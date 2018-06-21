@@ -24,6 +24,7 @@ import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser.Cont
 object IntegrationTestConstants {
   val testVatNumber: String = UUID.randomUUID().toString
   val testCompanyNumber: String = UUID.randomUUID().toString
+  val testCtReference: String = UUID.randomUUID().toString
   val testEmail: String = "test@test.test"
   val testAgentNumber: String = UUID.randomUUID().toString
   val testSafeId: String = UUID.randomUUID().toString

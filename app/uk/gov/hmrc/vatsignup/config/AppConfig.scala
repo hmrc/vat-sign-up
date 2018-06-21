@@ -44,9 +44,9 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
     )
 
   lazy val desAuthorisationToken: String = s"Bearer ${loadConfig("microservice.services.des.authorisation-token")}"
+
   lazy val desEnvironmentHeader: (String, String) =
     "Environment" -> loadConfig("microservice.services.des.environment")
-
   def registerWithMultipleIdentifiersUrl: String = s"$desUrl/cross-regime/register/VATC"
 
   lazy val authenticatorUrl: String = baseUrl("authenticator")
@@ -82,6 +82,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   lazy val sendEmailUrl: String = s"$emailUrl/hmrc/email"
 
   def mandationStatusUrl(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/mandation-status"
+
+  def getCtReferenceUrl(companyNumber: String): String = s"$desUrl/corporation-tax/identifiers/crn/$companyNumber"
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 }
