@@ -20,7 +20,9 @@ import java.util.UUID
 
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.models.CustomerDetails
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
+import uk.gov.hmrc.vatsignup.models.ControlListInformation.{Company, Stagger1}
+import uk.gov.hmrc.vatsignup.models.{ControlListInformation, CustomerDetails}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser.ControlListInformationIndices._
 
 
@@ -47,6 +49,19 @@ object TestConstants {
     Some("testLastName"),
     Some("testOrganisationName"),
     Some("testTradingName"))
+
+  val testControlListInformation = ControlListInformation(
+    false, false, false, false, false, false,
+    false, false, false, false, false, false,
+    Stagger1, false, false, false, Company,
+    false, false, false, false
+  )
+
+  val testKnownFactsAndControlListInformation = KnownFactsAndControlListInformation(
+    testPostCode,
+    testDateOfRegistration,
+    testControlListInformation
+  )
 
   object ControlList {
     val allFalse: String = "1" * CONTROL_INFORMATION_STRING_LENGTH

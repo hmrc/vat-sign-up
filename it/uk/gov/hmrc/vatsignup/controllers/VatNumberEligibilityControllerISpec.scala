@@ -24,7 +24,6 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{mandationStatusBody, stubGetMandationStatus}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{MtdEligible, MtdIneligible}
 import uk.gov.hmrc.vatsignup.models.MTDfBVoluntary
 
 class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
@@ -38,7 +37,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
 
           stubAuth(OK, successfulAuthResponse())
           stubGetMandationStatus(testVatNumber)(NOT_FOUND)
-          stubGetKnownFactsAndControlListInformation(testVatNumber, MtdEligible(testPostCode, testDateOfRegistration))
+          stubGetKnownFactsAndControlListInformation(testVatNumber, testPostCode, testDateOfRegistration)
 
           val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 
@@ -56,7 +55,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
 
           stubAuth(OK, successfulAuthResponse())
           stubGetMandationStatus(testVatNumber)(NOT_FOUND)
-          stubGetKnownFactsAndControlListInformation(testVatNumber, MtdIneligible)
+          stubIneligibleControlListInformation(testVatNumber)
 
           val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 

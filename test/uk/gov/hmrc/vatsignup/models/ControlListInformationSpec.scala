@@ -16,12 +16,31 @@
 
 package uk.gov.hmrc.vatsignup.models
 
+import cats.data.NonEmptyList
+import cats.data.Validated.Invalid
+import org.scalatest.enablers.Containing
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.models.ControlListInformation._
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListIneligibilityMessages._
 
 class ControlListInformationSpec extends UnitSpec {
-  private def valid(entityType: BusinessEntity) = ControlListInformation(
+
+  val allFalseEligibilityConfig = EligibilityConfig(
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false
+  )
+
+  val allTrueEligibilityConfig = EligibilityConfig(
+    true, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true
+  )
+
+  private val testControlList = ControlListInformation(
     belowVatThreshold = false,
     missingReturns = false,
     centralAssessments = false,
@@ -38,15 +57,15 @@ class ControlListInformationSpec extends UnitSpec {
     nonStandardTaxPeriod = false,
     overseasTrader = false,
     poaTrader = false,
-    entityType = entityType,
+    entityType = Company,
     dificTrader = false,
     anythingUnderAppeal = false,
     repaymentTrader = false,
     mossTrader = false
   )
 
-  private val invalid = ControlListInformation(
-    belowVatThreshold = false,
+  private val testAllTrueControlList = ControlListInformation(
+    belowVatThreshold = true,
     missingReturns = true,
     centralAssessments = true,
     criminalInvestigationInhibits = true,
@@ -58,198 +77,400 @@ class ControlListInformationSpec extends UnitSpec {
     euSalesOrPurchases = true,
     largeBusiness = true,
     missingTrader = true,
-    staggerType = AnnualStagger,
+    staggerType = Stagger1,
     nonStandardTaxPeriod = true,
     overseasTrader = true,
     poaTrader = true,
-    entityType = Division,
+    entityType = Company,
     dificTrader = true,
     anythingUnderAppeal = true,
     repaymentTrader = true,
     mossTrader = true
   )
 
-  "isValid" when {
-    "the user is a sole trader with no ineligible data and a stagger type of Stagger1" should {
-      "return Valid" in {
-        valid(SoleTrader).validate shouldBe eligible
+  implicit val t = new Containing[ValidatedType] {
+    override def contains(container: ValidatedType, element: Any): Boolean = (container, element) match {
+      case (Invalid(err: NonEmptyList[_]), Invalid(expected: NonEmptyList[_])) =>
+        expected.forall(exp => err.exists(x => x == exp))
+      case (Invalid(err: NonEmptyList[_]), msg: String) =>
+        err.exists(x => x == msg)
+      case _ => false
+    }
+
+    override def containsOneOf(container: ValidatedType, elements: Seq[Any]): Boolean = ???
+
+    override def containsNoneOf(container: ValidatedType, elements: Seq[Any]): Boolean = ???
+  }
+
+  private def specificFlagTest(controlListWithFlagSetToFalse: ControlListInformation, expectedValidationErrorMessage: String) = {
+    val invalid = ineligible(expectedValidationErrorMessage)
+    "config permits the flag then it is eligible regardless" in {
+      controlListWithFlagSetToFalse.validate(allTrueEligibilityConfig) should not contain invalid
+      testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+    }
+    "config is set to does not permit then it is eligible only if it the control list has it set to false" in {
+      controlListWithFlagSetToFalse.validate(allFalseEligibilityConfig) should not contain invalid
+      testAllTrueControlList.validate(allFalseEligibilityConfig) should contain(invalid)
+    }
+  }
+
+  "validate" should {
+    "return valid if all eligibility rules passed according to its config" in {
+      val testConfig = allFalseEligibilityConfig.copy(permitStagger1 = true, permitCompany = true)
+      testControlList.validate(testConfig) shouldBe eligible
+    }
+    "return valid if all eligibility criteria are permitted in the config" in {
+      testAllTrueControlList.validate(allTrueEligibilityConfig) shouldBe eligible
+    }
+
+    "validate belowVatThreshold correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(belowVatThreshold = false)
+      val expectedValidationErrorMessage = belowVatThresholdMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate missingReturns correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(missingReturns = false)
+      val expectedValidationErrorMessage = missingReturnsMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate centralAssessments correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(centralAssessments = false)
+      val expectedValidationErrorMessage = centralAssessmentsMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate criminalInvestigationInhibits correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(criminalInvestigationInhibits = false)
+      val expectedValidationErrorMessage = criminalInvestigationInhibitsMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate compliancePenaltiesOrSurcharges correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(compliancePenaltiesOrSurcharges = false)
+      val expectedValidationErrorMessage = compliancePenaltiesOrSurchargesMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate insolvency correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(insolvency = false)
+      val expectedValidationErrorMessage = insolvencyMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate deRegOrDeath correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(deRegOrDeath = false)
+      val expectedValidationErrorMessage = deRegOrDeathMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate debtMigration correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(debtMigration = false)
+      val expectedValidationErrorMessage = debtMigrationMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate directDebit correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(directDebit = false)
+      val expectedValidationErrorMessage = directDebitMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate euSalesOrPurchases correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(euSalesOrPurchases = false)
+      val expectedValidationErrorMessage = euSalesOrPurchasesMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate largeBusiness correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(largeBusiness = false)
+      val expectedValidationErrorMessage = largeBusinessMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate missingTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(missingTrader = false)
+      val expectedValidationErrorMessage = missingTraderMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate nonStandardTaxPeriod correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(nonStandardTaxPeriod = false)
+      val expectedValidationErrorMessage = nonStandardTaxPeriodMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate overseasTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(overseasTrader = false)
+      val expectedValidationErrorMessage = overseasTraderMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate poaTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(poaTrader = false)
+      val expectedValidationErrorMessage = poaTraderMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate dificTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(dificTrader = false)
+      val expectedValidationErrorMessage = dificTraderMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate anythingUnderAppeal correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(anythingUnderAppeal = false)
+      val expectedValidationErrorMessage = anythingUnderAppealMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate repaymentTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(repaymentTrader = false)
+      val expectedValidationErrorMessage = repaymentTraderMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+    "validate mossTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(mossTrader = false)
+      val expectedValidationErrorMessage = mossTraderMessage
+
+      specificFlagTest(testEligibleCase, expectedValidationErrorMessage)
+    }
+
+    "validate annualStagger correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(staggerType = AnnualStagger)
+      val expectedValidationErrorMessage = invalidStaggerTypeMessage(AnnualStagger)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to AnnualStagger" in {
+        testAllTrueControlList.copy(staggerType = MonthlyStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger1).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger2).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger3).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user is a limited company with no ineligible data and a stagger type of Stagger1" should {
-      "return Valid" in {
-        valid(Company).validate shouldBe eligible
+    "validate monthlyStagger correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(staggerType = MonthlyStagger)
+      val expectedValidationErrorMessage = invalidStaggerTypeMessage(MonthlyStagger)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to MonthlyStagger" in {
+        testAllTrueControlList.copy(staggerType = AnnualStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger1).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger2).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger3).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user has a stagger type of Stagger 2" should {
-      "return Valid" in {
-        valid(SoleTrader).copy(staggerType = Stagger2).validate shouldBe eligible
+    "validate stagger 1 correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(staggerType = Stagger1)
+      val expectedValidationErrorMessage = invalidStaggerTypeMessage(Stagger1)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Stagger1" in {
+        testAllTrueControlList.copy(staggerType = AnnualStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = MonthlyStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger2).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger3).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user has a stagger type of Stagger 3" should {
-      "return Valid" in {
-        valid(SoleTrader).copy(staggerType = Stagger3).validate shouldBe eligible
+    "validate stagger 2 correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(staggerType = Stagger2)
+      val expectedValidationErrorMessage = invalidStaggerTypeMessage(Stagger2)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Stagger2" in {
+        testAllTrueControlList.copy(staggerType = AnnualStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = MonthlyStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger1).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger3).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user is below the VAT threshold" should {
-      "return Valid" in {
-        valid(SoleTrader).copy(belowVatThreshold = true).validate shouldBe eligible
+    "validate stagger 3 correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(staggerType = Stagger3)
+      val expectedValidationErrorMessage = invalidStaggerTypeMessage(Stagger3)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Stagger3" in {
+        testAllTrueControlList.copy(staggerType = AnnualStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = MonthlyStagger).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger1).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(staggerType = Stagger2).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user has missing returns" should {
-      "return Invalid wtih a missing returns message" in {
-        valid(SoleTrader).copy(missingReturns = true).validate shouldBe ineligible(missingReturnsMessage)
+
+    "validate Company correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = Company)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(Company)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Company" in {
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user has central assessments" should {
-      "return Invalid with a central assessments message" in {
-        valid(SoleTrader).copy(centralAssessments = true).validate shouldBe ineligible(centralAssessmentsMessage)
+    "validate Division correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = Division)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(Division)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Division" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user has criminal investigation inhibits" should {
-      "return Invalid with a criminal investigations message" in {
-        valid(SoleTrader).copy(criminalInvestigationInhibits = true).validate shouldBe ineligible(criminalInvestigationInhibitsMessage)
+    "validate Group correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = Group)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(Group)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Group" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user has compliance penalties or surcharges" should {
-      "return Invalid with a compliance penalties or surcharges message" in {
-        valid(SoleTrader).copy(compliancePenaltiesOrSurcharges = true).validate shouldBe ineligible(compliancePenaltiesOrSurchargesMessage)
+    "validate Partnership correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = Partnership)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(Partnership)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to Partnership" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user is or was insolvent" should {
-      "return Invalid with an insolvency message" in {
-        valid(SoleTrader).copy(insolvency = true).validate shouldBe ineligible(insolvencyMessage)
+    "validate PublicCorporation correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = PublicCorporation)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(PublicCorporation)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to PublicCorporation" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user is de-registered or dead" should {
-      "return Invalid with a deRegOrDeathMessage" in {
-        valid(SoleTrader).copy(deRegOrDeath = true).validate shouldBe ineligible(deRegOrDeathMessage)
+    "validate SoleTrader correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = SoleTrader)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(SoleTrader)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to SoleTrader" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user is debt migration" should {
-      "return Invalid with a debtMigrationMessage" in {
-        valid(SoleTrader).copy(debtMigration = true).validate shouldBe ineligible(debtMigrationMessage)
+    "validate LocalAuthority correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = LocalAuthority)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(LocalAuthority)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
+      }
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to LocalAuthority" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = NonProfitMakingBody).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
-    "the user pays by direct debit" should {
-      "return Invalid with a directDebitMessage" in {
-        valid(SoleTrader).copy(directDebit = true).validate shouldBe ineligible(directDebitMessage)
+    "validate NonProfitMakingBody correctly according to the eligibility config" when {
+      val testEligibleCase = testAllTrueControlList.copy(entityType = NonProfitMakingBody)
+      val expectedValidationErrorMessage = invalidEntityTypeMessage(NonProfitMakingBody)
+
+      val invalid = ineligible(expectedValidationErrorMessage)
+      "config permits the flag then it is eligible regardless" in {
+        testEligibleCase.validate(allTrueEligibilityConfig) should not contain invalid
+        testAllTrueControlList.validate(allTrueEligibilityConfig) should not contain invalid
       }
-    }
-    "the user has EU sales or purchases" should {
-      "return Invalid with an euSalesOrPurchasesMessage" in {
-        valid(SoleTrader).copy(euSalesOrPurchases = true).validate shouldBe ineligible(euSalesOrPurchasesMessage)
-      }
-    }
-    "the user is a large business" should {
-      "return Invalid with a largeBusinessMessage" in {
-        valid(SoleTrader).copy(largeBusiness = true).validate shouldBe ineligible(largeBusinessMessage)
-      }
-    }
-    "the user is a missing trader" should {
-      "return Invalid with a missingTraderMessage" in {
-        valid(SoleTrader).copy(missingTrader = true).validate shouldBe ineligible(missingTraderMessage)
-      }
-    }
-    "the user has a monthly stagger" should {
-      "return Invalid with an invalidStaggerTypeMessage for MonthlyStagger" in {
-        valid(SoleTrader).copy(staggerType = MonthlyStagger).validate shouldBe ineligible(invalidStaggerTypeMessage(MonthlyStagger))
-      }
-    }
-    "the user has an annual stagger" should {
-      "return Invalid with an invalidStaggerTypeMessage for AnnualStagger" in {
-        valid(SoleTrader).copy(staggerType = AnnualStagger).validate shouldBe ineligible(invalidStaggerTypeMessage(AnnualStagger))
-      }
-    }
-    "the user has a non standard tax period" should {
-      "return Invalid with an nonStandardTaxPeriodMessage" in {
-        valid(SoleTrader).copy(nonStandardTaxPeriod = true).validate shouldBe ineligible(nonStandardTaxPeriodMessage)
-      }
-    }
-    "the user is an overseas trader" should {
-      "return Invalid with an overseasTraderMessage" in {
-        valid(SoleTrader).copy(overseasTrader = true).validate shouldBe ineligible(overseasTraderMessage)
-      }
-    }
-    "the user is a POA trader" should {
-      "return Invalid with an poaTraderMessage" in {
-        valid(SoleTrader).copy(poaTrader = true).validate shouldBe ineligible(poaTraderMessage)
-      }
-    }
-    "the user has an entity type of Division" should {
-      "return Invalid with an invalidEntityTypeMessage for Division" in {
-        valid(Division).validate shouldBe ineligible(invalidEntityTypeMessage(Division))
-      }
-    }
-    "the user has an entity type of Group" should {
-      "return Invalid with an invalidEntityTypeMessage for Group" in {
-        valid(Group).validate shouldBe ineligible(invalidEntityTypeMessage(Group))
-      }
-    }
-    "the user has an entity type of Partnership" should {
-      "return Invalid with an invalidEntityTypeMessage for Partnership" in {
-        valid(Partnership).validate shouldBe ineligible(invalidEntityTypeMessage(Partnership))
-      }
-    }
-    "the user has an entity type of PublicCorporation" should {
-      "return Invalid with an invalidEntityTypeMessage for PublicCorporation" in {
-        valid(PublicCorporation).validate shouldBe ineligible(invalidEntityTypeMessage(PublicCorporation))
-      }
-    }
-    "the user has an entity type of LocalAuthority" should {
-      "return Invalid with an invalidEntityTypeMessage for LocalAuthority" in {
-        valid(LocalAuthority).validate shouldBe ineligible(invalidEntityTypeMessage(LocalAuthority))
-      }
-    }
-    "the user has an entity type of NonProfitMakingBody" should {
-      "return Invalid with an invalidEntityTypeMessage for NonProfitMakingBody" in {
-        valid(NonProfitMakingBody).validate shouldBe ineligible(invalidEntityTypeMessage(NonProfitMakingBody))
-      }
-    }
-    "the user is a DIFIC trader" should {
-      "return Invalid with a dificTraderMessage" in {
-        valid(SoleTrader).copy(dificTrader = true).validate shouldBe ineligible(dificTraderMessage)
-      }
-    }
-    "the user has anything under appeal" should {
-      "return Invalid with an anythingUnderAppealMessage" in {
-        valid(SoleTrader).copy(anythingUnderAppeal = true).validate shouldBe ineligible(anythingUnderAppealMessage)
-      }
-    }
-    "the user is a repayment trader" should {
-      "return Invalid with a repaymentTraderMessage" in {
-        valid(SoleTrader).copy(repaymentTrader = true).validate shouldBe ineligible(repaymentTraderMessage)
-      }
-    }
-    "the user is a MOSS trader" should {
-      "return Invalid with a mossTraderMessage" in {
-        valid(SoleTrader).copy(mossTrader = true).validate shouldBe ineligible(mossTraderMessage)
-      }
-    }
-    "the user is ineligible for multiple reasons" should {
-      "return Invalid with all relevant error messages" in {
-        invalid.validate shouldBe ineligible(
-          missingReturnsMessage,
-          centralAssessmentsMessage,
-          criminalInvestigationInhibitsMessage,
-          compliancePenaltiesOrSurchargesMessage,
-          insolvencyMessage,
-          deRegOrDeathMessage,
-          debtMigrationMessage,
-          directDebitMessage,
-          euSalesOrPurchasesMessage,
-          largeBusinessMessage,
-          missingTraderMessage,
-          invalidStaggerTypeMessage(AnnualStagger),
-          nonStandardTaxPeriodMessage,
-          overseasTraderMessage,
-          poaTraderMessage,
-          invalidEntityTypeMessage(Division),
-          dificTraderMessage,
-          anythingUnderAppealMessage,
-          repaymentTraderMessage,
-          mossTraderMessage
-        )
+      "config is set to does not permit then it is eligible only if it the control list does not have it set to NonProfitMakingBody" in {
+        testAllTrueControlList.copy(entityType = Company).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Division).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Group).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = Partnership).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = PublicCorporation).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = SoleTrader).validate(allFalseEligibilityConfig) should not contain invalid
+        testAllTrueControlList.copy(entityType = LocalAuthority).validate(allFalseEligibilityConfig) should not contain invalid
       }
     }
   }
+
 }

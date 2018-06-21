@@ -17,13 +17,13 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import cats.data.NonEmptyList
-import cats.data.Validated.{Invalid, Valid}
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
+import uk.gov.hmrc.vatsignup.models.ControlListInformation
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser
 
 object KnownFactsAndControlListInformationHttpParser {
-  type KnownFactsAndControlListInformationHttpParserResponse = Either[KnownFactsAndControlListInformationFailure, MtdEligible]
+  type KnownFactsAndControlListInformationHttpParserResponse = Either[KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation]
 
   val postcodeKey = "postcode"
   val registrationDateKey = "dateOfReg"
@@ -41,10 +41,7 @@ object KnownFactsAndControlListInformationHttpParser {
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
             case Right(validControlList) =>
-              validControlList.validate match {
-                case Valid(_) => Right(MtdEligible(businessPostcode, vatRegistrationDate))
-                case Invalid(ineligibilityReasons) => Left(MtdIneligible(ineligibilityReasons))
-              }
+              Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, validControlList))
             case Left(parsingError) =>
               Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, parsingError.toString))
           }) getOrElse Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, invalidJsonResponseMessage))
@@ -58,11 +55,9 @@ object KnownFactsAndControlListInformationHttpParser {
     }
   }
 
-  case class MtdEligible(businessPostcode: String, vatRegistrationDate: String)
+  case class KnownFactsAndControlListInformation(businessPostcode: String, vatRegistrationDate: String, controlListInformation: ControlListInformation)
 
   sealed trait KnownFactsAndControlListInformationFailure
-
-  case class MtdIneligible(ineligibilityReasons: NonEmptyList[String]) extends KnownFactsAndControlListInformationFailure
 
   case object KnownFactsInvalidVatNumber extends KnownFactsAndControlListInformationFailure
 
