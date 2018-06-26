@@ -46,8 +46,8 @@ class StoreCompanyNumberController @Inject()(val authConnector: AuthConnector,
               storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber, ctReference)
           }) map {
             case Right(StoreCompanyNumberSuccess) => NoContent
-            case Left(CompanyNumberDatabaseFailureNoVATNumber) => NotFound
-            case Left(CompanyNumberDatabaseFailure) => InternalServerError
+            case Left(DatabaseFailureNoVATNumber) => NotFound
+            case Left(CompanyNumberDatabaseFailure | CtReferenceDatabaseFailure) => InternalServerError
             case Left(CtReferenceMismatch) => BadRequest(Json.obj(HttpCodeKey -> CtReferenceMismatchCode))
             case Left(MatchCtReferenceFailure) => BadGateway
           }

@@ -57,7 +57,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
 
           val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber)
 
-          await(res) shouldBe Left(CompanyNumberDatabaseFailureNoVATNumber)
+          await(res) shouldBe Left(DatabaseFailureNoVATNumber)
         }
       }
 
@@ -73,25 +73,51 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
     }
     "there is a CT reference provided" when {
       "the company number matches the CT reference" when {
-        "the database stores the company number successfully" should {
-          "return StoreCompanyNumberSuccess" in {
-            mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
-            mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+        "the database stores the company number successfully" when {
+          "the database stores the CT reference successfully" should {
+            "return StoreCompanyNumberSuccess" in {
+              mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
+              mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertCtReference(testVatNumber, testCtReference)(Future.successful(mock[UpdateWriteResult]))
 
-            val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
+              val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
 
-            await(res) shouldBe Right(StoreCompanyNumberSuccess)
+              await(res) shouldBe Right(StoreCompanyNumberSuccess)
+            }
+          }
+          "the database returns a NoSuchElementException" should {
+            "return DatabaseFailureNoVATNumber" in {
+              mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
+              mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertCtReference(testVatNumber, testCtReference)(Future.failed(new NoSuchElementException))
+
+              val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
+
+              await(res) shouldBe Left(DatabaseFailureNoVATNumber)
+            }
+          }
+
+          "the database returns any other failure" should {
+            "return CompanyNumberDatabaseFailure" in {
+              mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
+              mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertCtReference(testVatNumber, testCtReference)(Future.failed(new Exception))
+
+              val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
+
+              await(res) shouldBe Left(CtReferenceDatabaseFailure)
+            }
           }
         }
 
         "the database returns a NoSuchElementException" should {
-          "return CompanyNumberDatabaseFailureNoVATNumber" in {
+          "return DatabaseFailureNoVATNumber" in {
             mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
             mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.failed(new NoSuchElementException))
 
             val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
 
-            await(res) shouldBe Left(CompanyNumberDatabaseFailureNoVATNumber)
+            await(res) shouldBe Left(DatabaseFailureNoVATNumber)
           }
         }
 

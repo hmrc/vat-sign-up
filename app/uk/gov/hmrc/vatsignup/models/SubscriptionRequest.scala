@@ -24,6 +24,7 @@ import NinoSource._
 
 case class SubscriptionRequest(vatNumber: String,
                                companyNumber: Option[String] = None,
+                               ctReference: Option[String] = None,
                                nino: Option[String] = None,
                                ninoSource: Option[NinoSource] = None,
                                email: Option[String] = None,
@@ -50,6 +51,7 @@ object SubscriptionRequest {
       for {
         vatNumber <- (json \ idKey).validate[String]
         companyNumber <- (json \ companyNumberKey).validateOpt[String]
+        ctReference <- (json \ ctReferenceKey).validateOpt[String]
         nino <- (json \ ninoKey).validateOpt[String]
         ninoSource <- (json \ ninoSourceKey).validateOpt[NinoSource].map { source =>
           (nino, source) match {
@@ -61,7 +63,7 @@ object SubscriptionRequest {
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
-      } yield SubscriptionRequest(vatNumber, companyNumber, nino, ninoSource, email, transactionEmail, identityVerified),
+      } yield SubscriptionRequest(vatNumber, companyNumber, ctReference, nino, ninoSource, email, transactionEmail, identityVerified),
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
