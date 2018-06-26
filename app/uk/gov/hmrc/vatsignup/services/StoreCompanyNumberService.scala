@@ -17,19 +17,37 @@
 package uk.gov.hmrc.vatsignup.services
 
 import java.util.NoSuchElementException
-import javax.inject.{Inject, Singleton}
 
+import cats.data.EitherT
+import cats.implicits._
+import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
+import uk.gov.hmrc.vatsignup.services.CompanyMatchService.GetCtReferenceFailure
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository
+class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
+                                          companyMatchService: CompanyMatchService
                                          )(implicit ec: ExecutionContext) {
 
   import StoreCompanyNumberService._
 
-  def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[Either[StoreCompanyNumberFailure, StoreCompanyNumberSuccess.type]] =
+  def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse] =
+    upsertCompanyNumber(vatNumber, companyNumber)
+
+  def storeCompanyNumber(vatNumber: String, companyNumber: String, ctReference: String)(implicit hc: HeaderCarrier): Future[StoreCompanyResponse] = {
+    for {
+      _ <- EitherT(companyMatchService.checkCompanyMatch(companyNumber, ctReference)) leftMap {
+        case CompanyMatchService.CtReferenceMismatch => StoreCompanyNumberService.CtReferenceMismatch
+        case GetCtReferenceFailure => MatchCtReferenceFailure
+      }
+      _ <- EitherT(upsertCompanyNumber(vatNumber, companyNumber))
+    } yield StoreCompanyNumberSuccess
+  }.value
+
+  private def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse] =
     subscriptionRequestRepository.upsertCompanyNumber(vatNumber, companyNumber) map {
       _ => Right(StoreCompanyNumberSuccess)
     } recover {
@@ -39,13 +57,18 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
 }
 
 object StoreCompanyNumberService {
+  type StoreCompanyResponse = Either[StoreCompanyNumberFailure, StoreCompanyNumberSuccess.type]
 
-  object StoreCompanyNumberSuccess
+  case object StoreCompanyNumberSuccess
 
   sealed trait StoreCompanyNumberFailure
 
-  object CompanyNumberDatabaseFailure extends StoreCompanyNumberFailure
+  case object CompanyNumberDatabaseFailure extends StoreCompanyNumberFailure
 
-  object CompanyNumberDatabaseFailureNoVATNumber extends StoreCompanyNumberFailure
+  case object CompanyNumberDatabaseFailureNoVATNumber extends StoreCompanyNumberFailure
+
+  case object CtReferenceMismatch extends StoreCompanyNumberFailure
+
+  case object MatchCtReferenceFailure extends StoreCompanyNumberFailure
 
 }
