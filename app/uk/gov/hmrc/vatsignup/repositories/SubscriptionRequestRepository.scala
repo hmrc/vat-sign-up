@@ -74,6 +74,9 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
       upsert = false
     ).filter(_.n == 1)
 
+  def upsertCtReference(vatNumber: String, ctReference: String): Future[UpdateWriteResult] =
+    upsert(vatNumber, ctReferenceKey, ctReference)
+
   def upsertEmail(vatNumber: String, email: String): Future[UpdateWriteResult] =
     upsert(vatNumber, emailKey, email)
 

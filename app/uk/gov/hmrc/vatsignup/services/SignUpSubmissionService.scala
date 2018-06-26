@@ -55,7 +55,7 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
     val isDelegated = optAgentReferenceNumber.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
-      case Some(SubscriptionRequest(_, Some(companyNumber), None, _, principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || identityVerified =>
+      case Some(SubscriptionRequest(_, Some(companyNumber),_ , None, _, principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || identityVerified =>
         val result = for {
           email <- checkEmailVerification(principalEmailAddress, transactionEmailAddress, isDelegated)
           transactionEmail = email.address
@@ -68,7 +68,7 @@ class SignUpSubmissionService @Inject()(subscriptionRequestRepository: Subscript
         } yield SignUpRequestSubmitted
 
         result.value
-      case Some(SubscriptionRequest(_, None, Some(nino), Some(ninoSource), principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
+      case Some(SubscriptionRequest(_, None, _, Some(nino), Some(ninoSource), principalEmailAddress, transactionEmailAddress, identityVerified)) if isDelegated || ninoSource == IRSA || identityVerified =>
         val result = for {
           email <- checkEmailVerification(principalEmailAddress, transactionEmailAddress, isDelegated)
           transactionEmail = email.address

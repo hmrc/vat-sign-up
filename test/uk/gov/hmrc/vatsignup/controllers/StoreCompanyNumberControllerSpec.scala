@@ -58,7 +58,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
     "if vat doesn't exist" should {
       "return NOT_FOUND" in {
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(CompanyNumberDatabaseFailureNoVATNumber)))
+        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(DatabaseFailureNoVATNumber)))
 
         val request = FakeRequest() withBody(testCompanyNumber, None)
 
@@ -72,6 +72,19 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
       "return INTERNAL_SERVER_ERROR" in {
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(CompanyNumberDatabaseFailure)))
+
+        val request = FakeRequest() withBody(testCompanyNumber, None)
+
+        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+
+        status(res) shouldBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+    "the CT reference storage has failed" should {
+      "return INTERNAL_SERVER_ERROR" in {
+        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(CtReferenceDatabaseFailure)))
 
         val request = FakeRequest() withBody(testCompanyNumber, None)
 

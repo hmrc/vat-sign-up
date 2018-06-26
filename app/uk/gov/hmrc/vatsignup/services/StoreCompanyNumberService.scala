@@ -34,38 +34,54 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
 
   import StoreCompanyNumberService._
 
-  def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse] =
+  def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
     upsertCompanyNumber(vatNumber, companyNumber)
 
-  def storeCompanyNumber(vatNumber: String, companyNumber: String, ctReference: String)(implicit hc: HeaderCarrier): Future[StoreCompanyResponse] = {
+  def storeCompanyNumber(vatNumber: String,
+                         companyNumber: String,
+                         ctReference: String
+                        )(implicit hc: HeaderCarrier): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] = {
     for {
       _ <- EitherT(companyMatchService.checkCompanyMatch(companyNumber, ctReference)) leftMap {
         case CompanyMatchService.CtReferenceMismatch => StoreCompanyNumberService.CtReferenceMismatch
         case GetCtReferenceFailure => MatchCtReferenceFailure
       }
       _ <- EitherT(upsertCompanyNumber(vatNumber, companyNumber))
+      _ <- EitherT(upsertCtReference(vatNumber, ctReference))
     } yield StoreCompanyNumberSuccess
   }.value
 
-  private def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse] =
+  private def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
     subscriptionRequestRepository.upsertCompanyNumber(vatNumber, companyNumber) map {
       _ => Right(StoreCompanyNumberSuccess)
     } recover {
-      case e: NoSuchElementException => Left(CompanyNumberDatabaseFailureNoVATNumber)
+      case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)
       case _ => Left(CompanyNumberDatabaseFailure)
+    }
+
+  private def upsertCtReference(vatNumber: String, ctReference: String): Future[StoreCompanyResponse[StoreCtReferenceSuccess.type]] =
+    subscriptionRequestRepository.upsertCtReference(vatNumber, ctReference) map {
+      _ => Right(StoreCtReferenceSuccess)
+    } recover {
+      case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)
+      case _ => Left(CtReferenceDatabaseFailure)
     }
 }
 
 object StoreCompanyNumberService {
-  type StoreCompanyResponse = Either[StoreCompanyNumberFailure, StoreCompanyNumberSuccess.type]
+  type StoreCompanyResponse[A] = Either[StoreCompanyNumberFailure, A]
 
   case object StoreCompanyNumberSuccess
+
+  case object StoreCtReferenceSuccess
 
   sealed trait StoreCompanyNumberFailure
 
   case object CompanyNumberDatabaseFailure extends StoreCompanyNumberFailure
 
-  case object CompanyNumberDatabaseFailureNoVATNumber extends StoreCompanyNumberFailure
+  case object CtReferenceDatabaseFailure extends StoreCompanyNumberFailure
+
+  case object DatabaseFailureNoVATNumber extends StoreCompanyNumberFailure
 
   case object CtReferenceMismatch extends StoreCompanyNumberFailure
 

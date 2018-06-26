@@ -66,7 +66,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "replace the previous data when one already exists" in {
       val res = for {
-        _ <- repo.insert(SubscriptionRequest(testVatNumber, Some(testCompanyNumber), Some(testNino), Some(UserEntered), Some(testEmail), identityVerified = true))
+        _ <- repo.insert(SubscriptionRequest(testVatNumber, Some(testCompanyNumber), Some(testCtReference), Some(testNino), Some(UserEntered), Some(testEmail), identityVerified = true))
         _ <- repo.upsertVatNumber(testVatNumber)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -302,6 +302,32 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
         identityVerified = true
+      ))
+    }
+  }
+
+  "upsertCtReference" should {
+    "throw NoSuchElementException where the vat number doesn't exist" in {
+      val res = for {
+        _ <- repo.upsertCtReference(testVatNumber, testCtReference)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      intercept[NoSuchElementException] {
+        await(res)
+      }
+    }
+
+    "update the subscription request with CtReference" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertCtReference(testVatNumber, testCtReference)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(SubscriptionRequest(
+        vatNumber = testVatNumber,
+        ctReference = Some(testCtReference)
       ))
     }
   }
