@@ -21,6 +21,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetCtReferenceStub.{ctReferenceBody, stubGetCtReference}
 
 class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
@@ -56,6 +57,22 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
       res should have(
         httpStatus(BAD_REQUEST)
       )
+    }
+
+    "return NO_CONTENT when the provided CT reference matches the one returned by DES" in {
+      stubAuth(OK, successfulAuthResponse())
+      await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+      stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
+
+      val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
+        "companyNumber" -> testCompanyNumber,
+        "ctReference" -> testCtReference
+      ))
+
+      res should have(
+        httpStatus(NO_CONTENT)
+      )
+
     }
   }
 

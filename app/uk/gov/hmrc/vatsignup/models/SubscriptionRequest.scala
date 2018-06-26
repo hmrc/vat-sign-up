@@ -37,6 +37,7 @@ object SubscriptionRequest {
   val registrationDateKey = "registrationDate"
   val idKey = "_id"
   val companyNumberKey = "companyNumber"
+  val ctReferenceKey = "ctReference"
   val ninoKey = "nino"
   val ninoSourceKey = "ninoSource"
   val emailKey = "email"
