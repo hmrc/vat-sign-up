@@ -15,6 +15,7 @@
  */
 
 package uk.gov.hmrc.vatsignup.models
+
 import SignUpRequest._
 
 case class SignUpRequest(vatNumber: String,
@@ -25,6 +26,7 @@ case class SignUpRequest(vatNumber: String,
                         )
 
 object SignUpRequest {
+
   sealed trait BusinessEntity
 
   case class LimitedCompany(companyNumber: String) extends BusinessEntity
@@ -32,6 +34,7 @@ object SignUpRequest {
   case class SoleTrader(nino: String) extends BusinessEntity
 
   case class EmailAddress(emailAddress: String, isVerified: Boolean)
+
 }
 
 
