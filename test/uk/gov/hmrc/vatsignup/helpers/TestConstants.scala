@@ -22,6 +22,7 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
 import uk.gov.hmrc.vatsignup.models.ControlListInformation.{Company, Stagger1}
+import uk.gov.hmrc.vatsignup.models.SignUpRequest.{LimitedCompany, SoleTrader, EmailAddress}
 import uk.gov.hmrc.vatsignup.models.{ControlListInformation, CustomerDetails}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser.ControlListInformationIndices._
 
@@ -36,6 +37,9 @@ object TestConstants {
   val testSafeId: String = UUID.randomUUID().toString
   val testToken = UUID.randomUUID().toString
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
+  val testBusinessEntityLTD = LimitedCompany(testCompanyNumber)
+  val testBusinessEntitySole = SoleTrader(testNino)
+  val testSignUpEmail = EmailAddress(testEmail, true)
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
