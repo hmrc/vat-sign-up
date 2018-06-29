@@ -55,10 +55,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
 
     val result = for {
       safeId <- signUpRequest.businessEntity match {
-        case x: LimitedCompany =>
-          registerCompany(signUpRequest.vatNumber, x.companyNumber, optAgentReferenceNumber)
-        case x: SoleTrader =>
-          registerIndividual(signUpRequest.vatNumber, x.nino, optAgentReferenceNumber)
+        case LimitedCompany(companyNumber) =>
+          registerCompany(signUpRequest.vatNumber, companyNumber, optAgentReferenceNumber)
+        case SoleTrader(nino) =>
+          registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber)
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
