@@ -19,7 +19,6 @@ package uk.gov.hmrc.vatsignup.service
 import org.scalatest.EitherValues
 import play.api.http.Status._
 import play.api.test.FakeRequest
-import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -32,18 +31,15 @@ import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.{MockEmailRequestRepository, MockSubscriptionRequestRepository}
-import uk.gov.hmrc.vatsignup.service.mocks.MockEmailRequirementService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
-import uk.gov.hmrc.vatsignup.services.EmailRequirementService.{Email, GetEmailVerificationFailure, UnVerifiedEmail}
 import uk.gov.hmrc.vatsignup.services.SubmissionService._
 import uk.gov.hmrc.vatsignup.services._
-
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SubmissionServiceSpec extends UnitSpec with EitherValues
-  with MockSubscriptionRequestRepository with MockEmailRequirementService
+  with MockSubscriptionRequestRepository
   with MockCustomerSignUpConnector with MockRegistrationConnector
   with MockTaxEnrolmentsConnector with MockAuditService with MockEmailRequestRepository {
 
@@ -75,7 +71,6 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true
               )
-
 
               mockRegisterIndividual(testVatNumber, testNino)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
 
