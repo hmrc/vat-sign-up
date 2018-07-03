@@ -68,13 +68,17 @@ object SubscriptionRequest {
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
         companyNumberKey -> subscriptionRequest.companyNumber,
-        ctReferenceKey -> subscriptionRequest.ctReference,
         ninoKey -> subscriptionRequest.nino,
         ninoSourceKey -> subscriptionRequest.ninoSource,
         emailKey -> subscriptionRequest.email,
         transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli)
+      ).++(
+        subscriptionRequest.ctReference match {
+          case Some(ref) => Json.obj(ctReferenceKey -> ref)
+          case _ => Json.obj()
+        }
       )
   )
 
