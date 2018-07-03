@@ -68,6 +68,7 @@ object SubscriptionRequest {
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
         companyNumberKey -> subscriptionRequest.companyNumber,
+        ctReferenceKey -> subscriptionRequest.ctReference,
         ninoKey -> subscriptionRequest.nino,
         ninoSourceKey -> subscriptionRequest.ninoSource,
         emailKey -> subscriptionRequest.email,

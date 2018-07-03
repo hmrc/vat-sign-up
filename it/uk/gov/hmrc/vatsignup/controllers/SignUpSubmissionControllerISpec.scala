@@ -152,7 +152,30 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           )
         }
       }
+      "the user is signing up a limited company and has provided a CT reference" should {
+        "return NO_CONTENT for company sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            companyNumber = Some(testCompanyNumber),
+            ctReference = Some(testCtReference),
+            email = Some(testEmail)
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+      }
     }
   }
-
 }
