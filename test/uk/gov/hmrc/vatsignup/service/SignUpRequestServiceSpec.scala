@@ -135,6 +135,39 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
         "there is not a stored CT reference" when {
+          "the user has a matching VAT enrolment" when {
+            "there is a stored sign up email address" when {
+              "the sign up email address is verified" when {
+                "there is not a transaction e-mail address" should {
+                  "return a successful SignUpRequest" in {
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        companyNumber = Some(testCompanyNumber),
+                        email = Some(testEmail)
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPrincipalEnrolment)))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedCompany(testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false
+                      )
+                    )
+                  }
+                }
+              }
+            }
+          }
           "there is a stored identity verified flag" when {
             "there is a stored sign up email address" when {
               "the sign up email address is verified" when {
@@ -293,6 +326,7 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
       }
     }
+
     "the request is delegated" when {
       "there is a stored NINO" when {
         "there is an unverified sign up e-mail" should {
