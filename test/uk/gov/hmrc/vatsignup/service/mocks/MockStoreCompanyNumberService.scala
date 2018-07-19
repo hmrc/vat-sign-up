@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService._
 import uk.gov.hmrc.vatsignup.services._
@@ -54,7 +55,8 @@ trait MockStoreCompanyNumberService extends MockitoSugar with BeforeAndAfterEach
       ArgumentMatchers.eq(companyNumber),
       ArgumentMatchers.eq(ctReference)
     )(
-      ArgumentMatchers.any[HeaderCarrier]
+      ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]]
     )) thenReturn response
   }
 }
