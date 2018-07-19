@@ -39,9 +39,11 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
       case Some(subscriptionRequest) =>
+        val hasVatEnrolment = enrolments.vatNumber contains subscriptionRequest.vatNumber
+
         val res: EitherT[Future, GetSignUpRequestFailure, SignUpRequest] = for {
           businessEntity <- EitherT.fromEither[Future](getBusinessEntity(subscriptionRequest))
-          _ <- EitherT.fromEither[Future](checkAuthorisation(businessEntity, subscriptionRequest, isDelegated))
+          _ <- EitherT.fromEither[Future](checkAuthorisation(businessEntity, subscriptionRequest, isDelegated, hasVatEnrolment))
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
         } yield SignUpRequest(
@@ -72,9 +74,10 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
   private def checkAuthorisation(businessEntity: BusinessEntity,
                                  subscriptionRequest: SubscriptionRequest,
-                                 isDelegated: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
+                                 isDelegated: Boolean,
+                                 hasVatEnrolment: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
     businessEntity match {
-      case _: LimitedCompany if subscriptionRequest.ctReference.isDefined =>
+      case _: LimitedCompany if subscriptionRequest.ctReference.isDefined || hasVatEnrolment =>
         Right(RequestAuthorised)
       case _: SoleTrader if subscriptionRequest.ninoSource contains IRSA =>
         Right(RequestAuthorised)
