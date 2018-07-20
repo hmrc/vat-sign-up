@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.{BadGatewayException, HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.{BadGatewayException, HeaderCarrier}
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, MTDEligibilityCheck}
+import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, KnownFactsAndControlListInformationConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
@@ -102,7 +101,6 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                optBusinessPostcode: Option[String],
                                optVatRegistrationDate: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess.type] =
-    if (appConfig.isEnabled(MTDEligibilityCheck)) {
       EitherT[Future, KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation](
         knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber: String)
       ).transform[StoreVatNumberFailure, EligibilitySuccess.type] {
@@ -161,14 +159,6 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
           ))
           throw new BadGatewayException(s"Known facts & control list returned ${err.status} ${err.body}")
       }
-    } else {
-      (optBusinessPostcode, optVatRegistrationDate) match {
-        case (Some(_), Some(_)) =>
-          EitherT.liftF(Future.failed(new InternalServerException("The known facts API is disabled and known facts were provided")))
-        case _ =>
-          EitherT.pure(EligibilitySuccess)
-      }
-    }
 
   private def checkExistingVatSubscription(vatNumber: String
                                           )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
