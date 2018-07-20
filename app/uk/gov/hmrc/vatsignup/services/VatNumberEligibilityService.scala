@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data.EitherT
 import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, MTDEligibilityCheck}
+import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.connectors.{KnownFactsAndControlListInformationConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformation, KnownFactsInvalidVatNumber}
 import uk.gov.hmrc.vatsignup.models._
@@ -63,7 +62,6 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
 
   private def getEligibilityStatus(vatNumber: String
                                   )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, VatNumberEligibilityFailure, VatNumberEligible.type] = {
-    if (appConfig.isEnabled(MTDEligibilityCheck)) {
       EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) transform {
         case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlList)) =>
           controlList.validate(appConfig.eligibilityConfig) match {
@@ -103,9 +101,6 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
           ))
           Left(KnownFactsAndControlListFailure)
       }
-    } else {
-      EitherT.pure[Future, VatNumberEligibilityFailure](VatNumberEligible)
-    }
   }
 }
 
