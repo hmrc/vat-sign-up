@@ -30,7 +30,8 @@ class SubscriptionRequestSpec extends UnitSpec {
       ninoSourceKey -> UserEntered,
       emailKey -> testEmail,
       transactionEmailKey -> testEmail,
-      identityVerifiedKey -> true
+      identityVerifiedKey -> true,
+      isMigratableKey -> false
     )
 
     val testModel = SubscriptionRequest(
@@ -40,7 +41,8 @@ class SubscriptionRequestSpec extends UnitSpec {
       ninoSource = Some(UserEntered),
       email = Some(testEmail),
       transactionEmail = Some(testEmail),
-      identityVerified = true
+      identityVerified = true,
+      isMigratable = false
     )
 
     "convert a SubscriptionRequest into a correctly formatted json model" in {
