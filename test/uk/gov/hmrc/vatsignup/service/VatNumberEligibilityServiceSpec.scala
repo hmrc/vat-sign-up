@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import cats.data.Validated.Invalid
 import org.scalatest.EitherValues
 import play.api.http.Status
 import play.api.mvc.Request
@@ -31,6 +30,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandati
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers._
 import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DeRegOrDeath, Ineligible}
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService
@@ -72,13 +72,12 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
               enable(AlreadySubscribedCheck)
 
               val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
-                testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
+                ControlListInformation(testKnownFactsAndControlListInformation.controlListInformation.controlList + DeRegOrDeath)
               )
-              import ControlListInformation.eligible
               val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
-              assert(failures != eligible)
+              assert(!failures.isRight)
               val ineligibilityReasons = failures match {
-                case Invalid(err) => err.toList
+                case Left(Ineligible(err)) => err.toList.map(_.toString)
               }
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))

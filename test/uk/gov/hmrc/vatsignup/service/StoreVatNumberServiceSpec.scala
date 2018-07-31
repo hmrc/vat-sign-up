@@ -18,13 +18,12 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.util.UUID
 
-import cats.data.Validated.Invalid
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
@@ -34,6 +33,7 @@ import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber}
 import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DeRegOrDeath}
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -148,13 +148,12 @@ class StoreVatNumberServiceSpec
             enable(AlreadySubscribedCheck)
 
             val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
-              testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
+              ControlListInformation(testKnownFactsAndControlListInformation.controlListInformation.controlList + DeRegOrDeath)
             )
-            import ControlListInformation.eligible
             val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
-            assert(failures != eligible)
+            assert(!failures.isRight)
             val ineligibilityReasons = failures match {
-              case Invalid(err) => err.toList
+              case Left(uk.gov.hmrc.vatsignup.models.controllist.Ineligible(err)) => err.toList.map(_.toString)
             }
 
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
@@ -272,13 +271,12 @@ class StoreVatNumberServiceSpec
             enable(AlreadySubscribedCheck)
 
             val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
-              testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
+              ControlListInformation(testKnownFactsAndControlListInformation.controlListInformation.controlList + DeRegOrDeath)
             )
-            import ControlListInformation.eligible
             val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
-            assert(failures != eligible)
+            assert(!failures.isRight)
             val ineligibilityReasons = failures match {
-              case Invalid(err) => err.toList
+              case Left(uk.gov.hmrc.vatsignup.models.controllist.Ineligible(err)) => err.toList.map(_.toString)
             }
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))

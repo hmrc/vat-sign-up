@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import cats.data.Validated.{Invalid, Valid}
+import javax.inject.{Inject, Singleton}
+
 import cats.data._
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{BadGatewayException, HeaderCarrier}
@@ -101,64 +101,64 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                optBusinessPostcode: Option[String],
                                optVatRegistrationDate: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess.type] =
-      EitherT[Future, KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation](
-        knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber: String)
-      ).transform[StoreVatNumberFailure, EligibilitySuccess.type] {
-        case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlListInformation)) =>
-          controlListInformation.validate(appConfig.eligibilityConfig) match {
-            case Valid(_) =>
-              auditService.audit(ControlListAuditModel(
-                vatNumber = vatNumber,
-                isSuccess = true
-              ))
-              (optBusinessPostcode, optVatRegistrationDate) match {
-                case (Some(enteredPostCode), Some(enteredVatRegistrationDate)) =>
-                  val knownFactsMatched =
-                    (enteredPostCode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
-                      (enteredVatRegistrationDate == vatRegistrationDate)
-                  auditService.audit(KnownFactsAuditModel(
-                    vatNumber = vatNumber,
-                    enteredPostCode = enteredPostCode,
-                    enteredVatRegistrationDate = enteredVatRegistrationDate,
-                    desPostCode = businessPostcode,
-                    desVatRegistrationDate = vatRegistrationDate,
-                    matched = knownFactsMatched
-                  ))
-                  if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
-                  else Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
-                case _ =>
-                  Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
-              }
-            case Invalid(ineligibilityReasons) =>
-              auditService.audit(ControlListAuditModel(
-                vatNumber = vatNumber,
-                isSuccess = false,
-                failureReasons = ineligibilityReasons.toList
-              ))
-              Left(Ineligible)
-          }
-        case Left(ControlListInformationVatNumberNotFound) =>
-          auditService.audit(ControlListAuditModel(
-            vatNumber = vatNumber,
-            isSuccess = false,
-            failureReasons = Seq(vatNumberNotFound)
-          ))
-          Left(VatNotFound)
-        case Left(KnownFactsInvalidVatNumber) =>
-          auditService.audit(ControlListAuditModel(
-            vatNumber = vatNumber,
-            isSuccess = false,
-            failureReasons = Seq(invalidVatNumber)
-          ))
-          Left(VatInvalid)
-        case Left(err: UnexpectedKnownFactsAndControlListInformationFailure) =>
-          auditService.audit(ControlListAuditModel(
-            vatNumber = vatNumber,
-            isSuccess = false,
-            failureReasons = Seq(unexpectedError)
-          ))
-          throw new BadGatewayException(s"Known facts & control list returned ${err.status} ${err.body}")
-      }
+    EitherT[Future, KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation](
+      knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber: String)
+    ).transform[StoreVatNumberFailure, EligibilitySuccess.type] {
+      case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlListInformation)) =>
+        controlListInformation.validate(appConfig.eligibilityConfig) match {
+          case Right(_) =>
+            auditService.audit(ControlListAuditModel(
+              vatNumber = vatNumber,
+              isSuccess = true
+            ))
+            (optBusinessPostcode, optVatRegistrationDate) match {
+              case (Some(enteredPostCode), Some(enteredVatRegistrationDate)) =>
+                val knownFactsMatched =
+                  (enteredPostCode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
+                    (enteredVatRegistrationDate == vatRegistrationDate)
+                auditService.audit(KnownFactsAuditModel(
+                  vatNumber = vatNumber,
+                  enteredPostCode = enteredPostCode,
+                  enteredVatRegistrationDate = enteredVatRegistrationDate,
+                  desPostCode = businessPostcode,
+                  desVatRegistrationDate = vatRegistrationDate,
+                  matched = knownFactsMatched
+                ))
+                if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+                else Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
+              case _ =>
+                Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+            }
+          case Left(ineligibilityReasons) =>
+            auditService.audit(ControlListAuditModel(
+              vatNumber = vatNumber,
+              isSuccess = false,
+              failureReasons = ineligibilityReasons.reasons.toList.map(_.toString)
+            ))
+            Left(Ineligible)
+        }
+      case Left(ControlListInformationVatNumberNotFound) =>
+        auditService.audit(ControlListAuditModel(
+          vatNumber = vatNumber,
+          isSuccess = false,
+          failureReasons = Seq(vatNumberNotFound)
+        ))
+        Left(VatNotFound)
+      case Left(KnownFactsInvalidVatNumber) =>
+        auditService.audit(ControlListAuditModel(
+          vatNumber = vatNumber,
+          isSuccess = false,
+          failureReasons = Seq(invalidVatNumber)
+        ))
+        Left(VatInvalid)
+      case Left(err: UnexpectedKnownFactsAndControlListInformationFailure) =>
+        auditService.audit(ControlListAuditModel(
+          vatNumber = vatNumber,
+          isSuccess = false,
+          failureReasons = Seq(unexpectedError)
+        ))
+        throw new BadGatewayException(s"Known facts & control list returned ${err.status} ${err.body}")
+    }
 
   private def checkExistingVatSubscription(vatNumber: String
                                           )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =

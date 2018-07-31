@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vatsignup.utils.controllist
+package uk.gov.hmrc.vatsignup.models.controllist
 
-import uk.gov.hmrc.vatsignup.models.ControlListInformation.{BusinessEntity, Stagger}
-
-object ControlListIneligibilityMessages {
+object ControlListMessages {
   val belowVatThresholdMessage: String = "Below VAT threshold"
   val missingReturnsMessage: String = "Missing returns"
   val centralAssessmentsMessage: String = "Central assessments"

@@ -16,40 +16,94 @@
 
 package uk.gov.hmrc.vatsignup.config
 
+import uk.gov.hmrc.vatsignup.models.controllist._
 
-case class EligibilityConfig(
-                              permitBelowVatThreshold: Boolean,
-                              permitAnnualStagger: Boolean,
-                              permitMissingReturns: Boolean,
-                              permitCentralAssessments: Boolean,
-                              permitCriminalInvestigationInhibits: Boolean,
-                              permitCompliancePenaltiesOrSurcharges: Boolean,
-                              permitInsolvency: Boolean,
-                              permitDeRegOrDeath: Boolean,
-                              permitDebtMigration: Boolean,
-                              permitDirectDebit: Boolean,
-                              permitEuSalesOrPurchases: Boolean,
-                              permitLargeBusiness: Boolean,
-                              permitMissingTrader: Boolean,
-                              permitMonthlyStagger: Boolean,
-                              permitNonStandardTaxPeriod: Boolean,
-                              permitOverseasTrader: Boolean,
-                              permitPoaTrader: Boolean,
-                              permitStagger1: Boolean,
-                              permitStagger2: Boolean,
-                              permitStagger3: Boolean,
-                              permitCompany: Boolean,
-                              permitDivision: Boolean,
-                              permitGroup: Boolean,
-                              permitPartnership: Boolean,
-                              permitPublicCorporation: Boolean,
-                              permitSoleTrader: Boolean,
-                              permitLocalAuthority: Boolean,
-                              permitNonProfit: Boolean,
-                              permitDificTrader: Boolean,
-                              permitAnythingUnderAppeal: Boolean,
-                              permitRepaymentTrader: Boolean,
-                              permitMossTrader: Boolean
-                            )
+sealed trait EligibilityConfiguration
+
+sealed trait EligibleConfig extends EligibilityConfiguration
+
+case object MigratableParameter extends EligibleConfig
+
+case object NonMigratableParameter extends EligibleConfig
+
+case object IneligibleParameter extends EligibilityConfiguration
 
 
+case class EligibilityConfig(config: Map[ControlListParameter, EligibilityConfiguration]) {
+  lazy val ineligibleParameters: Set[ControlListParameter] = config.filter { case (_, value) => value == IneligibleParameter }.keySet
+  lazy val nonMigratableParameters: Set[ControlListParameter] = config.filter { case (_, value) => value == NonMigratableParameter }.keySet
+}
+
+object EligibilityConfig {
+
+  def apply(belowVatThresholdConfig: EligibilityConfiguration,
+            annualStaggerConfig: EligibilityConfiguration,
+            missingReturnsConfig: EligibilityConfiguration,
+            centralAssessmentsConfig: EligibilityConfiguration,
+            criminalInvestigationInhibitsConfig: EligibilityConfiguration,
+            compliancePenaltiesOrSurchargesConfig: EligibilityConfiguration,
+            insolvencyConfig: EligibilityConfiguration,
+            deRegOrDeathConfig: EligibilityConfiguration,
+            debtMigrationConfig: EligibilityConfiguration,
+            directDebitConfig: EligibilityConfiguration,
+            euSalesOrPurchasesConfig: EligibilityConfiguration,
+            largeBusinessConfig: EligibilityConfiguration,
+            missingTraderConfig: EligibilityConfiguration,
+            monthlyStaggerConfig: EligibilityConfiguration,
+            nonStandardTaxPeriodConfig: EligibilityConfiguration,
+            overseasTraderConfig: EligibilityConfiguration,
+            poaTraderConfig: EligibilityConfiguration,
+            stagger1Config: EligibilityConfiguration,
+            stagger2Config: EligibilityConfiguration,
+            stagger3Config: EligibilityConfiguration,
+            companyConfig: EligibilityConfiguration,
+            divisionConfig: EligibilityConfiguration,
+            groupConfig: EligibilityConfiguration,
+            partnershipConfig: EligibilityConfiguration,
+            publicCorporationConfig: EligibilityConfiguration,
+            soleTraderConfig: EligibilityConfiguration,
+            localAuthorityConfig: EligibilityConfiguration,
+            nonProfitConfig: EligibilityConfiguration,
+            dificTraderConfig: EligibilityConfiguration,
+            anythingUnderAppealConfig: EligibilityConfiguration,
+            repaymentTraderConfig: EligibilityConfiguration,
+            mossTraderConfig: EligibilityConfiguration
+           ): EligibilityConfig =
+    new EligibilityConfig(
+      Map(
+        BelowVatThreshold -> belowVatThresholdConfig,
+        AnnualStagger -> annualStaggerConfig,
+        MissingReturns -> missingReturnsConfig,
+        CentralAssessments -> centralAssessmentsConfig,
+        CriminalInvestigationInhibits -> criminalInvestigationInhibitsConfig,
+        CompliancePenaltiesOrSurcharges -> compliancePenaltiesOrSurchargesConfig,
+        Insolvency -> insolvencyConfig,
+        DeRegOrDeath -> deRegOrDeathConfig,
+        DebtMigration -> debtMigrationConfig,
+        DirectDebit -> directDebitConfig,
+        EuSalesOrPurchases -> euSalesOrPurchasesConfig,
+        LargeBusiness -> largeBusinessConfig,
+        MissingTrader -> missingTraderConfig,
+        MonthlyStagger -> monthlyStaggerConfig,
+        NonStandardTaxPeriod -> nonStandardTaxPeriodConfig,
+        OverseasTrader -> overseasTraderConfig,
+        PoaTrader -> poaTraderConfig,
+        Stagger1 -> stagger1Config,
+        Stagger2 -> stagger2Config,
+        Stagger3 -> stagger3Config,
+        Company -> companyConfig,
+        Division -> divisionConfig,
+        Group -> groupConfig,
+        Partnership -> partnershipConfig,
+        PublicCorporation -> publicCorporationConfig,
+        SoleTrader -> soleTraderConfig,
+        LocalAuthority -> localAuthorityConfig,
+        NonProfitMakingBody -> nonProfitConfig,
+        DificTrader -> dificTraderConfig,
+        AnythingUnderAppeal -> anythingUnderAppealConfig,
+        RepaymentTrader -> repaymentTraderConfig,
+        MossTrader -> mossTraderConfig
+      )
+    )
+
+}
