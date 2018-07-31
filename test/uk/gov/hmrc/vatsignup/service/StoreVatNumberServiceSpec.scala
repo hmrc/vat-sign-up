@@ -78,7 +78,7 @@ class StoreVatNumberServiceSpec
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
                 mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-                mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+                mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
                 res shouldBe Right(StoreVatNumberSuccess)
@@ -93,7 +93,7 @@ class StoreVatNumberServiceSpec
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
                 mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-                mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
+                mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
                 res shouldBe Left(VatNumberDatabaseFailure)
@@ -134,13 +134,38 @@ class StoreVatNumberServiceSpec
 
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-              mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
               res shouldBe Right(StoreVatNumberSuccess)
 
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
+          }
+        }
+        "the VAT number is eligible but non migratable" should {
+          "return StoreVatNumberSuccess" in {
+            sys.props += "control-list.eligible.stagger_1" -> "NonMigratable"
+
+            enable(AlreadySubscribedCheck)
+
+            val failures = testKnownFactsAndControlListInformation.controlListInformation.validate(mockConfig.eligibilityConfig)
+            val nonMigratableReasons = failures match {
+              case Right(uk.gov.hmrc.vatsignup.models.controllist.NonMigratable(err)) => err.toList.map(_.toString)
+            }
+
+            mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
+            mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
+
+            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+            res shouldBe Right(StoreVatNumberSuccess)
+
+            verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = nonMigratableReasons))
+
+            sys.props += "control-list.eligible.stagger_1" -> "Migratable"
           }
         }
         "the VAT number is not eligible for MTD" should {
@@ -201,7 +226,7 @@ class StoreVatNumberServiceSpec
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-              mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
               res shouldBe Right(StoreVatNumberSuccess)
@@ -213,7 +238,7 @@ class StoreVatNumberServiceSpec
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
               mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-              mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
               res shouldBe Left(VatNumberDatabaseFailure)
@@ -259,7 +284,7 @@ class StoreVatNumberServiceSpec
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-            mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
             verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
@@ -330,7 +355,7 @@ class StoreVatNumberServiceSpec
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
             mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-            mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
             val res = await(call)
             res shouldBe Left(VatNumberDatabaseFailure)

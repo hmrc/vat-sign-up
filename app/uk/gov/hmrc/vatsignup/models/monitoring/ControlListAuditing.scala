@@ -28,7 +28,8 @@ object ControlListAuditing {
 
   case class ControlListAuditModel(vatNumber: String,
                                    isSuccess: Boolean,
-                                   failureReasons: Seq[String] = Nil
+                                   failureReasons: Seq[String] = Nil,
+                                   nonMigratableReasons: Seq[String] = Nil
                                   ) extends AuditModel {
     override val transactionName: String = controlListTransactionName
     override val detail: Map[String, String] = Map(
@@ -37,6 +38,9 @@ object ControlListAuditing {
     ) ++ (failureReasons match {
       case Nil => None
       case reasons => Some("failureReasons" -> reasons.mkString(", "))
+    }) ++ (nonMigratableReasons match {
+      case Nil => None
+      case reasons => Some("nonMigratableReasons" -> reasons.mkString(", "))
     })
 
     override val auditType: String = controlListAuditType

@@ -29,6 +29,7 @@ import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, Know
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.models.controllist.{Migratable, NonMigratable}
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
@@ -56,8 +57,12 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
       _ <- checkExistingVatSubscription(vatNumber)
-      _ <- checkEligibility(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- insertVatNumber(vatNumber)
+      migrtableType <- checkEligibility(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
+      isMigratable = migrtableType match {
+        case MigratableRecord => true
+        case NonMigratableRecord => false
+      }
+      _ <- insertVatNumber(vatNumber, isMigratable)
     } yield StoreVatNumberSuccess
   }.value
 
@@ -100,17 +105,28 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                enrolments: Enrolments,
                                optBusinessPostcode: Option[String],
                                optVatRegistrationDate: Option[String]
-                              )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess.type] =
+                              )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] =
     EitherT[Future, KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation](
       knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber: String)
-    ).transform[StoreVatNumberFailure, EligibilitySuccess.type] {
+    ).transform[StoreVatNumberFailure, EligibilitySuccess] {
       case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlListInformation)) =>
         controlListInformation.validate(appConfig.eligibilityConfig) match {
-          case Right(_) =>
-            auditService.audit(ControlListAuditModel(
-              vatNumber = vatNumber,
-              isSuccess = true
-            ))
+          case Right(eligible) =>
+            val eligibilitySuccessType = eligible match {
+              case Migratable =>
+                auditService.audit(ControlListAuditModel(
+                  vatNumber = vatNumber,
+                  isSuccess = true
+                ))
+                MigratableRecord
+              case NonMigratable(reasons) =>
+                auditService.audit(ControlListAuditModel(
+                  vatNumber = vatNumber,
+                  isSuccess = true,
+                  nonMigratableReasons = reasons.map(_.toString)
+                ))
+                NonMigratableRecord
+            }
             (optBusinessPostcode, optVatRegistrationDate) match {
               case (Some(enteredPostCode), Some(enteredVatRegistrationDate)) =>
                 val knownFactsMatched =
@@ -124,10 +140,10 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                   desVatRegistrationDate = vatRegistrationDate,
                   matched = knownFactsMatched
                 ))
-                if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
-                else Left[StoreVatNumberFailure, EligibilitySuccess.type](KnownFactsMismatch)
+                if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess](eligibilitySuccessType)
+                else Left[StoreVatNumberFailure, EligibilitySuccess](KnownFactsMismatch)
               case _ =>
-                Right[StoreVatNumberFailure, EligibilitySuccess.type](EligibilitySuccess)
+                Right[StoreVatNumberFailure, EligibilitySuccess](eligibilitySuccessType)
             }
           case Left(ineligibilityReasons) =>
             auditService.audit(ControlListAuditModel(
@@ -172,9 +188,10 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       EitherT.pure(NotSubscribed)
     }
 
-  private def insertVatNumber(vatNumber: String
+  private def insertVatNumber(vatNumber: String,
+                              isMigratable: Boolean
                              )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, StoreVatNumberSuccess.type] =
-    EitherT(subscriptionRequestRepository.upsertVatNumber(vatNumber) map {
+    EitherT(subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable) map {
       _ => Right(StoreVatNumberSuccess)
     } recover {
       case _ => Left(VatNumberDatabaseFailure)
@@ -191,7 +208,11 @@ object StoreVatNumberService {
 
   case object UserHasKnownFacts
 
-  case object EligibilitySuccess
+  sealed trait EligibilitySuccess
+
+  case object MigratableRecord extends EligibilitySuccess
+
+  case object NonMigratableRecord extends EligibilitySuccess
 
   sealed trait StoreVatNumberFailure
 

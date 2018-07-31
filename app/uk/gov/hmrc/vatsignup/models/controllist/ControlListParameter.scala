@@ -77,7 +77,7 @@ case object BelowVatThreshold extends ControlListParameter {
 
 case object AnnualStagger extends ControlListParameter with Stagger {
   val ordinal = ANNUAL_STAGGER
-  val errorMessage: String = invalidStaggerTypeMessage(this)
+  val errorMessage: String = invalidStaggerTypeMessage("AnnualStagger")
 }
 
 case object MissingReturns extends ControlListParameter {
@@ -137,7 +137,7 @@ case object MissingTrader extends ControlListParameter {
 
 case object MonthlyStagger extends ControlListParameter with Stagger {
   val ordinal = MONTHLY_STAGGER
-  val errorMessage: String = invalidStaggerTypeMessage(this)
+  val errorMessage: String = invalidStaggerTypeMessage("MonthlyStagger")
 }
 
 case object NonStandardTaxPeriod extends ControlListParameter {
@@ -157,57 +157,57 @@ case object PoaTrader extends ControlListParameter {
 
 case object Stagger1 extends ControlListParameter with Stagger {
   val ordinal = STAGGER_1
-  val errorMessage: String = invalidStaggerTypeMessage(this)
+  val errorMessage: String = invalidStaggerTypeMessage("Stagger1")
 }
 
 case object Stagger2 extends ControlListParameter with Stagger {
   val ordinal = STAGGER_2
-  val errorMessage: String = invalidStaggerTypeMessage(this)
+  val errorMessage: String = invalidStaggerTypeMessage("Stagger2")
 }
 
 case object Stagger3 extends ControlListParameter with Stagger {
   val ordinal = STAGGER_3
-  val errorMessage: String = invalidStaggerTypeMessage(this)
+  val errorMessage: String = invalidStaggerTypeMessage("Stagger3")
 }
 
 case object Company extends ControlListParameter with BusinessEntity {
   val ordinal = COMPANY
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("Company")
 }
 
 case object Division extends ControlListParameter with BusinessEntity {
   val ordinal = DIVISION
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("Division")
 }
 
 case object Group extends ControlListParameter with BusinessEntity {
   val ordinal = GROUP
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("Group")
 }
 
 case object Partnership extends ControlListParameter with BusinessEntity {
   val ordinal = PARTNERSHIP
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("Partnership")
 }
 
 case object PublicCorporation extends ControlListParameter with BusinessEntity {
   val ordinal = PUBLIC_CORPORATION
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("PublicCorporation")
 }
 
 case object SoleTrader extends ControlListParameter with BusinessEntity {
   val ordinal = SOLE_TRADER
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("SoleTrader")
 }
 
 case object LocalAuthority extends ControlListParameter with BusinessEntity {
   val ordinal = LOCAL_AUTHORITY
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("LocalAuthority")
 }
 
 case object NonProfitMakingBody extends ControlListParameter with BusinessEntity {
   val ordinal = NON_PROFIT
-  val errorMessage: String = invalidEntityTypeMessage(this)
+  val errorMessage: String = invalidEntityTypeMessage("NonProfitMakingBody")
 }
 
 case object DificTrader extends ControlListParameter {

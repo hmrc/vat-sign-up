@@ -55,19 +55,29 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       vatNumber = testVatNumber
     )
 
-    "insert the subscription request where there is not already one" in {
-      val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
-        model <- repo.findById(testVatNumber)
-      } yield model
+    "insert the subscription request where there is not already one" when {
+      "isMigratable is true" in {
+        val res = for {
+          _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+          model <- repo.findById(testVatNumber)
+        } yield model
 
-      await(res) should contain(testSubscriptionRequest)
+        await(res) should contain(testSubscriptionRequest)
+      }
+      "isMigratable is false" in {
+        val res = for {
+          _ <- repo.upsertVatNumber(testVatNumber, isMigratable = false)
+          model <- repo.findById(testVatNumber)
+        } yield model
+
+        await(res) should contain(testSubscriptionRequest.copy(isMigratable = false))
+      }
     }
 
     "replace the previous data when one already exists" in {
       val res = for {
         _ <- repo.insert(SubscriptionRequest(testVatNumber, Some(testCompanyNumber), Some(testCtReference), Some(testNino), Some(UserEntered), Some(testEmail), identityVerified = true))
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -96,7 +106,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request where there isn't already a company number stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -106,7 +116,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "delete the nino if it already exists" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         withNino <- repo.findById(testVatNumber)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
@@ -150,7 +160,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request where there isn't already an email stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertEmail(testVatNumber, testEmail)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -189,7 +199,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request where there isn't already a transaction email stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertTransactionEmail(testVatNumber, testEmail)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -229,7 +239,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request where there isn't already a nino stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -239,7 +249,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "delete the company number if it already exists" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
         withCompanyNumber <- repo.findById(testVatNumber)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
@@ -254,7 +264,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "set identity verification to false" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertIdentityVerified(testVatNumber)
         identityVerified <- repo.findById(testVatNumber)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
@@ -294,7 +304,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request with IdentityVerified" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertIdentityVerified(testVatNumber)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -320,7 +330,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request with CtReference" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertCtReference(testVatNumber, testCtReference)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -335,7 +345,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   "deleteRecord" should {
     "delete the entry stored against the vrn" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         inserted <- repo.findById(testVatNumber)
         _ <- repo.deleteRecord(testVatNumber)
         postDelete <- repo.findById(testVatNumber)
