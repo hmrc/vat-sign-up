@@ -27,7 +27,7 @@ import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.connectors.{KnownFactsAndControlListInformationConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformation, KnownFactsInvalidVatNumber}
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.models.controllist.Ineligible
+import uk.gov.hmrc.vatsignup.models.controllist.{Ineligible, Migratable, NonMigratable}
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -66,17 +66,24 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
     EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) transform {
       case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlList)) =>
         controlList.validate(appConfig.eligibilityConfig) match {
-          case Right(_) =>
+          case Right(Migratable) =>
             auditService.audit(ControlListAuditModel(
               vatNumber = vatNumber,
               isSuccess = true
+            ))
+            Right(VatNumberEligible)
+          case Right(NonMigratable(reasons)) =>
+            auditService.audit(ControlListAuditModel(
+              vatNumber = vatNumber,
+              isSuccess = true,
+              nonMigratableReasons = reasons.map(_.toString)
             ))
             Right(VatNumberEligible)
           case Left(Ineligible(reasons)) =>
             auditService.audit(ControlListAuditModel(
               vatNumber = vatNumber,
               isSuccess = false,
-              failureReasons = reasons.toList.map(_.toString)
+              failureReasons = reasons.map(_.toString)
             ))
             Left(VatNumberIneligible)
         }

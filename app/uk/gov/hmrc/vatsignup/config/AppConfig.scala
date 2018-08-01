@@ -88,13 +88,20 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
-  private def loadEligibilityConfig(key: String): EligibilityConfiguration =
-    runModeConfiguration.getString(s"control-list.eligible.$key") match {
+  private def loadConfigFromEnvFirst(key:String):Option[String] = {
+    sys.props.get(key) match {
+      case r@Some(result) if result.nonEmpty => r
+      case _ => runModeConfiguration.getString(key)
+    }
+  }
+  private def loadEligibilityConfig(key: String): EligibilityConfiguration = {
+    loadConfigFromEnvFirst(s"control-list.eligible.$key") match {
       case Some("Migratable") => MigratableParameter
       case Some("NonMigratable") => NonMigratableParameter
       case Some("Ineligible") => IneligibleParameter
       case _ => throw new Exception(s"Missing eligibility configuration key: $key")
     }
+  }
 
   def eligibilityConfig: EligibilityConfig = EligibilityConfig(
     belowVatThresholdConfig = loadEligibilityConfig("below_vat_threshold"),

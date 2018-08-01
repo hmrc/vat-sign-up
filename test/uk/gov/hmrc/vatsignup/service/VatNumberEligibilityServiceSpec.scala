@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandati
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers._
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DeRegOrDeath, Ineligible}
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DeRegOrDeath, Ineligible, Stagger1}
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService
@@ -56,7 +56,7 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
     "the AlreadySubscribedCheck feature switch is enabled" when {
       "the mandation status service returns NonMTDfB" when {
         "the MTDEligibilityCheck feature switch is enabled" when {
-          "the known facts and control list service returns MtdEligible" should {
+          "the known facts and control list service returns Migratable" should {
             "return VatNumberEligible" in {
               enable(AlreadySubscribedCheck)
 
@@ -65,6 +65,21 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
 
               await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber)).right.value shouldBe VatNumberEligible
               verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
+            }
+          }
+          "the known facts and control list service returns NonMigratable" should {
+            "return VatNumberEligible" in {
+              sys.props += "control-list.eligible.stagger_1" -> "NonMigratable"
+
+              enable(AlreadySubscribedCheck)
+
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+              mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
+
+              await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber)).right.value shouldBe VatNumberEligible
+              verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = Seq(Stagger1.errorMessage)))
+
+              sys.props += "control-list.eligible.stagger_1" -> "Migratable"
             }
           }
           "the known facts and control list service returns a control list information that is ineligible" should {
