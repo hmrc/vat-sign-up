@@ -86,6 +86,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def getCtReferenceUrl(companyNumber: String): String = s"$desUrl/corporation-tax/identifiers/crn/$companyNumber"
 
+  def allocateEnrolmentUrl(groupId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/groups/$groupId/enrolments/$enrolmentKey"
+
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
   private def loadConfigFromEnvFirst(key:String):Option[String] = {
