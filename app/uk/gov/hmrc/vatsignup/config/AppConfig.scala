@@ -84,6 +84,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def mandationStatusUrl(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/mandation-status"
 
+  def vatSubscriptionKnownFacts(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/known-facts"
+
   def getCtReferenceUrl(companyNumber: String): String = s"$desUrl/corporation-tax/identifiers/crn/$companyNumber"
 
   def allocateEnrolmentUrl(groupId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/groups/$groupId/enrolments/$enrolmentKey"
