@@ -83,6 +83,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def mandationStatusUrl(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/mandation-status"
 
+  def vatSubscriptionKnownFacts(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/known-facts"
+
   def getCtReferenceUrl(companyNumber: String): String = s"$desUrl/corporation-tax/identifiers/crn/$companyNumber"
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
