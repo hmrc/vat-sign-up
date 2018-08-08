@@ -16,94 +16,68 @@
 
 package uk.gov.hmrc.vatsignup.config
 
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.vatsignup.models.controllist._
-
-sealed trait EligibilityConfiguration
-
-sealed trait EligibleConfig extends EligibilityConfiguration
-
-case object MigratableParameter extends EligibleConfig
-
-case object NonMigratableParameter extends EligibleConfig
-
-case object IneligibleParameter extends EligibilityConfiguration
+import EligibilityConfig._
 
 
-case class EligibilityConfig(config: Map[ControlListParameter, EligibilityConfiguration]) {
-  lazy val ineligibleParameters: Set[ControlListParameter] = config.filter { case (_, value) => value == IneligibleParameter }.keySet
-  lazy val nonMigratableParameters: Set[ControlListParameter] = config.filter { case (_, value) => value == NonMigratableParameter }.keySet
+@Singleton
+class EligibilityConfig @Inject()(appConfig: AppConfig) {
+  import appConfig.loadEligibilityConfig
+
+  private lazy val configMap = Map(
+    BelowVatThreshold -> loadEligibilityConfig("below_vat_threshold"),
+    AnnualStagger -> loadEligibilityConfig("annual_stagger"),
+    MissingReturns -> loadEligibilityConfig("missing_returns"),
+    CentralAssessments -> loadEligibilityConfig("central_assessments"),
+    CriminalInvestigationInhibits -> loadEligibilityConfig("criminal_investigation_inhibits"),
+    CompliancePenaltiesOrSurcharges -> loadEligibilityConfig("compliance_penalties_or_surcharges"),
+    Insolvency -> loadEligibilityConfig("insolvency"),
+    DeRegOrDeath -> loadEligibilityConfig("dereg_or_death"),
+    DebtMigration -> loadEligibilityConfig("debt_migration"),
+    DirectDebit -> loadEligibilityConfig("direct_debit"),
+    EuSalesOrPurchases -> loadEligibilityConfig("eu_sales_or_purchases"),
+    LargeBusiness -> loadEligibilityConfig("large_business"),
+    MissingTrader -> loadEligibilityConfig("missing_trader"),
+    MonthlyStagger -> loadEligibilityConfig("monthly_stagger"),
+    NonStandardTaxPeriod -> loadEligibilityConfig("none_standard_tax_period"),
+    OverseasTrader -> loadEligibilityConfig("overseas_trader"),
+    PoaTrader -> loadEligibilityConfig("poa_trader"),
+    Stagger1 -> loadEligibilityConfig("stagger_1"),
+    Stagger2 -> loadEligibilityConfig("stagger_2"),
+    Stagger3 -> loadEligibilityConfig("stagger_3"),
+    Company -> loadEligibilityConfig("company"),
+    Division -> loadEligibilityConfig("division"),
+    Group -> loadEligibilityConfig("group"),
+    Partnership -> loadEligibilityConfig("partnership"),
+    PublicCorporation -> loadEligibilityConfig("public_corporation"),
+    SoleTrader -> loadEligibilityConfig("sole_trader"),
+    LocalAuthority -> loadEligibilityConfig("local_authority"),
+    NonProfitMakingBody -> loadEligibilityConfig("non_profit"),
+    DificTrader -> loadEligibilityConfig("dific_trader"),
+    AnythingUnderAppeal -> loadEligibilityConfig("anything_under_appeal"),
+    RepaymentTrader -> loadEligibilityConfig("repayment_trader"),
+    MossTrader -> loadEligibilityConfig("oss_trader")
+  )
+
+  lazy val ineligibleParameters: Set[ControlListParameter] = (configMap collect {
+    case (attribute, migrationStatus) if migrationStatus == IneligibleParameter => attribute
+  }).toSet
+  lazy val nonMigratableParameters: Set[ControlListParameter] = (configMap collect {
+    case (attribute, migrationStatus) if migrationStatus == NonMigratableParameter => attribute
+  }).toSet
+
 }
 
+
 object EligibilityConfig {
+  sealed trait EligibilityConfiguration
 
-  def apply(belowVatThresholdConfig: EligibilityConfiguration,
-            annualStaggerConfig: EligibilityConfiguration,
-            missingReturnsConfig: EligibilityConfiguration,
-            centralAssessmentsConfig: EligibilityConfiguration,
-            criminalInvestigationInhibitsConfig: EligibilityConfiguration,
-            compliancePenaltiesOrSurchargesConfig: EligibilityConfiguration,
-            insolvencyConfig: EligibilityConfiguration,
-            deRegOrDeathConfig: EligibilityConfiguration,
-            debtMigrationConfig: EligibilityConfiguration,
-            directDebitConfig: EligibilityConfiguration,
-            euSalesOrPurchasesConfig: EligibilityConfiguration,
-            largeBusinessConfig: EligibilityConfiguration,
-            missingTraderConfig: EligibilityConfiguration,
-            monthlyStaggerConfig: EligibilityConfiguration,
-            nonStandardTaxPeriodConfig: EligibilityConfiguration,
-            overseasTraderConfig: EligibilityConfiguration,
-            poaTraderConfig: EligibilityConfiguration,
-            stagger1Config: EligibilityConfiguration,
-            stagger2Config: EligibilityConfiguration,
-            stagger3Config: EligibilityConfiguration,
-            companyConfig: EligibilityConfiguration,
-            divisionConfig: EligibilityConfiguration,
-            groupConfig: EligibilityConfiguration,
-            partnershipConfig: EligibilityConfiguration,
-            publicCorporationConfig: EligibilityConfiguration,
-            soleTraderConfig: EligibilityConfiguration,
-            localAuthorityConfig: EligibilityConfiguration,
-            nonProfitConfig: EligibilityConfiguration,
-            dificTraderConfig: EligibilityConfiguration,
-            anythingUnderAppealConfig: EligibilityConfiguration,
-            repaymentTraderConfig: EligibilityConfiguration,
-            mossTraderConfig: EligibilityConfiguration
-           ): EligibilityConfig =
-    new EligibilityConfig(
-      Map(
-        BelowVatThreshold -> belowVatThresholdConfig,
-        AnnualStagger -> annualStaggerConfig,
-        MissingReturns -> missingReturnsConfig,
-        CentralAssessments -> centralAssessmentsConfig,
-        CriminalInvestigationInhibits -> criminalInvestigationInhibitsConfig,
-        CompliancePenaltiesOrSurcharges -> compliancePenaltiesOrSurchargesConfig,
-        Insolvency -> insolvencyConfig,
-        DeRegOrDeath -> deRegOrDeathConfig,
-        DebtMigration -> debtMigrationConfig,
-        DirectDebit -> directDebitConfig,
-        EuSalesOrPurchases -> euSalesOrPurchasesConfig,
-        LargeBusiness -> largeBusinessConfig,
-        MissingTrader -> missingTraderConfig,
-        MonthlyStagger -> monthlyStaggerConfig,
-        NonStandardTaxPeriod -> nonStandardTaxPeriodConfig,
-        OverseasTrader -> overseasTraderConfig,
-        PoaTrader -> poaTraderConfig,
-        Stagger1 -> stagger1Config,
-        Stagger2 -> stagger2Config,
-        Stagger3 -> stagger3Config,
-        Company -> companyConfig,
-        Division -> divisionConfig,
-        Group -> groupConfig,
-        Partnership -> partnershipConfig,
-        PublicCorporation -> publicCorporationConfig,
-        SoleTrader -> soleTraderConfig,
-        LocalAuthority -> localAuthorityConfig,
-        NonProfitMakingBody -> nonProfitConfig,
-        DificTrader -> dificTraderConfig,
-        AnythingUnderAppeal -> anythingUnderAppealConfig,
-        RepaymentTrader -> repaymentTraderConfig,
-        MossTrader -> mossTraderConfig
-      )
-    )
+  sealed trait EligibleConfig extends EligibilityConfiguration
 
+  case object MigratableParameter extends EligibleConfig
+
+  case object NonMigratableParameter extends EligibleConfig
+
+  case object IneligibleParameter extends EligibilityConfiguration
 }

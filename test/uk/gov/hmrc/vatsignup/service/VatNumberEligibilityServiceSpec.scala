@@ -23,7 +23,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
-import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
+import uk.gov.hmrc.vatsignup.config.mocks.{MockConfig, MockEligibilityConfig}
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpFailure
@@ -40,13 +40,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
-  with MockMandationStatusConnector with MockKnownFactsAndControlListInformationConnector with MockConfig with MockAuditService {
+  with MockMandationStatusConnector with MockKnownFactsAndControlListInformationConnector with MockConfig with MockAuditService with MockEligibilityConfig {
 
   object TestVatNumberEligibilityService extends VatNumberEligibilityService(
     mockMandationStatusConnector,
     mockKnownFactsAndControlListInformationConnector,
     mockAuditService,
-    mockConfig
+    mockConfig,
+    mockEligibilityConfig
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -69,7 +70,7 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
           }
           "the known facts and control list service returns NonMigratable" should {
             "return VatNumberEligible" in {
-              sys.props += "control-list.eligible.stagger_1" -> "NonMigratable"
+              mockNonMigratableParameters(Set(Stagger1))
 
               enable(AlreadySubscribedCheck)
 
@@ -78,18 +79,17 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
 
               await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber)).right.value shouldBe VatNumberEligible
               verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = Seq(Stagger1.errorMessage)))
-
-              sys.props += "control-list.eligible.stagger_1" -> "Migratable"
             }
           }
           "the known facts and control list service returns a control list information that is ineligible" should {
             "return VatNumberIneligible" in {
               enable(AlreadySubscribedCheck)
+              mockIneligibleParameters(Set(DeRegOrDeath))
 
               val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
                 ControlListInformation(testKnownFactsAndControlListInformation.controlListInformation.controlList + DeRegOrDeath)
               )
-              val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
+              val failures = testIneligible.controlListInformation.validate(mockEligibilityConfig)
               assert(!failures.isRight)
               val ineligibilityReasons = failures match {
                 case Left(Ineligible(err)) => err.toList.map(_.toString)
