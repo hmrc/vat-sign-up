@@ -17,12 +17,11 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.EitherT
 import cats.implicits._
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.{AppConfig, EligibilityConfig}
 import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.connectors.{KnownFactsAndControlListInformationConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformation, KnownFactsInvalidVatNumber}
@@ -38,7 +37,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationStatusConnector,
                                             knownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector,
                                             auditService: AuditService,
-                                            appConfig: AppConfig)(implicit ec: ExecutionContext) {
+                                            appConfig: AppConfig,
+                                            eligibilityConfig: EligibilityConfig)(implicit ec: ExecutionContext) {
 
   def checkVatNumberEligibility(vatNumber: String)(implicit hc: HeaderCarrier, request: Request[_]): Future[VatNumberEligibility] = {
     for {
@@ -65,7 +65,7 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
                                   )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, VatNumberEligibilityFailure, VatNumberEligible.type] = {
     EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) transform {
       case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlList)) =>
-        controlList.validate(appConfig.eligibilityConfig) match {
+        controlList.validate(eligibilityConfig) match {
           case Right(Migratable) =>
             auditService.audit(ControlListAuditModel(
               vatNumber = vatNumber,

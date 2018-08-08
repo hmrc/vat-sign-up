@@ -17,10 +17,10 @@
 package uk.gov.hmrc.vatsignup.config
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.vatsignup.config.EligibilityConfig.{EligibilityConfiguration, IneligibleParameter, MigratableParameter, NonMigratableParameter}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 
 @Singleton
@@ -98,7 +98,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
       case _ => runModeConfiguration.getString(key)
     }
   }
-  private def loadEligibilityConfig(key: String): EligibilityConfiguration = {
+  def loadEligibilityConfig(key: String): EligibilityConfiguration = {
     loadConfigFromEnvFirst(s"control-list.eligible.$key") match {
       case Some("Migratable") => MigratableParameter
       case Some("NonMigratable") => NonMigratableParameter
@@ -106,40 +106,5 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
       case _ => throw new Exception(s"Missing eligibility configuration key: $key")
     }
   }
-
-  def eligibilityConfig: EligibilityConfig = EligibilityConfig(
-    belowVatThresholdConfig = loadEligibilityConfig("below_vat_threshold"),
-    annualStaggerConfig = loadEligibilityConfig("annual_stagger"),
-    missingReturnsConfig = loadEligibilityConfig("missing_returns"),
-    centralAssessmentsConfig = loadEligibilityConfig("central_assessments"),
-    criminalInvestigationInhibitsConfig = loadEligibilityConfig("criminal_investigation_inhibits"),
-    compliancePenaltiesOrSurchargesConfig = loadEligibilityConfig("compliance_penalties_or_surcharges"),
-    insolvencyConfig = loadEligibilityConfig("insolvency"),
-    deRegOrDeathConfig = loadEligibilityConfig("dereg_or_death"),
-    debtMigrationConfig = loadEligibilityConfig("debt_migration"),
-    directDebitConfig = loadEligibilityConfig("direct_debit"),
-    euSalesOrPurchasesConfig = loadEligibilityConfig("eu_sales_or_purchases"),
-    largeBusinessConfig = loadEligibilityConfig("large_business"),
-    missingTraderConfig = loadEligibilityConfig("missing_trader"),
-    monthlyStaggerConfig = loadEligibilityConfig("monthly_stagger"),
-    nonStandardTaxPeriodConfig = loadEligibilityConfig("none_standard_tax_period"),
-    overseasTraderConfig = loadEligibilityConfig("overseas_trader"),
-    poaTraderConfig = loadEligibilityConfig("poa_trader"),
-    stagger1Config = loadEligibilityConfig("stagger_1"),
-    stagger2Config = loadEligibilityConfig("stagger_2"),
-    stagger3Config = loadEligibilityConfig("stagger_3"),
-    companyConfig = loadEligibilityConfig("company"),
-    divisionConfig = loadEligibilityConfig("division"),
-    groupConfig = loadEligibilityConfig("group"),
-    partnershipConfig = loadEligibilityConfig("partnership"),
-    publicCorporationConfig = loadEligibilityConfig("public_corporation"),
-    soleTraderConfig = loadEligibilityConfig("sole_trader"),
-    localAuthorityConfig = loadEligibilityConfig("local_authority"),
-    nonProfitConfig = loadEligibilityConfig("non_profit"),
-    dificTraderConfig = loadEligibilityConfig("dific_trader"),
-    anythingUnderAppealConfig = loadEligibilityConfig("anything_under_appeal"),
-    repaymentTraderConfig = loadEligibilityConfig("repayment_trader"),
-    mossTraderConfig = loadEligibilityConfig("oss_trader")
-  )
 
 }

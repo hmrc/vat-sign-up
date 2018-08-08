@@ -17,49 +17,43 @@
 package uk.gov.hmrc.vatsignup.models.controllist
 
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.{EligibilityConfig, IneligibleParameter, MigratableParameter, NonMigratableParameter}
+import uk.gov.hmrc.vatsignup.config.EligibilityConfig
+import uk.gov.hmrc.vatsignup.config.EligibilityConfig._
+import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 
 
-class ControlListInformationSpec extends UnitSpec {
+class ControlListInformationSpec extends UnitSpec with MockEligibilityConfig {
 
 
   // n.b. invalid scenario since multiple stagger and business entities are present
   // however we don't care about that here as that'll fail at the parser level
-  val testControlList = ControlListInformation(
-    BelowVatThreshold, MissingReturns, CentralAssessments, CriminalInvestigationInhibits,
+  val allEligibilityParameters: Set[ControlListParameter] = Set(BelowVatThreshold, MissingReturns, CentralAssessments, CriminalInvestigationInhibits,
     CompliancePenaltiesOrSurcharges, Insolvency, DeRegOrDeath, DebtMigration,
     DirectDebit, EuSalesOrPurchases, LargeBusiness, MissingTrader,
     NonStandardTaxPeriod, OverseasTrader, PoaTrader, DificTrader,
     AnythingUnderAppeal, RepaymentTrader, MossTrader,
     AnnualStagger, MonthlyStagger, Stagger1, Stagger2, Stagger3,
     Company, Division, Group, Partnership, PublicCorporation,
-    SoleTrader, LocalAuthority, NonProfitMakingBody
-  )
+    SoleTrader, LocalAuthority, NonProfitMakingBody)
 
-  val allMigratableConfig =
-    EligibilityConfig(
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter,
-      MigratableParameter, MigratableParameter, MigratableParameter, MigratableParameter
-    )
+  val testControlList: ControlListInformation = ControlListInformation(allEligibilityParameters)
+
+
 
   ".validate" should {
     "return Right(Migratable) if every parameter is migratable" in {
-      val res = testControlList.validate(allMigratableConfig)
+      val res = testControlList.validate(mockEligibilityConfig)
       res shouldBe Right(Migratable)
     }
     "return Right(NonMigratable) with all the members in the reason field if every parameter is nonmigratable" in {
-      val nonMigratableConfig = EligibilityConfig(allMigratableConfig.config.map { case (k, v) => (k, NonMigratableParameter) })
+      val nonMigratableConfig = mockEligibilityConfig
+      mockNonMigratableParameters(allEligibilityParameters)
       val res = testControlList.validate(nonMigratableConfig)
       res shouldBe Right(NonMigratable(testControlList.controlList.toSeq))
     }
     "return Left(Ineligible) with all the members in the reason field if every parameter is ineligible" in {
-      val ineligibleConfig = EligibilityConfig(allMigratableConfig.config.map { case (k, v) => (k, IneligibleParameter) })
+      val ineligibleConfig = mockEligibilityConfig
+      mockIneligibleParameters(allEligibilityParameters)
       val res = testControlList.validate(ineligibleConfig)
       res shouldBe Left(Ineligible(testControlList.controlList.toSeq))
     }

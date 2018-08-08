@@ -17,13 +17,12 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data._
 import cats.implicits._
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{BadGatewayException, HeaderCarrier}
-import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.{AppConfig, EligibilityConfig}
 import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, KnownFactsAndControlListInformationConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
@@ -46,7 +45,8 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                       mandationStatusConnector: MandationStatusConnector,
                                       knownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector,
                                       auditService: AuditService,
-                                      appConfig: AppConfig
+                                      appConfig: AppConfig,
+                                      eligibilityConfig: EligibilityConfig
                                      )(implicit ec: ExecutionContext) {
 
   def storeVatNumber(vatNumber: String,
@@ -110,7 +110,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber: String)
     ).transform[StoreVatNumberFailure, EligibilitySuccess] {
       case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlListInformation)) =>
-        controlListInformation.validate(appConfig.eligibilityConfig) match {
+        controlListInformation.validate(eligibilityConfig) match {
           case Right(eligible) =>
             val eligibilitySuccessType = eligible match {
               case Migratable =>

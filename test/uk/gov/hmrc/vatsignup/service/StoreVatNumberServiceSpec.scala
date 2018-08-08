@@ -27,13 +27,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
-import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
+import uk.gov.hmrc.vatsignup.config.mocks.{MockConfig, MockEligibilityConfig}
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber}
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DeRegOrDeath}
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DeRegOrDeath, Stagger1}
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -46,7 +46,7 @@ import scala.concurrent.Future
 
 class StoreVatNumberServiceSpec
   extends UnitSpec with MockAgentClientRelationshipsConnector with MockSubscriptionRequestRepository
-    with MockAuditService with MockConfig
+    with MockAuditService with MockConfig with MockEligibilityConfig
     with MockMandationStatusConnector
     with MockKnownFactsAndControlListInformationConnector {
 
@@ -56,7 +56,8 @@ class StoreVatNumberServiceSpec
     mockMandationStatusConnector,
     mockKnownFactsAndControlListInformationConnector,
     mockAuditService,
-    mockConfig
+    mockConfig,
+    mockEligibilityConfig
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(FakeRequest().headers)
@@ -145,11 +146,11 @@ class StoreVatNumberServiceSpec
         }
         "the VAT number is eligible but non migratable" should {
           "return StoreVatNumberSuccess" in {
-            sys.props += "control-list.eligible.stagger_1" -> "NonMigratable"
+            mockNonMigratableParameters(Set(Stagger1))
 
             enable(AlreadySubscribedCheck)
 
-            val failures = testKnownFactsAndControlListInformation.controlListInformation.validate(mockConfig.eligibilityConfig)
+            val failures = testKnownFactsAndControlListInformation.controlListInformation.validate(mockEligibilityConfig)
             val nonMigratableReasons = failures match {
               case Right(uk.gov.hmrc.vatsignup.models.controllist.NonMigratable(err)) => err.toList.map(_.toString)
             }
@@ -164,18 +165,18 @@ class StoreVatNumberServiceSpec
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = nonMigratableReasons))
-
-            sys.props += "control-list.eligible.stagger_1" -> "Migratable"
           }
         }
         "the VAT number is not eligible for MTD" should {
           "return Ineligible" in {
             enable(AlreadySubscribedCheck)
 
+            mockIneligibleParameters(Set(DeRegOrDeath))
+
             val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
               ControlListInformation(testKnownFactsAndControlListInformation.controlListInformation.controlList + DeRegOrDeath)
             )
-            val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
+            val failures = testIneligible.controlListInformation.validate(mockEligibilityConfig)
             assert(!failures.isRight)
             val ineligibilityReasons = failures match {
               case Left(uk.gov.hmrc.vatsignup.models.controllist.Ineligible(err)) => err.toList.map(_.toString)
@@ -294,11 +295,12 @@ class StoreVatNumberServiceSpec
         "Known facts and control list returned ineligible" should {
           "return a Ineligible" in {
             enable(AlreadySubscribedCheck)
+            mockIneligibleParameters(Set(DeRegOrDeath))
 
             val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
               ControlListInformation(testKnownFactsAndControlListInformation.controlListInformation.controlList + DeRegOrDeath)
             )
-            val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
+            val failures = testIneligible.controlListInformation.validate(mockEligibilityConfig)
             assert(!failures.isRight)
             val ineligibilityReasons = failures match {
               case Left(uk.gov.hmrc.vatsignup.models.controllist.Ineligible(err)) => err.toList.map(_.toString)
