@@ -44,7 +44,21 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
           httpStatus(NO_CONTENT)
         )
       }
-    }
 
+      "callback is unsuccessful" should {
+        "return no Email" in {
+          enable(EmailNotification)
+
+          await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
+
+          val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
+          res should have(
+            httpStatus(PRECONDITION_FAILED)
+          )
+        }
+      }
+
+    }
   }
+
 }
