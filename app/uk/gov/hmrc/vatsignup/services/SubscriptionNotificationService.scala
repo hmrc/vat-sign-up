@@ -67,7 +67,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
       EitherT.rightT(DelegatedSubscription)
     } else {
       subscriptionState match {
-        case Failure => EitherT.leftT(EmailRequestDataNotFound)
+        case Failure => EitherT.rightT(TaxEnrolmentFailure)
         case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate)) bimap(
           _ => EmailServiceFailure,
           _ => NotificationSent
@@ -88,10 +88,11 @@ object SubscriptionNotificationService {
 
   case object DelegatedSubscription extends NotificationSuccess
 
+  case object TaxEnrolmentFailure extends NotificationSuccess
+
   sealed trait NotificationFailure
 
   case object EmailRequestDataNotFound extends NotificationFailure
 
   case object EmailServiceFailure extends NotificationFailure
-
 }

@@ -53,7 +53,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
           val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
           res should have(
-            httpStatus(PRECONDITION_FAILED)
+            httpStatus(NO_CONTENT)
           )
         }
       }
