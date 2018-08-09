@@ -20,32 +20,28 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.mvc.Request
+import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.services.EmailRequirementService.{Email, InsufficientEmailRequirement}
-import uk.gov.hmrc.vatsignup.services._
+import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService
+import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService.SubmissionResponse
 
 import scala.concurrent.Future
 
-trait MockEmailRequirementService extends MockitoSugar with BeforeAndAfterEach {
-  self: Suite =>
-
-  val mockEmailRequirementService: EmailRequirementService = mock[EmailRequirementService]
+trait MockSubmissionOrchestrationService extends MockitoSugar with BeforeAndAfterEach {
+  this: Suite =>
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockEmailRequirementService)
+    reset(mockSubmissionOrchestrationService)
   }
 
-  def mockCheckRequirements(principalEmail: Option[String],
-                            agentEmail: Option[String],
-                            isDelegated: Boolean
-                           )(response: Future[Either[InsufficientEmailRequirement, Email]]): Unit = {
-    when(mockEmailRequirementService.checkRequirements(
-      ArgumentMatchers.eq(principalEmail),
-      ArgumentMatchers.eq(agentEmail),
-      ArgumentMatchers.eq(isDelegated)
-    )(
-      ArgumentMatchers.any[HeaderCarrier]
-    )) thenReturn response
-  }
+  val mockSubmissionOrchestrationService: SubmissionOrchestrationService = mock[SubmissionOrchestrationService]
+
+  def mockSubmitSignUpRequest(vatNumber: String, enrolments: Enrolments)(response: Future[SubmissionResponse]): Unit =
+    when(mockSubmissionOrchestrationService.submitSignUpRequest(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(enrolments)
+    )(ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]])) thenReturn response
 }

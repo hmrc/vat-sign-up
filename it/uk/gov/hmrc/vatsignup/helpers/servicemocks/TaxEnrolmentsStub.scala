@@ -19,19 +19,22 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 import helpers.WiremockHelper
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.when
 
 object TaxEnrolmentsStub extends WireMockMethods {
 
   val mockUrl = s"http://${WiremockHelper.wiremockHost}:${WiremockHelper.wiremockPort}"
 
-  def registerEnrolmentUri(vatNumber: String): String =
+  private def registerEnrolmentUri(vatNumber: String): String =
     s"/tax-enrolments/subscriptions/$vatNumber/subscriber"
 
   private def taxEnrolmentsCallbackUrl(vatNumber: String) =
     s"$mockUrl/vat-sign-up/subscription-request/vat-number/$vatNumber/callback"
 
-  def stubRegisterEnrolment(vatNumber: String, safeId: String)(status: Int): Unit = {
+  private def allocateEnrolmentUrl(groupId: String, enrolmentKey: String) =
+    s"/tax-enrolments/groups/$groupId/enrolments/$enrolmentKey"
 
+  def stubRegisterEnrolment(vatNumber: String, safeId: String)(status: Int): Unit = {
     val registerEnrolmentJsonBody = Json.obj(
       "serviceName" -> Constants.TaxEnrolments.ServiceName,
       "callback" -> taxEnrolmentsCallbackUrl(vatNumber),
@@ -41,6 +44,35 @@ object TaxEnrolmentsStub extends WireMockMethods {
       method = PUT,
       uri = registerEnrolmentUri(vatNumber),
       body = registerEnrolmentJsonBody
+    ) thenReturn status
+  }
+
+  def stubAllocateEnrolment(vatNumber: String, groupId: String, postcode: String, vatRegistrationDate: String)(status: Int): Unit = {
+    val allocateEnrolmentJsonBody = Json.obj(
+      "userId" -> groupId,
+      "friendlyName" -> "Making Tax Digital - VAT",
+      "type" -> "principal",
+      "verifiers" -> Json.arr(
+        Json.obj(
+          "key" -> "Postcode",
+          "value" -> postcode
+        ),
+        Json.obj(
+          "key" -> "VATRegistrationDate",
+          "value" -> vatRegistrationDate
+        )
+      )
+    )
+
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    when(
+      method = POST,
+      uri = allocateEnrolmentUrl(
+        groupId = groupId,
+        enrolmentKey = enrolmentKey
+    ),
+      body = allocateEnrolmentJsonBody
     ) thenReturn status
   }
 }

@@ -21,6 +21,7 @@ import java.util.NoSuchElementException
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService.GetCtReferenceFailure
@@ -40,7 +41,7 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
   def storeCompanyNumber(vatNumber: String,
                          companyNumber: String,
                          ctReference: String
-                        )(implicit hc: HeaderCarrier): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] = {
+                        )(implicit hc: HeaderCarrier, request: Request[_]): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] = {
     for {
       _ <- EitherT(companyMatchService.checkCompanyMatch(companyNumber, ctReference)) leftMap {
         case CompanyMatchService.CtReferenceMismatch => StoreCompanyNumberService.CtReferenceMismatch

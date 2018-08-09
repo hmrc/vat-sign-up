@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import cats.data.NonEmptyList
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
-import uk.gov.hmrc.vatsignup.models.ControlListInformation
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser
 
 object KnownFactsAndControlListInformationHttpParser {

@@ -22,24 +22,24 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.service.mocks.MockSignUpSubmissionService
-import uk.gov.hmrc.vatsignup.services.SignUpSubmissionService._
+import uk.gov.hmrc.vatsignup.service.mocks.MockSubmissionOrchestrationService
+import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SignUpSubmissionControllerSpec extends UnitSpec
-  with MockAuthConnector with MockSignUpSubmissionService {
+  with MockAuthConnector with MockSubmissionOrchestrationService {
 
   object TestSignUpSubmissionController extends SignUpSubmissionController(
     mockAuthConnector,
-    mockSignUpSubmissionService
+    mockSubmissionOrchestrationService
   )
 
   "submitSignUpRequest" when {
     "the user is a delegate and" when {
       val enrolments = Enrolments(Set(testAgentEnrolment))
-      "the sign up service returns a success" should {
+      "the submission orchestration service returns a success" should {
         "return NO_CONTENT" in {
           mockAuthRetrieveAgentEnrolment()
           mockSubmitSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(SignUpRequestSubmitted)))
@@ -49,7 +49,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
           status(res) shouldBe NO_CONTENT
         }
       }
-      "the sign up service returns InsufficientData" should {
+      "the submission orchestration service returns InsufficientData" should {
         "return BAD_REQUEST" in {
           mockAuthRetrieveAgentEnrolment()
           mockSubmitSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(InsufficientData)))
@@ -59,7 +59,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
           status(res) shouldBe BAD_REQUEST
         }
       }
-      "the sign up service returns any other error" should {
+      "the submission orchestration service returns any other error" should {
         "return BAD_GATEWAY" in {
           mockAuthRetrieveAgentEnrolment()
           mockSubmitSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(EmailVerificationFailure)))
@@ -69,7 +69,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
           status(res) shouldBe BAD_GATEWAY
         }
       }
-      "the sign up service throws an exception" should {
+      "the submission orchestration service throws an exception" should {
         "return the exception" in {
           mockAuthRetrieveAgentEnrolment()
 
@@ -84,7 +84,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
     }
     "the user is principal and" when {
       val enrolments = Enrolments(Set(testPrincipalEnrolment))
-      "the sign up service returns a success" should {
+      "the submission orchestration service returns a success" should {
         "return NO_CONTENT" in {
           mockAuthRetrievePrincipalEnrolment()
           mockSubmitSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(SignUpRequestSubmitted)))
@@ -94,7 +94,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
           status(res) shouldBe NO_CONTENT
         }
       }
-      "the sign up service returns InsufficientData" should {
+      "the submission orchestration service returns InsufficientData" should {
         "return BAD_REQUEST" in {
           mockAuthRetrievePrincipalEnrolment()
           mockSubmitSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(InsufficientData)))
@@ -104,7 +104,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
           status(res) shouldBe BAD_REQUEST
         }
       }
-      "the sign up service returns any other error" should {
+      "the submission orchestration service returns any other error" should {
         "return BAD_GATEWAY" in {
           mockAuthRetrievePrincipalEnrolment()
           mockSubmitSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(EmailVerificationFailure)))
@@ -114,7 +114,7 @@ class SignUpSubmissionControllerSpec extends UnitSpec
           status(res) shouldBe BAD_GATEWAY
         }
       }
-      "the sign up service throws an exception" should {
+      "the submission orchestration service throws an exception" should {
         "return the exception" in {
           mockAuthRetrievePrincipalEnrolment()
 
@@ -128,4 +128,5 @@ class SignUpSubmissionControllerSpec extends UnitSpec
       }
     }
   }
+
 }

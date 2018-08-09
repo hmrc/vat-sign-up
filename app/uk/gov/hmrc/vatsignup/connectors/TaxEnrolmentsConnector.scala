@@ -17,13 +17,13 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
 
 import scala.concurrent.Future
@@ -52,5 +52,33 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
     )
   }
 
+  def allocateEnrolment(groupId: String,
+                        vatNumber: String,
+                        postcode: String,
+                        vatRegistrationDate: String
+                       )(implicit hc: HeaderCarrier): Future[AllocateEnrolmentResponse] = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    val requestBody = Json.obj(
+      "userId" -> groupId,
+      "friendlyName" -> "Making Tax Digital - VAT",
+      "type" -> "principal",
+      "verifiers" -> Json.arr(
+        Json.obj(
+          "key" -> "Postcode",
+          "value" -> postcode
+        ),
+        Json.obj(
+          "key" -> "VATRegistrationDate",
+          "value" -> vatRegistrationDate
+        )
+      )
+    )
+
+    http.POST[JsObject, AllocateEnrolmentResponse](
+      url = applicationConfig.allocateEnrolmentUrl(groupId, enrolmentKey),
+      body = requestBody
+    )
+  }
 
 }

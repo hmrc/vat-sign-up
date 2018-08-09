@@ -21,7 +21,7 @@ import java.util.UUID
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, MTDEligibilityCheck}
+import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
@@ -41,6 +41,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+        stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 
@@ -95,6 +96,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 
@@ -145,7 +147,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
     "does not have a HMCE-VAT enrolment but has provided known facts" should {
       "return CREATED when the vat number has been stored successfully" in {
         enable(AlreadySubscribedCheck)
-        enable(MTDEligibilityCheck)
 
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -164,7 +165,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       }
       "return FORBIDDEN when known facts mismatch" in {
         enable(AlreadySubscribedCheck)
-        enable(MTDEligibilityCheck)
 
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -183,7 +183,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       }
       "return PRECONDITION_FAILED when vat number is not found" in {
         enable(AlreadySubscribedCheck)
-        enable(MTDEligibilityCheck)
 
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -201,7 +200,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       }
       "return PRECONDITION_FAILED when vat number is invalid" in {
         enable(AlreadySubscribedCheck)
-        enable(MTDEligibilityCheck)
 
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -222,7 +220,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
     "does not have a HMCE-VAT enrolment and have not provided known facts" should {
       "return FORBIDDEN" in {
         enable(AlreadySubscribedCheck)
-        enable(MTDEligibilityCheck)
 
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))

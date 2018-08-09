@@ -17,20 +17,26 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.Inject
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.GetCtReferenceConnector
+import uk.gov.hmrc.vatsignup.models.monitoring.CtReferenceMatchAuditing.CtReferenceMatchAuditModel
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService._
+import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CompanyMatchService @Inject()(getCtReferenceConnector: GetCtReferenceConnector
+class CompanyMatchService @Inject()(getCtReferenceConnector: GetCtReferenceConnector,
+                                    auditService: AuditService
                                    )(implicit ec: ExecutionContext) {
-  def checkCompanyMatch(companyNumber: String, ctReference: String)(implicit hc: HeaderCarrier): Future[CheckCompanyMatchResponse] = {
+  def checkCompanyMatch(companyNumber: String, ctReference: String)(implicit hc: HeaderCarrier, request: Request[_]): Future[CheckCompanyMatchResponse] = {
     getCtReferenceConnector.getCtReference(companyNumber) map {
-      case Right(retrievedCtReference) if retrievedCtReference == ctReference =>
-        Right(CompanyVerified)
-      case Right(_) =>
-        Left(CtReferenceMismatch)
+      case Right(retrievedCtReference) =>
+        val isMatch = retrievedCtReference == ctReference
+        auditService.audit(CtReferenceMatchAuditModel(companyNumber, ctReference, retrievedCtReference, isMatch))
+
+        if (isMatch) Right(CompanyVerified)
+        else Left(CtReferenceMismatch)
       case Left(_) =>
         Left(GetCtReferenceFailure)
     }
@@ -42,7 +48,11 @@ object CompanyMatchService {
   type CheckCompanyMatchResponse = Either[CheckCompanyMatchFailure, CompanyVerified.type]
 
   case object CompanyVerified
+
   sealed trait CheckCompanyMatchFailure
+
   case object CtReferenceMismatch extends CheckCompanyMatchFailure
+
   case object GetCtReferenceFailure extends CheckCompanyMatchFailure
+
 }

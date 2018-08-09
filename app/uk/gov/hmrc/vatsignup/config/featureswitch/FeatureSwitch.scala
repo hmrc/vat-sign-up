@@ -27,7 +27,6 @@ object FeatureSwitch {
   val prefix = "feature-switch"
 
   val switches: Set[FeatureSwitch] = Set(
-    MTDEligibilityCheck,
     AlreadySubscribedCheck,
     EmailNotification,
     StubDESFeature,
@@ -45,11 +44,6 @@ object FeatureSwitch {
       case Some(switch) => switch
       case None => throw new IllegalArgumentException("Invalid feature switch: " + setting.feature)
     }
-}
-
-object MTDEligibilityCheck extends FeatureSwitch {
-  val displayName = s"Enable MTD VAT control list eligibility check"
-  val name = s"$prefix.control-list-check"
 }
 
 object AlreadySubscribedCheck extends FeatureSwitch {

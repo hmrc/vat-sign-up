@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -38,6 +40,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val request: Request[_] = FakeRequest()
 
   "storeCompanyNumber" when {
     "there is no CT reference provided" when {

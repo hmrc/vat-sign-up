@@ -29,7 +29,9 @@ case class SubscriptionRequest(vatNumber: String,
                                ninoSource: Option[NinoSource] = None,
                                email: Option[String] = None,
                                transactionEmail: Option[String] = None,
-                               identityVerified: Boolean = false)
+                               identityVerified: Boolean = false,
+                               isMigratable: Boolean = true
+                              )
 
 object SubscriptionRequest {
 
@@ -45,6 +47,7 @@ object SubscriptionRequest {
   val transactionEmailKey = "transactionEmail"
   val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
+  val isMigratableKey = "isMigratable"
 
   val mongoFormat: OFormat[SubscriptionRequest] = OFormat(
     json =>
@@ -63,7 +66,8 @@ object SubscriptionRequest {
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
-      } yield SubscriptionRequest(vatNumber, companyNumber, ctReference, nino, ninoSource, email, transactionEmail, identityVerified),
+        isMigratable <- (json \ isMigratableKey).validate[Boolean]
+      } yield SubscriptionRequest(vatNumber, companyNumber, ctReference, nino, ninoSource, email, transactionEmail, identityVerified, isMigratable),
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
@@ -73,7 +77,13 @@ object SubscriptionRequest {
         emailKey -> subscriptionRequest.email,
         transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
-        creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli)
+        creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli),
+        isMigratableKey -> subscriptionRequest.isMigratable
+      ).++(
+        subscriptionRequest.ctReference match {
+          case Some(ref) => Json.obj(ctReferenceKey -> ref)
+          case _ => Json.obj()
+        }
       )
   )
 

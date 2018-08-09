@@ -18,30 +18,22 @@ package uk.gov.hmrc.vatsignup.models.monitoring
 
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
-object ControlListAuditing {
-  val controlListTransactionName = "VATControlListRequest"
-  val controlListAuditType = "mtdVatControlList"
+object CtReferenceMatchAuditing {
+  val controlListTransactionName = "CtReferenceMatchRequest"
+  val controlListAuditType = "mtdVatCtReferenceMatch"
 
-  val invalidVatNumber = "Invalid VAT number"
-  val vatNumberNotFound = "VAT number not found"
-  val unexpectedError = "Unexpected error"
-
-  case class ControlListAuditModel(vatNumber: String,
-                                   isSuccess: Boolean,
-                                   failureReasons: Seq[String] = Nil,
-                                   nonMigratableReasons: Seq[String] = Nil
+  case class CtReferenceMatchAuditModel(companyNumber: String,
+                                        userCtReference: String,
+                                        storedCtReference: String,
+                                        isMatch: Boolean
                                   ) extends AuditModel {
     override val transactionName: String = controlListTransactionName
     override val detail: Map[String, String] = Map(
-      "vatNumber" -> vatNumber,
-      "isSuccess" -> s"$isSuccess"
-    ) ++ (failureReasons match {
-      case Nil => None
-      case reasons => Some("failureReasons" -> reasons.mkString(", "))
-    }) ++ (nonMigratableReasons match {
-      case Nil => None
-      case reasons => Some("nonMigratableReasons" -> reasons.mkString(", "))
-    })
+      "companyNumber" -> companyNumber,
+      "userCtReference" -> userCtReference,
+      "storedCtReference" -> storedCtReference,
+      "isMatch" -> s"$isMatch"
+    )
 
     override val auditType: String = controlListAuditType
   }

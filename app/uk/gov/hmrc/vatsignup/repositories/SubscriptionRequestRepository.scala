@@ -28,9 +28,9 @@ import reactivemongo.play.json.JSONSerializationPack.Writer
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.models.{NinoSource, SubscriptionRequest}
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
 import uk.gov.hmrc.vatsignup.models.NinoSource._
+import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
+import uk.gov.hmrc.vatsignup.models.{NinoSource, SubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,10 +54,10 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     ).filter(_.n == 1)
   }
 
-  def upsertVatNumber(vatNumber: String): Future[UpdateWriteResult] = {
+  def upsertVatNumber(vatNumber: String, isMigratable: Boolean): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
-      update = SubscriptionRequest(vatNumber),
+      update = SubscriptionRequest(vatNumber, isMigratable = isMigratable),
       upsert = true
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }
