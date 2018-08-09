@@ -16,29 +16,24 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.{AppConfig, EligibilityConfig}
 import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
-import uk.gov.hmrc.vatsignup.connectors.{KnownFactsAndControlListInformationConnector, MandationStatusConnector}
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformation, KnownFactsInvalidVatNumber}
+import uk.gov.hmrc.vatsignup.config.{AppConfig, EligibilityConfig}
+import uk.gov.hmrc.vatsignup.connectors.MandationStatusConnector
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.models.controllist.{Ineligible, Migratable, NonMigratable}
-import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
+import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
-import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationStatusConnector,
-                                            knownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector,
-                                            auditService: AuditService,
-                                            appConfig: AppConfig,
-                                            eligibilityConfig: EligibilityConfig)(implicit ec: ExecutionContext) {
+                                            controlListEligibilityService: ControlListEligibilityService,
+                                            appConfig: AppConfig)(implicit ec: ExecutionContext) {
 
   def checkVatNumberEligibility(vatNumber: String)(implicit hc: HeaderCarrier, request: Request[_]): Future[VatNumberEligibility] = {
     for {
@@ -63,51 +58,12 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
 
   private def getEligibilityStatus(vatNumber: String
                                   )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, VatNumberEligibilityFailure, VatNumberEligible.type] = {
-    EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) transform {
-      case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlList)) =>
-        controlList.validate(eligibilityConfig) match {
-          case Right(Migratable) =>
-            auditService.audit(ControlListAuditModel(
-              vatNumber = vatNumber,
-              isSuccess = true
-            ))
-            Right(VatNumberEligible)
-          case Right(NonMigratable(reasons)) =>
-            auditService.audit(ControlListAuditModel(
-              vatNumber = vatNumber,
-              isSuccess = true,
-              nonMigratableReasons = reasons.map(_.toString)
-            ))
-            Right(VatNumberEligible)
-          case Left(Ineligible(reasons)) =>
-            auditService.audit(ControlListAuditModel(
-              vatNumber = vatNumber,
-              isSuccess = false,
-              failureReasons = reasons.map(_.toString)
-            ))
-            Left(VatNumberIneligible)
-        }
-      case Left(KnownFactsInvalidVatNumber) =>
-        auditService.audit(ControlListAuditModel(
-          vatNumber = vatNumber,
-          isSuccess = false,
-          failureReasons = Seq(invalidVatNumber)
-        ))
-        Left(InvalidVatNumber)
-      case Left(ControlListInformationVatNumberNotFound) =>
-        auditService.audit(ControlListAuditModel(
-          vatNumber = vatNumber,
-          isSuccess = false,
-          failureReasons = Seq(vatNumberNotFound)
-        ))
-        Left(VatNumberNotFound)
-      case _ =>
-        auditService.audit(ControlListAuditModel(
-          vatNumber = vatNumber,
-          isSuccess = false,
-          failureReasons = Seq(unexpectedError)
-        ))
-        Left(KnownFactsAndControlListFailure)
+    EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
+      case Right(_: EligibilitySuccess) => Right(VatNumberEligible)
+      case Left(ControlListEligibilityService.IneligibleVatNumber) => Left(VatNumberIneligible)
+      case Left(ControlListEligibilityService.InvalidVatNumber) => Left(InvalidVatNumber)
+      case Left(ControlListEligibilityService.VatNumberNotFound) => Left(VatNumberNotFound)
+      case _ => Left(KnownFactsAndControlListFailure)
     }
   }
 }

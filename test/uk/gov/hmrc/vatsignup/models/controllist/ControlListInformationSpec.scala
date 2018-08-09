@@ -17,9 +17,8 @@
 package uk.gov.hmrc.vatsignup.models.controllist
 
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.EligibilityConfig
-import uk.gov.hmrc.vatsignup.config.EligibilityConfig._
 import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 
 
 class ControlListInformationSpec extends UnitSpec with MockEligibilityConfig {

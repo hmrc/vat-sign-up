@@ -36,15 +36,15 @@ case class ControlListInformation(controlList: Set[ControlListParameter]) {
 
 }
 
-sealed trait Eligible
-
-case object Migratable extends Eligible
-
-case class NonMigratable(reasons: Seq[ControlListParameter]) extends Eligible
-
-case class Ineligible(reasons: Seq[ControlListParameter])
 
 object ControlListInformation {
+  sealed trait Eligible
+
+  case object Migratable extends Eligible
+
+  case class NonMigratable(reasons: Seq[ControlListParameter]) extends Eligible
+
+  case class Ineligible(reasons: Seq[ControlListParameter])
 
   type Result = Either[Ineligible, Eligible]
 
