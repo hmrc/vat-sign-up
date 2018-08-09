@@ -66,22 +66,19 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
     if (isDelegated) {
       EitherT.rightT(DelegatedSubscription)
     } else {
-      val emailTemplate = subscriptionState match {
-        case Success => principalSuccessEmailTemplate
-        case Failure => principalFailureEmailTemplate
+      subscriptionState match {
+        case Failure => EitherT.rightT(TaxEnrolmentFailure)
+        case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate)) bimap(
+          _ => EmailServiceFailure,
+          _ => NotificationSent
+        )
       }
-
-      EitherT(emailConnector.sendEmail(emailAddress, emailTemplate)) bimap(
-        _ => EmailServiceFailure,
-        _ => NotificationSent
-      )
     }
   }
 }
 
 object SubscriptionNotificationService {
   val principalSuccessEmailTemplate = "mtdfb_vat_principal_sign_up_successful"
-  val principalFailureEmailTemplate = "mtdfb_vat_principal_sign_up_failure"
 
   sealed trait NotificationSuccess
 
@@ -91,10 +88,11 @@ object SubscriptionNotificationService {
 
   case object DelegatedSubscription extends NotificationSuccess
 
+  case object TaxEnrolmentFailure extends NotificationSuccess
+
   sealed trait NotificationFailure
 
   case object EmailRequestDataNotFound extends NotificationFailure
 
   case object EmailServiceFailure extends NotificationFailure
-
 }
