@@ -31,7 +31,7 @@ class StoreIdentityVerificationOutcomeControllerISpec extends ComponentSpecBase 
       "return NoContent" in {
         stubAuth(OK, successfulAuthResponse())
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
         stubGetIdentityVerifiedOutcome(testJourneyLink)("Success")
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/identity-verification")(Json.obj("journeyLink" -> testJourneyLink))
@@ -46,7 +46,7 @@ class StoreIdentityVerificationOutcomeControllerISpec extends ComponentSpecBase 
       "return NoContent" in {
         stubAuth(OK, successfulAuthResponse(L200))
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/identity-verification")(Json.obj("journeyLink" -> testJourneyLink))
 
@@ -60,7 +60,7 @@ class StoreIdentityVerificationOutcomeControllerISpec extends ComponentSpecBase 
       "return Forbidden" in {
         stubAuth(OK, successfulAuthResponse())
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
         stubGetIdentityVerifiedOutcome(testJourneyLink)("Incomplete")
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/identity-verification")(Json.obj("journeyLink" -> testJourneyLink))

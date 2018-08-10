@@ -17,10 +17,10 @@
 package uk.gov.hmrc.vatsignup.config
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.vatsignup.config.EligibilityConfig.{EligibilityConfiguration, IneligibleParameter, MigratableParameter, NonMigratableParameter}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 
 @Singleton
@@ -47,6 +47,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   lazy val desEnvironmentHeader: (String, String) =
     "Environment" -> loadConfig("microservice.services.des.environment")
+
   def registerWithMultipleIdentifiersUrl: String = s"$desUrl/cross-regime/register/VATC"
 
   lazy val authenticatorUrl: String = baseUrl("authenticator")
@@ -83,46 +84,27 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def mandationStatusUrl(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/mandation-status"
 
+  def vatSubscriptionKnownFacts(vatNumber: String): String = s"$vatSubscriptionUrl/vat-subscription/$vatNumber/known-facts"
+
   def getCtReferenceUrl(companyNumber: String): String = s"$desUrl/corporation-tax/identifiers/crn/$companyNumber"
+
+  def allocateEnrolmentUrl(groupId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/groups/$groupId/enrolments/$enrolmentKey"
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
-  private def loadEligibilityConfig(key: String): Boolean =
-    runModeConfiguration.getBoolean(s"control-list.eligible.$key").getOrElse(throw new Exception(s"Missing eligibility configuration key: $key"))
-
-  def eligibilityConfig: EligibilityConfig = EligibilityConfig(
-    permitBelowVatThreshold = loadEligibilityConfig("below_vat_threshold"),
-    permitAnnualStagger = loadEligibilityConfig("annual_stagger"),
-    permitMissingReturns = loadEligibilityConfig("missing_returns"),
-    permitCentralAssessments = loadEligibilityConfig("central_assessments"),
-    permitCriminalInvestigationInhibits = loadEligibilityConfig("criminal_investigation_inhibits"),
-    permitCompliancePenaltiesOrSurcharges = loadEligibilityConfig("compliance_penalties_or_surcharges"),
-    permitInsolvency = loadEligibilityConfig("insolvency"),
-    permitDeRegOrDeath = loadEligibilityConfig("dereg_or_death"),
-    permitDebtMigration = loadEligibilityConfig("debt_migration"),
-    permitDirectDebit = loadEligibilityConfig("direct_debit"),
-    permitEuSalesOrPurchases = loadEligibilityConfig("eu_sales_or_purchases"),
-    permitLargeBusiness = loadEligibilityConfig("large_business"),
-    permitMissingTrader = loadEligibilityConfig("missing_trader"),
-    permitMonthlyStagger = loadEligibilityConfig("monthly_stagger"),
-    permitNonStandardTaxPeriod = loadEligibilityConfig("none_standard_tax_period"),
-    permitOverseasTrader = loadEligibilityConfig("overseas_trader"),
-    permitPoaTrader = loadEligibilityConfig("poa_trader"),
-    permitStagger1 = loadEligibilityConfig("stagger_1"),
-    permitStagger2 = loadEligibilityConfig("stagger_2"),
-    permitStagger3 = loadEligibilityConfig("stagger_3"),
-    permitCompany = loadEligibilityConfig("company"),
-    permitDivision = loadEligibilityConfig("division"),
-    permitGroup = loadEligibilityConfig("group"),
-    permitPartnership = loadEligibilityConfig("partnership"),
-    permitPublicCorporation = loadEligibilityConfig("public_corporation"),
-    permitSoleTrader = loadEligibilityConfig("sole_trader"),
-    permitLocalAuthority = loadEligibilityConfig("local_authority"),
-    permitNonProfit = loadEligibilityConfig("non_profit"),
-    permitDificTrader = loadEligibilityConfig("dific_trader"),
-    permitAnythingUnderAppeal = loadEligibilityConfig("anything_under_appeal"),
-    permitRepaymentTrader = loadEligibilityConfig("repayment_trader"),
-    permitMossTrader = loadEligibilityConfig("oss_trader")
-  )
+  private def loadConfigFromEnvFirst(key:String):Option[String] = {
+    sys.props.get(key) match {
+      case r@Some(result) if result.nonEmpty => r
+      case _ => runModeConfiguration.getString(key)
+    }
+  }
+  def loadEligibilityConfig(key: String): EligibilityConfiguration = {
+    loadConfigFromEnvFirst(s"control-list.eligible.$key") match {
+      case Some("Migratable") => MigratableParameter
+      case Some("NonMigratable") => NonMigratableParameter
+      case Some("Ineligible") => IneligibleParameter
+      case _ => throw new Exception(s"Missing eligibility configuration key: $key")
+    }
+  }
 
 }

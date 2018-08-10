@@ -17,32 +17,32 @@
 package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
-import org.scalatest.{BeforeAndAfterEach, Suite}
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.vatsignup.services.CompanyMatchService
 import org.mockito.Mockito._
+import org.mockito.internal.invocation.ArgumentMatcherAction
+import org.scalatest.{BeforeAndAfterEach, Suite}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.services.CompanyMatchService.CheckCompanyMatchResponse
+import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService
+import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.Eligibility
 
 import scala.concurrent.Future
 
-trait MockCompanyMatchService extends BeforeAndAfterEach with MockitoSugar {
+trait MockControlListEligibilityService extends MockitoSugar with BeforeAndAfterEach {
   this: Suite =>
 
   override def beforeEach(): Unit = {
+    reset(mockControlListEligibilityService)
     super.beforeEach()
-    reset(mockCompanyMatchService)
   }
 
-  val mockCompanyMatchService: CompanyMatchService = mock[CompanyMatchService]
+  val mockControlListEligibilityService: ControlListEligibilityService = mock[ControlListEligibilityService]
 
-  def mockCheckCompanyMatch(companyNumber: String, ctReference: String)(response: Future[CheckCompanyMatchResponse]): Unit = {
-    when(mockCompanyMatchService.checkCompanyMatch(
-      ArgumentMatchers.eq(companyNumber),
-      ArgumentMatchers.eq(ctReference)
-    )(ArgumentMatchers.any[HeaderCarrier],
-      ArgumentMatchers.any[Request[_]])
-    ) thenReturn response
-  }
+  def mockGetEligibilityStatus(vatNumber: String)(response: Future[Eligibility]): Unit =
+    when(mockControlListEligibilityService.getEligibilityStatus(
+      ArgumentMatchers.eq(vatNumber)
+    )(
+      ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]]
+    )) thenReturn response
 }

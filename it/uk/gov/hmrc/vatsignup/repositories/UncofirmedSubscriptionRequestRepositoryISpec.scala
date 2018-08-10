@@ -210,17 +210,6 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
       identityVerified = Some(false)
     )
 
-    //    "throw NoSuchElementException where the request id doesn't exist" in {
-    //      val res = for {
-    //        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
-    //        model <- repo.findById(testRequestId)
-    //      } yield model
-    //
-    //      intercept[NoSuchElementException] {
-    //        await(res)
-    //      }
-    //    }
-
     "insert the unconfirmed subscription request where there isn't one" in {
       val res = for {
         _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
@@ -239,24 +228,6 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
       await(res) should contain(testUnconfirmedSubscriptionRequest.copy(vatNumber = Some(testVatNumber)))
     }
-
-    //    "delete the company number if it already exists" in {
-    //      val res = for {
-    //        _ <- repo.upsertCompanyNumber(testRequestId, testCompanyNumber)
-    //        withCompanyNumber <- repo.findById(testRequestId)
-    //        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
-    //        withoutCompanyNumber <- repo.findById(testRequestId)
-    //      } yield (withCompanyNumber, withoutCompanyNumber)
-    //
-    //      val (withCompanyNumber, withoutCompanyNumber) = await(res)
-    //
-    //      withCompanyNumber should contain(testUnconfirmedSubscriptionRequest.copy(
-    //        companyNumber = Some(testCompanyNumber),
-    //        nino = Some(testNino),
-    //        ninoSource = Some(UserEntered)
-    //      ))
-    //      withoutCompanyNumber should contain(testUnconfirmedSubscriptionRequest)
-    //    }
 
     "set identity verification to false" in {
       val res = for {

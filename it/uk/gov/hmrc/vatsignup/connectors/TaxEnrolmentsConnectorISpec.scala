@@ -21,6 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolFailure, EnrolSuccess}
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
 
 class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
@@ -47,6 +48,28 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
         val res = connector.registerEnrolment(testVatNumber, testSafeId)
 
         await(res) shouldBe Left(FailedTaxEnrolment(BAD_REQUEST))
+      }
+    }
+  }
+
+  "allocateEnrolment" when {
+    "Tax Enrolments returns a successful response" should {
+      "return an EnrolSuccess" in {
+        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testPostCode, testDateOfRegistration)(CREATED)
+
+        val res = connector.allocateEnrolment(testGroupId, testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Right(EnrolSuccess)
+      }
+    }
+
+    "Tax Enrolments returns a unsuceessful response" should {
+      "return an EnrolFailure" in {
+        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testPostCode, testDateOfRegistration)(BAD_REQUEST)
+
+        val res = connector.allocateEnrolment(testGroupId, testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Left(EnrolFailure(""))
       }
     }
   }

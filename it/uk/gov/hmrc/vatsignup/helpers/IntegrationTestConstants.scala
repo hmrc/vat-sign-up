@@ -19,9 +19,8 @@ package uk.gov.hmrc.vatsignup.helpers
 import java.util.UUID
 
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.models.ControlListInformation
-import uk.gov.hmrc.vatsignup.models.ControlListInformation.{Company, Stagger1}
-import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser.ControlListInformationIndices._
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
+import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
 
 object IntegrationTestConstants {
   val testVatNumber: String = UUID.randomUUID().toString
@@ -34,16 +33,14 @@ object IntegrationTestConstants {
   val testToken: String = UUID.randomUUID().toString
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
   val testEmailTemplate: String = "template"
+  val testGroupId: String = UUID.randomUUID().toString
   val testRequestId: String = UUID.randomUUID().toString
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
 
   val eligibleModel: ControlListInformation = ControlListInformation(
-    false, false, false, false, false, false,
-    false, false, false, false, false, false,
-    Stagger1, false, false, false, Company,
-    false, false, false, false
+    Stagger1, Company
   )
 
   object ControlList {

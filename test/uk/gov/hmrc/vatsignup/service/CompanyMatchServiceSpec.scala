@@ -19,11 +19,15 @@ package uk.gov.hmrc.vatsignup.service
 import java.util.UUID
 
 import play.api.http.Status._
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockGetCtReferenceConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser
+import uk.gov.hmrc.vatsignup.models.monitoring.CtReferenceMatchAuditing.CtReferenceMatchAuditModel
+import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService._
 
@@ -31,13 +35,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class CompanyMatchServiceSpec extends UnitSpec
-  with MockGetCtReferenceConnector {
+  with MockGetCtReferenceConnector with MockAuditService {
 
   object TestCompanyMatchService extends CompanyMatchService(
-    mockGetCtReferenceConnector
+    mockGetCtReferenceConnector,
+    mockAuditService
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val request: Request[_] = FakeRequest()
 
   "checkCompanyMatch" when {
     "DES returns a CT reference" when {
@@ -48,6 +54,7 @@ class CompanyMatchServiceSpec extends UnitSpec
           val res = TestCompanyMatchService.checkCompanyMatch(testCompanyNumber, testCtReference)
 
           await(res) shouldBe Right(CompanyVerified)
+          verifyAudit(CtReferenceMatchAuditModel(testCompanyNumber, testCtReference, testCtReference, isMatch = true))
         }
       }
       "the CT reference does not match" should {
@@ -59,6 +66,7 @@ class CompanyMatchServiceSpec extends UnitSpec
           val res = TestCompanyMatchService.checkCompanyMatch(testCompanyNumber, testCtReference)
 
           await(res) shouldBe Left(CtReferenceMismatch)
+          verifyAudit(CtReferenceMatchAuditModel(testCompanyNumber, testCtReference, nonMatchingCtReference, isMatch = false))
         }
       }
     }

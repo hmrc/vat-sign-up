@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformationFailure, KnownFactsInvalidVatNumber}
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
+import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object ControlListAuditing {
@@ -28,7 +31,8 @@ object ControlListAuditing {
 
   case class ControlListAuditModel(vatNumber: String,
                                    isSuccess: Boolean,
-                                   failureReasons: Seq[String] = Nil
+                                   failureReasons: Seq[String] = Nil,
+                                   nonMigratableReasons: Seq[String] = Nil
                                   ) extends AuditModel {
     override val transactionName: String = controlListTransactionName
     override val detail: Map[String, String] = Map(
@@ -37,9 +41,41 @@ object ControlListAuditing {
     ) ++ (failureReasons match {
       case Nil => None
       case reasons => Some("failureReasons" -> reasons.mkString(", "))
+    }) ++ (nonMigratableReasons match {
+      case Nil => None
+      case reasons => Some("nonMigratableReasons" -> reasons.mkString(", "))
     })
 
     override val auditType: String = controlListAuditType
+  }
+
+  object ControlListAuditModel {
+    def fromFailure(vatNumber: String, failure: KnownFactsAndControlListInformationFailure): ControlListAuditModel = {
+      val failureMessage = failure match {
+        case KnownFactsInvalidVatNumber => invalidVatNumber
+        case ControlListInformationVatNumberNotFound => vatNumberNotFound
+        case _ => unexpectedError
+      }
+
+      ControlListAuditModel(
+        vatNumber = vatNumber,
+        isSuccess = false,
+        failureReasons = Seq(failureMessage)
+      )
+    }
+
+    def fromEligibilityState(vatNumber: String, controlListEligibility: ControlListInformation.Eligible): ControlListAuditModel = {
+      controlListEligibility match {
+        case Migratable =>
+          ControlListAuditModel(vatNumber, isSuccess = true)
+        case NonMigratable(nonMigratableReasons) =>
+          ControlListAuditModel(vatNumber, isSuccess = true, nonMigratableReasons = nonMigratableReasons map (_.toString))
+      }
+    }
+
+    def fromEligibilityState(vatNumber: String, controlListEligibility: ControlListInformation.Ineligible): ControlListAuditModel = {
+      ControlListAuditModel(vatNumber, isSuccess = false, failureReasons = controlListEligibility.reasons map (_.toString))
+    }
   }
 
 }

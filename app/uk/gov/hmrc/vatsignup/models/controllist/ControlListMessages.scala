@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vatsignup.utils.controllist
+package uk.gov.hmrc.vatsignup.models.controllist
 
-import uk.gov.hmrc.vatsignup.models.ControlListInformation.{BusinessEntity, Stagger}
-
-object ControlListIneligibilityMessages {
+object ControlListMessages {
   val belowVatThresholdMessage: String = "Below VAT threshold"
   val missingReturnsMessage: String = "Missing returns"
   val centralAssessmentsMessage: String = "Central assessments"
@@ -32,13 +30,13 @@ object ControlListIneligibilityMessages {
   val largeBusinessMessage: String = "Large business"
   val missingTraderMessage: String = "Missing trader"
 
-  def invalidStaggerTypeMessage(staggerType: Stagger): String = s"Invalid stagger type: $staggerType"
+  def invalidStaggerTypeMessage(staggerType: String): String = s"Invalid stagger type: $staggerType"
 
   val nonStandardTaxPeriodMessage: String = "Non standard tax period"
   val overseasTraderMessage: String = "Overseas trader"
   val poaTraderMessage: String = "POA trader"
 
-  def invalidEntityTypeMessage(entityType: BusinessEntity): String = s"Invalid entity type: $entityType"
+  def invalidEntityTypeMessage(entityType: String): String = s"Invalid entity type: $entityType"
 
   val dificTraderMessage: String = "DIFIC trader"
   val anythingUnderAppealMessage = "Anything under appeal"

@@ -18,27 +18,25 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.util.UUID
 
-import cats.data.NonEmptyList
-import cats.data.Validated.Invalid
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, MTDEligibilityCheck}
-import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
-import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockKnownFactsAndControlListInformationConnector, MockMandationStatusConnector}
+import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
+import uk.gov.hmrc.vatsignup.config.mocks.{MockConfig, MockEligibilityConfig}
+import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
-import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
+import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
+import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services._
 
@@ -49,13 +47,14 @@ class StoreVatNumberServiceSpec
   extends UnitSpec with MockAgentClientRelationshipsConnector with MockSubscriptionRequestRepository
     with MockAuditService with MockConfig
     with MockMandationStatusConnector
-    with MockKnownFactsAndControlListInformationConnector {
+    with MockControlListEligibilityService
+{
 
   object TestStoreVatNumberService extends StoreVatNumberService(
     mockSubscriptionRequestRepository,
     mockAgentClientRelationshipsConnector,
     mockMandationStatusConnector,
-    mockKnownFactsAndControlListInformationConnector,
+    mockControlListEligibilityService,
     mockAuditService,
     mockConfig
   )
@@ -75,12 +74,11 @@ class StoreVatNumberServiceSpec
             "the vat number is stored successfully" should {
               "return a StoreVatNumberSuccess" in {
                 enable(AlreadySubscribedCheck)
-                enable(MTDEligibilityCheck)
 
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-                mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-                mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+                mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+                mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
                 res shouldBe Right(StoreVatNumberSuccess)
@@ -91,12 +89,11 @@ class StoreVatNumberServiceSpec
             "the vat number is not stored successfully" should {
               "return a VatNumberDatabaseFailure" in {
                 enable(AlreadySubscribedCheck)
-                enable(MTDEligibilityCheck)
 
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-                mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-                mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
+                mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+                mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
                 res shouldBe Left(VatNumberDatabaseFailure)
@@ -108,7 +105,6 @@ class StoreVatNumberServiceSpec
           "the VAT number is already voluntarily subscribed for MTD-VAT" should {
             "return AlreadySubscribed" in {
               enable(AlreadySubscribedCheck)
-              enable(MTDEligibilityCheck)
 
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
@@ -122,7 +118,6 @@ class StoreVatNumberServiceSpec
           "the VAT number is already mandated for MTD-VAT" should {
             "return AlreadySubscribed" in {
               enable(AlreadySubscribedCheck)
-              enable(MTDEligibilityCheck)
 
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
@@ -136,11 +131,10 @@ class StoreVatNumberServiceSpec
           "the already subscribed check feature switch is turned off" should {
             "always treat the user as not subscribed" in {
               disable(AlreadySubscribedCheck)
-              enable(MTDEligibilityCheck)
 
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
-              mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-              mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
               res shouldBe Right(StoreVatNumberSuccess)
@@ -149,42 +143,31 @@ class StoreVatNumberServiceSpec
             }
           }
         }
-        "the VAT number is not eligible for MTD" should {
-          "return Ineligible" in {
-            enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
-
-            val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
-              testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
-            )
-            import ControlListInformation.eligible
-            val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
-            assert(failures != eligible)
-            val ineligibilityReasons = failures match {
-              case Invalid(err) => err.toList
-            }
-
-            mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testIneligible)))
-
-            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
-            res shouldBe Left(Ineligible)
-
-            verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
-            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, ineligibilityReasons))
-          }
-        }
-        "the MTDEligibilityCheck feature switch is turned off" should {
-          "always treat the user as eligible" in {
+        "the VAT number is eligible but non migratable" should {
+          "return StoreVatNumberSuccess" in {
             enable(AlreadySubscribedCheck)
 
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false))))
+            mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
             res shouldBe Right(StoreVatNumberSuccess)
+
+            verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+          }
+        }
+        "the VAT number is not eligible for MTD" should {
+          "return Ineligible" in {
+            enable(AlreadySubscribedCheck)
+
+            mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
+
+            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+            res shouldBe Left(StoreVatNumberService.Ineligible)
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
@@ -222,7 +205,8 @@ class StoreVatNumberServiceSpec
               enable(AlreadySubscribedCheck)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-              mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
               res shouldBe Right(StoreVatNumberSuccess)
@@ -233,7 +217,8 @@ class StoreVatNumberServiceSpec
               enable(AlreadySubscribedCheck)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-              mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
               res shouldBe Left(VatNumberDatabaseFailure)
@@ -276,75 +261,54 @@ class StoreVatNumberServiceSpec
         "the vat number is stored successfully" should {
           "return StoreVatNumberSuccess" in {
             enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-            mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
-            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
             res shouldBe Right(StoreVatNumberSuccess)
           }
         }
         "Known facts and control list returned ineligible" should {
           "return a Ineligible" in {
             enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
-
-            val testIneligible = testKnownFactsAndControlListInformation.copy(controlListInformation =
-              testKnownFactsAndControlListInformation.controlListInformation.copy(deRegOrDeath = true)
-            )
-            import ControlListInformation.eligible
-            val failures = testIneligible.controlListInformation.validate(mockConfig.eligibilityConfig)
-            assert(failures != eligible)
-            val ineligibilityReasons = failures match {
-              case Invalid(err) => err.toList
-            }
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testIneligible)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
 
             val res = await(call)
-            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = ineligibilityReasons))
-            res shouldBe Left(Ineligible)
+            res shouldBe Left(StoreVatNumberService.Ineligible)
           }
         }
         "Known facts and control list returned ControlListInformationVatNumberNotFound" should {
           "return a VatNotFound" in {
             enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Left(ControlListInformationVatNumberNotFound)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.VatNumberNotFound)))
 
             val res = await(call)
-            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(vatNumberNotFound)))
             res shouldBe Left(VatNotFound)
           }
         }
         "Known facts and control list returned KnownFactsInvalidVatNumber" should {
           "return a VatInvalid" in {
             enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Left(KnownFactsInvalidVatNumber)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.InvalidVatNumber)))
 
             val res = await(call)
-            verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(invalidVatNumber)))
             res shouldBe Left(VatInvalid)
           }
         }
         "known facts returned from api differs from known facts by the user" should {
           "return a KnownFactsMismatch" in {
             enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(
-              Right(testKnownFactsAndControlListInformation.copy(businessPostcode = testKnownFactsAndControlListInformation.businessPostcode.drop(1)))
-            ))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode.drop(1), testDateOfRegistration, isMigratable = false))))
 
             val res = await(call)
             res shouldBe Left(KnownFactsMismatch)
@@ -353,11 +317,10 @@ class StoreVatNumberServiceSpec
         "the vat number is not stored successfully" should {
           "return a VatNumberDatabaseFailure" in {
             enable(AlreadySubscribedCheck)
-            enable(MTDEligibilityCheck)
 
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-            mockUpsertVatNumber(testVatNumber)(Future.failed(new Exception))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
             val res = await(call)
             res shouldBe Left(VatNumberDatabaseFailure)
@@ -367,7 +330,6 @@ class StoreVatNumberServiceSpec
       "the VAT number is already subscribed for MTD-VAT" should {
         "return AlreadySubscribed" in {
           enable(AlreadySubscribedCheck)
-          enable(MTDEligibilityCheck)
 
           mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
@@ -378,21 +340,9 @@ class StoreVatNumberServiceSpec
       "the user does not have either enrolment and did not provide both known facts" should {
         "return InsufficientEnrolments" in {
           enable(AlreadySubscribedCheck)
-          enable(MTDEligibilityCheck)
 
           val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None, None))
           res shouldBe Left(InsufficientEnrolments)
-        }
-      }
-      "the MtdEligibility feature switch is turned off" should {
-        "throw an exception" in {
-          enable(AlreadySubscribedCheck)
-
-          mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-          mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
-          mockUpsertVatNumber(testVatNumber)(Future.successful(mock[UpdateWriteResult]))
-
-          intercept[InternalServerException](await(call))
         }
       }
     }

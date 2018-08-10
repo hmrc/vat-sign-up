@@ -29,7 +29,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
     "if vat number exists return no content when the company number has been stored successfully" in {
       stubAuth(OK, successfulAuthResponse())
 
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
       val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
 
@@ -61,7 +61,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
 
     "return NO_CONTENT when the provided CT reference matches the one returned by DES" in {
       stubAuth(OK, successfulAuthResponse())
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
       stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
 
       val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(

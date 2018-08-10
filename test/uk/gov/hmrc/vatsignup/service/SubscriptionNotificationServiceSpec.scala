@@ -68,17 +68,16 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               }
             }
             "the subscription failed" should {
-              "return NotificationSent" in {
+              "return no email" in {
                 enable(EmailNotification)
 
                 val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-                mockSendEmail(testEmail, principalFailureEmailTemplate)(Future.successful(Right(EmailQueued)))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
-                res shouldBe Right(NotificationSent)
+                res shouldBe Right(TaxEnrolmentFailure)
               }
             }
           }
@@ -116,7 +115,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
           enable(EmailNotification)
 
           mockFindEmailRequestById(testVatNumber)(None)
-          val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+          val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
           res shouldBe Left(EmailRequestDataNotFound)
         }

@@ -44,7 +44,7 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
         stubAuth(OK, successfulAuthResponse())
         stubMatchUser(requestBody)(matched = true)
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
         val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
 
         res should have(
@@ -102,7 +102,7 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
         stubAuth(OK, successfulAuthResponse())
         stubMatchUser(userDetails)(matched = true)
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
         val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
 
         res should have(
