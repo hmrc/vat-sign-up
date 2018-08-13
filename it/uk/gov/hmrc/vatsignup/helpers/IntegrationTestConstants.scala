@@ -34,7 +34,7 @@ object IntegrationTestConstants {
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
   val testEmailTemplate: String = "template"
   val testGroupId: String = UUID.randomUUID().toString
-
+  val testRequestId: String = UUID.randomUUID().toString
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
