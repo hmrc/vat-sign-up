@@ -40,7 +40,7 @@ object KnownFactsStub extends WireMockMethods {
 
   private def successResponseBody =
     Json.obj(
-      "postcode" -> testPostCode,
-      "dateOfReg" -> testDateOfRegistration
+      "businessPostCode" -> testPostCode,
+      "vatRegistrationDate" -> testDateOfRegistration
     )
 }
