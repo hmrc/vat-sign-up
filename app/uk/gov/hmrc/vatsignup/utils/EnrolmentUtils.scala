@@ -33,6 +33,10 @@ object EnrolmentUtils {
         agentEnrolment =>
           agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
       }
+
+    def isPrincipal: Boolean = agentReferenceNumber.isEmpty
+
+    def isDelegated: Boolean = agentReferenceNumber.isDefined
   }
 
 }

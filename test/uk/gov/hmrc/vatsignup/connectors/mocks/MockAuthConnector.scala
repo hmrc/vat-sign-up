@@ -21,7 +21,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.auth.core.authorise.{EmptyPredicate, Predicate}
-import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.{AuthConnector, ConfidenceLevel, Enrolments}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -54,6 +54,11 @@ trait MockAuthConnector extends BeforeAndAfterEach with MockitoSugar {
 
   def mockAuthRetrieveConfidenceLevel(confidenceLevel: ConfidenceLevel): Unit =
     mockAuthorise(retrievals = Retrievals.confidenceLevel)(Future.successful(confidenceLevel))
+
+  def mockAuthRetrieveCredentialAndGroupId(credentials: Credentials, groupId: Option[String]): Unit =
+    mockAuthorise(EmptyPredicate, Retrievals.credentials and Retrievals.groupIdentifier)(Future.successful(
+      new ~(credentials, groupId)
+    ))
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()

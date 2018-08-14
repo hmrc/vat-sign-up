@@ -22,13 +22,14 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
-import uk.gov.hmrc.vatsignup.config.{AppConfig, EligibilityConfig}
+import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
+import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.SubscriptionClaimed
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService.{Ineligible, _}
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -41,6 +42,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                       agentClientRelationshipsConnector: AgentClientRelationshipsConnector,
                                       mandationStatusConnector: MandationStatusConnector,
                                       controlListEligibilityService: ControlListEligibilityService,
+                                      claimSubscriptionService: ClaimSubscriptionService,
                                       auditService: AuditService,
                                       appConfig: AppConfig
                                      )(implicit ec: ExecutionContext) {
@@ -52,7 +54,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- checkExistingVatSubscription(vatNumber)
+      _ <- checkExistingVatSubscription(vatNumber, enrolments)
       eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
     } yield StoreVatNumberSuccess
@@ -121,13 +123,24 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
     }
   }
 
-  private def checkExistingVatSubscription(vatNumber: String
+  private def checkExistingVatSubscription(vatNumber: String,
+                                           enrolments: Enrolments
                                           )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
     if (appConfig.isEnabled(AlreadySubscribedCheck)) {
-      EitherT(mandationStatusConnector.getMandationStatus(vatNumber) map {
-        case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) => Right(NotSubscribed)
-        case Right(MTDfBMandated | MTDfBVoluntary) => Left(AlreadySubscribed)
-        case _ => Left(VatSubscriptionConnectionFailure)
+      EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
+        case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
+          Future.successful(Right(NotSubscribed))
+        case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
+          claimSubscriptionService.claimSubscription(vatNumber) map {
+            case Right(SubscriptionClaimed) =>
+              Left(AlreadySubscribed(subscriptionClaimed = true))
+            case Left(err) =>
+              Left(ClaimSubscriptionFailure)
+          }
+        case Right(MTDfBMandated | MTDfBVoluntary) =>
+          Future.successful(Left(AlreadySubscribed(subscriptionClaimed = false)))
+        case _ =>
+          Future.successful(Left(VatSubscriptionConnectionFailure))
       })
     } else {
       EitherT.pure(NotSubscribed)
@@ -155,7 +168,7 @@ object StoreVatNumberService {
 
   sealed trait StoreVatNumberFailure
 
-  case object AlreadySubscribed extends StoreVatNumberFailure
+  case class AlreadySubscribed(subscriptionClaimed: Boolean) extends StoreVatNumberFailure
 
   case object DoesNotMatchEnrolment extends StoreVatNumberFailure
 
@@ -178,6 +191,8 @@ object StoreVatNumberService {
   case object VatSubscriptionConnectionFailure extends StoreVatNumberFailure
 
   case object VatNumberDatabaseFailure extends StoreVatNumberFailure
+
+  case object ClaimSubscriptionFailure extends StoreVatNumberFailure
 
 }
 

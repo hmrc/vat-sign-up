@@ -30,7 +30,8 @@ object FeatureSwitch {
     AlreadySubscribedCheck,
     EmailNotification,
     StubDESFeature,
-    StubAgentServicesFeature
+    StubAgentServicesFeature,
+    ClaimSubscription
   )
 
   def apply(str: String): FeatureSwitch =
@@ -64,4 +65,9 @@ object StubAgentServicesFeature extends FeatureSwitch {
 object EmailNotification extends FeatureSwitch {
   val displayName = s"Send notification e-mail on tax enrolments callback"
   val name = s"$prefix.email-notification"
+}
+
+object ClaimSubscription extends FeatureSwitch {
+  val displayName = s"Allow users to claim their subscription"
+  val name = s"$prefix.claim-subscription"
 }

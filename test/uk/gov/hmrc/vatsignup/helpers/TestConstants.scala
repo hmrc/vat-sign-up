@@ -19,12 +19,14 @@ package uk.gov.hmrc.vatsignup.helpers
 import java.util.UUID
 
 import uk.gov.hmrc.auth.core.Enrolment
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
 import uk.gov.hmrc.vatsignup.models.CustomerDetails
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.{EmailAddress, LimitedCompany, SoleTrader}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
+import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
 
 object TestConstants {
@@ -40,6 +42,10 @@ object TestConstants {
   val testBusinessEntityLTD = LimitedCompany(testCompanyNumber)
   val testBusinessEntitySole = SoleTrader(testNino)
   val testSignUpEmail = EmailAddress(testEmail, true)
+
+  val testCredentialId: String = UUID.randomUUID().toString
+  val testCredentials: Credentials = Credentials(testCredentialId, GGProviderId)
+  val testGroupId: String = UUID.randomUUID().toString
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"

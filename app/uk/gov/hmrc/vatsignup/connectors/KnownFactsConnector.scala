@@ -27,12 +27,11 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class KnownFactsConnector @Inject()(
-                                     val http: HttpClient,
-                                     val applicationConfig: AppConfig
+class KnownFactsConnector @Inject()(val http: HttpClient,
+                                    val applicationConfig: AppConfig
                                    ) {
 
-  def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): Future[Either[KnownFactsFailure, KnownFacts]] =
+  def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): Future[KnownFactsHttpParserResponse] =
     http.GET[KnownFactsHttpParserResponse](url = applicationConfig.vatSubscriptionKnownFacts(vatNumber))
 
 }
