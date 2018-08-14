@@ -30,11 +30,11 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.{stubGetKnownFacts, stubSuccessGetKnownFacts}
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.{KnownFactsStub, TaxEnrolmentsStub}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
 import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, NonMTDfB}
+import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 
 class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
@@ -134,7 +134,13 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(CREATED)
+          stubAllocateEnrolment(
+            vatNumber = testVatNumber,
+            groupId = testGroupId,
+            credentialId = testCredentialId,
+            postcode = testPostCode,
+            vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
+          )(CREATED)
 
           val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 

@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
@@ -61,7 +64,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
           credentialId = credentialId,
           vatNumber = vatNumber,
           postcode = knownFacts.businessPostcode,
-          vatRegistrationDate = knownFacts.vatRegistrationDate
+          vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
         )) leftMap {
           _ => EnrolFailure
         }
@@ -87,4 +90,13 @@ object ClaimSubscriptionService {
 
   case object EnrolFailure extends ClaimSubscriptionFailure
 
+  implicit class KnownFactsDateFormatter(date: String) {
+    def toTaxEnrolmentsFormat: String = {
+      val desFormat = new SimpleDateFormat("yyyy-MM-dd")
+      val taxEnrolmentsFormat = new SimpleDateFormat("dd/MM/yy")
+      val parsedDate = desFormat parse date
+
+      taxEnrolmentsFormat format parsedDate
+    }
+  }
 }
