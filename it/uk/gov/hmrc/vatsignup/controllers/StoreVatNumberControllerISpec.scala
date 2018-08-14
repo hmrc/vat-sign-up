@@ -21,13 +21,18 @@ import java.util.UUID
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
-import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
+import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
+import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController.SubscriptionClaimedCode
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.{stubGetKnownFacts, stubSuccessGetKnownFacts}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.{KnownFactsStub, TaxEnrolmentsStub}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
 import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, NonMTDfB}
 
@@ -118,6 +123,24 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(CONFLICT),
             emptyBody
+          )
+        }
+
+        "claim the enrolment when the user is already subscribed and the Claim Enrolment feature switch is enabled" in {
+          enable(AlreadySubscribedCheck)
+          enable(ClaimSubscription)
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
+          stubSuccessGetKnownFacts(testVatNumber)
+          stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(CREATED)
+
+          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(HttpCodeKey -> SubscriptionClaimedCode))
           )
         }
 

@@ -39,6 +39,7 @@ import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.vatsignup.connectors.TaxEnrolmentsConnector
 import org.mockito.Mockito._
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.TaxEnrolmentsResponse
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,4 +62,19 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
       ArgumentMatchers.any[HeaderCarrier]
     )) thenReturn response
   }
+
+  def mockAllocateEnrolment(groupId: String,
+                            credentialId: String,
+                            vatNumber: String,
+                            postcode: String,
+                            vatRegistrationDate: String)(response: Future[AllocateEnrolmentResponse]): Unit =
+    when(mockTaxEnrolmentsConnector.allocateEnrolment(
+      ArgumentMatchers.eq(groupId),
+      ArgumentMatchers.eq(credentialId),
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(postcode),
+      ArgumentMatchers.eq(vatRegistrationDate)
+    )(
+      ArgumentMatchers.any[HeaderCarrier]
+    )) thenReturn response
 }

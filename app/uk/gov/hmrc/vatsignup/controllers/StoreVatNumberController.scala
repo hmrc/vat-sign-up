@@ -17,14 +17,13 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
+import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController._
 import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services._
@@ -48,26 +47,40 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
             storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate) map {
               case Right(StoreVatNumberSuccess) =>
                 Created
-              case Left(DoesNotMatchEnrolment) =>
-                Forbidden(Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment"))
-              case Left(InsufficientEnrolments) =>
-                Forbidden(Json.obj(HttpCodeKey -> "InsufficientEnrolments"))
-              case Left(RelationshipNotFound) =>
-                Forbidden(Json.obj(HttpCodeKey -> NoRelationshipCode))
-              case Left(KnownFactsMismatch) =>
-                Forbidden(Json.obj(HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
-              case Left(VatNotFound | VatInvalid) =>
-                PreconditionFailed
-              case Left(Ineligible) =>
-                UnprocessableEntity
-              case Left(AlreadySubscribed) =>
+              case Left(AlreadySubscribed(true)) =>
+                Ok(Json.obj(HttpCodeKey -> SubscriptionClaimedCode))
+              case Left(AlreadySubscribed(false)) =>
                 Conflict
-              case Left(VatNumberDatabaseFailure) =>
-                InternalServerError
-              case Left(AgentServicesConnectionFailure | VatSubscriptionConnectionFailure) =>
-                BadGateway
+              case Left(failure) =>
+                getErrorResponse(failure)
             }
         }
     }
 
+  def getErrorResponse(failure: StoreVatNumberFailure): Result =
+    failure match {
+      case DoesNotMatchEnrolment =>
+        Forbidden(Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment"))
+      case InsufficientEnrolments =>
+        Forbidden(Json.obj(HttpCodeKey -> "InsufficientEnrolments"))
+      case RelationshipNotFound =>
+        Forbidden(Json.obj(HttpCodeKey -> NoRelationshipCode))
+      case KnownFactsMismatch =>
+        Forbidden(Json.obj(HttpCodeKey -> KnownFactsMismatchCode))
+      case VatNotFound | VatInvalid =>
+        PreconditionFailed
+      case Ineligible =>
+        UnprocessableEntity
+      case VatNumberDatabaseFailure =>
+        InternalServerError
+      case AgentServicesConnectionFailure | VatSubscriptionConnectionFailure | ClaimSubscriptionFailure =>
+        BadGateway
+    }
+
+}
+
+object StoreVatNumberController {
+  val SubscriptionClaimedCode = "SUBSCRIPTION_CLAIMED"
+  val NoRelationshipCode = "RELATIONSHIP_NOT_FOUND"
+  val KnownFactsMismatchCode = "KNOWN_FACTS_MISMATCH"
 }

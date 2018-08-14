@@ -26,16 +26,17 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
-import uk.gov.hmrc.vatsignup.config.mocks.{MockConfig, MockEligibilityConfig}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
+import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
+import uk.gov.hmrc.vatsignup.service.mocks.{MockClaimSubscriptionService, MockControlListEligibilityService}
+import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.{KnownFactsFailure, SubscriptionClaimed}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services._
@@ -48,13 +49,14 @@ class StoreVatNumberServiceSpec
     with MockAuditService with MockConfig
     with MockMandationStatusConnector
     with MockControlListEligibilityService
-{
+    with MockClaimSubscriptionService {
 
   object TestStoreVatNumberService extends StoreVatNumberService(
     mockSubscriptionRequestRepository,
     mockAgentClientRelationshipsConnector,
     mockMandationStatusConnector,
     mockControlListEligibilityService,
+    mockClaimSubscriptionService,
     mockAuditService,
     mockConfig
   )
@@ -110,7 +112,7 @@ class StoreVatNumberServiceSpec
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
-              res shouldBe Left(AlreadySubscribed)
+              res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
 
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
@@ -123,7 +125,7 @@ class StoreVatNumberServiceSpec
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
-              res shouldBe Left(AlreadySubscribed)
+              res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
 
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
@@ -232,7 +234,7 @@ class StoreVatNumberServiceSpec
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
-            res shouldBe Left(AlreadySubscribed)
+            res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
           }
         }
         "the vat number does not match enrolment" should {
@@ -327,14 +329,43 @@ class StoreVatNumberServiceSpec
           }
         }
       }
-      "the VAT number is already subscribed for MTD-VAT" should {
-        "return AlreadySubscribed" in {
-          enable(AlreadySubscribedCheck)
+      "the VAT number is already subscribed for MTD-VAT" when {
+        "the claim subscription feature switch is enabled" when {
+          "the claim subscription is successful" should {
+            "return AlreadySubscribed with the subscription claimed" in {
+              enable(AlreadySubscribedCheck)
+              enable(ClaimSubscription)
 
-          mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+              mockClaimSubscription(testVatNumber)(Future.successful(Right(SubscriptionClaimed)))
 
-          val res = await(call)
-          res shouldBe Left(AlreadySubscribed)
+              val res = await(call)
+              res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
+            }
+          }
+
+          "the claim subscription fails" should {
+            "return ClaimSubscriptionFailure" in {
+              enable(AlreadySubscribedCheck)
+              enable(ClaimSubscription)
+
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+              mockClaimSubscription(testVatNumber)(Future.successful(Left(KnownFactsFailure)))
+
+              val res = await(call)
+              res shouldBe Left(ClaimSubscriptionFailure)
+            }
+          }
+        }
+        "the claim subscription feature switch is not enabled" should {
+          "return AlreadySubscribed" in {
+            enable(AlreadySubscribedCheck)
+
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+
+            val res = await(call)
+            res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
+          }
         }
       }
       "the user does not have either enrolment and did not provide both known facts" should {

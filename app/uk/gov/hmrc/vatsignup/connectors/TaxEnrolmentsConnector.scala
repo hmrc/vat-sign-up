@@ -53,6 +53,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
   }
 
   def allocateEnrolment(groupId: String,
+                        credentialId: String,
                         vatNumber: String,
                         postcode: String,
                         vatRegistrationDate: String
@@ -60,7 +61,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
 
     val requestBody = Json.obj(
-      "userId" -> groupId,
+      "userId" -> credentialId,
       "friendlyName" -> "Making Tax Digital - VAT",
       "type" -> "principal",
       "verifiers" -> Json.arr(

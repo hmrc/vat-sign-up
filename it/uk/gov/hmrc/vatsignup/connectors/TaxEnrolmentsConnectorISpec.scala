@@ -55,9 +55,9 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
   "allocateEnrolment" when {
     "Tax Enrolments returns a successful response" should {
       "return an EnrolSuccess" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testPostCode, testDateOfRegistration)(CREATED)
+        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(CREATED)
 
-        val res = connector.allocateEnrolment(testGroupId, testVatNumber, testPostCode, testDateOfRegistration)
+        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration)
 
         await(res) shouldBe Right(EnrolSuccess)
       }
@@ -65,9 +65,9 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
 
     "Tax Enrolments returns a unsuceessful response" should {
       "return an EnrolFailure" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testPostCode, testDateOfRegistration)(BAD_REQUEST)
+        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(BAD_REQUEST)
 
-        val res = connector.allocateEnrolment(testGroupId, testVatNumber, testPostCode, testDateOfRegistration)
+        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration)
 
         await(res) shouldBe Left(EnrolFailure(""))
       }
