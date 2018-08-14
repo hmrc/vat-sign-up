@@ -54,7 +54,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testCredentialId,
               testVatNumber,
               testPostCode,
-              testDateOfRegistration
+              testDateOfRegistration.toTaxEnrolmentsFormat
             )(Future.successful(Right(EnrolSuccess)))
 
             val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
@@ -71,7 +71,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testCredentialId,
               testVatNumber,
               testPostCode,
-              testDateOfRegistration
+              testDateOfRegistration.toTaxEnrolmentsFormat
             )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(""))))
 
             val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
@@ -120,6 +120,13 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
 
         res shouldBe Left(KnownFactsFailure)
       }
+    }
+  }
+
+  "toTaxEnrolmentFormat" should {
+    "convert the date to the correct format" in {
+      "2017-01-01".toTaxEnrolmentsFormat shouldBe "01/01/17"
+      "1999-01-01".toTaxEnrolmentsFormat shouldBe "01/01/99"
     }
   }
 }
