@@ -37,8 +37,8 @@ class KnownFactsHttpParserSpec extends UnitSpec with EitherValues {
             responseStatus = OK,
             responseJson = Some(
               Json.obj(
-                "postcode" -> testPostCode,
-                "dateOfReg" -> testDateOfRegistration
+                "businessPostCode" -> testPostCode,
+                "vatRegistrationDate" -> testDateOfRegistration
               )
             )
           )
@@ -56,7 +56,7 @@ class KnownFactsHttpParserSpec extends UnitSpec with EitherValues {
             responseStatus = OK,
             responseJson = Some(
               Json.obj(
-                "postcode" -> testPostCode
+                "businessPostCode" -> testPostCode
               )
             )
           )
