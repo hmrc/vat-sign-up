@@ -22,7 +22,7 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockMandationStatusConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -165,6 +165,19 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
           await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber)).left.value shouldBe GetVatCustomerInformationFailure
         }
       }
+    }
+    "the claim subscription feature switch is enabled" should {
+      "skip the already subscribed check" in {
+        enable(AlreadySubscribedCheck)
+        enable(ClaimSubscription)
+
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+
+        val res = await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber))
+        res shouldBe Right(VatNumberEligible)
+
+      }
+
     }
   }
 
