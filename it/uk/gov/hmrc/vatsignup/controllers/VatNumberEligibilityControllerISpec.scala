@@ -18,7 +18,6 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
-import uk.gov.hmrc.vatsignup.config.featureswitch.AlreadySubscribedCheck
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{mandationStatusBody, stubGetMandationStatus}
@@ -32,8 +31,6 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
     "the user does not exist on ETMP" when {
       "the user is eligible" should {
         "return OK" in {
-          enable(AlreadySubscribedCheck)
-
           stubAuth(OK, successfulAuthResponse())
           stubGetMandationStatus(testVatNumber)(NOT_FOUND)
           stubGetKnownFactsAndControlListInformation(testVatNumber, testPostCode, testDateOfRegistration)
@@ -49,8 +46,6 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
     "the user does not exist on ETMP" when {
       "the user is ineligible" should {
         "return BAD_REQUEST" in {
-          enable(AlreadySubscribedCheck)
-
           stubAuth(OK, successfulAuthResponse())
           stubGetMandationStatus(testVatNumber)(NOT_FOUND)
           stubIneligibleControlListInformation(testVatNumber)
@@ -65,8 +60,6 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
     }
     "the user is already subscribed" should {
       "return CONFLICT" in {
-        enable(AlreadySubscribedCheck)
-
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
 
