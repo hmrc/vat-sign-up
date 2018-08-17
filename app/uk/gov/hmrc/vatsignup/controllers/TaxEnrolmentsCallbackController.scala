@@ -23,7 +23,7 @@ import play.api.mvc.Action
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.models.SubscriptionState
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
-import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{DelegatedSubscription, EmailRequestDataNotFound, EmailServiceFailure, NotificationSent}
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{EmailRequestDataNotFound, EmailServiceFailure}
 
 import scala.concurrent.ExecutionContext
 
