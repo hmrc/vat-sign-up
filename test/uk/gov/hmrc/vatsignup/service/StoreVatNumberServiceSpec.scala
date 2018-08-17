@@ -26,7 +26,7 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
+import uk.gov.hmrc.vatsignup.config.featureswitch.ClaimSubscription
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
@@ -75,8 +75,6 @@ class StoreVatNumberServiceSpec
           "the VAT number is eligible for MTD" when {
             "the vat number is stored successfully" should {
               "return a StoreVatNumberSuccess" in {
-                enable(AlreadySubscribedCheck)
-
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
@@ -90,8 +88,6 @@ class StoreVatNumberServiceSpec
             }
             "the vat number is not stored successfully" should {
               "return a VatNumberDatabaseFailure" in {
-                enable(AlreadySubscribedCheck)
-
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
@@ -106,8 +102,6 @@ class StoreVatNumberServiceSpec
           }
           "the VAT number is already voluntarily subscribed for MTD-VAT" should {
             "return AlreadySubscribed" in {
-              enable(AlreadySubscribedCheck)
-
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
@@ -119,8 +113,6 @@ class StoreVatNumberServiceSpec
           }
           "the VAT number is already mandated for MTD-VAT" should {
             "return AlreadySubscribed" in {
-              enable(AlreadySubscribedCheck)
-
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
 
@@ -130,25 +122,9 @@ class StoreVatNumberServiceSpec
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
           }
-          "the already subscribed check feature switch is turned off" should {
-            "always treat the user as not subscribed" in {
-              disable(AlreadySubscribedCheck)
-
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
-              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
-              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
-
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
-              res shouldBe Right(StoreVatNumberSuccess)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
-            }
-          }
         }
         "the VAT number is eligible but non migratable" should {
           "return StoreVatNumberSuccess" in {
-            enable(AlreadySubscribedCheck)
-
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false))))
@@ -162,8 +138,6 @@ class StoreVatNumberServiceSpec
         }
         "the VAT number is not eligible for MTD" should {
           "return Ineligible" in {
-            enable(AlreadySubscribedCheck)
-
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
@@ -204,8 +178,6 @@ class StoreVatNumberServiceSpec
         "the vat number is not already subscribed for MTD-VAT" when {
           "the vat number is stored successfully" should {
             "return StoreVatNumberSuccess" in {
-              enable(AlreadySubscribedCheck)
-
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
@@ -216,8 +188,6 @@ class StoreVatNumberServiceSpec
           }
           "the vat number is not stored successfully" should {
             "return a VatNumberDatabaseFailure" in {
-              enable(AlreadySubscribedCheck)
-
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
@@ -229,8 +199,6 @@ class StoreVatNumberServiceSpec
         }
         "the VAT number is already subscribed for MTD-VAT" should {
           "return AlreadySubscribed" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
@@ -239,8 +207,6 @@ class StoreVatNumberServiceSpec
         }
         "the vat number does not match enrolment" should {
           "return DoesNotMatchEnrolment" in {
-            enable(AlreadySubscribedCheck)
-
             val res = await(TestStoreVatNumberService.storeVatNumber(UUID.randomUUID().toString, principalUser, None, None))
             res shouldBe Left(DoesNotMatchEnrolment)
           }
@@ -262,8 +228,6 @@ class StoreVatNumberServiceSpec
       "the vat number is not already subscribed for MTD-VAT" when {
         "the vat number is stored successfully" should {
           "return StoreVatNumberSuccess" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
@@ -274,8 +238,6 @@ class StoreVatNumberServiceSpec
         }
         "Known facts and control list returned ineligible" should {
           "return a Ineligible" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
 
@@ -285,8 +247,6 @@ class StoreVatNumberServiceSpec
         }
         "Known facts and control list returned ControlListInformationVatNumberNotFound" should {
           "return a VatNotFound" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.VatNumberNotFound)))
 
@@ -296,8 +256,6 @@ class StoreVatNumberServiceSpec
         }
         "Known facts and control list returned KnownFactsInvalidVatNumber" should {
           "return a VatInvalid" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.InvalidVatNumber)))
 
@@ -307,8 +265,6 @@ class StoreVatNumberServiceSpec
         }
         "known facts returned from api differs from known facts by the user" should {
           "return a KnownFactsMismatch" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode.drop(1), testDateOfRegistration, isMigratable = false))))
 
@@ -318,8 +274,6 @@ class StoreVatNumberServiceSpec
         }
         "the vat number is not stored successfully" should {
           "return a VatNumberDatabaseFailure" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
@@ -333,7 +287,6 @@ class StoreVatNumberServiceSpec
         "the claim subscription feature switch is enabled" when {
           "the claim subscription is successful" should {
             "return AlreadySubscribed with the subscription claimed" in {
-              enable(AlreadySubscribedCheck)
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
@@ -346,7 +299,6 @@ class StoreVatNumberServiceSpec
 
           "the claim subscription fails" should {
             "return ClaimSubscriptionFailure" in {
-              enable(AlreadySubscribedCheck)
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
@@ -359,8 +311,6 @@ class StoreVatNumberServiceSpec
         }
         "the claim subscription feature switch is not enabled" should {
           "return AlreadySubscribed" in {
-            enable(AlreadySubscribedCheck)
-
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
             val res = await(call)
@@ -370,8 +320,6 @@ class StoreVatNumberServiceSpec
       }
       "the user does not have either enrolment and did not provide both known facts" should {
         "return InsufficientEnrolments" in {
-          enable(AlreadySubscribedCheck)
-
           val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None, None))
           res shouldBe Left(InsufficientEnrolments)
         }

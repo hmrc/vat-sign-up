@@ -21,8 +21,8 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
-import uk.gov.hmrc.vatsignup.config.{AppConfig, EligibilityConfig}
+import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.featureswitch.ClaimSubscription
 import uk.gov.hmrc.vatsignup.connectors.MandationStatusConnector
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
@@ -45,7 +45,7 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
   private def checkExistingVatSubscription(vatNumber: String
                                           )(implicit hc: HeaderCarrier): EitherT[Future, VatNumberEligibilityFailure, NotSubscribed.type] = {
     import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser._
-    if ((appConfig isEnabled AlreadySubscribedCheck) && (appConfig isDisabled ClaimSubscription)) {
+    if (appConfig isDisabled ClaimSubscription) {
       EitherT(mandationStatusConnector.getMandationStatus(vatNumber)) transform {
         case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) => Right(NotSubscribed)
         case Right(MTDfBMandated | MTDfBVoluntary) => Left(AlreadySubscribed)

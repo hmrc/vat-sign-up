@@ -23,7 +23,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AlreadySubscribedCheck, ClaimSubscription}
+import uk.gov.hmrc.vatsignup.config.featureswitch.ClaimSubscription
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.models._
@@ -126,25 +126,22 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   private def checkExistingVatSubscription(vatNumber: String,
                                            enrolments: Enrolments
                                           )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
-    if (appConfig.isEnabled(AlreadySubscribedCheck)) {
-      EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
-        case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
-          Future.successful(Right(NotSubscribed))
-        case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
-          claimSubscriptionService.claimSubscription(vatNumber) map {
-            case Right(SubscriptionClaimed) =>
-              Left(AlreadySubscribed(subscriptionClaimed = true))
-            case Left(err) =>
-              Left(ClaimSubscriptionFailure)
-          }
-        case Right(MTDfBMandated | MTDfBVoluntary) =>
-          Future.successful(Left(AlreadySubscribed(subscriptionClaimed = false)))
-        case _ =>
-          Future.successful(Left(VatSubscriptionConnectionFailure))
-      })
-    } else {
-      EitherT.pure(NotSubscribed)
-    }
+    EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
+      case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
+        Future.successful(Right(NotSubscribed))
+      case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
+        claimSubscriptionService.claimSubscription(vatNumber) map {
+          case Right(SubscriptionClaimed) =>
+            Left(AlreadySubscribed(subscriptionClaimed = true))
+          case Left(err) =>
+            Left(ClaimSubscriptionFailure)
+        }
+      case Right(MTDfBMandated | MTDfBVoluntary) =>
+        Future.successful(Left(AlreadySubscribed(subscriptionClaimed = false)))
+      case _ =>
+        Future.successful(Left(VatSubscriptionConnectionFailure))
+    })
+
 
   private def insertVatNumber(vatNumber: String,
                               isMigratable: Boolean
