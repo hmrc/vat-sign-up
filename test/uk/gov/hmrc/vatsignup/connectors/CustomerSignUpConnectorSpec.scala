@@ -26,7 +26,7 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
   "CustomerSignUpConnector" should {
     import CustomerSignUpConnector._
     "convert the request into the correct DES format" in {
-      val requestJson = buildRequest(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))
+      val requestJson = buildRequest(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(true))
       val expectedJson = Json.parse(
         s"""
            |{
@@ -47,15 +47,17 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |        "fieldContents": "$testEmail",
            |        "infoVerified": true
            |      }
-           |    ]
+           |    ],
+           |    "isPartialMigration" : true
            |  }
            |}
         """.stripMargin
       )
       requestJson shouldBe expectedJson
     }
+
     "convert the request into the correct DES format when email is not defined" in {
-      val requestJson = buildRequest(testSafeId, testVatNumber, None, emailVerified = None)
+      val requestJson = buildRequest(testSafeId, testVatNumber, None, emailVerified = None, optIsPartialMigration = Some(false))
       val expectedJson = Json.parse(
         s"""
            |{
@@ -68,6 +70,37 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |     {
            |        "idType": "VRN",
            |        "idValue": "$testVatNumber"
+           |      }
+           |    ],
+           |    "isPartialMigration" : false
+           |  }
+           |}
+        """.stripMargin
+      )
+      requestJson shouldBe expectedJson
+    }
+
+    "convert the request into the correct DES format when isPartialMigration is not defined" in {
+      val requestJson = buildRequest(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)
+      val expectedJson = Json.parse(
+        s"""
+           |{
+           |  "signUpRequest": {
+           |    "identification": [
+           |      {
+           |        "idType": "SAFEID",
+           |        "idValue": "$testSafeId"
+           |      },
+           |     {
+           |        "idType": "VRN",
+           |        "idValue": "$testVatNumber"
+           |      }
+           |    ],
+           |    "additionalInformation": [
+           |      {
+           |        "typeOfField": "EMAIL",
+           |        "fieldContents": "$testEmail",
+           |        "infoVerified": true
            |      }
            |    ]
            |  }

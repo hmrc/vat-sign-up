@@ -19,9 +19,11 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data._
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, HybridSolution}
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
@@ -42,7 +44,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                                   registrationConnector: RegistrationConnector,
                                   taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                   auditService: AuditService
-                                 )(implicit ec: ExecutionContext) {
+                                 )(implicit ec: ExecutionContext) extends FeatureSwitching {
 
   def submitSignUpRequest(signUpRequest: SignUpRequest,
                           enrolments: Enrolments
@@ -52,6 +54,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     val optAgentReferenceNumber = enrolments.agentReferenceNumber
     val email = signUpRequest.signUpEmail map { _.emailAddress }
     val isSignUpVerified = signUpRequest.signUpEmail map { _.isVerified }
+    val isPartialMigration = !signUpRequest.isMigratable
 
     val result = for {
       safeId <- signUpRequest.businessEntity match {
@@ -60,7 +63,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
         case SoleTrader(nino) =>
           registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
       }
-      _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber)
+      _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
     } yield SignUpRequestSubmitted
 
@@ -105,9 +108,15 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                      vatNumber: String,
                      emailAddress: Option[String],
                      emailAddressVerified: Option[Boolean],
-                     agentReferenceNumber: Option[String]
+                     agentReferenceNumber: Option[String],
+                     isPartialMigration: Boolean
                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, CustomerSignUpResponseSuccess.type] =
-    EitherT(customerSignUpConnector.signUp(safeId, vatNumber, emailAddress, emailAddressVerified)) bimap( {
+    EitherT(customerSignUpConnector.signUp(
+      safeId,
+      vatNumber,
+      emailAddress,
+      emailAddressVerified,
+      optIsPartialMigration = if(isEnabled(HybridSolution)) Some(isPartialMigration) else None)) bimap( {
       _ => {
         auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, isSuccess = false))
         SignUpFailure

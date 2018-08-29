@@ -66,6 +66,7 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
 
   override def beforeEach(): Unit = {
     super.beforeEach()
+    resetWiremock()
     FeatureSwitch.switches foreach disable
   }
 
