@@ -30,7 +30,8 @@ object FeatureSwitch {
     EmailNotification,
     StubDESFeature,
     StubAgentServicesFeature,
-    ClaimSubscription
+    ClaimSubscription,
+    HybridSolution
   )
 
   def apply(str: String): FeatureSwitch =
@@ -64,4 +65,9 @@ object EmailNotification extends FeatureSwitch {
 object ClaimSubscription extends FeatureSwitch {
   val displayName = s"Allow users to claim their subscription"
   val name = s"$prefix.claim-subscription"
+}
+
+object HybridSolution extends FeatureSwitch {
+  val displayName = s"Enable the hybrid solution"
+  val name = s"$prefix.hybrid-solution"
 }
