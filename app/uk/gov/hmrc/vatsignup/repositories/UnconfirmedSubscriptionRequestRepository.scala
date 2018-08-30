@@ -44,7 +44,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     implicitly[Format[String]]
   ) {
 
-  def getRequestIdByCredential(credentialId: String): Future[Option[String]] = {
+  def getRequestIdByCredential(credentialId: String): Future[String] = {
     collection.findAndUpdate(
       selector = Json.obj(credentialIdKey -> credentialId),
       update = Json.obj("$setOnInsert" -> Json.obj(
@@ -52,7 +52,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
       )),
       upsert = true,
       fetchNewObject = true
-    ).map(_.result[UnconfirmedSubscriptionRequest].map(_.requestId))
+    ).map(_.result[UnconfirmedSubscriptionRequest].map(_.requestId).get)
   }
 
 
