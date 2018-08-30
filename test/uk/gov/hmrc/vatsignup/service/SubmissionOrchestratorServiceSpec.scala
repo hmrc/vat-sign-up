@@ -50,7 +50,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
     businessEntity = testBusinessEntitySole,
     signUpEmail = Some(testSignUpEmail),
     transactionEmail = testSignUpEmail,
-    isDelegated = true
+    isDelegated = true,
+    isMigratable = true
   )
   val enrolments = Enrolments(Set(testAgentEnrolment))
 

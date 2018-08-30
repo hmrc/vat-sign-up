@@ -43,6 +43,8 @@ class SignUpRequestServiceSpec extends UnitSpec
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
+  val testIsMigratable = true
+
   "getSignUpRequest" when {
     "the request is not at delegated" when {
       "there is a stored company number" when {
@@ -56,7 +58,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                       vatNumber = testVatNumber,
                       companyNumber = Some(testCompanyNumber),
                       ctReference = Some(testCtReference),
-                      email = Some(testEmail)
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
                     )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -72,7 +75,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                       businessEntity = LimitedCompany(testCompanyNumber),
                       signUpEmail = Some(verifiedEmail),
                       transactionEmail = verifiedEmail,
-                      isDelegated = false
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
                     )
                   )
                 }
@@ -85,7 +89,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                     vatNumber = testVatNumber,
                     companyNumber = Some(testCompanyNumber),
                     ctReference = Some(testCtReference),
-                    email = Some(testEmail)
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable
                   )
 
                 mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -103,7 +108,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                     vatNumber = testVatNumber,
                     companyNumber = Some(testCompanyNumber),
                     ctReference = Some(testCtReference),
-                    email = Some(testEmail)
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable
                   )
 
                 mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -123,7 +129,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                 SubscriptionRequest(
                   vatNumber = testVatNumber,
                   companyNumber = Some(testCompanyNumber),
-                  ctReference = Some(testCtReference)
+                  ctReference = Some(testCtReference),
+                  isMigratable = testIsMigratable
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -144,7 +151,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
                         companyNumber = Some(testCompanyNumber),
-                        email = Some(testEmail)
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
                       )
 
                     mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -160,7 +168,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                         businessEntity = LimitedCompany(testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
-                        isDelegated = false
+                        isDelegated = false,
+                        isMigratable = testIsMigratable
                       )
                     )
                   }
@@ -178,7 +187,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                         vatNumber = testVatNumber,
                         companyNumber = Some(testCompanyNumber),
                         email = Some(testEmail),
-                        identityVerified = true
+                        identityVerified = true,
+                        isMigratable = testIsMigratable
                       )
 
                     mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -194,7 +204,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                         businessEntity = LimitedCompany(testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
-                        isDelegated = false
+                        isDelegated = false,
+                        isMigratable = testIsMigratable
                       )
                     )
                   }
@@ -208,7 +219,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                 SubscriptionRequest(
                   vatNumber = testVatNumber,
                   companyNumber = Some(testCompanyNumber),
-                  email = Some(testEmail)
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -231,7 +243,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                       vatNumber = testVatNumber,
                       nino = Some(testNino),
                       ninoSource = Some(IRSA),
-                      email = Some(testEmail)
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
                     )
 
                   mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -247,7 +260,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                       businessEntity = SoleTrader(testNino),
                       signUpEmail = Some(verifiedEmail),
                       transactionEmail = verifiedEmail,
-                      isDelegated = false
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
                     )
                   )
                 }
@@ -267,7 +281,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                         nino = Some(testNino),
                         ninoSource = Some(UserEntered),
                         email = Some(testEmail),
-                        identityVerified = true
+                        identityVerified = true,
+                        isMigratable = testIsMigratable
                       )
 
                     mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -283,7 +298,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                         businessEntity = SoleTrader(testNino),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
-                        isDelegated = false
+                        isDelegated = false,
+                        isMigratable = testIsMigratable
                       )
                     )
                   }
@@ -298,7 +314,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                   vatNumber = testVatNumber,
                   nino = Some(testNino),
                   ninoSource = Some(UserEntered),
-                  email = Some(testEmail)
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -315,7 +332,8 @@ class SignUpRequestServiceSpec extends UnitSpec
           val testSubscriptionRequest =
             SubscriptionRequest(
               vatNumber = testVatNumber,
-              email = Some(testEmail)
+              email = Some(testEmail),
+              isMigratable = testIsMigratable
             )
 
           mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -335,7 +353,8 @@ class SignUpRequestServiceSpec extends UnitSpec
               SubscriptionRequest(
                 vatNumber = testVatNumber,
                 nino = Some(testNino),
-                email = Some(testEmail)
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
               )
 
             mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -351,7 +370,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                 businessEntity = SoleTrader(testNino),
                 signUpEmail = Some(unverifiedEmail),
                 transactionEmail = unverifiedEmail,
-                isDelegated = true
+                isDelegated = true,
+                isMigratable = testIsMigratable
               )
             )
           }
@@ -363,7 +383,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                 SubscriptionRequest(
                   vatNumber = testVatNumber,
                   nino = Some(testNino),
-                  transactionEmail = Some(testEmail)
+                  transactionEmail = Some(testEmail),
+                  isMigratable = testIsMigratable
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
@@ -379,7 +400,8 @@ class SignUpRequestServiceSpec extends UnitSpec
                   businessEntity = SoleTrader(testNino),
                   signUpEmail = None,
                   transactionEmail = verifiedEmail,
-                  isDelegated = true
+                  isDelegated = true,
+                  isMigratable = testIsMigratable
                 )
               )
             }
@@ -406,7 +428,8 @@ class SignUpRequestServiceSpec extends UnitSpec
               val testSubscriptionRequest =
                 SubscriptionRequest(
                   vatNumber = testVatNumber,
-                  nino = Some(testNino)
+                  nino = Some(testNino),
+                  isMigratable = testIsMigratable
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))

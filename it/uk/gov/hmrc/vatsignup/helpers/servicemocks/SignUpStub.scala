@@ -23,7 +23,12 @@ import uk.gov.hmrc.vatsignup.config.Constants.Des._
 
 object SignUpStub extends WireMockMethods {
 
-  def stubSignUp[T](safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean])(status: Int): StubMapping =
+  def stubSignUp[T](safeId: String,
+                    vatNumber: String,
+                    email: Option[String],
+                    emailVerified: Option[Boolean],
+                    optIsPartialMigration: Option[Boolean]
+                   )(status: Int): StubMapping =
     when(method = POST, uri = "/cross-regime/signup/VATC",
       body = Json.obj(
         "signUpRequest" -> Json.obj(
@@ -43,6 +48,11 @@ object SignUpStub extends WireMockMethods {
                   )
                 )
               )
+            case _ => Json.obj()
+          }
+        ).++(
+          optIsPartialMigration match {
+            case Some(isPartialMigration) => Json.obj("isPartialMigration" -> isPartialMigration)
             case _ => Json.obj()
           }
         )
