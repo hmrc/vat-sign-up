@@ -53,21 +53,20 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
     "create a new record and return the requestID if the record does not already exist," +
       " but if it does then return without replacement of the existing record" in {
-      val (findBeforeInsert, someRequestId, findAfterInsert, someRequestIdForExistingRecord) =
+      val (findBeforeInsert, requestId, findAfterInsert, requestIdForExistingRecord) =
         await(
           for {
             findBeforeInsert <- findSubscriptionRequest(testCredentialId)
-            someRequestId <- repo.getRequestIdByCredential(testCredentialId)
+            requestId <- repo.getRequestIdByCredential(testCredentialId)
             findAfterInsert <- findSubscriptionRequest(testCredentialId)
-            someRequestIdForExistingRecord <- repo.getRequestIdByCredential(testCredentialId)
-          } yield (findBeforeInsert, someRequestId, findAfterInsert, someRequestIdForExistingRecord)
+            requestIdForExistingRecord <- repo.getRequestIdByCredential(testCredentialId)
+          } yield (findBeforeInsert, requestId, findAfterInsert, requestIdForExistingRecord)
         )
 
       findBeforeInsert shouldBe None
-      someRequestId shouldBe defined
-      someRequestId should not be empty
-      findAfterInsert shouldBe Some(UnconfirmedSubscriptionRequest(someRequestId.get, Some(testCredentialId)))
-      someRequestId shouldBe someRequestIdForExistingRecord
+      requestId should not be empty
+      findAfterInsert shouldBe Some(UnconfirmedSubscriptionRequest(requestId, Some(testCredentialId)))
+      requestId shouldBe requestIdForExistingRecord
     }
   }
 
