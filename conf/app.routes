@@ -1,13 +1,6 @@
 # microservice specific routes
+# old APIs
+->          /                                                                        deprecated.Routes
 
-POST        /subscription-request/vat-number                                         @uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController.storeVatNumber
-PUT         /subscription-request/vat-number/:vatNumber/company-number               @uk.gov.hmrc.vatsignup.controllers.StoreCompanyNumberController.storeCompanyNumber(vatNumber: String)
-PUT         /subscription-request/vat-number/:vatNumber/email                        @uk.gov.hmrc.vatsignup.controllers.StoreEmailController.storeEmail(vatNumber: String)
-PUT         /subscription-request/vat-number/:vatNumber/transaction-email            @uk.gov.hmrc.vatsignup.controllers.StoreTransactionEmailController.storeTransactionEmail(vatNumber: String)
-PUT         /subscription-request/vat-number/:vatNumber/nino                         @uk.gov.hmrc.vatsignup.controllers.StoreNinoController.storeNino(vatNumber: String)
-POST        /subscription-request/vat-number/:vatNumber/submit                       @uk.gov.hmrc.vatsignup.controllers.SignUpSubmissionController.submitSignUpRequest(vatNumber: String)
-POST        /subscription-request/vat-number/:vatNumber/identity-verification        @uk.gov.hmrc.vatsignup.controllers.StoreIdentityVerificationOutcomeController.storeIdentityVerificationOutcome(vatNumber: String)
-
-GET         /subscription-request/vat-number/:vatNumber/mtdfb-eligibility            @uk.gov.hmrc.vatsignup.controllers.VatNumberEligibilityController.checkVatNumberEligibility(vatNumber: String)
-
-POST        /subscription-request/vat-number/:vatNumber/callback                     @uk.gov.hmrc.vatsignup.controllers.TaxEnrolmentsCallbackController.taxEnrolmentsCallback(vatNumber: String)
+# new APIs
+POST        /sign-up-request/                                                        @uk.gov.hmrc.vatsignup.controllers.GetRequestIdController.getRequestId

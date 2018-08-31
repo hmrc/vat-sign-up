@@ -22,7 +22,6 @@ import play.api.http.Status._
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L0
-import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
@@ -42,18 +41,25 @@ object AuthStub extends WireMockMethods {
       .thenReturn(status = UNAUTHORIZED, headers = exceptionHeaders("MissingBearerToken"))
   }
 
-  def successfulAuthResponse(confidenceLevel: ConfidenceLevel, enrolments: JsObject*): JsObject = Json.obj(
+  def successfulAuthResponse(confidenceLevel: ConfidenceLevel, internalId: Option[String], enrolments: JsObject*): JsObject = Json.obj(
     "allEnrolments" -> enrolments,
     "confidenceLevel" -> confidenceLevel.level,
     "credentials" -> Json.obj(
-      "providerId" ->testCredentialId,
-      "providerType" ->GGProviderId
+      "providerId" -> testCredentialId,
+      "providerType" -> GGProviderId
     ),
-    "groupIdentifier" -> testGroupId
+    "groupIdentifier" -> testGroupId,
+    "internalId" -> internalId
   )
 
   def successfulAuthResponse(enrolments: JsObject*): JsObject =
-    successfulAuthResponse(L0, enrolments: _*)
+    successfulAuthResponse(L0, None, enrolments: _*)
+
+  def successfulAuthResponse(internalId: String, enrolments: JsObject*): JsObject =
+    successfulAuthResponse(L0, Some(internalId), enrolments: _*)
+
+  def successfulAuthResponse(confidenceLevel: ConfidenceLevel): JsObject =
+    successfulAuthResponse(confidenceLevel, None)
 
   val agentEnrolment: JsObject = Json.obj(
     "key" -> AgentEnrolmentKey,
@@ -74,4 +80,5 @@ object AuthStub extends WireMockMethods {
       )
     )
   )
+
 }
