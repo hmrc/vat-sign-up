@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.repositories
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.{Format, JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
@@ -42,6 +44,18 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     implicitly[Format[String]]
   ) {
 
+  def getRequestIdByCredential(credentialId: String): Future[String] = {
+    collection.findAndUpdate(
+      selector = Json.obj(credentialIdKey -> credentialId),
+      update = Json.obj("$setOnInsert" -> Json.obj(
+        idKey -> UUID.randomUUID().toString
+      )),
+      upsert = true,
+      fetchNewObject = true
+    ).map(_.result[UnconfirmedSubscriptionRequest].map(_.requestId).get)
+  }
+
+
   private def upsert(requestId: String, elementKey: String, elementValue: String): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> requestId),
@@ -57,7 +71,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
       selector = Json.obj(
         idKey -> requestId
       ),
-      update = UnconfirmedSubscriptionRequest(requestId, Some(vatNumber)),
+      update = UnconfirmedSubscriptionRequest(requestId = requestId, vatNumber = Some(vatNumber)),
       upsert = true
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }
@@ -119,17 +133,29 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     options = BSONDocument("expireAfterSeconds" -> appConfig.timeToLiveSeconds)
   )
 
-  private def setIndex(): Unit = {
-    collection.indexesManager.drop(ttlIndex.name.get) onComplete {
-      _ => collection.indexesManager.ensure(ttlIndex)
-    }
+  private lazy val credentialIdIndex = Index(
+    Seq((credentialIdKey, IndexType(Ascending.value))),
+    name = Some("credentialIdIndex"),
+    unique = true,
+    background = false,
+    dropDups = false,
+    sparse = true,
+    version = None
+  )
+
+  private def setIndex(): Future[Unit] = {
+    for {
+      _ <- collection.indexesManager.create(ttlIndex)
+      _ <- collection.indexesManager.create(credentialIdIndex)
+    } yield Unit
   }
 
   setIndex()
 
   override def drop(implicit ec: ExecutionContext): Future[Boolean] =
-    collection.drop(failIfNotFound = false).map { r =>
-      setIndex()
-      r
-    }
+    for {
+      r <- collection.drop(failIfNotFound = false)
+      _  <- setIndex()
+    } yield r
+
 }

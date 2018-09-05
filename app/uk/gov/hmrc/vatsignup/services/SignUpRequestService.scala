@@ -46,12 +46,14 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           _ <- EitherT.fromEither[Future](checkAuthorisation(businessEntity, subscriptionRequest, isDelegated, hasVatEnrolment))
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
+          isMigratable  = subscriptionRequest.isMigratable
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,
           optSignUpEmail,
           transactionEmail,
-          isDelegated
+          isDelegated,
+          isMigratable
         )
         res.value
       case None =>

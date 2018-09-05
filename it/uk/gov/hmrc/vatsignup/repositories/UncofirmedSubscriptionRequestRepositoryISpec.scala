@@ -20,11 +20,14 @@ import java.util.UUID
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
+import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest.credentialIdKey
 import uk.gov.hmrc.vatsignup.models.{UnconfirmedSubscriptionRequest, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val repo: UnconfirmedSubscriptionRequestRepository = app.injector.instanceOf[UnconfirmedSubscriptionRequestRepository]
@@ -37,6 +40,34 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
   override def beforeEach: Unit = {
     super.beforeEach()
     await(repo.drop)
+  }
+
+
+  "getRequestIdByCredential" should {
+    import reactivemongo.play.json._
+    implicit val format = UnconfirmedSubscriptionRequest.mongoFormat
+
+    def findSubscriptionRequest(credentialId: String
+                               )(implicit format: OFormat[UnconfirmedSubscriptionRequest]): Future[Option[UnconfirmedSubscriptionRequest]] =
+      repo.collection.find(selector = Json.obj(credentialIdKey -> credentialId)).one[UnconfirmedSubscriptionRequest]
+
+    "create a new record and return the requestID if the record does not already exist," +
+      " but if it does then return without replacement of the existing record" in {
+      val (findBeforeInsert, requestId, findAfterInsert, requestIdForExistingRecord) =
+        await(
+          for {
+            findBeforeInsert <- findSubscriptionRequest(testCredentialId)
+            requestId <- repo.getRequestIdByCredential(testCredentialId)
+            findAfterInsert <- findSubscriptionRequest(testCredentialId)
+            requestIdForExistingRecord <- repo.getRequestIdByCredential(testCredentialId)
+          } yield (findBeforeInsert, requestId, findAfterInsert, requestIdForExistingRecord)
+        )
+
+      findBeforeInsert shouldBe None
+      requestId should not be empty
+      findAfterInsert shouldBe Some(UnconfirmedSubscriptionRequest(requestId, Some(testCredentialId)))
+      requestId shouldBe requestIdForExistingRecord
+    }
   }
 
   "insert" should {
@@ -70,6 +101,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
         _ <- repo.insert(
           UnconfirmedSubscriptionRequest(
             testRequestId,
+            credentialId = None,
             Some(testVatNumber),
             Some(testCompanyNumber),
             Some(testCtReference),

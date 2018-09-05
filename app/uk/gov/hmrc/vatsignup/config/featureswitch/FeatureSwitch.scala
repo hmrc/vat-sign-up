@@ -27,10 +27,11 @@ object FeatureSwitch {
   val prefix = "feature-switch"
 
   val switches: Set[FeatureSwitch] = Set(
-    AlreadySubscribedCheck,
     EmailNotification,
     StubDESFeature,
-    StubAgentServicesFeature
+    StubAgentServicesFeature,
+    ClaimSubscription,
+    HybridSolution
   )
 
   def apply(str: String): FeatureSwitch =
@@ -46,11 +47,6 @@ object FeatureSwitch {
     }
 }
 
-object AlreadySubscribedCheck extends FeatureSwitch {
-  override val displayName: String = "Enable check for already subscribed VAT numbers (API 1363)"
-  override val name: String = s"$prefix.already-subscribed-check"
-}
-
 object StubDESFeature extends FeatureSwitch {
   val displayName = s"Use stub for DES connection"
   val name = s"$prefix.stub-des"
@@ -64,4 +60,14 @@ object StubAgentServicesFeature extends FeatureSwitch {
 object EmailNotification extends FeatureSwitch {
   val displayName = s"Send notification e-mail on tax enrolments callback"
   val name = s"$prefix.email-notification"
+}
+
+object ClaimSubscription extends FeatureSwitch {
+  val displayName = s"Allow users to claim their subscription"
+  val name = s"$prefix.claim-subscription"
+}
+
+object HybridSolution extends FeatureSwitch {
+  val displayName = s"Enable the hybrid solution"
+  val name = s"$prefix.hybrid-solution"
 }

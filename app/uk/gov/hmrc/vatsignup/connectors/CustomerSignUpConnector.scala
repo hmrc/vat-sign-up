@@ -36,7 +36,11 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
 
   import CustomerSignUpConnector._
 
-  def signUp(safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean]
+  def signUp(safeId: String,
+             vatNumber: String,
+             email: Option[String],
+             emailVerified: Option[Boolean],
+             optIsPartialMigration: Option[Boolean]
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
     val headerCarrier = hc
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
@@ -44,7 +48,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
 
     http.POST[JsObject, CustomerSignUpResponse](
       url = url,
-      body = buildRequest(safeId, vatNumber, email, emailVerified)
+      body = buildRequest(safeId, vatNumber, email, emailVerified, optIsPartialMigration)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[CustomerSignUpResponse]],
@@ -59,7 +63,7 @@ object CustomerSignUpConnector {
 
   import uk.gov.hmrc.vatsignup.config.Constants.Des._
 
-  private[connectors] def buildRequest(safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean]): JsObject = {
+  private[connectors] def buildRequest(safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean], optIsPartialMigration: Option[Boolean]): JsObject = {
     Json.obj(
       "signUpRequest" -> Json.obj(
         "identification" ->
@@ -81,7 +85,12 @@ object CustomerSignUpConnector {
               )
             case _ => Json.obj()
           }
-        )
+        ).++(
+        optIsPartialMigration match {
+          case Some(isPartialMigration) => Json.obj("isPartialMigration" -> isPartialMigration)
+          case _ => Json.obj()
+        }
+      )
     )
   }
 

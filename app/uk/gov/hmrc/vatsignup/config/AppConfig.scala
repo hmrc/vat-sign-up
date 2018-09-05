@@ -17,11 +17,12 @@
 package uk.gov.hmrc.vatsignup.config
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.vatsignup.config.EligibilityConfig.{EligibilityConfiguration, IneligibleParameter, MigratableParameter, NonMigratableParameter}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListParameter
 
 @Singleton
 class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig with FeatureSwitching {
@@ -92,19 +93,25 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
-  private def loadConfigFromEnvFirst(key:String):Option[String] = {
+  def isDisabled(featureSwitch: FeatureSwitch): Boolean = !isEnabled(featureSwitch)
+
+  private def loadConfigFromEnvFirst(key: String): Option[String] = {
     sys.props.get(key) match {
       case r@Some(result) if result.nonEmpty => r
       case _ => runModeConfiguration.getString(key)
     }
   }
-  def loadEligibilityConfig(key: String): EligibilityConfiguration = {
-    loadConfigFromEnvFirst(s"control-list.eligible.$key") match {
-      case Some("Migratable") => MigratableParameter
-      case Some("NonMigratable") => NonMigratableParameter
-      case Some("Ineligible") => IneligibleParameter
-      case _ => throw new Exception(s"Missing eligibility configuration key: $key")
+
+  def loadIsEligibleConfig(param: ControlListParameter): Boolean =
+    loadConfigFromEnvFirst(s"control-list.${param.configKey}.eligible") match {
+      case Some(bool) => bool.toBoolean
+      case _ => throw new Exception(s"Missing eligibility configuration key: ${param.configKey}")
     }
-  }
+
+  def loadIsMigratableConfig(param: ControlListParameter): Boolean =
+    loadConfigFromEnvFirst(s"control-list.${param.configKey}.migratable") match {
+      case Some(bool) => bool.toBoolean
+      case _ => throw new Exception(s"Missing migratability configuration key: ${param.configKey}")
+    }
 
 }

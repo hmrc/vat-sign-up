@@ -23,9 +23,9 @@ import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 object KnownFactsHttpParser {
   type KnownFactsHttpParserResponse = Either[KnownFactsFailure, KnownFacts]
 
-  val postCodeKey = "postcode"
+  val postCodeKey = "businessPostCode"
 
-  val registrationDateKey = "dateOfReg"
+  val registrationDateKey = "vatRegistrationDate"
 
   val invalidJsonResponseMessage = "Invalid JSON response"
 

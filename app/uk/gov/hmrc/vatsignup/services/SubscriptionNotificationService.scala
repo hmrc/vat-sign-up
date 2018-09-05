@@ -28,6 +28,8 @@ import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
+import play.api.Logger
+
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,10 +41,10 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
   def sendEmailNotification(vatNumber: String,
                             subscriptionState: SubscriptionState
                            )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
-    if(appConfig.isEnabled(EmailNotification)) {
+    if (appConfig.isEnabled(EmailNotification)) {
       (for {
         emailRequest <- getEmailRequest(vatNumber)
-        notificationResult <- sendEmail(emailRequest.email, subscriptionState, emailRequest.isDelegated)
+        notificationResult <- sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated)
         _ <- deleteEmailRequest(vatNumber)
       } yield notificationResult).value
     }
@@ -60,6 +62,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
 
 
   private def sendEmail(emailAddress: String,
+                        vatNumber: String,
                         subscriptionState: SubscriptionState,
                         isDelegated: Boolean
                        )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
@@ -67,7 +70,8 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
       EitherT.rightT(DelegatedSubscription)
     } else {
       subscriptionState match {
-        case Failure => EitherT.rightT(TaxEnrolmentFailure)
+        case Failure => Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
+          EitherT.rightT(TaxEnrolmentFailure)
         case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate)) bimap(
           _ => EmailServiceFailure,
           _ => NotificationSent
@@ -95,4 +99,5 @@ object SubscriptionNotificationService {
   case object EmailRequestDataNotFound extends NotificationFailure
 
   case object EmailServiceFailure extends NotificationFailure
+
 }

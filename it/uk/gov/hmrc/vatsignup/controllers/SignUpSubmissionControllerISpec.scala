@@ -18,6 +18,7 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import play.api.http.Status._
 import play.api.libs.json.Json
+import uk.gov.hmrc.vatsignup.config.featureswitch.HybridSolution
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
@@ -31,6 +32,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatchers
  with TestSubmissionRequestRepository with TestEmailRequestRepository {
+
+  val testIsMigratable = true
+
+  override def beforeEach: Unit = {
+    super.beforeEach
+    enable(HybridSolution)
+  }
+
   "/subscription-request/vat-number/:vatNumber/submit" when {
     "the user is a delegate and" when {
       "all downstream services behave as expected" should {
@@ -39,13 +48,14 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             nino = Some(testNino),
             ninoSource = Some(UserEntered),
-            email = Some(testEmail)
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -61,13 +71,14 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
-            email = Some(testEmail)
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -83,13 +94,14 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
-            transactionEmail = Some(testEmail)
+            transactionEmail = Some(testEmail),
+            isMigratable = testIsMigratable
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, None, None)(OK)
+          stubSignUp(testSafeId, testVatNumber, None, None, optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -111,13 +123,14 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             nino = Some(testNino),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            identityVerified = true
+            identityVerified = true,
+            isMigratable = testIsMigratable
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -134,13 +147,14 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
             email = Some(testEmail),
-            identityVerified = true
+            identityVerified = true,
+            isMigratable = testIsMigratable
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -158,13 +172,14 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
             ctReference = Some(testCtReference),
-            email = Some(testEmail)
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true))(OK)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))

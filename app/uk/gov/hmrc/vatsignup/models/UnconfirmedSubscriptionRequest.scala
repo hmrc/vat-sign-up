@@ -22,6 +22,7 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.vatsignup.models.NinoSource._
 
 case class UnconfirmedSubscriptionRequest(requestId: String,
+                                          credentialId: Option[String] = None, // n.b. must exist for principal users
                                           vatNumber: Option[String] = None,
                                           companyNumber: Option[String] = None,
                                           ctReference: Option[String] = None,
@@ -33,11 +34,11 @@ case class UnconfirmedSubscriptionRequest(requestId: String,
 
 object UnconfirmedSubscriptionRequest {
 
-  val requestIdKey = "requestId"
+  val idKey = "_id"
+  val credentialIdKey = "credentialId"
   val vatNumberKey = "vatNumber"
   val postCodeKey = "postCode"
   val registrationDateKey = "registrationDate"
-  val idKey = "_id"
   val companyNumberKey = "companyNumber"
   val ctReferenceKey = "ctReference"
   val ninoKey = "nino"
@@ -51,6 +52,7 @@ object UnconfirmedSubscriptionRequest {
     json =>
       for {
         requestId <- (json \ idKey).validate[String]
+        credentialId <- (json \ credentialIdKey).validateOpt[String]
         vatNumber <- (json \ vatNumberKey).validateOpt[String]
         companyNumber <- (json \ companyNumberKey).validateOpt[String]
         ctReference <- (json \ ctReferenceKey).validateOpt[String]
@@ -65,10 +67,21 @@ object UnconfirmedSubscriptionRequest {
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validateOpt[Boolean]
-      } yield UnconfirmedSubscriptionRequest(requestId, vatNumber, companyNumber, ctReference, nino, ninoSource, email, transactionEmail, identityVerified),
+      } yield UnconfirmedSubscriptionRequest(
+        requestId = requestId,
+        credentialId = credentialId,
+        vatNumber = vatNumber,
+        companyNumber = companyNumber,
+        ctReference = ctReference,
+        nino = nino,
+        ninoSource = ninoSource,
+        email = email,
+        transactionEmail = transactionEmail,
+        identityVerified = identityVerified),
     unconfirmedSubscriptionRequest =>
       Json.obj(
         idKey -> unconfirmedSubscriptionRequest.requestId,
+        credentialIdKey -> unconfirmedSubscriptionRequest.credentialId,
         vatNumberKey -> unconfirmedSubscriptionRequest.vatNumber,
         companyNumberKey -> unconfirmedSubscriptionRequest.companyNumber,
         ninoKey -> unconfirmedSubscriptionRequest.nino,
@@ -84,4 +97,5 @@ object UnconfirmedSubscriptionRequest {
         }
       )
   )
+
 }

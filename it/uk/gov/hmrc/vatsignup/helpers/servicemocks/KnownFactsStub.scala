@@ -29,14 +29,6 @@ object KnownFactsStub extends WireMockMethods {
       body = body
     )
 
-  def stubGetKnownFacts(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
-    val body = Json.obj(
-      "businessPostcode" -> businessPostcode,
-      "vatRegistrationDate" -> vatRegistrationDate
-    )
-    stubGetKnownFacts(vatNumber)(OK, Some(body))
-  }
-
   def stubSuccessGetKnownFacts(vatNumber: String): StubMapping =
     stubGetKnownFacts(vatNumber)(OK, Some(successResponseBody))
 
@@ -48,7 +40,7 @@ object KnownFactsStub extends WireMockMethods {
 
   private def successResponseBody =
     Json.obj(
-      "postcode" -> testPostCode,
-      "dateOfReg" -> testDateOfRegistration
+      "businessPostCode" -> testPostCode,
+      "vatRegistrationDate" -> testDateOfRegistration
     )
 }

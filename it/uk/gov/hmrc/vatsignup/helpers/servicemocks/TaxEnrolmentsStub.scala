@@ -47,9 +47,9 @@ object TaxEnrolmentsStub extends WireMockMethods {
     ) thenReturn status
   }
 
-  def stubAllocateEnrolment(vatNumber: String, groupId: String, postcode: String, vatRegistrationDate: String)(status: Int): Unit = {
+  def stubAllocateEnrolment(vatNumber: String, groupId: String, credentialId: String, postcode: String, vatRegistrationDate: String)(status: Int): Unit = {
     val allocateEnrolmentJsonBody = Json.obj(
-      "userId" -> groupId,
+      "userId" -> credentialId,
       "friendlyName" -> "Making Tax Digital - VAT",
       "type" -> "principal",
       "verifiers" -> Json.arr(
