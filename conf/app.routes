@@ -4,3 +4,4 @@
 
 # new APIs
 POST        /sign-up-request/                                                        @uk.gov.hmrc.vatsignup.controllers.GetRequestIdController.getRequestId
+PUT         /sign-up-request/request-id/:requestId/company-number                     @uk.gov.hmrc.vatsignup.controllers.StoreCompanyNumberWithRequestIdController.storeCompanyNumber(requestId: String)
