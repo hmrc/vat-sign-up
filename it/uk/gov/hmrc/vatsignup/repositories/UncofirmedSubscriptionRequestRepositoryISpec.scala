@@ -47,9 +47,12 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
     import reactivemongo.play.json._
     implicit val format = UnconfirmedSubscriptionRequest.mongoFormat
 
-    def findSubscriptionRequest(credentialId: String
-                               )(implicit format: OFormat[UnconfirmedSubscriptionRequest]): Future[Option[UnconfirmedSubscriptionRequest]] =
-      repo.collection.find(selector = Json.obj(credentialIdKey -> credentialId)).one[UnconfirmedSubscriptionRequest]
+    def findSubscriptionRequest(
+      credentialId: String
+    )(implicit format: OFormat[UnconfirmedSubscriptionRequest]): Future[Option[UnconfirmedSubscriptionRequest]] =
+      repo.collection.find(selector = Json.obj(
+        credentialIdKey -> credentialId
+      )).one[UnconfirmedSubscriptionRequest]
 
     "create a new record and return the requestID if the record does not already exist," +
       " but if it does then return without replacement of the existing record" in {
@@ -89,7 +92,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
     "insert the unconfirmed subscription request where there is not already one" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -111,7 +114,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
             identityVerified = Some(true)
           )
         )
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -169,7 +172,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
     }
     "update the unconfirmed subscription request where there isn't already an email stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         _ <- repo.upsertEmail(testRequestId, testEmail)
         model <- repo.findById(testRequestId)
       } yield model
@@ -210,7 +213,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
     "update the unconfirmed subscription request where there isn't already a transaction email stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         _ <- repo.upsertTransactionEmail(testRequestId, testEmail)
         model <- repo.findById(testRequestId)
       } yield model
@@ -253,7 +256,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
     "update the unconfirmed subscription request where there isn't already a nino stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
         model <- repo.findById(testRequestId)
       } yield model
@@ -309,7 +312,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
     "update the unconfirmed subscription request with IdentityVerified" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         _ <- repo.upsertIdentityVerified(testRequestId)
         model <- repo.findById(testRequestId)
       } yield model
@@ -338,7 +341,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
 
     "update the unconfirmed subscription request with CtReference" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         _ <- repo.upsertCtReference(testRequestId, testCtReference)
         model <- repo.findById(testRequestId)
       } yield model
@@ -350,7 +353,7 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
   "deleteRecord" should {
     "delete the entry stored against the vrn" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber)
+        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
         inserted <- repo.findById(testRequestId)
         _ <- repo.deleteRecord(testRequestId)
         postDelete <- repo.findById(testRequestId)
