@@ -30,7 +30,8 @@ case class UnconfirmedSubscriptionRequest(requestId: String,
                                           ninoSource: Option[NinoSource] = None,
                                           email: Option[String] = None,
                                           transactionEmail: Option[String] = None,
-                                          identityVerified: Option[Boolean] = None)
+                                          identityVerified: Option[Boolean] = None,
+                                          isMigratable: Boolean = true)
 
 object UnconfirmedSubscriptionRequest {
 
@@ -47,6 +48,7 @@ object UnconfirmedSubscriptionRequest {
   val transactionEmailKey = "transactionEmail"
   val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
+  val isMigratableKey = "isMigratable"
 
   val mongoFormat: OFormat[UnconfirmedSubscriptionRequest] = OFormat(
     json =>
@@ -67,6 +69,7 @@ object UnconfirmedSubscriptionRequest {
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validateOpt[Boolean]
+        isMigratable <- (json \ isMigratableKey).validate[Boolean]
       } yield UnconfirmedSubscriptionRequest(
         requestId = requestId,
         credentialId = credentialId,
@@ -77,7 +80,9 @@ object UnconfirmedSubscriptionRequest {
         ninoSource = ninoSource,
         email = email,
         transactionEmail = transactionEmail,
-        identityVerified = identityVerified),
+        identityVerified = identityVerified,
+        isMigratable = isMigratable
+      ),
     unconfirmedSubscriptionRequest =>
       Json.obj(
         idKey -> unconfirmedSubscriptionRequest.requestId,
@@ -89,7 +94,8 @@ object UnconfirmedSubscriptionRequest {
         emailKey -> unconfirmedSubscriptionRequest.email,
         transactionEmailKey -> unconfirmedSubscriptionRequest.transactionEmail,
         identityVerifiedKey -> unconfirmedSubscriptionRequest.identityVerified,
-        creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli)
+        creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli),
+        isMigratableKey -> unconfirmedSubscriptionRequest.isMigratable
       ).++(
         unconfirmedSubscriptionRequest.ctReference match {
           case Some(ref) => Json.obj(ctReferenceKey -> ref)

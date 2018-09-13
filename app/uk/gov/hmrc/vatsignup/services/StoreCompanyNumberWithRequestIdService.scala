@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StoreCompanyNumberWithRequestIdService @Inject()(subscriptionRequestRepository: UnconfirmedSubscriptionRequestRepository,
                                                        companyMatchService: CompanyMatchService
-                                         )(implicit ec: ExecutionContext) {
+                                                      )(implicit ec: ExecutionContext) {
 
   import StoreCompanyNumberWithRequestIdService._
 
@@ -69,27 +69,28 @@ class StoreCompanyNumberWithRequestIdService @Inject()(subscriptionRequestReposi
     }
 
 }
-  object StoreCompanyNumberWithRequestIdService {
 
-    type StoreCompanyResponse[A] = Either[StoreCompanyNumberFailure, A]
+object StoreCompanyNumberWithRequestIdService {
 
-    case object StoreCompanyNumberSuccess
+  type StoreCompanyResponse[A] = Either[StoreCompanyNumberFailure, A]
 
-    case object StoreCtReferenceSuccess
+  case object StoreCompanyNumberSuccess
 
-    sealed trait StoreCompanyNumberFailure
+  case object StoreCtReferenceSuccess
 
-    case object CompanyNumberDatabaseFailure extends StoreCompanyNumberFailure
+  sealed trait StoreCompanyNumberFailure
 
-    case object CtReferenceDatabaseFailure extends StoreCompanyNumberFailure
+  case object CompanyNumberDatabaseFailure extends StoreCompanyNumberFailure
 
-    case object DatabaseFailureNoRequestId extends StoreCompanyNumberFailure
+  case object CtReferenceDatabaseFailure extends StoreCompanyNumberFailure
 
-    case object CtReferenceMismatch extends StoreCompanyNumberFailure
+  case object DatabaseFailureNoRequestId extends StoreCompanyNumberFailure
 
-    case object MatchCtReferenceFailure extends StoreCompanyNumberFailure
+  case object CtReferenceMismatch extends StoreCompanyNumberFailure
 
-  }
+  case object MatchCtReferenceFailure extends StoreCompanyNumberFailure
+
+}
 
 
 

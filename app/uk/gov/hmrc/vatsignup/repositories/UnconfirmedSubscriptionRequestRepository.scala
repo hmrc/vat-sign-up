@@ -35,9 +35,10 @@ import uk.gov.hmrc.vatsignup.models.{NinoSource, UnconfirmedSubscriptionRequest}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
-                                                         appConfig: AppConfig)(implicit ec: ExecutionContext)
-  extends ReactiveRepository[UnconfirmedSubscriptionRequest, String](
+class UnconfirmedSubscriptionRequestRepository @Inject()(
+  mongo: ReactiveMongoComponent,
+  appConfig: AppConfig
+)(implicit ec: ExecutionContext) extends ReactiveRepository[UnconfirmedSubscriptionRequest, String](
     "unconfirmedSubscriptionRequestRepository",
     mongo.mongoConnector.db,
     UnconfirmedSubscriptionRequest.mongoFormat,
@@ -48,7 +49,8 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     collection.findAndUpdate(
       selector = Json.obj(credentialIdKey -> credentialId),
       update = Json.obj("$setOnInsert" -> Json.obj(
-        idKey -> UUID.randomUUID().toString
+        idKey -> UUID.randomUUID().toString,
+        isMigratableKey -> true
       )),
       upsert = true,
       fetchNewObject = true
@@ -60,18 +62,23 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        elementKey -> elementValue
+        elementKey -> elementValue,
+        isMigratableKey -> true
       )),
       upsert = true
     ).filter(_.n == 1)
   }
 
-  def upsertVatNumber(requestId: String, vatNumber: String): Future[UpdateWriteResult] = {
+  def upsertVatNumber(requestId: String, vatNumber: String, isMigratable: Boolean): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(
         idKey -> requestId
       ),
-      update = UnconfirmedSubscriptionRequest(requestId = requestId, vatNumber = Some(vatNumber)),
+      update = UnconfirmedSubscriptionRequest(
+        requestId = requestId,
+        vatNumber = Some(vatNumber),
+        isMigratable = isMigratable
+      ),
       upsert = true
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }
@@ -80,7 +87,8 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        companyNumberKey -> companyNumber
+        companyNumberKey -> companyNumber,
+        isMigratableKey -> true
       ), "$unset" -> Json.obj(
         ninoKey -> "",
         ninoSourceKey -> ""
@@ -103,7 +111,8 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
       update = Json.obj("$set" -> Json.obj(
         ninoKey -> nino,
         ninoSourceKey -> ninoSource,
-        identityVerifiedKey -> false
+        identityVerifiedKey -> false,
+        isMigratableKey -> true
       ), "$unset" -> Json.obj(
         companyNumberKey -> ""
       )),
@@ -114,7 +123,8 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(mongo: ReactiveMongoCom
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        identityVerifiedKey -> true
+        identityVerifiedKey -> true,
+        isMigratableKey -> true
       )),
       upsert = true
     ).filter(_.n == 1)

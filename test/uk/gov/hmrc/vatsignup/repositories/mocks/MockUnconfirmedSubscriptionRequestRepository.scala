@@ -47,4 +47,11 @@ trait MockUnconfirmedSubscriptionRequestRepository extends MockitoSugar with Bef
     when(mockUnconfirmedSubscriptionRequestRepository.upsertCtReference(ArgumentMatchers.eq(requestId), ArgumentMatchers.eq(ctReference)))
       .thenReturn(response)
 
+  def mockUpsertVatNumber(requestId: String, vatNumber: String, isMigratable: Boolean)(response: Future[UpdateWriteResult]): Unit =
+    when(mockUnconfirmedSubscriptionRequestRepository.upsertVatNumber(
+      requestId = ArgumentMatchers.eq(requestId),
+      vatNumber = ArgumentMatchers.eq(vatNumber),
+      isMigratable = ArgumentMatchers.eq(isMigratable)
+    )).thenReturn(response)
+
 }
