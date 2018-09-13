@@ -41,7 +41,7 @@ object EmailVerificationStub extends WireMockMethods {
       EmailKey -> emailAddress,
       TemplateIdKey -> "verifyEmailAddress",
       TemplateParametersKey -> Json.obj(),
-      LinkExpiryDurationKey -> "P1D",
+      LinkExpiryDurationKey -> "P3D",
       ContinueUrlKey -> continueUrl
     )
 
