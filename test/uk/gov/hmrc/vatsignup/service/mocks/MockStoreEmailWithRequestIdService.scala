@@ -22,26 +22,27 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.services.StoreEmailWithRequestIdService._
 import uk.gov.hmrc.vatsignup.services.StoreEmailWithRequestIdService
+import uk.gov.hmrc.vatsignup.services.StoreEmailWithRequestIdService._
 
 import scala.concurrent.Future
 
 trait MockStoreEmailWithRequestIdService extends MockitoSugar with BeforeAndAfterEach {
   self: Suite =>
 
-  val mockStoreEmailService: StoreEmailWithRequestIdService = mock[StoreEmailWithRequestIdService]
+  val mockStoreEmailWithRequestIdService: StoreEmailWithRequestIdService = mock[StoreEmailWithRequestIdService]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockStoreEmailService)
+    reset(mockStoreEmailWithRequestIdService)
   }
+
 
   def mockStoreEmail(requestId: String,
                      email: String,
                      enrolments: Enrolments
                     )(response: Future[Either[StoreEmailFailure, StoreEmailSuccess]]): Unit = {
-    when(mockStoreEmailService.storeEmail(
+    when(mockStoreEmailWithRequestIdService.storeEmail(
       ArgumentMatchers.eq(requestId),
       ArgumentMatchers.eq(email),
       ArgumentMatchers.eq(enrolments)
@@ -51,9 +52,9 @@ trait MockStoreEmailWithRequestIdService extends MockitoSugar with BeforeAndAfte
   }
 
   def mockStoreTransactionEmail(requestId: String,
-                     email: String
-                    )(response: Future[Either[StoreEmailFailure, StoreEmailSuccess]]): Unit = {
-    when(mockStoreEmailService.storeTransactionEmail(
+                                email: String
+                               )(response: Future[Either[StoreEmailFailure, StoreEmailSuccess]]): Unit = {
+    when(mockStoreEmailWithRequestIdService.storeTransactionEmail(
       ArgumentMatchers.eq(requestId),
       ArgumentMatchers.eq(email)
     )(
