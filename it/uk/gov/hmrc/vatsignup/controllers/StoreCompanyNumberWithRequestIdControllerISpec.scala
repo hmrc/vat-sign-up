@@ -25,11 +25,11 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetCtReferenceStub.{ctReferenc
 
 class StoreCompanyNumberWithRequestIdControllerISpec extends ComponentSpecBase with CustomMatchers with TestUnconfirmedSubmissionRequestRepository {
 
-  "PUT sign-up-request/request-id/:requestId/company-number" should {
+  "POST sign-up-request/request-id/:requestId/company-number" should {
     "return no content if the request id exists and the company number has been stored successfully" in {
       stubAuth(OK, successfulAuthResponse())
 
-      val res = put(s"/sign-up-request/request-id/$testToken/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
+      val res = post(s"/sign-up-request/request-id/$testToken/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
 
       res should have(
         httpStatus(NO_CONTENT),
@@ -40,7 +40,7 @@ class StoreCompanyNumberWithRequestIdControllerISpec extends ComponentSpecBase w
     "return BAD_REQUEST when the json is invalid" in {
       stubAuth(OK, successfulAuthResponse())
 
-      val res = put(s"/sign-up-request/request-id/$testToken/company-number")(Json.obj())
+      val res = post(s"/sign-up-request/request-id/$testToken/company-number")(Json.obj())
 
       res should have(
         httpStatus(BAD_REQUEST)
@@ -51,7 +51,7 @@ class StoreCompanyNumberWithRequestIdControllerISpec extends ComponentSpecBase w
       stubAuth(OK, successfulAuthResponse())
       stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
 
-      val res = put(s"/sign-up-request/request-id/$testToken/company-number")(Json.obj(
+      val res = post(s"/sign-up-request/request-id/$testToken/company-number")(Json.obj(
         "companyNumber" -> testCompanyNumber,
         "ctReference" -> testCtReference
       ))
