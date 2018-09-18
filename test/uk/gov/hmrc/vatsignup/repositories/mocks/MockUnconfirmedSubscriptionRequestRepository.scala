@@ -54,4 +54,11 @@ trait MockUnconfirmedSubscriptionRequestRepository extends MockitoSugar with Bef
       isMigratable = ArgumentMatchers.eq(isMigratable)
     )).thenReturn(response)
 
+  def mockUpsertEmail(requestId: String, email: String)(response: Future[UpdateWriteResult]): Unit =
+    when(mockUnconfirmedSubscriptionRequestRepository.upsertEmail(ArgumentMatchers.eq(requestId), ArgumentMatchers.eq(email)))
+      .thenReturn(response)
+
+  def upsertTransactionEmail(requestId: String, email: String)(response: Future[UpdateWriteResult]): Unit =
+    when(mockUnconfirmedSubscriptionRequestRepository.upsertTransactionEmail(ArgumentMatchers.eq(requestId), ArgumentMatchers.eq(email)))
+      .thenReturn(response)
 }
