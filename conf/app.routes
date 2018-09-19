@@ -7,3 +7,4 @@ POST        /sign-up-request/                                                   
 POST        /sign-up-request/request-id/:requestId/company-number                    @uk.gov.hmrc.vatsignup.controllers.StoreCompanyNumberWithRequestIdController.storeCompanyNumber(requestId: String)
 POST        /sign-up-request/request-id/:requestId/email                             @uk.gov.hmrc.vatsignup.controllers.StoreEmailWithRequestIdController.storeEmail(requestId: String)
 POST        /sign-up-request/request-id/:requestId/transaction-email                 @uk.gov.hmrc.vatsignup.controllers.StoreTransactionEmailWithRequestIdController.storeTransactionEmail(requestId: String)
+POST        /sign-up-request/request-id/:requestId/nino                              @uk.gov.hmrc.vatsignup.controllers.StoreNinoWithRequestIdController.storeNino(requestId: String)
