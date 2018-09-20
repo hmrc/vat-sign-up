@@ -31,9 +31,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreNinoWithRequestIdService @Inject()(unconfirmedSubscriptionRequestRepository: UnconfirmedSubscriptionRequestRepository,
-                                 authenticatorConnector: AuthenticatorConnector,
-                                 auditService: AuditService
-                                )(implicit ec: ExecutionContext) {
+                                              authenticatorConnector: AuthenticatorConnector,
+                                              auditService: AuditService
+                                             )(implicit ec: ExecutionContext) {
 
   import StoreNinoWithRequestIdService._
 

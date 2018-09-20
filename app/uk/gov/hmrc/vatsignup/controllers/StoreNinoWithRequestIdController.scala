@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreNinoWithRequestIdController @Inject()(val authConnector: AuthConnector,
-                                                 storeNinoService: StoreNinoWithRequestIdService
+                                                 storeNinoWithRequestIdService: StoreNinoWithRequestIdService
                                                 )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
@@ -45,7 +45,7 @@ class StoreNinoWithRequestIdController @Inject()(val authConnector: AuthConnecto
             req.body.validate[UserDetailsModel] match {
               case JsSuccess(userDetails, _) =>
                 val ninoSource = (req.body \ ninoSourceFrontEndKey).validate[NinoSource].getOrElse(UserEntered)
-                storeNinoService.storeNino(requestId, userDetails, enrolments, ninoSource) map {
+                storeNinoWithRequestIdService.storeNino(requestId, userDetails, enrolments, ninoSource) map {
                   case Right(StoreNinoSuccess) => NoContent
                   case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")
                   case Left(NoMatchFoundFailure) => Forbidden

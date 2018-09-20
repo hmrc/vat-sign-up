@@ -31,8 +31,8 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreCompanyNumberWithRequestIdController @Inject()(val authConnector: AuthConnector,
-                                             storeCompanyNumberWithRequestIdService: StoreCompanyNumberWithRequestIdService
-                                            )(implicit ec: ExecutionContext)
+                                                          storeCompanyNumberWithRequestIdService: StoreCompanyNumberWithRequestIdService
+                                                         )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
   def storeCompanyNumber(requestId: String): Action[(String, Option[String])] =
