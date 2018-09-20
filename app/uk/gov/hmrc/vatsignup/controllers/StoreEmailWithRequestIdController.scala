@@ -31,7 +31,7 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreEmailWithRequestIdController @Inject()(val authConnector: AuthConnector,
-                                                  storeEmailService: StoreEmailWithRequestIdService
+                                                  storeEmailWithRequestIdService: StoreEmailWithRequestIdService
                                                  )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
@@ -41,7 +41,7 @@ class StoreEmailWithRequestIdController @Inject()(val authConnector: AuthConnect
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
             val email = req.body
-            storeEmailService.storeEmail(requestId, email, enrolments) map {
+            storeEmailWithRequestIdService.storeEmail(requestId, email, enrolments) map {
               case Right(StoreEmailSuccess(emailVerified)) =>
                 Ok(Json.obj(
                   EmailVerifiedKey -> emailVerified

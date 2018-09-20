@@ -70,4 +70,7 @@ trait MockUnconfirmedSubscriptionRequestRepository extends MockitoSugar with Bef
       ArgumentMatchers.eq(ninoSource)
     )).thenReturn(response)
 
+  def mockUpsertIdentityVerified(requestId: String)(response: Future[UpdateWriteResult]): Unit =
+    when(mockUnconfirmedSubscriptionRequestRepository.upsertIdentityVerified(ArgumentMatchers.eq(requestId)))
+      .thenReturn(response)
 }
