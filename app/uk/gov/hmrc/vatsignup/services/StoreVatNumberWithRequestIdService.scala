@@ -170,7 +170,8 @@ class StoreVatNumberWithRequestIdService @Inject()(
     ) map {
       _ => Right(StoreVatNumberSuccess)
     } recover {
-      case _ => Left(VatNumberDatabaseFailure)
+      case _ =>
+        Left(VatNumberDatabaseFailure)
     })
   }
 
