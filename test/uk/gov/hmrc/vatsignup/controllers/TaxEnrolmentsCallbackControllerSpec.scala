@@ -22,16 +22,18 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.testVatNumber
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
+import uk.gov.hmrc.vatsignup.models.monitoring.TaxEnrolmentsCallbackAuditing.TaxEnrolmentsCallbackAuditModel
 import uk.gov.hmrc.vatsignup.service.mocks.MockSubscriptionNotificationService
+import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscriptionNotificationService {
+class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscriptionNotificationService with MockAuditService {
 
   object TestTaxEnrolmentsCallbackController
-    extends TaxEnrolmentsCallbackController(mockSubscriptionNotificationService)
+    extends TaxEnrolmentsCallbackController(mockSubscriptionNotificationService, mockAuditService)
 
   def testRequest(subscriptionState: String): FakeRequest[JsValue] =
     FakeRequest().withBody(Json.obj(TestTaxEnrolmentsCallbackController.stateKey -> subscriptionState))
@@ -41,34 +43,52 @@ class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscription
       "return NO_CONTENT" in {
         mockSendEmailNotification(testVatNumber, Success)(Future.successful(Right(NotificationSent)))
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        val request = testRequest(Success.jsonName)
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+
         status(res) shouldBe NO_CONTENT
+        verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
       }
     }
     "the subscription notification service returns EmailRequestDataNotFound" should {
       "return PRECONDITION_FAILED" in {
         mockSendEmailNotification(testVatNumber, Success)(Future.successful(Left(EmailRequestDataNotFound)))
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        val request = testRequest(Success.jsonName)
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+
         status(res) shouldBe PRECONDITION_FAILED
+        verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
+
       }
     }
 
     "the subscription notification service returns EmailServiceFailure" should {
       "return PRECONDITION_FAILED" in {
-        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Left(EmailServiceFailure)))
+        mockSendEmailNotification(testVatNumber, Failure)(Future.successful(Left(EmailServiceFailure)))
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        val request = testRequest(Failure.jsonName)
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+
         status(res) shouldBe BAD_GATEWAY
+        verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
+
       }
     }
 
     "the subscription notification service returns DelegatedSubscription" should {
       "return NO_CONTENT" in {
-        mockSendEmailNotification(testVatNumber, Success)(Future.successful(Right(DelegatedSubscription)))
+        mockSendEmailNotification(testVatNumber, Failure)(Future.successful(Right(DelegatedSubscription)))
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(testRequest(Success.jsonName)))
+        val request = testRequest(Failure.jsonName)
+
+        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+
         status(res) shouldBe NO_CONTENT
+        verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
       }
     }
   }

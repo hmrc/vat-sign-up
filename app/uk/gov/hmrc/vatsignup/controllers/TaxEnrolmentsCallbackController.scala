@@ -22,13 +22,16 @@ import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.models.SubscriptionState
+import uk.gov.hmrc.vatsignup.models.monitoring.TaxEnrolmentsCallbackAuditing.TaxEnrolmentsCallbackAuditModel
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{EmailRequestDataNotFound, EmailServiceFailure}
+import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService: SubscriptionNotificationService
+class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService: SubscriptionNotificationService,
+                                                auditService: AuditService
                                                )(implicit ec: ExecutionContext)
   extends BaseController {
 
@@ -38,6 +41,8 @@ class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService:
     implicit req =>
       Logger.warn(s"taxEnrolmentsCallback($vatNumber)${req.body.toString()}")
       val state = (req.body \ stateKey).as[SubscriptionState]
+
+      auditService.audit(TaxEnrolmentsCallbackAuditModel(vatNumber, req.body.toString()))
 
       subscriptionNotificationService.sendEmailNotification(vatNumber, state) map {
         case Right(_) => NoContent
