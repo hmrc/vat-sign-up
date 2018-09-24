@@ -18,12 +18,12 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.services.RequestIdService
-import uk.gov.hmrc.vatsignup.services.RequestIdService.RequestIdSuccess
 
 import scala.concurrent.ExecutionContext
 
@@ -37,7 +37,7 @@ class GetRequestIdController @Inject()(val authConnector: AuthConnector,
     authorised().retrieve(Retrievals.internalId) {
       case Some(internalId) =>
         requestIdService.getRequestIdByCredential(internalId).map {
-          case Right(RequestIdSuccess(requestId)) => Ok(requestId)
+          case Right(partialRequest) => Ok(Json.toJson(partialRequest))
           case Left(_) => InternalServerError("calls to mongo failed")
         }
     }

@@ -20,8 +20,9 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import uk.gov.hmrc.vatsignup.models.PartialSignUpRequest
 import uk.gov.hmrc.vatsignup.services.RequestIdService
-import uk.gov.hmrc.vatsignup.services.RequestIdService.{RequestIdDatabaseFailure, RequestIdSuccess}
+import uk.gov.hmrc.vatsignup.services.RequestIdService.RequestIdDatabaseFailure
 
 import scala.concurrent.Future
 
@@ -36,7 +37,7 @@ trait MockRequestIdService extends MockitoSugar with BeforeAndAfterEach {
   }
 
   def mockGetRequestIdByCredential(credentialId: String
-                                  )(response: Future[Either[RequestIdDatabaseFailure.type, RequestIdSuccess]]): Unit = {
+                                  )(response: Future[Either[RequestIdDatabaseFailure.type, PartialSignUpRequest]]): Unit = {
     when(mockRequestIdService.getRequestIdByCredential(
       ArgumentMatchers.eq(credentialId))
     ) thenReturn response

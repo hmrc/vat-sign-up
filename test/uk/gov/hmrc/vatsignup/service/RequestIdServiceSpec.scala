@@ -18,9 +18,10 @@ package uk.gov.hmrc.vatsignup.service
 
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.models.{PartialSignUpRequest, UnconfirmedSubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockUnconfirmedSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.RequestIdService
-import uk.gov.hmrc.vatsignup.services.RequestIdService.{RequestIdDatabaseFailure, RequestIdSuccess}
+import uk.gov.hmrc.vatsignup.services.RequestIdService.RequestIdDatabaseFailure
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -35,11 +36,11 @@ class RequestIdServiceSpec extends UnitSpec
   "getRequestIdByCredential" when {
     "repo returned request id" should {
       "return RequestIdSuccess(requestId)" in {
-        mockGetRequestIdByCredential(testCredentialId)(Future.successful(testToken))
+        mockGetRequestIdByCredential(testCredentialId)(Future.successful(UnconfirmedSubscriptionRequest(testToken)))
 
         val res = TestRequestIdService.getRequestIdByCredential(testCredentialId)
 
-        await(res) shouldBe Right(RequestIdSuccess(testToken))
+        await(res) shouldBe Right(PartialSignUpRequest(testToken))
       }
     }
 
