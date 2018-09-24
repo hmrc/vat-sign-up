@@ -19,13 +19,15 @@ package uk.gov.hmrc.vatsignup.controllers
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import play.api.http.Status._
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.models.PartialSignUpRequest
 import uk.gov.hmrc.vatsignup.service.mocks.MockRequestIdService
-import uk.gov.hmrc.vatsignup.services.RequestIdService.{RequestIdDatabaseFailure, RequestIdSuccess}
+import uk.gov.hmrc.vatsignup.services.RequestIdService.RequestIdDatabaseFailure
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -48,12 +50,12 @@ class GetRequestIdControllerSpec extends UnitSpec
     "request id is successfully returned from mongo" should {
       "Return 200" in {
         mockAuth()
-        mockGetRequestIdByCredential(testCredentialId)(Future.successful(Right(RequestIdSuccess(testToken))))
+        mockGetRequestIdByCredential(testCredentialId)(Future.successful(Right(PartialSignUpRequest(testToken))))
 
         val res = TestGetRequestIdController.getRequestId(FakeRequest())
 
         status(res) shouldBe OK
-        await(bodyOf(res)) shouldBe testToken
+        await(bodyOf(res)) shouldBe Json.toJson(PartialSignUpRequest(testToken)).toString()
       }
     }
 

@@ -18,8 +18,9 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 
+import uk.gov.hmrc.vatsignup.models.PartialSignUpRequest
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.RequestIdService.{RequestIdDatabaseFailure, RequestIdSuccess}
+import uk.gov.hmrc.vatsignup.services.RequestIdService.RequestIdDatabaseFailure
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,9 +28,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class RequestIdService @Inject()(subscriptionRequestRepository: UnconfirmedSubscriptionRequestRepository
                                 )(implicit ec: ExecutionContext) {
 
-  def getRequestIdByCredential(credentialId: String): Future[Either[RequestIdDatabaseFailure.type, RequestIdSuccess]] =
+  def getRequestIdByCredential(credentialId: String): Future[Either[RequestIdDatabaseFailure.type, PartialSignUpRequest]] =
     subscriptionRequestRepository.getRequestIdByCredential(credentialId)
-      .map(requestId => Right(RequestIdSuccess(requestId)))
+      .map(subscriptionRequest => Right(PartialSignUpRequest(subscriptionRequest)))
       .recover {
         case _ => Left(RequestIdDatabaseFailure)
       }
@@ -37,8 +38,6 @@ class RequestIdService @Inject()(subscriptionRequestRepository: UnconfirmedSubsc
 }
 
 object RequestIdService {
-
-  case class RequestIdSuccess(requestId: String)
 
   case object RequestIdDatabaseFailure
 

@@ -45,7 +45,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
     implicitly[Format[String]]
   ) {
 
-  def getRequestIdByCredential(credentialId: String): Future[String] = {
+  def getRequestIdByCredential(credentialId: String): Future[UnconfirmedSubscriptionRequest] = {
     collection.findAndUpdate(
       selector = Json.obj(credentialIdKey -> credentialId),
       update = Json.obj("$setOnInsert" -> Json.obj(
@@ -54,7 +54,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
       )),
       upsert = true,
       fetchNewObject = true
-    ).map(_.result[UnconfirmedSubscriptionRequest].map(_.requestId).get)
+    ).map(_.result[UnconfirmedSubscriptionRequest].get)
   }
 
 

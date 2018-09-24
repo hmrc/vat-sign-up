@@ -48,28 +48,27 @@ class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOn
     implicit val format = UnconfirmedSubscriptionRequest.mongoFormat
 
     def findSubscriptionRequest(
-      credentialId: String
-    )(implicit format: OFormat[UnconfirmedSubscriptionRequest]): Future[Option[UnconfirmedSubscriptionRequest]] =
+                                 credentialId: String
+                               )(implicit format: OFormat[UnconfirmedSubscriptionRequest]): Future[Option[UnconfirmedSubscriptionRequest]] =
       repo.collection.find(selector = Json.obj(
         credentialIdKey -> credentialId
       )).one[UnconfirmedSubscriptionRequest]
 
-    "create a new record and return the requestID if the record does not already exist," +
+    "create a new record or return the existing record if it already exist," +
       " but if it does then return without replacement of the existing record" in {
-      val (findBeforeInsert, requestId, findAfterInsert, requestIdForExistingRecord) =
+      val (findBeforeInsert, newlyCreatedRequest, findAfterInsert, requestForExistingRecord) =
         await(
           for {
             findBeforeInsert <- findSubscriptionRequest(testCredentialId)
-            requestId <- repo.getRequestIdByCredential(testCredentialId)
+            newlyCreatedRequest <- repo.getRequestIdByCredential(testCredentialId)
             findAfterInsert <- findSubscriptionRequest(testCredentialId)
-            requestIdForExistingRecord <- repo.getRequestIdByCredential(testCredentialId)
-          } yield (findBeforeInsert, requestId, findAfterInsert, requestIdForExistingRecord)
+            requestForExistingRecord <- repo.getRequestIdByCredential(testCredentialId)
+          } yield (findBeforeInsert, newlyCreatedRequest, findAfterInsert, requestForExistingRecord)
         )
 
       findBeforeInsert shouldBe None
-      requestId should not be empty
-      findAfterInsert shouldBe Some(UnconfirmedSubscriptionRequest(requestId, Some(testCredentialId)))
-      requestId shouldBe requestIdForExistingRecord
+      findAfterInsert shouldBe Some(newlyCreatedRequest)
+      newlyCreatedRequest shouldBe requestForExistingRecord
     }
   }
 
