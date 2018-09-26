@@ -19,11 +19,12 @@ package uk.gov.hmrc.vatsignup.models
 import play.api.libs.json.{Json, OFormat}
 
 case class StoreVatNumberWithRequestIdRequest(
-  requestId: String,
-  vatNumber: String,
-  postCode: Option[String],
-  registrationDate: Option[String]
-)
+                                               requestId: String,
+                                               vatNumber: String,
+                                               postCode: Option[String],
+                                               registrationDate: Option[String],
+                                               isFromBta: Option[Boolean]
+                                             )
 
 object StoreVatNumberWithRequestIdRequest {
   implicit val format: OFormat[StoreVatNumberWithRequestIdRequest] = Json.format[StoreVatNumberWithRequestIdRequest]
