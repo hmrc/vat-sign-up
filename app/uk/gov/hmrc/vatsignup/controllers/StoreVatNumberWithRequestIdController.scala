@@ -17,24 +17,24 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController._
 import uk.gov.hmrc.vatsignup.models.StoreVatNumberWithRequestIdRequest
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberWithRequestIdService._
 import uk.gov.hmrc.vatsignup.services._
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController._
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class StoreVatNumberWithRequestIdController @Inject()(
-  val authConnector: AuthConnector,
-  storeVatNumberWithRequestIdService: StoreVatNumberWithRequestIdService
-)(implicit ec: ExecutionContext)
+class StoreVatNumberWithRequestIdController @Inject()(val authConnector: AuthConnector,
+                                                      storeVatNumberWithRequestIdService: StoreVatNumberWithRequestIdService
+                                                     )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
 
@@ -50,7 +50,8 @@ class StoreVatNumberWithRequestIdController @Inject()(
               vatNumber = requestObj.vatNumber,
               enrolments = enrolments,
               businessPostcode = requestObj.postCode,
-              vatRegistrationDate = requestObj.registrationDate
+              vatRegistrationDate = requestObj.registrationDate,
+              isFromBta = requestObj.isFromBta
             ) map {
               case Right(StoreVatNumberSuccess) =>
                 Created

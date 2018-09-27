@@ -18,13 +18,17 @@ package uk.gov.hmrc.vatsignup.service
 
 
 import play.api.http.Status
+import play.api.mvc.Request
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, KnownFactsHttpParser}
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.{InvalidKnownFacts, KnownFacts}
+import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, KnownFactsHttpParser}
+import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
+import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 
@@ -32,15 +36,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ClaimSubscriptionServiceSpec extends UnitSpec
-  with MockKnownFactsConnector with MockAuthConnector with MockTaxEnrolmentsConnector {
+  with MockKnownFactsConnector with MockAuthConnector with MockTaxEnrolmentsConnector with MockAuditService {
 
   object TestClaimSubscriptionService extends ClaimSubscriptionService(
     mockAuthConnector,
     mockKnownFactsConnector,
-    mockTaxEnrolmentsConnector
+    mockTaxEnrolmentsConnector,
+    mockAuditService
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val request: Request[_] = FakeRequest()
 
   "claimSubscription" when {
     "the known facts connector is successful" when {
@@ -57,9 +63,10 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testDateOfRegistration.toTaxEnrolmentsFormat
             )(Future.successful(Right(EnrolSuccess)))
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
+            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
 
             res shouldBe Right(SubscriptionClaimed)
+            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true))
           }
         }
         "tax enrolments returns a failure" should {
@@ -74,9 +81,10 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testDateOfRegistration.toTaxEnrolmentsFormat
             )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(""))))
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
+            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = true))
 
             res shouldBe Left(EnrolFailure)
+            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false))
           }
         }
       }
@@ -85,7 +93,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
           mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
-          val res = TestClaimSubscriptionService.claimSubscription(testVatNumber)
+          val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false)
 
           intercept[ForbiddenException](await(res))
         }
@@ -95,7 +103,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
       "return InvalidVatNumber" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
+        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
 
         res shouldBe Left(InvalidVatNumber)
       }
@@ -104,7 +112,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
       "return InvalidVatNumber" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
+        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
 
         res shouldBe Left(VatNumberNotFound)
       }
@@ -116,7 +124,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
           body = ""
         ))))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber))
+        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
 
         res shouldBe Left(KnownFactsFailure)
       }

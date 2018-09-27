@@ -33,19 +33,21 @@ trait MockStoreVatNumberWithRequestIdService extends MockitoSugar {
 
   val mockStoreVatNumberWithRequestIdService: StoreVatNumberWithRequestIdService = mock[StoreVatNumberWithRequestIdService]
 
-  def mockStoreVatNumber(
-    requestId: String,
-    vatNumber: String,
-    enrolments: Enrolments,
-    businessPostcode: Option[String] = None,
-    vatRegistrationDate: Option[String] = None
-  )(response: Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]]): Unit =
+  def mockStoreVatNumber(requestId: String,
+                         vatNumber: String,
+                         enrolments: Enrolments,
+                         businessPostcode: Option[String] = None,
+                         vatRegistrationDate: Option[String] = None,
+                         isFromBta: Option[Boolean] = None
+                        )(response: Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]]): Unit =
     when(mockStoreVatNumberWithRequestIdService.storeVatNumber(
       ArgumentMatchers.eq(requestId),
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.any[Enrolments],
       ArgumentMatchers.eq(businessPostcode),
-      ArgumentMatchers.eq(vatRegistrationDate)
+      ArgumentMatchers.eq(vatRegistrationDate),
+      ArgumentMatchers.eq(isFromBta)
     )(ArgumentMatchers.any[HeaderCarrier],
       ArgumentMatchers.any[Request[_]])) thenReturn response
+
 }
