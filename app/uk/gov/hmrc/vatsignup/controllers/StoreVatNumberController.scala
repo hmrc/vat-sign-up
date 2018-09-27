@@ -44,7 +44,7 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
 
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-            storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate) map {
+            storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate, requestObj.isFromBta) map {
               case Right(StoreVatNumberSuccess) =>
                 Created
               case Left(AlreadySubscribed(true)) =>

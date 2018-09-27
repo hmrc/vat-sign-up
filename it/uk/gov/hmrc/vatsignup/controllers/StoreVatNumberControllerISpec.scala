@@ -133,7 +133,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
             vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
           )(CREATED)
 
-          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
+          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber, "isFromBta" -> true))
 
           res should have(
             httpStatus(OK),

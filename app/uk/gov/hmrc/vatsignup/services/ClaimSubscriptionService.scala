@@ -17,11 +17,11 @@
 package uk.gov.hmrc.vatsignup.services
 
 import java.text.SimpleDateFormat
-import java.util.Date
+import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
+import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.Retrievals.{credentials, groupIdentifier}
@@ -31,20 +31,23 @@ import uk.gov.hmrc.vatsignup.connectors.{KnownFactsConnector, TaxEnrolmentsConne
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
+import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
+import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                          knownFactsConnector: KnownFactsConnector,
-                                         taxEnrolmentsConnector: TaxEnrolmentsConnector
+                                         taxEnrolmentsConnector: TaxEnrolmentsConnector,
+                                         auditService: AuditService
                                         )(implicit ec: ExecutionContext) {
 
-  def claimSubscription(vatNumber: String)(implicit hc: HeaderCarrier): Future[ClaimSubscriptionResponse] = {
+  def claimSubscription(vatNumber: String, isFromBta: Boolean)(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
       knownFacts <- getKnownFacts(vatNumber)
-      _ <- allocateEnrolment(vatNumber, knownFacts)
+      _ <- allocateEnrolment(vatNumber, knownFacts, isFromBta)
     } yield SubscriptionClaimed
   }.value
 
@@ -56,7 +59,9 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     }
 
   private def allocateEnrolment(vatNumber: String,
-                                knownFacts: KnownFacts)(implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
+                                knownFacts: KnownFacts,
+                                isFromBta: Boolean
+                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
     EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)) flatMap {
       case Credentials(credentialId, GGProviderId) ~ Some(groupId) =>
         EitherT(taxEnrolmentsConnector.allocateEnrolment(
@@ -65,9 +70,27 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
           vatNumber = vatNumber,
           postcode = knownFacts.businessPostcode,
           vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-        )) leftMap {
-          _ => EnrolFailure
-        }
+        )) bimap(
+          _ => {
+            auditService.audit(ClaimSubscriptionAuditModel(
+              vatNumber,
+              businessPostcode = knownFacts.businessPostcode,
+              vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
+              isFromBta = isFromBta,
+              isSuccess = false
+            ))
+            EnrolFailure
+          },
+          result => {
+            auditService.audit(ClaimSubscriptionAuditModel(
+              vatNumber,
+              businessPostcode = knownFacts.businessPostcode,
+              vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
+              isFromBta = isFromBta,
+              isSuccess = true))
+            result
+          }
+        )
       case _ =>
         EitherT.liftF(Future.failed(new ForbiddenException("Invalid auth credentials")))
     }
@@ -99,4 +122,5 @@ object ClaimSubscriptionService {
       taxEnrolmentsFormat format parsedDate
     }
   }
+
 }

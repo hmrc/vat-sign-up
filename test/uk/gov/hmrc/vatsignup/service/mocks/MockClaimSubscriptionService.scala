@@ -23,6 +23,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.ClaimSubscriptionResponse
 import org.mockito.Mockito._
+import play.api.mvc.Request
 
 import scala.concurrent.Future
 
@@ -31,10 +32,13 @@ trait MockClaimSubscriptionService extends BeforeAndAfterEach with MockitoSugar 
 
   val mockClaimSubscriptionService: ClaimSubscriptionService = mock[ClaimSubscriptionService]
 
-  def mockClaimSubscription(vatNumber: String)(response: Future[ClaimSubscriptionResponse]): Unit =
+  def mockClaimSubscription(vatNumber: String, isFromtBta: Boolean)(response: Future[ClaimSubscriptionResponse]): Unit =
     when(mockClaimSubscriptionService.claimSubscription(
-      ArgumentMatchers.eq(vatNumber)
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(isFromtBta)
     )(
-      ArgumentMatchers.any[HeaderCarrier]
+      ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]]
     )) thenReturn response
+
 }

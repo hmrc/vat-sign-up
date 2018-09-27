@@ -141,7 +141,7 @@ class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
             vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
           )(CREATED)
 
-          val res = post(s"/sign-up-request/request-id/$testToken/vat-number")(jsonVatRequest)
+          val res = post(s"/sign-up-request/request-id/$testToken/vat-number")(jsonVatRequest.++(Json.obj("isFromBta" -> true)))
 
           res should have(
             httpStatus(OK),

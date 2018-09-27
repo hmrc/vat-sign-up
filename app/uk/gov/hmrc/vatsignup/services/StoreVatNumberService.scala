@@ -50,11 +50,12 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   def storeVatNumber(vatNumber: String,
                      enrolments: Enrolments,
                      businessPostcode: Option[String],
-                     vatRegistrationDate: Option[String]
+                     vatRegistrationDate: Option[String],
+                     isFromBta: Option[Boolean]
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- checkExistingVatSubscription(vatNumber, enrolments)
+      _ <- checkExistingVatSubscription(vatNumber, enrolments, isFromBta)
       eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
     } yield StoreVatNumberSuccess
@@ -124,13 +125,14 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   }
 
   private def checkExistingVatSubscription(vatNumber: String,
-                                           enrolments: Enrolments
-                                          )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
+                                           enrolments: Enrolments,
+                                           isFromBta: Option[Boolean]
+                                          )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
     EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
         Future.successful(Right(NotSubscribed))
       case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
-        claimSubscriptionService.claimSubscription(vatNumber) map {
+        claimSubscriptionService.claimSubscription(vatNumber, isFromBta = isFromBta.get) map {
           case Right(SubscriptionClaimed) =>
             Left(AlreadySubscribed(subscriptionClaimed = true))
           case Left(err) =>
@@ -141,7 +143,6 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       case _ =>
         Future.successful(Left(VatSubscriptionConnectionFailure))
     })
-
 
   private def insertVatNumber(vatNumber: String,
                               isMigratable: Boolean

@@ -92,7 +92,8 @@ class StoreVatNumberWithRequestIdServiceSpec
                   vatNumber = testVatNumber,
                   enrolments = agentUser,
                   businessPostcode = None,
-                  vatRegistrationDate = None
+                  vatRegistrationDate = None,
+                  isFromBta = None
                 ))
                 res shouldBe Right(StoreVatNumberSuccess)
 
@@ -123,7 +124,8 @@ class StoreVatNumberWithRequestIdServiceSpec
                   vatNumber = testVatNumber,
                   enrolments = agentUser,
                   businessPostcode = None,
-                  vatRegistrationDate = None
+                  vatRegistrationDate = None,
+                  isFromBta = None
                 ))
                 res shouldBe Left(VatNumberDatabaseFailure)
 
@@ -147,7 +149,8 @@ class StoreVatNumberWithRequestIdServiceSpec
                 vatNumber = testVatNumber,
                 enrolments = agentUser,
                 businessPostcode = None,
-                vatRegistrationDate = None
+                vatRegistrationDate = None,
+                isFromBta = None
               ))
               res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
 
@@ -170,7 +173,8 @@ class StoreVatNumberWithRequestIdServiceSpec
                 vatNumber = testVatNumber,
                 enrolments = agentUser,
                 businessPostcode = None,
-                vatRegistrationDate = None
+                vatRegistrationDate = None,
+                isFromBta = None
               ))
               res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
 
@@ -202,7 +206,8 @@ class StoreVatNumberWithRequestIdServiceSpec
               vatNumber = testVatNumber,
               enrolments = agentUser,
               businessPostcode = None,
-              vatRegistrationDate = None
+              vatRegistrationDate = None,
+              isFromBta = None
             ))
             res shouldBe Right(StoreVatNumberSuccess)
 
@@ -228,7 +233,8 @@ class StoreVatNumberWithRequestIdServiceSpec
               vatNumber = testVatNumber,
               enrolments = agentUser,
               businessPostcode = None,
-              vatRegistrationDate = None
+              vatRegistrationDate = None,
+              isFromBta = None
             ))
             res shouldBe Left(Ineligible)
 
@@ -252,7 +258,8 @@ class StoreVatNumberWithRequestIdServiceSpec
             vatNumber = testVatNumber,
             enrolments = agentUser,
             businessPostcode = None,
-            vatRegistrationDate = None
+            vatRegistrationDate = None,
+            isFromBta = None
           ))
           res shouldBe Left(RelationshipNotFound)
 
@@ -275,7 +282,8 @@ class StoreVatNumberWithRequestIdServiceSpec
             vatNumber = testVatNumber,
             enrolments = agentUser,
             businessPostcode = None,
-            vatRegistrationDate = None
+            vatRegistrationDate = None,
+            isFromBta = None
           ))
           res shouldBe Left(AgentServicesConnectionFailure)
         }
@@ -302,7 +310,8 @@ class StoreVatNumberWithRequestIdServiceSpec
                 vatNumber = testVatNumber,
                 enrolments = principalUser,
                 businessPostcode = None,
-                vatRegistrationDate = None
+                vatRegistrationDate = None,
+                isFromBta = None
               ))
               res shouldBe Right(StoreVatNumberSuccess)
             }
@@ -320,7 +329,8 @@ class StoreVatNumberWithRequestIdServiceSpec
                 vatNumber = testVatNumber,
                 enrolments = principalUser,
                 businessPostcode = None,
-                vatRegistrationDate = None
+                vatRegistrationDate = None,
+                isFromBta = None
               ))
               res shouldBe Left(VatNumberDatabaseFailure)
             }
@@ -335,7 +345,8 @@ class StoreVatNumberWithRequestIdServiceSpec
               vatNumber = testVatNumber,
               enrolments = principalUser,
               businessPostcode = None,
-              vatRegistrationDate = None
+              vatRegistrationDate = None,
+              isFromBta = None
             ))
             res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
           }
@@ -347,7 +358,8 @@ class StoreVatNumberWithRequestIdServiceSpec
               vatNumber = UUID.randomUUID().toString,
               enrolments = principalUser,
               businessPostcode = None,
-              vatRegistrationDate = None
+              vatRegistrationDate = None,
+              isFromBta = None
             ))
             res shouldBe Left(DoesNotMatchEnrolment)
           }
@@ -361,7 +373,8 @@ class StoreVatNumberWithRequestIdServiceSpec
             vatNumber = testVatNumber,
             enrolments = Enrolments(Set.empty),
             businessPostcode = None,
-            vatRegistrationDate = None
+            vatRegistrationDate = None,
+            isFromBta = None
           ))
           res shouldBe Left(InsufficientEnrolments)
         }
@@ -375,7 +388,8 @@ class StoreVatNumberWithRequestIdServiceSpec
         vatNumber = testVatNumber,
         enrolments = freshUser,
         businessPostcode = Some(testPostCode filterNot (_.isWhitespace)),
-        vatRegistrationDate = Some(testDateOfRegistration)
+        vatRegistrationDate = Some(testDateOfRegistration),
+        isFromBta = Some(false)
       )
 
       "the vat number is not already subscribed for MTD-VAT" when {
@@ -457,7 +471,7 @@ class StoreVatNumberWithRequestIdServiceSpec
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber)(Future.successful(Right(SubscriptionClaimed)))
+              mockClaimSubscription(testVatNumber, isFromtBta = false)(Future.successful(Right(SubscriptionClaimed)))
 
               val res = await(call)
               res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
@@ -469,7 +483,7 @@ class StoreVatNumberWithRequestIdServiceSpec
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber)(Future.successful(Left(KnownFactsFailure)))
+              mockClaimSubscription(testVatNumber, isFromtBta = false)(Future.successful(Left(KnownFactsFailure)))
 
               val res = await(call)
               res shouldBe Left(ClaimSubscriptionFailure)
@@ -487,7 +501,7 @@ class StoreVatNumberWithRequestIdServiceSpec
       }
       "the user does not have either enrolment and did not provide both known facts" should {
         "return InsufficientEnrolments" in {
-          val res = await(TestStoreVatNumberService.storeVatNumber(testToken, testVatNumber, freshUser, None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testToken, testVatNumber, freshUser, None, None, None))
           res shouldBe Left(InsufficientEnrolments)
         }
       }
@@ -495,7 +509,7 @@ class StoreVatNumberWithRequestIdServiceSpec
 
     "the user does not have either enrolment" should {
       "return InsufficientEnrolments" in {
-        val res = await(TestStoreVatNumberService.storeVatNumber(testToken, testVatNumber, freshUser, None, None))
+        val res = await(TestStoreVatNumberService.storeVatNumber(testToken, testVatNumber, freshUser, None, None, None))
         res shouldBe Left(InsufficientEnrolments)
       }
     }
