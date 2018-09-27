@@ -61,7 +61,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-                mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Right(EmailQueued)))
+                mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Right(EmailQueued)))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
                 res shouldBe Right(NotificationSent)
@@ -88,12 +88,26 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-              mockSendEmail(testEmail, principalSuccessEmailTemplate)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+              mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
               res shouldBe Left(EmailServiceFailure)
             }
           }
+          "the e-mail request fails and it was delegated" should {
+            "return EmailServiceFailure" in {
+              enable(EmailNotification)
+
+              val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
+
+              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+
+              res shouldBe Left(EmailServiceFailure)
+            }
+          }
+
         }
         "the subscription request was for a delegated user" when {
           "return DelegatedSubscription" in {
@@ -103,6 +117,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
             mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
             mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+            mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
 
             val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 

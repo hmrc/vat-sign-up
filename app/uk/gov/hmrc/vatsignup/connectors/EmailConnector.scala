@@ -30,11 +30,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class EmailConnector @Inject()(http: HttpClient,
                                appConfig: AppConfig
                               )(implicit ec: ExecutionContext) {
-  def sendEmail(emailAddress: String, emailTemplate: String)(implicit hc: HeaderCarrier): Future[SendEmailResponse] = {
+  def sendEmail(emailAddress: String,
+                emailTemplate: String,
+                vatNumber: Option[String])(implicit hc: HeaderCarrier): Future[SendEmailResponse] = {
     val body = Json.obj(
       toKey -> Json.arr(emailAddress),
       templateIdKey -> emailTemplate
-    )
+    ) ++ (vatNumber match {
+      case None => Json.obj()
+      case Some(vn) => Json.obj(parametersKey -> Json.obj(vatNumberKey -> vn))
+    })
 
     http.POST(appConfig.sendEmailUrl, body)
   }
@@ -43,4 +48,6 @@ class EmailConnector @Inject()(http: HttpClient,
 object EmailConnector {
   val toKey = "to"
   val templateIdKey = "templateId"
+  val vatNumberKey = "vatNumber"
+  val parametersKey = "parameters"
 }
