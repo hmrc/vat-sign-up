@@ -63,7 +63,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testDateOfRegistration.toTaxEnrolmentsFormat
             )(Future.successful(Right(EnrolSuccess)))
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
+            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
             res shouldBe Right(SubscriptionClaimed)
             verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true))
@@ -81,10 +81,33 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testDateOfRegistration.toTaxEnrolmentsFormat
             )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(""))))
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = true))
+            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
             res shouldBe Left(EnrolFailure)
             verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false))
+          }
+        }
+        "the supplied known facts do not match what is held on ETMP" should {
+          "return KnownFactsMismatch" in {
+            mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+            mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+            mockAllocateEnrolment(
+              testGroupId,
+              testCredentialId,
+              testVatNumber,
+              testPostCode,
+              testDateOfRegistration.toTaxEnrolmentsFormat
+            )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(""))))
+
+            val nonMatchingPostcode = "ZZ2 2ZZ"
+
+            val res = await(TestClaimSubscriptionService.claimSubscription(
+              vatNumber = testVatNumber,
+              businessPostcode = Some(nonMatchingPostcode),
+              vatRegistrationDate = Some(testDateOfRegistration),
+              isFromBta = true)
+            )
+
           }
         }
       }
@@ -93,7 +116,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
           mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
-          val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false)
+          val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false)
 
           intercept[ForbiddenException](await(res))
         }
@@ -103,7 +126,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
       "return InvalidVatNumber" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
+        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
         res shouldBe Left(InvalidVatNumber)
       }
@@ -112,7 +135,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
       "return InvalidVatNumber" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
+        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
         res shouldBe Left(VatNumberNotFound)
       }
@@ -124,7 +147,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
           body = ""
         ))))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, isFromBta = false))
+        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
         res shouldBe Left(KnownFactsFailure)
       }
