@@ -223,7 +223,7 @@ class StoreVatNumberServiceSpec
 
     "the user has a fresh cred" when {
 
-      def call = TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, Some(testPostCode filterNot (_.isWhitespace)), Some(testDateOfRegistration), isFromBta = Some(false))
+      def call = TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, Some(testPostCode), Some(testDateOfRegistration), isFromBta = Some(false))
 
       "the vat number is not already subscribed for MTD-VAT" when {
         "the vat number is stored successfully" should {
@@ -290,7 +290,7 @@ class StoreVatNumberServiceSpec
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, isFromtBta = false)(Future.successful(Right(SubscriptionClaimed)))
+              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Right(SubscriptionClaimed)))
 
               val res = await(call)
               res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
@@ -302,7 +302,7 @@ class StoreVatNumberServiceSpec
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, isFromtBta = false)(Future.successful(Left(KnownFactsFailure)))
+              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(KnownFactsFailure)))
 
               val res = await(call)
               res shouldBe Left(ClaimSubscriptionFailure)

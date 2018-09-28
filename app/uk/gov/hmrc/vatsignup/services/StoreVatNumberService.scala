@@ -28,6 +28,7 @@ import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, Mand
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
+import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.SubscriptionClaimed
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
@@ -55,7 +56,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- checkExistingVatSubscription(vatNumber, enrolments, isFromBta)
+      _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate, isFromBta)
       eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
     } yield StoreVatNumberSuccess
@@ -103,13 +104,19 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       case Right(success@EligibilitySuccess(businessPostcode, vatRegistrationDate, _)) =>
         (optBusinessPostcode, optVatRegistrationDate) match {
           case (Some(userBusinessPostcode), Some(userVatRegistrationDate)) =>
-            if (((userBusinessPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (businessPostcode filterNot (_.isWhitespace)))
-              &&
-              userVatRegistrationDate == vatRegistrationDate) {
-              Right(success)
-            } else {
-              Left(KnownFactsMismatch)
-            }
+            val knownFactsMatched =
+              (userBusinessPostcode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
+                (userVatRegistrationDate == vatRegistrationDate)
+            auditService.audit(KnownFactsAuditModel(
+              vatNumber = vatNumber,
+              enteredPostCode = userBusinessPostcode,
+              enteredVatRegistrationDate = userVatRegistrationDate,
+              desPostCode = businessPostcode,
+              desVatRegistrationDate = vatRegistrationDate,
+              matched = knownFactsMatched
+            ))
+            if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess](success)
+            else Left[StoreVatNumberFailure, EligibilitySuccess](KnownFactsMismatch)
           case _ =>
             Right(success)
         }
@@ -126,13 +133,20 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
   private def checkExistingVatSubscription(vatNumber: String,
                                            enrolments: Enrolments,
+                                           businessPostcode: Option[String],
+                                           vatRegistrationDate: Option[String],
                                            isFromBta: Option[Boolean]
                                           )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
     EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
         Future.successful(Right(NotSubscribed))
       case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
-        claimSubscriptionService.claimSubscription(vatNumber, isFromBta = isFromBta.get) map {
+        claimSubscriptionService.claimSubscription(
+          vatNumber = vatNumber,
+          businessPostcode = businessPostcode,
+          vatRegistrationDate = vatRegistrationDate,
+          isFromBta = isFromBta.get
+        ) map {
           case Right(SubscriptionClaimed) =>
             Left(AlreadySubscribed(subscriptionClaimed = true))
           case Left(err) =>

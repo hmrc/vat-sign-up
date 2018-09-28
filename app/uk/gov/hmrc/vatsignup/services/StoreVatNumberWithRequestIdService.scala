@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data._
 import cats.implicits._
 import play.api.mvc.Request
@@ -29,6 +28,7 @@ import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, Mand
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
+import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.SubscriptionClaimed
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
@@ -59,7 +59,7 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
                     ): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- checkExistingVatSubscription(vatNumber, enrolments, isFromBta)
+      _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate, isFromBta)
       eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
       _ <- insertVatNumber(requestId, vatNumber, eligibilitySuccess.isMigratable)
     } yield StoreVatNumberSuccess
@@ -69,7 +69,7 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
                                  enrolments: Enrolments,
                                  businessPostcode: Option[String],
                                  vatRegistrationDate: Option[String]
-                                )(implicit request: Request[_], hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, Any] =
+                                )(implicit request: Request[_], hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, Any] = {
     EitherT((enrolments.vatNumber, enrolments.agentReferenceNumber) match {
       case (Some(vatNumberFromEnrolment), _) =>
         if (vatNumber == vatNumberFromEnrolment) Future.successful(Right(UserHasMatchingEnrolment))
@@ -81,43 +81,45 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
       case _ =>
         Future.successful(Left(InsufficientEnrolments))
     })
+  }
 
   private def checkAgentClientRelationship(vatNumber: String,
                                            agentReferenceNumber: String
-                                          )(implicit hc: HeaderCarrier, request: Request[_]) =
+                                          )(implicit hc: HeaderCarrier,
+                                            request: Request[_]) = {
     agentClientRelationshipsConnector.checkAgentClientRelationship(agentReferenceNumber, vatNumber) map {
       case Right(HaveRelationshipResponse) =>
-        auditService.audit(AgentClientRelationshipAuditModel(
-          vatNumber = vatNumber,
-          agentReferenceNumber = agentReferenceNumber,
-          haveRelationship = true
-        ))
+        auditService.audit(AgentClientRelationshipAuditModel(vatNumber, agentReferenceNumber, haveRelationship = true))
         Right(HaveRelationshipResponse)
       case Right(NoRelationshipResponse) =>
-        auditService.audit(AgentClientRelationshipAuditModel(
-          vatNumber = vatNumber,
-          agentReferenceNumber = agentReferenceNumber,
-          haveRelationship = false
-        ))
+        auditService.audit(AgentClientRelationshipAuditModel(vatNumber, agentReferenceNumber, haveRelationship = false))
         Left(RelationshipNotFound)
       case _ =>
         Left(AgentServicesConnectionFailure)
     }
+  }
 
   private def checkEligibility(vatNumber: String,
                                optBusinessPostcode: Option[String],
                                optVatRegistrationDate: Option[String]
-                              )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] =
+                              )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
       case Right(success@EligibilitySuccess(businessPostcode, vatRegistrationDate, _)) =>
         (optBusinessPostcode, optVatRegistrationDate) match {
           case (Some(userBusinessPostcode), Some(userVatRegistrationDate)) =>
-            if (((userBusinessPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (
-              businessPostcode filterNot (_.isWhitespace)
-              )) && userVatRegistrationDate == vatRegistrationDate) {
-              Right(success)
-            } else
-              Left(KnownFactsMismatch)
+            val knownFactsMatched =
+              (userBusinessPostcode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
+                (userVatRegistrationDate == vatRegistrationDate)
+            auditService.audit(KnownFactsAuditModel(
+              vatNumber = vatNumber,
+              enteredPostCode = userBusinessPostcode,
+              enteredVatRegistrationDate = userVatRegistrationDate,
+              desPostCode = businessPostcode,
+              desVatRegistrationDate = vatRegistrationDate,
+              matched = knownFactsMatched
+            ))
+            if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess](success)
+            else Left[StoreVatNumberFailure, EligibilitySuccess](KnownFactsMismatch)
           case _ =>
             Right(success)
         }
@@ -130,16 +132,24 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
       case Left(_) =>
         Left(KnownFactsAndControlListInformationConnectionFailure)
     }
+  }
 
   private def checkExistingVatSubscription(vatNumber: String,
                                            enrolments: Enrolments,
+                                           businessPostcode: Option[String],
+                                           vatRegistrationDate: Option[String],
                                            isFromBta: Option[Boolean]
                                           )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
     EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
         Future.successful(Right(NotSubscribed))
       case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
-        claimSubscriptionService.claimSubscription(vatNumber, isFromBta.get) map {
+        claimSubscriptionService.claimSubscription(
+          vatNumber = vatNumber,
+          businessPostcode = businessPostcode,
+          vatRegistrationDate = vatRegistrationDate,
+          isFromBta = isFromBta.get
+        ) map {
           case Right(SubscriptionClaimed) =>
             Left(AlreadySubscribed(subscriptionClaimed = true))
           case Left(err) =>

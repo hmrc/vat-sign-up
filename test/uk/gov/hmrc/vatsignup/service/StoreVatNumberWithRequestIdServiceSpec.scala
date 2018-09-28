@@ -387,7 +387,7 @@ class StoreVatNumberWithRequestIdServiceSpec
         requestId = testToken,
         vatNumber = testVatNumber,
         enrolments = freshUser,
-        businessPostcode = Some(testPostCode filterNot (_.isWhitespace)),
+        businessPostcode = Some(testPostCode),
         vatRegistrationDate = Some(testDateOfRegistration),
         isFromBta = Some(false)
       )
@@ -471,7 +471,7 @@ class StoreVatNumberWithRequestIdServiceSpec
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, isFromtBta = false)(Future.successful(Right(SubscriptionClaimed)))
+              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Right(SubscriptionClaimed)))
 
               val res = await(call)
               res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
@@ -483,7 +483,7 @@ class StoreVatNumberWithRequestIdServiceSpec
               enable(ClaimSubscription)
 
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, isFromtBta = false)(Future.successful(Left(KnownFactsFailure)))
+              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(KnownFactsFailure)))
 
               val res = await(call)
               res shouldBe Left(ClaimSubscriptionFailure)

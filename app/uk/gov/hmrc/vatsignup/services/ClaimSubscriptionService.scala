@@ -44,12 +44,37 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                          auditService: AuditService
                                         )(implicit ec: ExecutionContext) {
 
-  def claimSubscription(vatNumber: String, isFromBta: Boolean)(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
+  def claimSubscription(vatNumber: String,
+                        businessPostcode: Option[String],
+                        vatRegistrationDate: Option[String],
+                        isFromBta: Boolean
+                       )(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
       knownFacts <- getKnownFacts(vatNumber)
+      _ <- EitherT.fromEither[Future](checkKnownFactsMatch(
+        businessPostcode,
+        vatRegistrationDate,
+        knownFacts
+      ))
       _ <- allocateEnrolment(vatNumber, knownFacts, isFromBta)
     } yield SubscriptionClaimed
+
   }.value
+
+  private def checkKnownFactsMatch(optBusinessPostcode: Option[String],
+                                   optVatRegistrationDate: Option[String],
+                                   storedKnownFacts: KnownFacts): Either[ClaimSubscriptionService.KnownFactsMismatch.type, KnownFactsMatch] = {
+    (optBusinessPostcode, optVatRegistrationDate) match {
+      case (Some(businessPostcode), Some(vatRegistrationDate)) =>
+        if ((storedKnownFacts.vatRegistrationDate == vatRegistrationDate)
+          &&
+          ((businessPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (businessPostcode filterNot (_.isWhitespace)))
+        ) Right(KnownFactsMatched)
+        else Left(KnownFactsMismatch)
+      case _ =>
+        Right(KnownFactsNotSupplied)
+    }
+  }
 
   private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, KnownFacts] =
     EitherT(knownFactsConnector.getKnownFacts(vatNumber)) leftMap {
@@ -103,9 +128,17 @@ object ClaimSubscriptionService {
 
   case object SubscriptionClaimed
 
+  sealed trait KnownFactsMatch
+
+  case object KnownFactsMatched extends KnownFactsMatch
+
+  case object KnownFactsNotSupplied extends KnownFactsMatch
+
   sealed trait ClaimSubscriptionFailure
 
   case object VatNumberNotFound extends ClaimSubscriptionFailure
+
+  case object KnownFactsMismatch extends ClaimSubscriptionFailure
 
   case object InvalidVatNumber extends ClaimSubscriptionFailure
 
