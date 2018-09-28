@@ -37,10 +37,13 @@ trait MockEmailConnector extends MockitoSugar with BeforeAndAfterEach {
 
   val mockEmailConnector: EmailConnector = mock[EmailConnector]
 
-  def mockSendEmail(emailAddress: String, emailTemplate: String)(response: Future[SendEmailResponse]): Unit =
+  def mockSendEmail(emailAddress: String,
+                    emailTemplate: String,
+                    vatNumber: Option[String])(response: Future[SendEmailResponse]): Unit =
     when(mockEmailConnector.sendEmail(
       ArgumentMatchers.eq(emailAddress),
-      ArgumentMatchers.eq(emailTemplate)
+      ArgumentMatchers.eq(emailTemplate),
+      ArgumentMatchers.eq(vatNumber)
     )(
       ArgumentMatchers.any[HeaderCarrier]
     )) thenReturn response

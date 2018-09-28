@@ -53,8 +53,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
     }
   }
 
-  private def getEmailRequest(vatNumber: String
-                             ): EitherT[Future, NotificationFailure, EmailRequest] =
+  private def getEmailRequest(vatNumber: String): EitherT[Future, NotificationFailure, EmailRequest] =
     EitherT.fromOptionF(emailRequestRepository.findById(vatNumber), EmailRequestDataNotFound)
 
   private def deleteEmailRequest(vatNumber: String): EitherT[Future, NotificationFailure, WriteResult] =
@@ -67,12 +66,15 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                         isDelegated: Boolean
                        )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
     if (isDelegated) {
-      EitherT.rightT(DelegatedSubscription)
+      EitherT(emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber))) bimap (
+        _ => EmailServiceFailure,
+        _ => DelegatedSubscription
+      )
     } else {
       subscriptionState match {
         case Failure => Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
           EitherT.rightT(TaxEnrolmentFailure)
-        case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate)) bimap(
+        case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None)) bimap(
           _ => EmailServiceFailure,
           _ => NotificationSent
         )
@@ -83,6 +85,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
 
 object SubscriptionNotificationService {
   val principalSuccessEmailTemplate = "mtdfb_vat_principal_sign_up_successful"
+  val agentSuccessEmailTemplate = "mtdfb_vat_agent_sign_up_successful"
 
   sealed trait NotificationSuccess
 
