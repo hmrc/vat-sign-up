@@ -28,7 +28,8 @@ object ClaimSubscriptionAuditing {
                                          businessPostcode: String,
                                          vatRegistrationDate: String,
                                          isFromBta: Boolean,
-                                         isSuccess: Boolean
+                                         isSuccess: Boolean,
+                                         failureMessage: Option[String]
                                         ) extends AuditModel {
 
     override val transactionName: String = claimSubscriptionTransactionName
@@ -38,8 +39,9 @@ object ClaimSubscriptionAuditing {
       "businessPostcode" -> businessPostcode,
       "vatRegistrationDate" -> vatRegistrationDate,
       "isFromBta" -> isFromBta.toString,
-      "isSuccess" -> isSuccess.toString
-    )
+      "isSuccess" -> isSuccess.toString,
+      "failureMessage" -> failureMessage.getOrElse("")
+    ).filter { case (_, value) => value.nonEmpty }
 
     override val auditType: String = claimSubscriptionAuditType
   }

@@ -66,7 +66,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
             val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
             res shouldBe Right(SubscriptionClaimed)
-            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true))
+            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
           }
         }
         "tax enrolments returns a failure" should {
@@ -79,12 +79,12 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               testVatNumber,
               testPostCode,
               testDateOfRegistration.toTaxEnrolmentsFormat
-            )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(""))))
+            )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("err"))))
 
             val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
             res shouldBe Left(EnrolFailure)
-            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false))
+            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("err")))
           }
         }
         "the supplied known facts do not match what is held on ETMP" should {
