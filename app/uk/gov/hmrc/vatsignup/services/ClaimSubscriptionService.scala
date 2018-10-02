@@ -29,8 +29,8 @@ import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
 import uk.gov.hmrc.vatsignup.connectors.{KnownFactsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
+import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, KnownFactsHttpParser}
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -95,24 +95,27 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
           vatNumber = vatNumber,
           postcode = knownFacts.businessPostcode,
           vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-        )) bimap(
-          _ => {
+        )) bimap( {
+          case enrolFailure@AllocateEnrolmentResponseHttpParser.EnrolFailure(message) =>
             auditService.audit(ClaimSubscriptionAuditModel(
               vatNumber,
               businessPostcode = knownFacts.businessPostcode,
               vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
               isFromBta = isFromBta,
-              isSuccess = false
+              isSuccess = false,
+              failureMessage = Some(enrolFailure.message)
             ))
-            EnrolFailure
-          },
+            ClaimSubscriptionService.EnrolFailure
+        },
           result => {
             auditService.audit(ClaimSubscriptionAuditModel(
               vatNumber,
               businessPostcode = knownFacts.businessPostcode,
               vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
               isFromBta = isFromBta,
-              isSuccess = true))
+              isSuccess = true,
+              failureMessage = None
+            ))
             result
           }
         )
