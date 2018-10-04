@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -25,6 +26,7 @@ import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
+import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
 import scala.concurrent.Future
 
@@ -49,6 +51,30 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
     http.PUT[JsObject, TaxEnrolmentsResponse](
       url = s"${applicationConfig.taxEnrolmentsUrl}/subscriptions/$vatNumber/subscriber",
       body = enrolmentRequestBody
+    )
+  }
+
+  def upsertEnrolment(vatNumber: String,
+                      postcode: String,
+                      vatRegistrationDate: String)
+                     (implicit hc: HeaderCarrier): Future[UpsertEnrolmentResponse] = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    val requestBody = Json.obj(
+      "verifiers" -> Json.arr(
+        Json.obj(
+          "key" -> "Postcode",
+          "value" -> postcode
+        ),
+        Json.obj(
+          "key" -> "VATRegistrationDate",
+          "value" -> vatRegistrationDate
+        )
+      )
+    )
+    http.PUT[JsObject, UpsertEnrolmentResponse](
+      url = applicationConfig.upsertEnrolmentUrl(enrolmentKey),
+      body = requestBody
     )
   }
 
