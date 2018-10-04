@@ -108,6 +108,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               isFromBta = true)
             )
 
+            res shouldBe Left(KnownFactsMismatch)
           }
         }
       }

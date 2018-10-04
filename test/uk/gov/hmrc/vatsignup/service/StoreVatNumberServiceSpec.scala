@@ -296,7 +296,17 @@ class StoreVatNumberServiceSpec
               res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
             }
           }
+          "the claim subscription returned known facts mismatch" should {
+            "return StoreVatNumberService.KnownFactsMismatch" in {
+              enable(ClaimSubscription)
 
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(ClaimSubscriptionService.KnownFactsMismatch)))
+
+              val res = await(call)
+              res shouldBe Left(StoreVatNumberService.KnownFactsMismatch)
+            }
+          }
           "the claim subscription fails" should {
             "return ClaimSubscriptionFailure" in {
               enable(ClaimSubscription)

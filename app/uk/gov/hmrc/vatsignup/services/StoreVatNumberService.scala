@@ -149,7 +149,9 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
         ) map {
           case Right(SubscriptionClaimed) =>
             Left(AlreadySubscribed(subscriptionClaimed = true))
-          case Left(err) =>
+          case Left(ClaimSubscriptionService.KnownFactsMismatch) =>
+            Left(StoreVatNumberService.KnownFactsMismatch)
+          case Left(_) =>
             Left(ClaimSubscriptionFailure)
         }
       case Right(MTDfBMandated | MTDfBVoluntary) =>
