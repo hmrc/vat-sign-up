@@ -23,6 +23,7 @@ import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolFailure, EnrolSuccess}
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
+import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
 
 class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
 
@@ -41,13 +42,35 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
       }
     }
 
-    "Tax Enrolments returns a unsuceessful response" should {
+    "Tax Enrolments returns an unsuccessful response" should {
       "return a FailedTaxEnrolment" in {
         TaxEnrolmentsStub.stubRegisterEnrolment(testVatNumber, testSafeId)(BAD_REQUEST)
 
         val res = connector.registerEnrolment(testVatNumber, testSafeId)
 
         await(res) shouldBe Left(FailedTaxEnrolment(BAD_REQUEST))
+      }
+    }
+  }
+
+  "upsertEnrolment" when {
+    "Tax Enrolments returns a successful response" should {
+      "return an EnrolSuccess" in {
+        TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(NO_CONTENT)
+
+        val res = connector.upsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Right(UpsertEnrolmentSuccess)
+      }
+    }
+
+    "Tax Enrolments returns an unsuccessful response" should {
+      "return an EnrolFailure" in {
+        TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(BAD_REQUEST)
+
+        val res = connector.upsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Left(UpsertEnrolmentFailure(BAD_REQUEST, ""))
       }
     }
   }
@@ -63,7 +86,7 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
       }
     }
 
-    "Tax Enrolments returns a unsuceessful response" should {
+    "Tax Enrolments returns an unsuccessful response" should {
       "return an EnrolFailure" in {
         TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(BAD_REQUEST)
 

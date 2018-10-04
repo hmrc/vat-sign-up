@@ -19,7 +19,6 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 import helpers.WiremockHelper
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.when
 
 object TaxEnrolmentsStub extends WireMockMethods {
 
@@ -30,6 +29,9 @@ object TaxEnrolmentsStub extends WireMockMethods {
 
   private def taxEnrolmentsCallbackUrl(vatNumber: String) =
     s"$mockUrl/vat-sign-up/subscription-request/vat-number/$vatNumber/callback"
+
+  private def upsertEnrolmentUrl(enrolmentKey: String) =
+    s"/tax-enrolments/enrolments/$enrolmentKey"
 
   private def allocateEnrolmentUrl(groupId: String, enrolmentKey: String) =
     s"/tax-enrolments/groups/$groupId/enrolments/$enrolmentKey"
@@ -44,6 +46,31 @@ object TaxEnrolmentsStub extends WireMockMethods {
       method = PUT,
       uri = registerEnrolmentUri(vatNumber),
       body = registerEnrolmentJsonBody
+    ) thenReturn status
+  }
+
+  def stubUpsertEnrolment(vatNumber: String, postcode: String, vatRegistrationDate: String)(status: Int): Unit = {
+    val allocateEnrolmentJsonBody = Json.obj(
+      "verifiers" -> Json.arr(
+        Json.obj(
+          "key" -> "Postcode",
+          "value" -> postcode
+        ),
+        Json.obj(
+          "key" -> "VATRegistrationDate",
+          "value" -> vatRegistrationDate
+        )
+      )
+    )
+
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    when(
+      method = PUT,
+      uri = upsertEnrolmentUrl(
+        enrolmentKey = enrolmentKey
+      ),
+      body = allocateEnrolmentJsonBody
     ) thenReturn status
   }
 
@@ -75,4 +102,5 @@ object TaxEnrolmentsStub extends WireMockMethods {
       body = allocateEnrolmentJsonBody
     ) thenReturn status
   }
+
 }
