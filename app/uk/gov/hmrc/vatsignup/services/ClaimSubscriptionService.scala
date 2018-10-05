@@ -68,7 +68,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       case (Some(businessPostcode), Some(vatRegistrationDate)) =>
         if ((storedKnownFacts.vatRegistrationDate == vatRegistrationDate)
           &&
-          ((businessPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (businessPostcode filterNot (_.isWhitespace)))
+          ((storedKnownFacts.businessPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (businessPostcode filterNot (_.isWhitespace)))
         ) Right(KnownFactsMatched)
         else Left(KnownFactsMismatch)
       case _ =>
