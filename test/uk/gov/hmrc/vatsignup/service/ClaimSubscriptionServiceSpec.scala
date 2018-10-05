@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-
 import play.api.http.Status
 import play.api.mvc.Request
 import play.api.test.FakeRequest
@@ -26,6 +25,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.{InvalidKnownFacts, KnownFacts}
+import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, KnownFactsHttpParser}
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
@@ -49,110 +49,157 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
   implicit val request: Request[_] = FakeRequest()
 
   "claimSubscription" when {
-    "the known facts connector is successful" when {
-      "auth returns a valid ggw credential and group ID" when {
-        "tax enrolments returns a success" should {
-          "return SubscriptionClaimed" in {
-            mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
-            mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-            mockAllocateEnrolment(
-              testGroupId,
-              testCredentialId,
-              testVatNumber,
-              testPostCode,
-              testDateOfRegistration.toTaxEnrolmentsFormat
-            )(Future.successful(Right(EnrolSuccess)))
+      "the known facts connector is successful" when {
+        "auth returns a valid ggw credential and group ID" when {
+          "tax enrolment to upsert the enrolment is successful" when {
+            "tax enrolment to allocate enrolment returns a success" should {
+              "return SubscriptionClaimed" in {
+                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  Future.successful(Right(UpsertEnrolmentSuccess))
+                )
+                mockAllocateEnrolment(
+                  testGroupId,
+                  testCredentialId,
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat
+                )(Future.successful(Right(EnrolSuccess)))
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta =
+                  false))
 
-            res shouldBe Right(SubscriptionClaimed)
-            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
+                res shouldBe Right(SubscriptionClaimed)
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
+              }
+            }
+            "tax enrolment to allocate enrolment returns a failure" should {
+              "return TaxEnrolmentsFailure" in {
+                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  Future.successful(Right(UpsertEnrolmentSuccess))
+                )
+                mockAllocateEnrolment(
+                  testGroupId,
+                  testCredentialId,
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat
+                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("err"))))
+
+                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
+
+                res shouldBe Left(EnrolFailure)
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("err")))
+              }
+            }
+          }
+          "tax enrolment to upsert the enrolment fails" when {
+            "tax enrolment to allocate enrolment returns a success" should {
+              "return SubscriptionClaimed" in {
+                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "")))
+                )
+                mockAllocateEnrolment(
+                  testGroupId,
+                  testCredentialId,
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat
+                )(Future.successful(Right(EnrolSuccess)))
+
+                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+
+                res shouldBe Right(SubscriptionClaimed)
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
+              }
+            }
+            "tax enrolment to allocate enrolment a failure" should {
+              "return TaxEnrolmentsFailure" in {
+                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "")))
+                )
+                mockAllocateEnrolment(
+                  testGroupId,
+                  testCredentialId,
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat
+                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("err"))))
+
+                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
+
+                res shouldBe Left(EnrolFailure)
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("err")))
+              }
+            }
+          }
+
+          "the supplied known facts do not match what is held on ETMP" should {
+            "return KnownFactsMismatch" in {
+              mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+
+              val nonMatchingPostcode = "ZZ2 2ZZ"
+
+              val res = await(TestClaimSubscriptionService.claimSubscription(
+                vatNumber = testVatNumber,
+                businessPostcode = Some(nonMatchingPostcode),
+                vatRegistrationDate = Some(testDateOfRegistration),
+                isFromBta = true)
+              )
+
+              res shouldBe Left(KnownFactsMismatch)
+            }
           }
         }
-        "tax enrolments returns a failure" should {
-          "return TaxEnrolmentsFailure" in {
+        "auth does not return a valid credential" should {
+          "return InvalidCredential" in {
             mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
-            mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-            mockAllocateEnrolment(
-              testGroupId,
-              testCredentialId,
-              testVatNumber,
-              testPostCode,
-              testDateOfRegistration.toTaxEnrolmentsFormat
-            )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("err"))))
+            mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
+            val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false)
 
-            res shouldBe Left(EnrolFailure)
-            verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("err")))
-          }
-        }
-        "the supplied known facts do not match what is held on ETMP" should {
-          "return KnownFactsMismatch" in {
-            mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
-            mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-            mockAllocateEnrolment(
-              testGroupId,
-              testCredentialId,
-              testVatNumber,
-              testPostCode,
-              testDateOfRegistration.toTaxEnrolmentsFormat
-            )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(""))))
-
-            val nonMatchingPostcode = "ZZ2 2ZZ"
-
-            val res = await(TestClaimSubscriptionService.claimSubscription(
-              vatNumber = testVatNumber,
-              businessPostcode = Some(nonMatchingPostcode),
-              vatRegistrationDate = Some(testDateOfRegistration),
-              isFromBta = true)
-            )
-
-            res shouldBe Left(KnownFactsMismatch)
+            intercept[ForbiddenException](await(res))
           }
         }
       }
-      "auth does not return a valid credential" should {
-        "return InvalidCredential" in {
-          mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
-          mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
+      "the known facts connector returns invalid VAT number" should {
+        "return InvalidVatNumber" in {
+          mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
 
-          val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false)
+          val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
-          intercept[ForbiddenException](await(res))
+          res shouldBe Left(InvalidVatNumber)
         }
       }
-    }
-    "the known facts connector returns invalid VAT number" should {
-      "return InvalidVatNumber" in {
-        mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
+      "the known facts connector returns VAT number not found" should {
+        "return InvalidVatNumber" in {
+          mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+          val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
-        res shouldBe Left(InvalidVatNumber)
+          res shouldBe Left(VatNumberNotFound)
+        }
       }
-    }
-    "the known facts connector returns VAT number not found" should {
-      "return InvalidVatNumber" in {
-        mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
+      "the known facts connector fails" should {
+        "return KnownFactsFailure" in {
+          mockGetKnownFacts(testVatNumber)(Future.successful(Left(InvalidKnownFacts(
+            status = Status.BAD_REQUEST,
+            body = ""
+          ))))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+          val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
-        res shouldBe Left(VatNumberNotFound)
+          res shouldBe Left(KnownFactsFailure)
+        }
       }
-    }
-    "the known facts connector fails" should {
-      "return KnownFactsFailure" in {
-        mockGetKnownFacts(testVatNumber)(Future.successful(Left(InvalidKnownFacts(
-          status = Status.BAD_REQUEST,
-          body = ""
-        ))))
-
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
-
-        res shouldBe Left(KnownFactsFailure)
-      }
-    }
   }
 
   "toTaxEnrolmentFormat" should {
