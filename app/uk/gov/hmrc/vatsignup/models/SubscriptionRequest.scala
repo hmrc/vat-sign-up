@@ -27,6 +27,8 @@ case class SubscriptionRequest(vatNumber: String,
                                ctReference: Option[String] = None,
                                nino: Option[String] = None,
                                ninoSource: Option[NinoSource] = None,
+                               partnershipEntity: Option[PartnershipEntityType] = None,
+                               partnershipUtr: Option[String] = None,
                                email: Option[String] = None,
                                transactionEmail: Option[String] = None,
                                identityVerified: Boolean = false,
@@ -43,6 +45,8 @@ object SubscriptionRequest {
   val ctReferenceKey = "ctReference"
   val ninoKey = "nino"
   val ninoSourceKey = "ninoSource"
+  val entityTypeKey = "entityType"
+  val partnershipUtrKey = "sautr"
   val emailKey = "email"
   val transactionEmailKey = "transactionEmail"
   val identityVerifiedKey = "identityVerified"
@@ -63,17 +67,33 @@ object SubscriptionRequest {
             case (_, _) => None
           }
         }
+        partnershipEntityType <- (json \ entityTypeKey).validateOpt[PartnershipEntityType]
+        partnershipUtr <- (json \ partnershipUtrKey).validateOpt[String]
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
         isMigratable <- (json \ isMigratableKey).validate[Boolean]
-      } yield SubscriptionRequest(vatNumber, companyNumber, ctReference, nino, ninoSource, email, transactionEmail, identityVerified, isMigratable),
+      } yield SubscriptionRequest(
+        vatNumber = vatNumber,
+        companyNumber = companyNumber,
+        ctReference = ctReference,
+        nino = nino,
+        ninoSource = ninoSource,
+        partnershipEntity = partnershipEntityType,
+        partnershipUtr = partnershipUtr,
+        email = email,
+        transactionEmail = transactionEmail,
+        identityVerified = identityVerified,
+        isMigratable = isMigratable
+      ),
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
         companyNumberKey -> subscriptionRequest.companyNumber,
         ninoKey -> subscriptionRequest.nino,
         ninoSourceKey -> subscriptionRequest.ninoSource,
+        entityTypeKey -> subscriptionRequest.partnershipEntity,
+        partnershipUtrKey -> subscriptionRequest.partnershipUtr,
         emailKey -> subscriptionRequest.email,
         transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
