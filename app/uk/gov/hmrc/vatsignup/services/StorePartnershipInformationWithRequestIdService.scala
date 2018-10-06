@@ -19,22 +19,21 @@ package uk.gov.hmrc.vatsignup.services
 import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType
+import uk.gov.hmrc.vatsignup.models.{PartnershipEntityType, PartnershipInformation}
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.StorePartnershipUtrWithRequestIdService._
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class StorePartnershipUtrWithRequestIdService @Inject()(unconfirmedSubscriptionRequestRepository: UnconfirmedSubscriptionRequestRepository)
-                                                       (implicit ec: ExecutionContext) {
+class StorePartnershipInformationWithRequestIdService @Inject()(unconfirmedSubscriptionRequestRepository: UnconfirmedSubscriptionRequestRepository)
+                                                               (implicit ec: ExecutionContext) {
 
-  def storePartnershipUtr(vatNumber: String,
-                          partnershipEntityType: PartnershipEntityType,
-                          partnershipUtr: String
+  def storePartnershipInformation(vatNumber: String,
+                                  partnershipInformation: PartnershipInformation
                          )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipUtrFailure, StorePartnershipUtrSuccess.type]] = {
-    unconfirmedSubscriptionRequestRepository.upsertPartnershipUtr(vatNumber, partnershipEntityType, partnershipUtr) map {
+    unconfirmedSubscriptionRequestRepository.upsertPartnershipUtr(vatNumber, partnershipInformation.partnershipType, partnershipInformation.sautr) map {
       _ => Right(StorePartnershipUtrSuccess)
     } recover {
       case e: NoSuchElementException => Left(PartnershipUtrDatabaseFailureNoVATNumber)
@@ -44,7 +43,7 @@ class StorePartnershipUtrWithRequestIdService @Inject()(unconfirmedSubscriptionR
 
 }
 
-object StorePartnershipUtrWithRequestIdService {
+object StorePartnershipInformationWithRequestIdService {
 
   case object StorePartnershipUtrSuccess
 
