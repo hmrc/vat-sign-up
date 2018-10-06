@@ -24,8 +24,8 @@ import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.{EmailNotVerified, EmailVerified}
-import uk.gov.hmrc.vatsignup.models.SignUpRequest.{EmailAddress, LimitedCompany, SoleTrader}
-import uk.gov.hmrc.vatsignup.models.{IRSA, SignUpRequest, SubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SignUpRequestService
 import uk.gov.hmrc.vatsignup.services.SignUpRequestService.{EmailVerificationFailure, EmailVerificationRequired, InsufficientData, RequestNotAuthorised}

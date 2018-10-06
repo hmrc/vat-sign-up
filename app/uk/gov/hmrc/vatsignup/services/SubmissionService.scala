@@ -19,7 +19,6 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data._
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
-
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -27,10 +26,9 @@ import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, HybridSolut
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
-import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, SignUpRequest}
-import uk.gov.hmrc.vatsignup.models.SignUpRequest._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
+import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, LimitedCompany, SignUpRequest, SoleTrader}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubmissionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService

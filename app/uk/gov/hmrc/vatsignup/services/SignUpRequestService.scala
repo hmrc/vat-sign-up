@@ -23,7 +23,7 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
-import uk.gov.hmrc.vatsignup.models.SignUpRequest.{BusinessEntity, EmailAddress, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SignUpRequestService.{RequestAuthorised, _}
