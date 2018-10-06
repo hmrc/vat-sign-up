@@ -31,7 +31,8 @@ object FeatureSwitch {
     StubDESFeature,
     StubAgentServicesFeature,
     ClaimSubscription,
-    HybridSolution
+    HybridSolution,
+    EtmpEntityType
   )
 
   def apply(str: String): FeatureSwitch =
@@ -70,4 +71,9 @@ object ClaimSubscription extends FeatureSwitch {
 object HybridSolution extends FeatureSwitch {
   val displayName = s"Enable the hybrid solution"
   val name = s"$prefix.hybrid-solution"
+}
+
+object EtmpEntityType extends FeatureSwitch {
+  val displayName = s"Send the Entity Type to ETMP on the Registration API (1369)"
+  val name = s"$prefix.etmp-entity-type"
 }
