@@ -39,9 +39,10 @@ trait MockUnconfirmedSubscriptionRequestRepository extends MockitoSugar with Bef
     when(mockUnconfirmedSubscriptionRequestRepository.getRequestIdByCredential(ArgumentMatchers.eq(credentialId)))
       .thenReturn(response)
 
-  def mockUpsertPartnershipUtr(vatNumber: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String)(response: Future[UpdateWriteResult]): Unit =
+  def mockUpsertPartnershipUtr(requestId: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String)(response: Future[UpdateWriteResult]): Unit =
     when(mockUnconfirmedSubscriptionRequestRepository.upsertPartnershipUtr(
-      ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(partnershipEntityType),
+      ArgumentMatchers.eq(requestId),
+      ArgumentMatchers.eq(partnershipEntityType),
       ArgumentMatchers.eq(partnershipUtr))
     ).thenReturn(response)
 
