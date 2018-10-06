@@ -21,7 +21,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.commands.UpdateWriteResult
-import uk.gov.hmrc.vatsignup.models.{NinoSource, UnconfirmedSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, UnconfirmedSubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
 
 import scala.concurrent.Future
@@ -39,6 +39,11 @@ trait MockUnconfirmedSubscriptionRequestRepository extends MockitoSugar with Bef
     when(mockUnconfirmedSubscriptionRequestRepository.getRequestIdByCredential(ArgumentMatchers.eq(credentialId)))
       .thenReturn(response)
 
+  def mockUpsertPartnershipUtr(vatNumber: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String)(response: Future[UpdateWriteResult]): Unit =
+    when(mockUnconfirmedSubscriptionRequestRepository.upsertPartnershipUtr(
+      ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(partnershipEntityType),
+      ArgumentMatchers.eq(partnershipUtr))
+    ).thenReturn(response)
 
   def mockUpsertCompanyNumber(requestId: String, companyNumber: String)(response: Future[UpdateWriteResult]): Unit =
     when(mockUnconfirmedSubscriptionRequestRepository.upsertCompanyNumber(ArgumentMatchers.eq(requestId), ArgumentMatchers.eq(companyNumber)))

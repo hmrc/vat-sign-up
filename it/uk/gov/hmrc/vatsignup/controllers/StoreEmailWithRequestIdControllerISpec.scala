@@ -24,11 +24,19 @@ import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub.stubVerifyEmail
+import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest
 
 class StoreEmailWithRequestIdControllerISpec extends ComponentSpecBase with CustomMatchers with TestUnconfirmedSubmissionRequestRepository {
 
   val delegatedContinueUrl = app.injector.instanceOf[AppConfig].delegatedVerifyEmailContinueUrl
   val principalContinueUrl = app.injector.instanceOf[AppConfig].principalVerifyEmailContinueUrl
+
+  override def beforeEach(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    super.beforeEach()
+    unconfirmedSubmissionRequestRepo.drop
+    await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
+  }
 
   "POST /sign-up-request/request-id/:requestId/email" when {
     "the email verification request has been sent successfully" when {

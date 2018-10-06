@@ -30,7 +30,7 @@ import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{NinoSource, UnconfirmedSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, UnconfirmedSubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,23 +49,20 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
     collection.findAndUpdate(
       selector = Json.obj(credentialIdKey -> credentialId),
       update = Json.obj("$setOnInsert" -> Json.obj(
-        idKey -> UUID.randomUUID().toString,
-        isMigratableKey -> true
+        idKey -> UUID.randomUUID().toString
       )),
       upsert = true,
       fetchNewObject = true
     ).map(_.result[UnconfirmedSubscriptionRequest].get)
   }
 
-
   private def upsert(requestId: String, elementKey: String, elementValue: String): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        elementKey -> elementValue,
-        isMigratableKey -> true
+        elementKey -> elementValue
       )),
-      upsert = true
+      upsert = false
     ).filter(_.n == 1)
   }
 
@@ -77,23 +74,40 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
       update = UnconfirmedSubscriptionRequest(
         requestId = requestId,
         vatNumber = Some(vatNumber),
-        isMigratable = isMigratable
+        isMigratable = Some(isMigratable)
       ),
-      upsert = true
-    )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
+      upsert = false
+    )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext]).filter(_.n == 1)
+  }
+
+  def upsertPartnershipUtr(requestId: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String): Future[UpdateWriteResult] = {
+    collection.update(
+      selector = Json.obj(idKey -> requestId),
+      update = Json.obj("$set" -> Json.obj(
+        entityTypeKey -> partnershipEntityType,
+        partnershipUtrKey -> partnershipUtr
+      ), "$unset" -> Json.obj(
+        ninoKey -> "",
+        ninoSourceKey -> "",
+        companyNumberKey -> "",
+        identityVerifiedKey -> ""
+      )),
+      upsert = false
+    ).filter(_.n == 1)
   }
 
   def upsertCompanyNumber(requestId: String, companyNumber: String): Future[UpdateWriteResult] =
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        companyNumberKey -> companyNumber,
-        isMigratableKey -> true
+        companyNumberKey -> companyNumber
       ), "$unset" -> Json.obj(
         ninoKey -> "",
-        ninoSourceKey -> ""
+        ninoSourceKey -> "",
+        entityTypeKey -> "",
+        partnershipUtrKey -> ""
       )),
-      upsert = true
+      upsert = false
     ).filter(_.n == 1)
 
   def upsertCtReference(requestId: String, ctReference: String): Future[UpdateWriteResult] =
@@ -111,22 +125,22 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
       update = Json.obj("$set" -> Json.obj(
         ninoKey -> nino,
         ninoSourceKey -> ninoSource,
-        identityVerifiedKey -> false,
-        isMigratableKey -> true
+        identityVerifiedKey -> false
       ), "$unset" -> Json.obj(
-        companyNumberKey -> ""
+        companyNumberKey -> "",
+        entityTypeKey -> "",
+        partnershipUtrKey -> ""
       )),
-      upsert = true
+      upsert = false
     ).filter(_.n == 1)
 
   def upsertIdentityVerified(requestId: String): Future[UpdateWriteResult] =
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        identityVerifiedKey -> true,
-        isMigratableKey -> true
+        identityVerifiedKey -> true
       )),
-      upsert = true
+      upsert = false
     ).filter(_.n == 1)
 
   def deleteRecord(requestId: String): Future[WriteResult] =

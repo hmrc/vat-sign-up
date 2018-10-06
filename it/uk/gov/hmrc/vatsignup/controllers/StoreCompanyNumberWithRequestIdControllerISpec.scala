@@ -22,8 +22,16 @@ import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestUnc
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetCtReferenceStub.{ctReferenceBody, stubGetCtReference}
+import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest
 
 class StoreCompanyNumberWithRequestIdControllerISpec extends ComponentSpecBase with CustomMatchers with TestUnconfirmedSubmissionRequestRepository {
+
+  override def beforeEach(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    super.beforeEach()
+    unconfirmedSubmissionRequestRepo.drop
+    await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
+  }
 
   "POST sign-up-request/request-id/:requestId/company-number" should {
     "return no content if the request id exists and the company number has been stored successfully" in {
