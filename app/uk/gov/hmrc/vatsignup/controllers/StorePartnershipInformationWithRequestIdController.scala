@@ -24,23 +24,23 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.PartnershipInformationDatabaseFailureNoVATNumber
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService.PartnershipInformationDatabaseFailureNoVATNumber
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class StorePartnershipInformationController @Inject()(val authConnector: AuthConnector,
-                                                      storePartnershipUtrService: StorePartnershipInformationService
-                                                     )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+class StorePartnershipInformationWithRequestIdController @Inject()(val authConnector: AuthConnector,
+                                                                   storePartnershipInformationWithRequestIdService: StorePartnershipInformationWithRequestIdService
+                                                                  )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
-  def storePartnershipInformation(vatNumber: String): Action[PartnershipInformation] = {
+  def storePartnershipInformation(requestId: String): Action[PartnershipInformation] = {
     Action.async(parse.json[PartnershipInformation]) { implicit req =>
       authorised().retrieve(Retrievals.allEnrolments) {
         enrolments =>
           val utr = req.body.sautr
           enrolments.getEnrolment(PartnershipIrsaEnrolmentKey).flatMap(_.getIdentifier(PartnershipIrsaReferenceNumberKey).map(_.value)) match {
             case Some(`utr`) =>
-              storePartnershipUtrService.storePartnershipInformation(vatNumber, req.body) map {
+              storePartnershipInformationWithRequestIdService.storePartnershipInformation(requestId, req.body) map {
                 case Right(_) => NoContent
                 case Left(PartnershipInformationDatabaseFailureNoVATNumber) => NotFound
                 case Left(_) => InternalServerError

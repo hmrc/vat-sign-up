@@ -32,12 +32,12 @@ class StorePartnershipInformationWithRequestIdService @Inject()(unconfirmedSubsc
 
   def storePartnershipInformation(vatNumber: String,
                                   partnershipInformation: PartnershipInformation
-                         )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipUtrFailure, StorePartnershipUtrSuccess.type]] = {
+                         )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
     unconfirmedSubscriptionRequestRepository.upsertPartnershipUtr(vatNumber, partnershipInformation.partnershipType, partnershipInformation.sautr) map {
-      _ => Right(StorePartnershipUtrSuccess)
+      _ => Right(StorePartnershipInformationSuccess)
     } recover {
-      case e: NoSuchElementException => Left(PartnershipUtrDatabaseFailureNoVATNumber)
-      case _ => Left(PartnershipUtrDatabaseFailure)
+      case e: NoSuchElementException => Left(PartnershipInformationDatabaseFailureNoVATNumber)
+      case _ => Left(PartnershipInformationDatabaseFailure)
     }
   }
 
@@ -45,12 +45,12 @@ class StorePartnershipInformationWithRequestIdService @Inject()(unconfirmedSubsc
 
 object StorePartnershipInformationWithRequestIdService {
 
-  case object StorePartnershipUtrSuccess
+  case object StorePartnershipInformationSuccess
 
-  sealed trait StorePartnershipUtrFailure
+  sealed trait StorePartnershipInformationFailure
 
-  case object PartnershipUtrDatabaseFailureNoVATNumber extends StorePartnershipUtrFailure
+  case object PartnershipInformationDatabaseFailureNoVATNumber extends StorePartnershipInformationFailure
 
-  case object PartnershipUtrDatabaseFailure extends StorePartnershipUtrFailure
+  case object PartnershipInformationDatabaseFailure extends StorePartnershipInformationFailure
 
 }

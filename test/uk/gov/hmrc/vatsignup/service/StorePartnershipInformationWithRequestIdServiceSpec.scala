@@ -49,7 +49,7 @@ class StorePartnershipInformationWithRequestIdServiceSpec extends UnitSpec
 
         val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(testToken, testPartnershipInfo)
 
-        await(res) shouldBe Right(StorePartnershipUtrSuccess)
+        await(res) shouldBe Right(StorePartnershipInformationSuccess)
       }
     }
     "upsertPartnershipUtr thrown a NoSuchElementException" should {
@@ -58,7 +58,7 @@ class StorePartnershipInformationWithRequestIdServiceSpec extends UnitSpec
 
         val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(testToken, testPartnershipInfo)
 
-        await(res) shouldBe Left(PartnershipUtrDatabaseFailureNoVATNumber)
+        await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
       }
     }
     "upsertPartnershipUtr failed any other way" should {
@@ -67,7 +67,7 @@ class StorePartnershipInformationWithRequestIdServiceSpec extends UnitSpec
 
         val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(testToken, testPartnershipInfo)
 
-        await(res) shouldBe Left(PartnershipUtrDatabaseFailure)
+        await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
       }
     }
   }

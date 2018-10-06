@@ -82,10 +82,10 @@ object AuthStub extends WireMockMethods {
   )
 
   val irsaEnrolment: JsObject = Json.obj(
-    "key" -> IrsaEnrolmentKey,
+    "key" -> PartnershipIrsaEnrolmentKey,
     "identifiers" -> Json.arr(
       Json.obj(
-        "key" -> IrsaReferenceNumberKey,
+        "key" -> PartnershipIrsaReferenceNumberKey,
         "value" -> testUtr
       )
     )
