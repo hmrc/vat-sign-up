@@ -33,7 +33,7 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInform
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
-import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, NonMTDfB}
+import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, NonMTDfB, UnconfirmedSubscriptionRequest}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 
 class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
@@ -43,6 +43,13 @@ class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
     "requestId" -> testToken,
     "vatNumber" -> testVatNumber
   )
+
+  override def beforeEach(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    super.beforeEach()
+    unconfirmedSubmissionRequestRepo.drop
+    await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
+  }
 
   "POST /sign-up-request/request-id/:requestId/vat-number" when {
     "the user is an agent" should {

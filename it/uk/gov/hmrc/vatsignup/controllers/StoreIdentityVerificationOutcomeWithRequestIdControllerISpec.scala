@@ -23,8 +23,16 @@ import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.IdentityVerificationStub.stubGetIdentityVerifiedOutcome
+import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest
 
-class StoreIdentityVerificationOutcomeWithRequestIdControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository{
+class StoreIdentityVerificationOutcomeWithRequestIdControllerISpec extends ComponentSpecBase with CustomMatchers with TestUnconfirmedSubmissionRequestRepository{
+
+  override def beforeEach(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    super.beforeEach()
+    unconfirmedSubmissionRequestRepo.drop
+    await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
+  }
 
   "POST /sign-up-request/request-id/:requestId/identity-verification" when {
     "the identity has been successfully verified" should {

@@ -28,6 +28,8 @@ class SubscriptionRequestSpec extends UnitSpec {
       companyNumberKey -> testCompanyNumber,
       ninoKey -> testNino,
       ninoSourceKey -> UserEntered,
+      entityTypeKey -> GeneralPartnership,
+      partnershipUtrKey -> testUtr,
       emailKey -> testEmail,
       transactionEmailKey -> testEmail,
       identityVerifiedKey -> true,
@@ -39,6 +41,8 @@ class SubscriptionRequestSpec extends UnitSpec {
       companyNumber = Some(testCompanyNumber),
       nino = Some(testNino),
       ninoSource = Some(UserEntered),
+      partnershipEntity = Some(GeneralPartnership),
+      partnershipUtr = Some(testUtr),
       email = Some(testEmail),
       transactionEmail = Some(testEmail),
       identityVerified = true,
@@ -62,6 +66,9 @@ class SubscriptionRequestSpec extends UnitSpec {
 
       val noNino = testModel.copy(nino = None, ninoSource = None)
       SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noNino)).get shouldBe noNino
+
+      val noPartnership = testModel.copy(partnershipEntity = None, partnershipUtr = None)
+      SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(noPartnership)).get shouldBe noPartnership
 
       val onlyVat = testModel.copy(companyNumber = None, email = None)
       SubscriptionRequest.mongoFormat.reads(SubscriptionRequest.mongoFormat.writes(onlyVat)).get shouldBe onlyVat

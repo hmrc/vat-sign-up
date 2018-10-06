@@ -26,12 +26,19 @@ import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthenticatorStub._
 import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
-import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{IRSA, UnconfirmedSubscriptionRequest, UserDetailsModel, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StoreNinoWithRequestIdControllerISpec extends ComponentSpecBase
   with CustomMatchers with TestUnconfirmedSubmissionRequestRepository {
+
+  override def beforeEach(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    super.beforeEach()
+    unconfirmedSubmissionRequestRepo.drop
+    await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
+  }
 
   "POST /sign-up-request/:requestId/nino" when {
     "nino source is not supplied" should {
