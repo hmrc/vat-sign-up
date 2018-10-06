@@ -60,6 +60,9 @@ trait MockAuthConnector extends BeforeAndAfterEach with MockitoSugar {
       new ~(credentials, groupId)
     ))
 
+  def mockAuthRetrieveIRSAEnrolment(): Unit =
+    mockAuthorise(retrievals = Retrievals.allEnrolments)(Future.successful(Enrolments(Set(testIrsaEnrolment))))
+
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockAuthConnector)

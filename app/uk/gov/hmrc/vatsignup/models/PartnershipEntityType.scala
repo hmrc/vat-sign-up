@@ -23,7 +23,7 @@ sealed trait PartnershipEntityType {
 }
 
 case object GeneralPartnership extends PartnershipEntityType {
-  val StringValue = "General Partnership"
+  val StringValue = "ordinaryPartnership"
 }
 
 object PartnershipEntityType {

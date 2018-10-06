@@ -22,6 +22,8 @@ object Constants {
   val VatDecEnrolmentKey: String = "HMCE-VATDEC-ORG"
   val VatReferenceKey: String = "VATRegNo"
   val HttpCodeKey: String = "CODE"
+  val PartnershipIrsaEnrolmentKey: String = "IR-SA-PART-ORG"
+  val PartnershipIrsaReferenceNumberKey: String = "UTR"
 
   object Des {
     val IdTypeKey = "idType"
