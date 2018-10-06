@@ -47,7 +47,7 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
 
   val testSignUpRequest = SignUpRequest(
     vatNumber = testVatNumber,
-    businessEntity = testBusinessEntitySole,
+    businessEntity = testSoleTrader,
     signUpEmail = Some(testSignUpEmail),
     transactionEmail = testSignUpEmail,
     isDelegated = true,

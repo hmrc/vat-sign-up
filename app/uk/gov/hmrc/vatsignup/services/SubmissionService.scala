@@ -22,16 +22,18 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, HybridSolution}
-import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, RegistrationConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolution}
+import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EntityTypeRegistrationConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
-import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseSuccess, LimitedCompany, SignUpRequest, SoleTrader}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubmissionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
+import EntityTypeRegistrationConnector._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,9 +42,11 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                   customerSignUpConnector: CustomerSignUpConnector,
                                   registrationConnector: RegistrationConnector,
+                                  entityTypeRegistrationConnector: EntityTypeRegistrationConnector,
                                   taxEnrolmentsConnector: TaxEnrolmentsConnector,
-                                  auditService: AuditService
-                                 )(implicit ec: ExecutionContext) extends FeatureSwitching {
+                                  auditService: AuditService,
+                                  appConfig: AppConfig
+                                 )(implicit ec: ExecutionContext) {
 
   def submitSignUpRequest(signUpRequest: SignUpRequest,
                           enrolments: Enrolments
@@ -50,16 +54,24 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                            request: Request[_]): Future[SignUpRequestSubmissionResponse] = {
 
     val optAgentReferenceNumber = enrolments.agentReferenceNumber
-    val email = signUpRequest.signUpEmail map { _.emailAddress }
-    val isSignUpVerified = signUpRequest.signUpEmail map { _.isVerified }
+    val email = signUpRequest.signUpEmail map {
+      _.emailAddress
+    }
+    val isSignUpVerified = signUpRequest.signUpEmail map {
+      _.isVerified
+    }
     val isPartialMigration = !signUpRequest.isMigratable
 
     val result = for {
-      safeId <- signUpRequest.businessEntity match {
-        case LimitedCompany(companyNumber) =>
-          registerCompany(signUpRequest.vatNumber, companyNumber, optAgentReferenceNumber)
-        case SoleTrader(nino) =>
-          registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
+      safeId <- if (appConfig.isEnabled(EtmpEntityType)) {
+        registerBusinessEntity(signUpRequest.vatNumber, signUpRequest.businessEntity, optAgentReferenceNumber)
+      } else {
+        signUpRequest.businessEntity match {
+          case LimitedCompany(companyNumber) =>
+            registerCompany(signUpRequest.vatNumber, companyNumber, optAgentReferenceNumber)
+          case SoleTrader(nino) =>
+            registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
+        }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
@@ -67,6 +79,21 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
 
     result.value
   }
+
+  private def registerBusinessEntity(vatNumber: String,
+                                     businessEntity: BusinessEntity,
+                                     agentReferenceNumber: Option[String]
+                                    )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
+    EitherT(entityTypeRegistrationConnector.registerBusinessEntity(vatNumber, businessEntity)) bimap( { _ =>
+      auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, businessEntity, agentReferenceNumber, isSuccess = false))
+      RegistrationFailure
+    }, {
+      case RegisterWithMultipleIdsSuccess(safeId) =>
+        auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, businessEntity, agentReferenceNumber, isSuccess = true))
+        safeId
+    }
+    )
+
 
   private def registerCompany(
                                vatNumber: String,
@@ -114,7 +141,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       vatNumber,
       emailAddress,
       emailAddressVerified,
-      optIsPartialMigration = if(isEnabled(HybridSolution)) Some(isPartialMigration) else None)) bimap( {
+      optIsPartialMigration = if (appConfig.isEnabled(HybridSolution)) Some(isPartialMigration) else None)) bimap( {
       _ => {
         auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, isSuccess = false))
         SignUpFailure
