@@ -22,10 +22,10 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
-import uk.gov.hmrc.vatsignup.models.CustomerDetails
-import uk.gov.hmrc.vatsignup.models.SignUpRequest.{EmailAddress, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
+import uk.gov.hmrc.vatsignup.models.{CustomerDetails, LimitedCompany, SoleTrader}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
 

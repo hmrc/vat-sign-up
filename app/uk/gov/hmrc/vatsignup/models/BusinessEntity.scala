@@ -16,20 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.models
 
-import SignUpRequest._
+sealed trait BusinessEntity
 
-case class SignUpRequest(vatNumber: String,
-                         businessEntity: BusinessEntity,
-                         signUpEmail: Option[EmailAddress],
-                         transactionEmail: EmailAddress,
-                         isDelegated: Boolean,
-                         isMigratable: Boolean
-                        )
+case class LimitedCompany(companyNumber: String) extends BusinessEntity
 
-object SignUpRequest {
-
-  case class EmailAddress(emailAddress: String, isVerified: Boolean)
-
-}
-
-
+case class SoleTrader(nino: String) extends BusinessEntity
