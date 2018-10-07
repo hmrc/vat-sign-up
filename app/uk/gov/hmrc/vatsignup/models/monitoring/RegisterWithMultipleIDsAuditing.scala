@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, LimitedCompany, SoleTrader}
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object RegisterWithMultipleIDsAuditing {
@@ -38,6 +39,20 @@ object RegisterWithMultipleIDsAuditing {
     ).collect { case (key, Some(value)) => key -> value }
 
     override val auditType: String = registerWithMultipleIDsAuditType
+  }
+
+  object RegisterWithMultipleIDsAuditModel {
+    def apply(vatNumber: String,
+              businessEntity: BusinessEntity,
+              agentReferenceNumber: Option[String],
+              isSuccess: Boolean): RegisterWithMultipleIDsAuditModel = {
+      businessEntity match {
+        case SoleTrader(nino) =>
+          RegisterWithMultipleIDsAuditModel(vatNumber, None, Some(nino), agentReferenceNumber, isSuccess)
+        case LimitedCompany(companyNumber) =>
+          RegisterWithMultipleIDsAuditModel(vatNumber, Some(companyNumber), None, agentReferenceNumber, isSuccess)
+      }
+    }
   }
 
 }

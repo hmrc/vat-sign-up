@@ -40,8 +40,8 @@ object TestConstants {
   val testSafeId: String = UUID.randomUUID().toString
   val testToken = UUID.randomUUID().toString
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
-  val testBusinessEntityLTD = LimitedCompany(testCompanyNumber)
-  val testBusinessEntitySole = SoleTrader(testNino)
+  val testLimitedCompany = LimitedCompany(testCompanyNumber)
+  val testSoleTrader = SoleTrader(testNino)
   val testSignUpEmail = EmailAddress(testEmail, true)
 
   val testCredentialId: String = UUID.randomUUID().toString
