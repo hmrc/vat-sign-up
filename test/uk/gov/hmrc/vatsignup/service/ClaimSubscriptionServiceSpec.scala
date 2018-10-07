@@ -71,11 +71,19 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                   false))
 
                 res shouldBe Right(SubscriptionClaimed)
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
+                verifyAudit(ClaimSubscriptionAuditModel(
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat,
+                  isFromBta = false,
+                  isSuccess = true
+                ))
               }
             }
             "tax enrolment to allocate enrolment returns a failure" should {
               "return TaxEnrolmentsFailure" in {
+                val allocateEnrolmentFailureMessage = "allocateEnrolmentFailure"
+
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
@@ -87,22 +95,31 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                   testVatNumber,
                   testPostCode,
                   testDateOfRegistration.toTaxEnrolmentsFormat
-                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("err"))))
+                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentFailureMessage))))
 
                 val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
                 res shouldBe Left(EnrolFailure)
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("err")))
+                verifyAudit(ClaimSubscriptionAuditModel(
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat,
+                  isFromBta = true,
+                  isSuccess = false,
+                  allocateEnrolmentFailureMessage = Some(allocateEnrolmentFailureMessage)
+                ))
               }
             }
           }
           "tax enrolment to upsert the enrolment fails" when {
             "tax enrolment to allocate enrolment returns a success" should {
               "return SubscriptionClaimed" in {
+                val upsertEnrolmentErrorMessage = "upsertEnrolErr"
+                
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "upsertEnrolErr")))
+                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
                 mockAllocateEnrolment(
                   testGroupId,
@@ -115,16 +132,25 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
                 res shouldBe Right(SubscriptionClaimed)
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = false, failureMessage = Some("upsertEnrolErr")))
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
+
+                verifyAudit(ClaimSubscriptionAuditModel(
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat,
+                  isFromBta = false,
+                  isSuccess = true
+                ))
               }
             }
             "tax enrolment to allocate enrolment a failure" should {
               "return TaxEnrolmentsFailure" in {
+                val allocateEnrolmentErrorMessage = "allocateEnrolErr"
+                val upsertEnrolmentErrorMessage = "upsertEnrolErr"
+
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "upsertEnrolErr")))
+                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
                 mockAllocateEnrolment(
                   testGroupId,
@@ -132,13 +158,20 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                   testVatNumber,
                   testPostCode,
                   testDateOfRegistration.toTaxEnrolmentsFormat
-                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("allocateEnrolErr"))))
+                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentErrorMessage))))
 
                 val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
                 res shouldBe Left(EnrolFailure)
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("upsertEnrolErr")))
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("allocateEnrolErr")))
+                verifyAudit(ClaimSubscriptionAuditModel(
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat,
+                  isFromBta = true,
+                  isSuccess = false,
+                  allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage),
+                  upsertEnrolmentFailureMessage = Some(upsertEnrolmentErrorMessage))
+                )
               }
             }
           }

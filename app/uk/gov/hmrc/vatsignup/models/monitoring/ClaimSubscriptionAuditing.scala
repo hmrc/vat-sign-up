@@ -29,7 +29,8 @@ object ClaimSubscriptionAuditing {
                                          vatRegistrationDate: String,
                                          isFromBta: Boolean,
                                          isSuccess: Boolean,
-                                         failureMessage: Option[String]
+                                         allocateEnrolmentFailureMessage: Option[String] = None,
+                                         upsertEnrolmentFailureMessage: Option[String] = None
                                         ) extends AuditModel {
 
     override val transactionName: String = claimSubscriptionTransactionName
@@ -40,7 +41,8 @@ object ClaimSubscriptionAuditing {
       "vatRegistrationDate" -> vatRegistrationDate,
       "isFromBta" -> isFromBta.toString,
       "isSuccess" -> isSuccess.toString,
-      "failureMessage" -> failureMessage.getOrElse("")
+      "allocateEnrolmentFailureMessage" -> allocateEnrolmentFailureMessage.getOrElse(""),
+      "upsertKnownFactsFailureMessage" -> upsertEnrolmentFailureMessage.getOrElse("")
     ).filter { case (_, value) => value.nonEmpty }
 
     override val auditType: String = claimSubscriptionAuditType
