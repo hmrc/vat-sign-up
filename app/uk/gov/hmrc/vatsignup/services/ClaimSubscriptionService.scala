@@ -92,7 +92,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)) flatMap {
       case Credentials(credentialId, GGProviderId) ~ Some(groupId) =>
         for {
-          _ <- upsertEnrolment(vatNumber, knownFacts)
+          _ <- upsertEnrolment(vatNumber, knownFacts, isFromBta)
           res <- allocateEnrolment(vatNumber, knownFacts, isFromBta, groupId, credentialId)
         } yield res
       case _ =>
@@ -137,14 +137,26 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       result
     })
 
-  private def upsertEnrolment(vatNumber: String, knownFacts: KnownFacts)(
+  private def upsertEnrolment(vatNumber: String, knownFacts: KnownFacts, isFromBta: Boolean)(
                                implicit hc: HeaderCarrier, request: Request[_]
                              ): EitherT[Future, ClaimSubscriptionFailure, UpsertEnrolmentSuccess.type] =
     EitherT.right(taxEnrolmentsConnector.upsertEnrolment(
       vatNumber = vatNumber,
       postcode = knownFacts.businessPostcode,
       vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-    ) map { case _ => UpsertEnrolmentSuccess })
+    ) map {
+      case Right(_) => UpsertEnrolmentSuccess
+      case Left(UpsertEnrolmentFailure(_, message)) => {
+        auditService.audit(ClaimSubscriptionAuditModel(
+          vatNumber,
+          businessPostcode = knownFacts.businessPostcode,
+          vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
+          isFromBta = isFromBta,
+          isSuccess = false,
+          failureMessage = Some(message)
+        ))
+        UpsertEnrolmentSuccess
+    }})
 
 }
 
