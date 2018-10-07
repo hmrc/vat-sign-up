@@ -102,7 +102,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "")))
+                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "upsertEnrolErr")))
                 )
                 mockAllocateEnrolment(
                   testGroupId,
@@ -115,6 +115,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
                 res shouldBe Right(SubscriptionClaimed)
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = false, failureMessage = Some("upsertEnrolErr")))
                 verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = false, isSuccess = true, failureMessage = None))
               }
             }
@@ -123,7 +124,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "")))
+                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = "upsertEnrolErr")))
                 )
                 mockAllocateEnrolment(
                   testGroupId,
@@ -131,12 +132,13 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                   testVatNumber,
                   testPostCode,
                   testDateOfRegistration.toTaxEnrolmentsFormat
-                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("err"))))
+                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure("allocateEnrolErr"))))
 
                 val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
                 res shouldBe Left(EnrolFailure)
-                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("err")))
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("upsertEnrolErr")))
+                verifyAudit(ClaimSubscriptionAuditModel(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat, isFromBta = true, isSuccess = false, failureMessage = Some("allocateEnrolErr")))
               }
             }
           }
