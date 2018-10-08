@@ -92,7 +92,7 @@ class ControlListInformationParserSpec extends UnitSpec with EitherValues {
           tryParse(setupTestData(EU_SALES_OR_PURCHASES -> '1')).right.value.controlList should not contain EuSalesOrPurchases
         }
 
-        "parse Stagger correctly" in {
+        "parse Stagger without none standard tax period  correctly" in {
           tryParse(setupTestData(STAGGER_1 -> '1', ANNUAL_STAGGER -> '0')).right.value.controlList should contain(AnnualStagger)
           tryParse(setupTestData(STAGGER_1 -> '1', MONTHLY_STAGGER -> '0')).right.value.controlList should contain(MonthlyStagger)
           tryParse(setupTestData(STAGGER_1 -> '0')).right.value.controlList should contain(Stagger1)
@@ -100,9 +100,16 @@ class ControlListInformationParserSpec extends UnitSpec with EitherValues {
           tryParse(setupTestData(STAGGER_1 -> '1', STAGGER_3 -> '0')).right.value.controlList should contain(Stagger3)
         }
 
-        "parse none standard tax period correctly" in {
-          tryParse(setupTestData(NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(NonStandardTaxPeriod)
-          tryParse(setupTestData(NONE_STANDARD_TAX_PERIOD -> '1')).right.value.controlList should not contain NonStandardTaxPeriod
+        "parse Stagger with none standard tax period correctly" in {
+          tryParse(setupTestData(STAGGER_1 -> '1', NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(NonStandardTaxPeriod)
+          tryParse(setupTestData(STAGGER_1 -> '0', NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(Stagger1)
+          tryParse(setupTestData(STAGGER_1 -> '1', STAGGER_2 -> '0', NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(Stagger2)
+          tryParse(setupTestData(STAGGER_1 -> '1', STAGGER_3 -> '0', NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(Stagger3)
+          tryParse(setupTestData(STAGGER_1 -> '1', ANNUAL_STAGGER -> '0', NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(AnnualStagger)
+          tryParse(setupTestData(STAGGER_1 -> '1', MONTHLY_STAGGER -> '0', NONE_STANDARD_TAX_PERIOD -> '0')).right.value.controlList should contain(MonthlyStagger)
+
+          tryParse(setupTestData(STAGGER_1 -> '1', NONE_STANDARD_TAX_PERIOD -> '1')) shouldBe Left(StaggerConflict)
+          tryParse(setupTestData(STAGGER_1 -> '1', ANNUAL_STAGGER -> '0', MONTHLY_STAGGER -> '0', NONE_STANDARD_TAX_PERIOD -> '0')) shouldBe Left(StaggerConflict)
         }
 
         "parse over seas trader correctly" in {
