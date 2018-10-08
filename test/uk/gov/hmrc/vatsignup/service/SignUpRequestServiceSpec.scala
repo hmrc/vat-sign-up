@@ -46,7 +46,7 @@ class SignUpRequestServiceSpec extends UnitSpec
   val testIsMigratable = true
 
   "getSignUpRequest" when {
-    "the request is not at delegated" when {
+    "the request is not a delegated" when {
       "there is a stored company number" when {
         "there is a stored CT reference" when {
           "there is a stored sign up email address" when {
@@ -324,6 +324,60 @@ class SignUpRequestServiceSpec extends UnitSpec
 
               await(res) shouldBe Left(RequestNotAuthorised)
             }
+          }
+        }
+      }
+      "there is stored general partnership information" when {
+        "the user has a partnership enrolment" when {
+          "the sign up email address is verified" when {
+            "there is not a transaction e-mail address" should {
+              "return a successful SignUpRequest" in {
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
+                    partnershipUtr = Some(testUtr),
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable
+                  )
+
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = GeneralPartnership(testUtr),
+                    signUpEmail = Some(verifiedEmail),
+                    transactionEmail = verifiedEmail,
+                    isDelegated = false,
+                    isMigratable = testIsMigratable
+                  )
+                )
+              }
+            }
+          }
+        }
+        "the user does not have a partnership enrolment" should {
+          "return RequestNotAuthorised" in {
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
+                partnershipUtr = Some(testUtr),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Left(RequestNotAuthorised)
           }
         }
       }

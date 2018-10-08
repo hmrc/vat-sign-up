@@ -50,7 +50,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
   "storePartnershipInformation" when {
     "the UTR in the request json does not match the UTR in the enrolment" should {
       "return FORBIDDEN" in {
-        mockAuthRetrieveIRSAEnrolment()
+        mockAuthRetrievePartnershipEnrolment()
         mockStorePartnershipInformationSuccess(testVatNumber, testPartnershipInformation)
 
         val request = FakeRequest().withBody[PartnershipInformation](testPartnershipInformation.copy(sautr = testUtr.drop(1)))
@@ -63,7 +63,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
     "the UTR in the request json matches the UTR in the enrolment" should {
       "store parternship information returns StorePartnershipInformationSuccess" should {
         "return NO_CONTENT" in {
-          mockAuthRetrieveIRSAEnrolment()
+          mockAuthRetrievePartnershipEnrolment()
           mockStorePartnershipInformationSuccess(testVatNumber, testPartnershipInformation)
 
           val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -73,7 +73,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
       }
       "store parternship information returns PartnershipInformationDatabaseFailureNoVATNumber" should {
         "return NOT_FOUND" in {
-          mockAuthRetrieveIRSAEnrolment()
+          mockAuthRetrievePartnershipEnrolment()
           mockStorePartnershipInformation(testVatNumber, testPartnershipInformation)(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
 
           val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -83,7 +83,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
       }
       "store parternship information returns PartnershipInformationDatabaseFailure" should {
         "return INTERNAL_SERVER_ERROR" in {
-          mockAuthRetrieveIRSAEnrolment()
+          mockAuthRetrievePartnershipEnrolment()
           mockStorePartnershipInformation(testVatNumber, testPartnershipInformation)(Future.successful(Left(PartnershipInformationDatabaseFailure)))
 
           val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))

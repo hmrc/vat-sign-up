@@ -33,7 +33,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
   "POST /subscription-request/vat-number/:vatNumber/partnership-information" when {
     "enrolment matches the utr" should {
       "return NO_CONTENT" in {
-        stubAuth(OK, successfulAuthResponse(irsaEnrolment))
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
@@ -51,7 +51,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
     }
     "enrolment does not matches the utr" should {
       "return NO_CONTENT" in {
-        stubAuth(OK, successfulAuthResponse(irsaEnrolment))
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
@@ -72,7 +72,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
 
     "the vat number does not already exists" should {
       "return NOT_FOUND" in {
-        stubAuth(OK, successfulAuthResponse(irsaEnrolment))
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
 

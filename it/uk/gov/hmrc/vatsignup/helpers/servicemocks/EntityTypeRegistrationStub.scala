@@ -18,6 +18,7 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, Json}
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, GeneralPartnership, LimitedCompany, SoleTrader}
 
 object EntityTypeRegistrationStub extends WireMockMethods {
   private val registerUri = "/cross-regime/register/VATC"
@@ -38,6 +39,14 @@ object EntityTypeRegistrationStub extends WireMockMethods {
       )
     )
 
+  private def registerGeneralPartnershipJsonBody(vatNumber: String, sautr: String): JsObject =
+    Json.obj(
+      "ordinaryPartnership" -> Json.obj(
+        "vrn" -> vatNumber,
+        "sautr" -> sautr
+      )
+    )
+
   private def registerResponseBody(safeId: String): JsObject =
     Json.obj(
       "identification" -> Json.arr(
@@ -54,21 +63,20 @@ object EntityTypeRegistrationStub extends WireMockMethods {
     "Environment" -> "dev"
   )
 
-  def stubRegisterCompany(vatNumber: String, companyNumber: String)(safeId: String): Unit = {
+  def stubRegisterBusinessEntity(vatNumber: String, businessEntity: BusinessEntity)(safeId: String): Unit = {
     when(
       method = POST,
       uri = registerUri,
       headers = desHeaders,
-      body = registerCompanyJsonBody(vatNumber, companyNumber)
+      body = businessEntity match {
+        case SoleTrader(nino) =>
+          registerIndividualJsonBody(vatNumber, nino)
+        case LimitedCompany(companyNumber) =>
+          registerCompanyJsonBody(vatNumber, companyNumber)
+        case GeneralPartnership(sautr) =>
+          registerGeneralPartnershipJsonBody(vatNumber, sautr)
+      }
     ) thenReturn(OK, registerResponseBody(safeId))
   }
 
-  def stubRegisterIndividual(vatNumber: String, nino: String)(safeId: String): Unit = {
-    when(
-      method = POST,
-      uri = registerUri,
-      headers = desHeaders,
-      body = registerIndividualJsonBody(vatNumber, nino)
-    ) thenReturn(OK, registerResponseBody(safeId))
-  }
 }

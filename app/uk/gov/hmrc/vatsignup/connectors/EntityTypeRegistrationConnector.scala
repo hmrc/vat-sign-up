@@ -25,7 +25,7 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.connectors.EntityTypeRegistrationConnector._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, GeneralPartnership, LimitedCompany, SoleTrader}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -55,27 +55,34 @@ class EntityTypeRegistrationConnector @Inject()(val http: HttpClient,
 object EntityTypeRegistrationConnector {
   val SoleTraderKey = "soleTrader"
   val LimitedCompanyKey = "company"
+  val GeneralPartnershipKey = "ordinaryPartnership"
 
   val VrnKey = "vrn"
   val NinoKey = "nino"
   val CrnKey = "crn"
+  val SautrKey = "sautr"
 
   def toRegisterApiJson(businessEntity: BusinessEntity, vatNumber: String): JsObject = businessEntity match {
-    case soleTrader: SoleTrader =>
+    case SoleTrader(nino) =>
       Json.obj(
         SoleTraderKey -> Json.obj(
           VrnKey -> vatNumber,
-          NinoKey -> soleTrader.nino
+          NinoKey -> nino
         )
       )
-    case limitedCompany: LimitedCompany =>
+    case LimitedCompany(companyNumber) =>
       Json.obj(
         LimitedCompanyKey -> Json.obj(
           VrnKey -> vatNumber,
-          CrnKey -> limitedCompany.companyNumber
+          CrnKey -> companyNumber
+        )
+      )
+    case GeneralPartnership(sautr) =>
+      Json.obj(
+        GeneralPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr
         )
       )
   }
-
-
 }

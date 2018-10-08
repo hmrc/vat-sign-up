@@ -26,12 +26,12 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.EntityTypeRegistrationStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.SignUpStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository, TestSubmissionRequestRepository}
-import uk.gov.hmrc.vatsignup.models.{SubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSpecBase with CustomMatchers
- with TestSubmissionRequestRepository with TestEmailRequestRepository {
+  with TestSubmissionRequestRepository with TestEmailRequestRepository {
 
   val testIsMigratable = true
 
@@ -55,7 +55,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -78,7 +78,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -101,7 +101,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, None, None, optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -130,7 +130,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -154,7 +154,32 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
+        "return NO_CONTENT for general partnership sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
+            partnershipUtr = Some(testUtr),
+            email = Some(testEmail),
+            identityVerified = true,
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -179,7 +204,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 

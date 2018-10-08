@@ -36,6 +36,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
                                     )(implicit ec: ExecutionContext) {
   def getSignUpRequest(vatNumber: String, enrolments: Enrolments)(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, SignUpRequest]] = {
     val isDelegated = enrolments.agentReferenceNumber.isDefined
+    val hasPartnershipEnrolment = enrolments.partnershipUtr.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
       case Some(subscriptionRequest) =>
@@ -43,7 +44,13 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
         val res: EitherT[Future, GetSignUpRequestFailure, SignUpRequest] = for {
           businessEntity <- EitherT.fromEither[Future](getBusinessEntity(subscriptionRequest))
-          _ <- EitherT.fromEither[Future](checkAuthorisation(businessEntity, subscriptionRequest, isDelegated, hasVatEnrolment))
+          _ <- EitherT.fromEither[Future](checkAuthorisation(
+            businessEntity,
+            subscriptionRequest,
+            isDelegated,
+            hasVatEnrolment,
+            hasPartnershipEnrolment
+          ))
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable  = subscriptionRequest.isMigratable
@@ -65,11 +72,13 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
 
   private def getBusinessEntity(subscriptionRequest: SubscriptionRequest): Either[GetSignUpRequestFailure, BusinessEntity] =
-    (subscriptionRequest.companyNumber, subscriptionRequest.nino) match {
-      case (Some(companyNumber), _) =>
+    (subscriptionRequest.companyNumber, subscriptionRequest.nino, subscriptionRequest.partnershipEntity, subscriptionRequest.partnershipUtr) match {
+      case (Some(companyNumber), _, _, _) =>
         Right(LimitedCompany(companyNumber))
-      case (_, Some(nino)) =>
+      case (_, Some(nino), _, _) =>
         Right(SoleTrader(nino))
+      case (_, _, Some(PartnershipEntityType.GeneralPartnership), Some(sautr)) =>
+        Right(GeneralPartnership(sautr))
       case _ =>
         Left(InsufficientData)
     }
@@ -77,11 +86,14 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
   private def checkAuthorisation(businessEntity: BusinessEntity,
                                  subscriptionRequest: SubscriptionRequest,
                                  isDelegated: Boolean,
-                                 hasVatEnrolment: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
+                                 hasVatEnrolment: Boolean,
+                                 hasPartnershipEnrolment: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
     businessEntity match {
       case _: LimitedCompany if subscriptionRequest.ctReference.isDefined || hasVatEnrolment =>
         Right(RequestAuthorised)
       case _: SoleTrader if subscriptionRequest.ninoSource contains IRSA =>
+        Right(RequestAuthorised)
+      case _: GeneralPartnership if hasPartnershipEnrolment =>
         Right(RequestAuthorised)
       case _ if subscriptionRequest.identityVerified || isDelegated =>
         Right(RequestAuthorised)
