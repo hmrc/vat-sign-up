@@ -25,7 +25,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttp
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
-import uk.gov.hmrc.vatsignup.models.{CustomerDetails, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models.{CustomerDetails, GeneralPartnership, LimitedCompany, SoleTrader}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
 
@@ -41,6 +41,7 @@ object TestConstants {
   val testToken = UUID.randomUUID().toString
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
   val testLimitedCompany = LimitedCompany(testCompanyNumber)
+  val testGeneralPartnership = GeneralPartnership(testUtr)
   val testSoleTrader = SoleTrader(testNino)
   val testSignUpEmail = EmailAddress(testEmail, true)
 

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, GeneralPartnership, LimitedCompany, SoleTrader}
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object RegisterWithMultipleIDsAuditing {
@@ -24,8 +24,9 @@ object RegisterWithMultipleIDsAuditing {
   val registerWithMultipleIDsAuditType = "mtdVatRegisterWithMultipleIDs"
 
   case class RegisterWithMultipleIDsAuditModel(vatNumber: String,
-                                               companyNumber: Option[String],
-                                               nino: Option[String],
+                                               companyNumber: Option[String] = None,
+                                               nino: Option[String] = None,
+                                               sautr: Option[String] = None,
                                                agentReferenceNumber: Option[String],
                                                isSuccess: Boolean) extends AuditModel {
 
@@ -48,9 +49,26 @@ object RegisterWithMultipleIDsAuditing {
               isSuccess: Boolean): RegisterWithMultipleIDsAuditModel = {
       businessEntity match {
         case SoleTrader(nino) =>
-          RegisterWithMultipleIDsAuditModel(vatNumber, None, Some(nino), agentReferenceNumber, isSuccess)
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            nino = Some(nino),
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
         case LimitedCompany(companyNumber) =>
-          RegisterWithMultipleIDsAuditModel(vatNumber, Some(companyNumber), None, agentReferenceNumber, isSuccess)
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            companyNumber = Some(companyNumber),
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
+        case GeneralPartnership(sautr) =>
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            sautr = Some(sautr),
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
       }
     }
   }

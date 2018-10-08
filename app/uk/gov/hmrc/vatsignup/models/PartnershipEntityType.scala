@@ -22,11 +22,11 @@ sealed trait PartnershipEntityType {
   override def toString: String = StringValue
 }
 
-case object GeneralPartnership extends PartnershipEntityType {
-  val StringValue = "ordinaryPartnership"
-}
-
 object PartnershipEntityType {
+
+  case object GeneralPartnership extends PartnershipEntityType {
+    val StringValue = "ordinaryPartnership"
+  }
 
   val partnershipEntityTypeFrontEndKey = "entityType"
 

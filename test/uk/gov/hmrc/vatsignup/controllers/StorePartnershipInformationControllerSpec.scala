@@ -24,9 +24,11 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.{GeneralPartnership, PartnershipInformation}
+import uk.gov.hmrc.vatsignup.models.PartnershipInformation
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
 import uk.gov.hmrc.vatsignup.service.mocks.MockStorePartnershipInformationService
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.{PartnershipInformationDatabaseFailure, PartnershipInformationDatabaseFailureNoVATNumber}
+
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

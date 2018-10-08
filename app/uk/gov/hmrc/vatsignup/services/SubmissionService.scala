@@ -21,19 +21,18 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolution}
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EntityTypeRegistrationConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
-import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
+import uk.gov.hmrc.vatsignup.models.{GeneralPartnership, _}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubmissionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
-import EntityTypeRegistrationConnector._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -71,6 +70,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             registerCompany(signUpRequest.vatNumber, companyNumber, optAgentReferenceNumber)
           case SoleTrader(nino) =>
             registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
+          case GeneralPartnership(_) =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("General partnerships are not supported on the legacy Register API"))
+            )
         }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
@@ -102,12 +105,21 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                              )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
     EitherT(registrationConnector.registerCompany(vatNumber, companyNumber)) bimap( {
       _ => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, Some(companyNumber), None, agentReferenceNumber, isSuccess = false))
+        auditService.audit(RegisterWithMultipleIDsAuditModel(
+          vatNumber = vatNumber,
+          companyNumber = Some(companyNumber),
+          agentReferenceNumber = agentReferenceNumber, isSuccess = false
+        ))
         RegistrationFailure
       }
     }, {
       case RegisterWithMultipleIdsSuccess(safeId) => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, Some(companyNumber), None, agentReferenceNumber, isSuccess = true))
+        auditService.audit(RegisterWithMultipleIDsAuditModel(
+          vatNumber = vatNumber,
+          companyNumber = Some(companyNumber),
+          agentReferenceNumber = agentReferenceNumber,
+          isSuccess = true
+        ))
         safeId
       }
     })
@@ -119,12 +131,22 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                                 )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
     EitherT(registrationConnector.registerIndividual(vatNumber, nino)) bimap( {
       _ => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, None, Some(nino), agentReferenceNumber, isSuccess = false))
+        auditService.audit(RegisterWithMultipleIDsAuditModel(
+          vatNumber = vatNumber,
+          nino = Some(nino),
+          agentReferenceNumber = agentReferenceNumber,
+          isSuccess = true
+        ))
         RegistrationFailure
       }
     }, {
       case RegisterWithMultipleIdsSuccess(safeId) => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, None, Some(nino), agentReferenceNumber, isSuccess = true))
+        auditService.audit(RegisterWithMultipleIDsAuditModel(
+          vatNumber = vatNumber,
+          nino = Some(nino),
+          agentReferenceNumber = agentReferenceNumber,
+          isSuccess = true
+        ))
         safeId
       }
     })

@@ -21,6 +21,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
 
+
 class SubscriptionRequestSpec extends UnitSpec {
   "mongoFormat" should {
     val testJson = Json.obj(
@@ -28,7 +29,7 @@ class SubscriptionRequestSpec extends UnitSpec {
       companyNumberKey -> testCompanyNumber,
       ninoKey -> testNino,
       ninoSourceKey -> UserEntered,
-      entityTypeKey -> GeneralPartnership,
+      entityTypeKey -> PartnershipEntityType.GeneralPartnership,
       partnershipUtrKey -> testUtr,
       emailKey -> testEmail,
       transactionEmailKey -> testEmail,
@@ -41,7 +42,7 @@ class SubscriptionRequestSpec extends UnitSpec {
       companyNumber = Some(testCompanyNumber),
       nino = Some(testNino),
       ninoSource = Some(UserEntered),
-      partnershipEntity = Some(GeneralPartnership),
+      partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
       partnershipUtr = Some(testUtr),
       email = Some(testEmail),
       transactionEmail = Some(testEmail),
