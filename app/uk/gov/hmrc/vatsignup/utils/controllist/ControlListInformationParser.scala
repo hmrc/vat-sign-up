@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.utils.controllist
 
-import uk.gov.hmrc.vatsignup.models.controllist.{BusinessEntity, ControlListInformation, ControlListParameter, Stagger}
+import uk.gov.hmrc.vatsignup.models.controllist._
 
 object ControlListInformationParser {
 
@@ -26,16 +26,22 @@ object ControlListInformationParser {
   def tryParse(controlList: String): Either[ControlListParseError, ControlListInformation] = {
     val parameters = ControlListParameter.getParameterMap
     if (controlList matches "[0,1]{32}") {
-      val set: Set[ControlListParameter] = (controlList.zipWithIndex flatMap {
+      val unsanitisedSet: Set[ControlListParameter] = (controlList.zipWithIndex flatMap {
         case (CONTROL_LIST_TRUE, index) => parameters.get(index)
         case (CONTROL_LIST_FALSE, _) => None
       }).toSet
-      if ((set count (_.isInstanceOf[Stagger])) != 1) {
+      val sanitisedSet: Set[ControlListParameter] =
+        if (unsanitisedSet.exists(x => x.isInstanceOf[Stagger] && !x.isInstanceOf[NonStandardTaxPeriod.type])) {
+          unsanitisedSet - NonStandardTaxPeriod
+        } else {
+          unsanitisedSet
+        }
+      if ((sanitisedSet count (_.isInstanceOf[Stagger])) != 1) {
         Left(StaggerConflict)
-      } else if ((set count (_.isInstanceOf[BusinessEntity])) != 1) {
+      } else if ((sanitisedSet count (_.isInstanceOf[BusinessEntity])) != 1) {
         Left(EntityConflict)
       } else {
-        Right(ControlListInformation(set))
+        Right(ControlListInformation(sanitisedSet))
       }
     } else {
       Left(InvalidFormat)

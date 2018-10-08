@@ -155,7 +155,7 @@ case object MonthlyStagger extends ControlListParameter with Stagger {
   val errorMessage: String = invalidStaggerTypeMessage("MonthlyStagger")
 }
 
-case object NonStandardTaxPeriod extends ControlListParameter {
+case object NonStandardTaxPeriod extends ControlListParameter with Stagger {
   val configKey: String = "none_standard_tax_period"
   val ordinal = NONE_STANDARD_TAX_PERIOD
   val errorMessage: String = nonStandardTaxPeriodMessage
