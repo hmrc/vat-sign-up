@@ -20,7 +20,8 @@ import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.models.{PartnershipInformation, UnconfirmedSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -39,7 +40,7 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
   "POST /sign-up-request/request-id/:requestId/partnership-information" when {
     "enrolment matches the utr" should {
       "return NO_CONTENT" in {
-        stubAuth(OK, successfulAuthResponse(irsaEnrolment))
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
 
@@ -57,7 +58,7 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
     }
     "enrolment does not matches the utr" should {
       "return NO_CONTENT" in {
-        stubAuth(OK, successfulAuthResponse(irsaEnrolment))
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
 
@@ -78,7 +79,7 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
 
     "the vat number does not already exists" should {
       "return NOT_FOUND" in {
-        stubAuth(OK, successfulAuthResponse(irsaEnrolment))
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         val res = post(s"/sign-up-request/request-id/$testToken/partnership-information")(requestBody)
 

@@ -24,12 +24,13 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest.credentialIdKey
-import uk.gov.hmrc.vatsignup.models.{GeneralPartnership, UnconfirmedSubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{UnconfirmedSubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class UncofirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val repo: UnconfirmedSubscriptionRequestRepository = app.injector.instanceOf[UnconfirmedSubscriptionRequestRepository]
 
   private val testUnconfirmedSubscriptionRequest = UnconfirmedSubscriptionRequest(

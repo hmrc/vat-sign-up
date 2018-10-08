@@ -21,3 +21,5 @@ sealed trait BusinessEntity
 case class LimitedCompany(companyNumber: String) extends BusinessEntity
 
 case class SoleTrader(nino: String) extends BusinessEntity
+
+case class GeneralPartnership(sautr: String) extends BusinessEntity

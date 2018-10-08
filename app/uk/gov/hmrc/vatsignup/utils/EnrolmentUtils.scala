@@ -22,16 +22,22 @@ import uk.gov.hmrc.vatsignup.config.Constants._
 object EnrolmentUtils {
 
   implicit class EnrolmentUtils(enrolments: Enrolments) {
-    def vatNumber: Option[String] =
+    val vatNumber: Option[String] =
       enrolments getEnrolment VatDecEnrolmentKey flatMap {
         vatDecEnrolment =>
           vatDecEnrolment getIdentifier VatReferenceKey map (_.value)
       }
 
-    def agentReferenceNumber: Option[String] =
+    val agentReferenceNumber: Option[String] =
       enrolments getEnrolment AgentEnrolmentKey flatMap {
         agentEnrolment =>
           agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
+      }
+
+    val partnershipUtr: Option[String] =
+      enrolments getEnrolment PartnershipIrsaEnrolmentKey flatMap {
+        partnershipEnrolment =>
+          partnershipEnrolment.getIdentifier(PartnershipIrsaReferenceNumberKey).map(_.value)
       }
 
     def isPrincipal: Boolean = agentReferenceNumber.isEmpty

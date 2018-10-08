@@ -22,7 +22,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.models.{GeneralPartnership, SubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{SubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

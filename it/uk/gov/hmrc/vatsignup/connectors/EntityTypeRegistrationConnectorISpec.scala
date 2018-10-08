@@ -22,17 +22,29 @@ import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EntityTypeRegistrationStub._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
-import uk.gov.hmrc.vatsignup.models.{LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models._
 
 class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
   private lazy val registrationConnector: EntityTypeRegistrationConnector = app.injector.instanceOf[EntityTypeRegistrationConnector]
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
+  "registerPartnership" when {
+    "DES returns a successful response" should {
+      "return a RegistrationSuccess with the SAFE ID" in {
+        stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
+
+        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GeneralPartnership(testUtr)))
+
+        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+      }
+    }
+  }
+
   "registerCompany" when {
     "DES returns a successful response" should {
       "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+        stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
 
         val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber)))
 
@@ -44,7 +56,7 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
   "registerIndividual" when {
     "DES returns a successful response" should {
       "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
+        stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
 
         val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
 
