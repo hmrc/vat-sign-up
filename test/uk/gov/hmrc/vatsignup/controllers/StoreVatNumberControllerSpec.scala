@@ -28,7 +28,7 @@ import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser
-import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
+import uk.gov.hmrc.vatsignup.models.{MigratableDates, StoreVatNumberRequest}
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreVatNumberService
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 
@@ -120,14 +120,32 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
       }
     }
 
-    "the user is ineligible" should {
-      "return UNPROCESSABLE_ENTITY" in {
+    "the user is ineligible with no migratable dates" should {
+      "return UNPROCESSABLE_ENTITY with and empty body" in {
         mockAuthRetrieveAgentEnrolment()
-        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible)))
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible(MigratableDates.empty))))
 
         val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
 
         status(res) shouldBe UNPROCESSABLE_ENTITY
+        jsonBodyOf(res) shouldBe Json.obj()
+      }
+    }
+
+    "the user is ineligible with migratable dates included" should {
+      "return UNPROCESSABLE_ENTITY with the dates in the body" in {
+        val migratableDates = MigratableDates(
+          migratableDate = Some(testMigratableDate),
+          migratableCutoffDate = Some(testMigratableDate)
+        )
+
+        mockAuthRetrieveAgentEnrolment()
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible(migratableDates))))
+
+        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+
+        status(res) shouldBe UNPROCESSABLE_ENTITY
+        jsonBodyOf(res) shouldBe Json.toJson(migratableDates)
       }
     }
 

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -35,11 +36,16 @@ class VatNumberEligibilityController @Inject()(val authConnector: AuthConnector,
     implicit request =>
       authorised() {
         vatNumberEligibilityService.checkVatNumberEligibility(vatNumber) map {
-          case Right(VatNumberEligible) => NoContent
-          case Left(AlreadySubscribed) => Conflict
-          case Left(VatNumberIneligible) => BadRequest
-          case Left(VatNumberNotFound | InvalidVatNumber) => NotFound
-          case _ => BadGateway
+          case Right(VatNumberEligible) =>
+            NoContent
+          case Left(AlreadySubscribed) =>
+            Conflict
+          case Left(VatNumberIneligible(migratableDates)) =>
+            BadRequest(Json.toJson(migratableDates))
+          case Left(VatNumberNotFound | InvalidVatNumber) =>
+            NotFound
+          case _ =>
+            BadGateway
         }
       }
   }

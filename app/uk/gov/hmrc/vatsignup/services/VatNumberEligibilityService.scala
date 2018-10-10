@@ -60,10 +60,14 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
                                   )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, VatNumberEligibilityFailure, VatNumberEligible.type] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
       case Right(_: EligibilitySuccess) => Right(VatNumberEligible)
-      case Left(ControlListEligibilityService.IneligibleVatNumber) => Left(VatNumberIneligible)
-      case Left(ControlListEligibilityService.InvalidVatNumber) => Left(InvalidVatNumber)
-      case Left(ControlListEligibilityService.VatNumberNotFound) => Left(VatNumberNotFound)
-      case _ => Left(KnownFactsAndControlListFailure)
+      case Left(ControlListEligibilityService.IneligibleVatNumber) =>
+        Left(VatNumberIneligible(MigratableDates.empty))
+      case Left(ControlListEligibilityService.InvalidVatNumber) =>
+        Left(InvalidVatNumber)
+      case Left(ControlListEligibilityService.VatNumberNotFound) =>
+        Left(VatNumberNotFound)
+      case _ =>
+        Left(KnownFactsAndControlListFailure)
     }
   }
 }
@@ -80,7 +84,7 @@ object VatNumberEligibilityService {
 
   case object AlreadySubscribed extends VatNumberEligibilityFailure
 
-  case object VatNumberIneligible extends VatNumberEligibilityFailure
+  case class VatNumberIneligible(migratableDates: MigratableDates) extends VatNumberEligibilityFailure
 
   case object VatNumberNotFound extends VatNumberEligibilityFailure
 

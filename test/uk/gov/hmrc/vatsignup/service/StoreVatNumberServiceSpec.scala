@@ -143,7 +143,7 @@ class StoreVatNumberServiceSpec
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None))
-            res shouldBe Left(StoreVatNumberService.Ineligible)
+            res shouldBe Left(StoreVatNumberService.Ineligible(MigratableDates.empty))
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
@@ -242,7 +242,7 @@ class StoreVatNumberServiceSpec
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
 
             val res = await(call)
-            res shouldBe Left(StoreVatNumberService.Ineligible)
+            res shouldBe Left(StoreVatNumberService.Ineligible(MigratableDates.empty))
           }
         }
         "Known facts and control list returned ControlListInformationVatNumberNotFound" should {
