@@ -121,7 +121,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   def loadDirectDebitConfig: Map[Stagger, Set[DateRange]] =
     loadConfigFromEnvFirst("dd-config") match {
       case Some(jsonConfig) =>
-        val config = Json.parse(jsonConfig)
+        val config = Json.parse(jsonConfig.replaceAll("[\n\r]", ""))
         val stagger1Dates = (config \ "Stagger1").validate[Set[DateRange]].asOpt
         val stagger2Dates = (config \ "Stagger2").validate[Set[DateRange]].asOpt
         val stagger3Dates = (config \ "Stagger3").validate[Set[DateRange]].asOpt
