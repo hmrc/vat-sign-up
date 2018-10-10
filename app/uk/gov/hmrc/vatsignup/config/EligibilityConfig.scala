@@ -18,6 +18,7 @@ package uk.gov.hmrc.vatsignup.config
 
 import javax.inject.{Inject, Singleton}
 
+import uk.gov.hmrc.vatsignup.models.DateRange
 import uk.gov.hmrc.vatsignup.models.controllist._
 
 
@@ -29,5 +30,8 @@ class EligibilityConfig @Inject()(appConfig: AppConfig) {
 
   lazy val nonMigratableParameters: Set[ControlListParameter] =
     ControlListParameter.getParameterMap.values.filterNot(appConfig.loadIsMigratableConfig).toSet
+
+  // TODO define reader
+  lazy val staggerParameters: Map[Stagger, Set[DateRange]] = ???
 
 }
