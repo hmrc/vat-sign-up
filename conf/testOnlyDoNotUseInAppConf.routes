@@ -15,5 +15,6 @@
 DELETE        /vat-sign-up/test-only/vat-number/:vatNumber             @uk.gov.hmrc.vatsignup.testonly.controllers.DBAdminController.delete(vatNumber:String)
 GET           /vat-sign-up/test-only/feature-switch                    @uk.gov.hmrc.vatsignup.testonly.controllers.FeatureSwitchController.get
 POST          /vat-sign-up/test-only/feature-switch                    @uk.gov.hmrc.vatsignup.testonly.controllers.FeatureSwitchController.update
+GET           /vat-sign-up/test-only/dd-config                         @uk.gov.hmrc.vatsignup.testonly.controllers.DDEndDateConfigController.getConfig
 
 ->            /                                                        prod.Routes

@@ -18,10 +18,16 @@ package uk.gov.hmrc.vatsignup.models
 
 import java.time.LocalDate
 
+import play.api.libs.json.Json
+
 
 case class DateRange(startDate: LocalDate, endDate: LocalDate) {
 
   def contains(date: LocalDate): Boolean =
     date.isEqual(startDate) || date.isEqual(endDate) || (date.isAfter(startDate) && date.isBefore(endDate))
 
+}
+
+object DateRange {
+  implicit val format = Json.format[DateRange]
 }

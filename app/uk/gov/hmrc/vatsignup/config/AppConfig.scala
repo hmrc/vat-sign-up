@@ -19,10 +19,12 @@ package uk.gov.hmrc.vatsignup.config
 import javax.inject.{Inject, Singleton}
 
 import play.api.Mode.Mode
+import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListParameter
+import uk.gov.hmrc.vatsignup.models.DateRange
+import uk.gov.hmrc.vatsignup.models.controllist._
 
 @Singleton
 class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig with FeatureSwitching {
@@ -114,6 +116,21 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
     loadConfigFromEnvFirst(s"control-list.${param.configKey}.migratable") match {
       case Some(bool) => bool.toBoolean
       case _ => throw new Exception(s"Missing migratability configuration key: ${param.configKey}")
+    }
+
+  def loadDirectDebitConfig: Map[Stagger, Set[DateRange]] =
+    loadConfigFromEnvFirst("dd-config") match {
+      case Some(jsonConfig) =>
+        val config = Json.parse(jsonConfig)
+        val stagger1Dates = (config \ "Stagger1").validate[Set[DateRange]].asOpt
+        val stagger2Dates = (config \ "Stagger2").validate[Set[DateRange]].asOpt
+        val stagger3Dates = (config \ "Stagger3").validate[Set[DateRange]].asOpt
+        Map(
+          Stagger1 -> stagger1Dates,
+          Stagger2 -> stagger2Dates,
+          Stagger3 -> stagger3Dates
+        ).collect { case (key, Some(value)) => (key, value) }
+      case _ => throw new Exception("Missing migratability configuration key: dd-config")
     }
 
 }
