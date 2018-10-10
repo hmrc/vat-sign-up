@@ -72,12 +72,13 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
       )
     } else {
       subscriptionState match {
-        case Failure => Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
-          EitherT.rightT(TaxEnrolmentFailure)
         case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None)) bimap(
           _ => EmailServiceFailure,
           _ => NotificationSent
         )
+        case _ =>
+          Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
+          EitherT.rightT(TaxEnrolmentFailure)
       }
     }
   }
