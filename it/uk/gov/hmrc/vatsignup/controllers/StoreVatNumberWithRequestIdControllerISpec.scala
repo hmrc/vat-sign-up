@@ -47,7 +47,6 @@ class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
   override def beforeEach(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     super.beforeEach()
-    unconfirmedSubmissionRequestRepo.drop
     await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
   }
 

@@ -33,8 +33,7 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
   override def beforeEach(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     super.beforeEach()
-    unconfirmedSubmissionRequestRepo.drop
-
+    await(unconfirmedSubmissionRequestRepo.drop)
   }
 
   "POST /sign-up-request/request-id/:requestId/partnership-information" when {
