@@ -121,7 +121,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
             Right(success)
         }
       case Left(ControlListEligibilityService.IneligibleVatNumber) =>
-        Left(Ineligible)
+        Left(Ineligible(MigratableDates.empty))
       case Left(ControlListEligibilityService.InvalidVatNumber) =>
         Left(VatInvalid)
       case Left(ControlListEligibilityService.VatNumberNotFound) =>
@@ -190,7 +190,7 @@ object StoreVatNumberService {
 
   case object KnownFactsMismatch extends StoreVatNumberFailure
 
-  case object Ineligible extends StoreVatNumberFailure
+  case class Ineligible(migratableDates: MigratableDates) extends StoreVatNumberFailure
 
   case object VatNotFound extends StoreVatNumberFailure
 

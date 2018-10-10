@@ -69,8 +69,8 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
         Forbidden(Json.obj(HttpCodeKey -> KnownFactsMismatchCode))
       case VatNotFound | VatInvalid =>
         PreconditionFailed
-      case Ineligible =>
-        UnprocessableEntity
+      case Ineligible(migratableDates) =>
+        UnprocessableEntity(Json.toJson(migratableDates))
       case VatNumberDatabaseFailure =>
         InternalServerError
       case AgentServicesConnectionFailure | VatSubscriptionConnectionFailure | ClaimSubscriptionFailure =>

@@ -108,4 +108,6 @@ object TestConstants {
     )
   )
 
+  val testMigratableDate: LocalDate = LocalDate.now()
+
 }
