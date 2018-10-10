@@ -20,7 +20,9 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListParameter
+import uk.gov.hmrc.vatsignup.helpers.TestConstants
+import uk.gov.hmrc.vatsignup.models.DateRange
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListParameter, Stagger}
 
 trait MockEligibilityConfig extends MockitoSugar with BeforeAndAfterEach {
   this: Suite =>
@@ -35,11 +37,13 @@ trait MockEligibilityConfig extends MockitoSugar with BeforeAndAfterEach {
 
   val mockEligibilityConfig: EligibilityConfig = mock[EligibilityConfig]
 
-
   def mockIneligibleParameters(ineligibleParameters: Set[ControlListParameter]): Unit =
     when(mockEligibilityConfig.ineligibleParameters) thenReturn ineligibleParameters
 
   def mockNonMigratableParameters(nonMigratableParameters: Set[ControlListParameter]): Unit =
     when(mockEligibilityConfig.nonMigratableParameters) thenReturn nonMigratableParameters
+
+  def mockStaggerParameters(config: Map[Stagger, Set[DateRange]] = TestConstants.testDDConfig): Unit =
+    when(mockEligibilityConfig.staggerParameters) thenReturn config
 
 }

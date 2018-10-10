@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.helpers
 
+import java.time.LocalDate
 import java.util.UUID
 
 import uk.gov.hmrc.auth.core.Enrolment
@@ -24,8 +25,8 @@ import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
-import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
-import uk.gov.hmrc.vatsignup.models.{CustomerDetails, GeneralPartnership, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models.controllist._
+import uk.gov.hmrc.vatsignup.models.{CustomerDetails, DateRange, GeneralPartnership, LimitedCompany}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
 
@@ -38,12 +39,12 @@ object TestConstants {
   val testEmail: String = UUID.randomUUID().toString
   val testAgentReferenceNumber: String = UUID.randomUUID().toString
   val testSafeId: String = UUID.randomUUID().toString
-  val testToken = UUID.randomUUID().toString
+  val testToken: String = UUID.randomUUID().toString
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
   val testLimitedCompany = LimitedCompany(testCompanyNumber)
   val testGeneralPartnership = GeneralPartnership(testUtr)
-  val testSoleTrader = SoleTrader(testNino)
-  val testSignUpEmail = EmailAddress(testEmail, true)
+  val testSoleTrader = uk.gov.hmrc.vatsignup.models.SoleTrader(testNino)
+  val testSignUpEmail = EmailAddress(testEmail, isVerified = true)
 
   val testCredentialId: String = UUID.randomUUID().toString
   val testCredentials: Credentials = Credentials(testCredentialId, GGProviderId)
@@ -91,5 +92,20 @@ object TestConstants {
       }
     }
   }
+
+  val testDDConfig: Map[Stagger, Set[DateRange]] = Map(
+    Stagger1 -> Set(
+      DateRange(LocalDate.of(2018, 10, 18), LocalDate.of(2018, 11, 13)),
+      DateRange(LocalDate.of(2019, 1, 18), LocalDate.of(2019, 2, 13))
+    ),
+    Stagger2 -> Set(
+      DateRange(LocalDate.of(2018, 11, 17), LocalDate.of(2018, 12, 13)),
+      DateRange(LocalDate.of(2019, 2, 15), LocalDate.of(2019, 3, 13))
+    ),
+    Stagger3 -> Set(
+      DateRange(LocalDate.of(2018, 12, 13), LocalDate.of(2019, 1, 13)),
+      DateRange(LocalDate.of(2019, 3, 16), LocalDate.of(2019, 4, 11))
+    )
+  )
 
 }
