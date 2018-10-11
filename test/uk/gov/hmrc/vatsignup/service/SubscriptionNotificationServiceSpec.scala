@@ -29,7 +29,7 @@ import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
-import uk.gov.hmrc.vatsignup.models.SubscriptionState.{Failure, Success}
+import uk.gov.hmrc.vatsignup.models.SubscriptionState.{AuthRefreshed, Failure, Success}
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -76,6 +76,17 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
+
+                res shouldBe Right(TaxEnrolmentFailure)
+              }
+              "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
+                enable(EmailNotification)
+
+                val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
+
+                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+                val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, AuthRefreshed))
 
                 res shouldBe Right(TaxEnrolmentFailure)
               }

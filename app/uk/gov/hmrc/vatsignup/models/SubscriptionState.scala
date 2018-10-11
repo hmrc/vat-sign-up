@@ -31,11 +31,24 @@ object SubscriptionState {
     val jsonName = "ERROR"
   }
 
+  case object Enrolled extends SubscriptionState {
+    val jsonName = "Enrolled"
+  }
+
+  case object EnrolmentError extends SubscriptionState {
+    val jsonName = "EnrolmentError"
+  }
+
+  case object AuthRefreshed extends SubscriptionState {
+    val jsonName = "AuthRefreshed"
+  }
+
   implicit object SubscriptionStateJsonReads extends Reads[SubscriptionState] {
     override def reads(json: JsValue): JsResult[SubscriptionState] = {
       json.validate[String].flatMap {
         case Success.jsonName => JsSuccess(Success)
-        case Failure.jsonName => JsSuccess(Failure)
+        case Failure.jsonName | Enrolled.jsonName | EnrolmentError.jsonName | AuthRefreshed.jsonName =>
+          JsSuccess(Failure)
         case invalidState => JsError(ValidationError(Seq(s"$invalidState is an invalid state"), Nil))
       }
     }
