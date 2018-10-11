@@ -25,6 +25,7 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
+import uk.gov.hmrc.vatsignup.models.MigratableDates
 import uk.gov.hmrc.vatsignup.models.controllist.Stagger1
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
@@ -73,7 +74,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
       }
     }
 
-    "the control list indicates the user is ineligible" should {
+    "the control list indicates the user is ineligible with no migratable dates" should {
       "return IneligibleVatNumber" in {
         mockIneligibleParameters(Set(Stagger1))
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
@@ -81,7 +82,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-        res shouldBe Left(IneligibleVatNumber)
+        res shouldBe Left(IneligibleVatNumber(MigratableDates.empty))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(Stagger1.errorMessage)))
       }
     }

@@ -60,8 +60,8 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
                                   )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, VatNumberEligibilityFailure, VatNumberEligible.type] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
       case Right(_: EligibilitySuccess) => Right(VatNumberEligible)
-      case Left(ControlListEligibilityService.IneligibleVatNumber) =>
-        Left(VatNumberIneligible(MigratableDates.empty))
+      case Left(ControlListEligibilityService.IneligibleVatNumber(migratableDates)) =>
+        Left(VatNumberIneligible(migratableDates))
       case Left(ControlListEligibilityService.InvalidVatNumber) =>
         Left(InvalidVatNumber)
       case Left(ControlListEligibilityService.VatNumberNotFound) =>

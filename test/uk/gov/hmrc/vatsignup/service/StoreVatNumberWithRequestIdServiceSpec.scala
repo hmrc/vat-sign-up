@@ -225,7 +225,7 @@ class StoreVatNumberWithRequestIdServiceSpec
             )
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(
-              Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber))
+              Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates)))
             )
 
             val res = await(TestStoreVatNumberService.storeVatNumber(
@@ -236,7 +236,7 @@ class StoreVatNumberWithRequestIdServiceSpec
               vatRegistrationDate = None,
               isFromBta = None
             ))
-            res shouldBe Left(Ineligible)
+            res shouldBe Left(Ineligible(testMigratableDates))
 
             verifyAudit(AgentClientRelationshipAuditModel(
               vatNumber = testVatNumber,
@@ -411,11 +411,11 @@ class StoreVatNumberWithRequestIdServiceSpec
           "return a Ineligible" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(
-              Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber))
+              Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates)))
             )
 
             val res = await(call)
-            res shouldBe Left(Ineligible)
+            res shouldBe Left(Ineligible(testMigratableDates))
           }
         }
         "Known facts and control list returned ControlListInformationVatNumberNotFound" should {

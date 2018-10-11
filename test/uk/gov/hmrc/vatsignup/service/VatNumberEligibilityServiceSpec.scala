@@ -72,9 +72,9 @@ class VatNumberEligibilityServiceSpec extends UnitSpec with EitherValues
           "the known facts and control list service returns a control list information that is ineligible" should {
             "return VatNumberIneligible" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-              mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates))))
 
-              await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber)).left.value shouldBe VatNumberIneligible(MigratableDates.empty)
+              await(TestVatNumberEligibilityService.checkVatNumberEligibility(testVatNumber)).left.value shouldBe VatNumberIneligible(testMigratableDates)
             }
           }
           "the known facts and control list service returns KnownFactsInvalidVatNumber" should {

@@ -140,10 +140,10 @@ class StoreVatNumberServiceSpec
           "return Ineligible" in {
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates))))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None))
-            res shouldBe Left(StoreVatNumberService.Ineligible(MigratableDates.empty))
+            res shouldBe Left(StoreVatNumberService.Ineligible(testMigratableDates))
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
@@ -239,10 +239,10 @@ class StoreVatNumberServiceSpec
         "Known facts and control list returned ineligible" should {
           "return a Ineligible" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates))))
 
             val res = await(call)
-            res shouldBe Left(StoreVatNumberService.Ineligible(MigratableDates.empty))
+            res shouldBe Left(StoreVatNumberService.Ineligible(testMigratableDates))
           }
         }
         "Known facts and control list returned ControlListInformationVatNumberNotFound" should {

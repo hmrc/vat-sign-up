@@ -22,6 +22,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
+import uk.gov.hmrc.vatsignup.models.MigratableDates
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
@@ -47,7 +48,7 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
             ))
           case Left(eligibilityState) =>
             auditService.audit(ControlListAuditModel.fromEligibilityState(vatNumber, eligibilityState))
-            Left(IneligibleVatNumber)
+            Left(IneligibleVatNumber(MigratableDates.empty))
         }
       case Left(errorReason) =>
         auditService.audit(ControlListAuditModel.fromFailure(vatNumber, errorReason))
@@ -71,7 +72,7 @@ object ControlListEligibilityService {
 
   case object InvalidVatNumber extends EligibilityFailure
 
-  case object IneligibleVatNumber extends EligibilityFailure
+  case class IneligibleVatNumber(migratableDates: MigratableDates) extends EligibilityFailure
 
   case object VatNumberNotFound extends EligibilityFailure
 

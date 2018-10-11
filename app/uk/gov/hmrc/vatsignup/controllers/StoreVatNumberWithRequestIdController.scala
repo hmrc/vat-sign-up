@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
@@ -77,8 +76,8 @@ class StoreVatNumberWithRequestIdController @Inject()(val authConnector: AuthCon
         Forbidden(Json.obj(HttpCodeKey -> KnownFactsMismatchCode))
       case VatNotFound | VatInvalid =>
         PreconditionFailed
-      case Ineligible =>
-        UnprocessableEntity
+      case Ineligible(migratableDates) =>
+        UnprocessableEntity(Json.toJson(migratableDates))
       case VatNumberDatabaseFailure =>
         InternalServerError
       case AgentServicesConnectionFailure | VatSubscriptionConnectionFailure | ClaimSubscriptionFailure =>
