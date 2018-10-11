@@ -19,11 +19,11 @@ package uk.gov.hmrc.vatsignup.controllers
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import play.api.http.Status._
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
-import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testMigratableDate, testVatNumber}
+import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.MigratableDates
 import uk.gov.hmrc.vatsignup.service.mocks.MockVatNumberEligibilityService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
@@ -59,16 +59,11 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
 
     "the service returns VAT number ineligible with migratable dates included" should {
       "return BAD_REQUEST with the migratable dates" in {
-        val migratableDates = MigratableDates(
-          migratableDate = Some(testMigratableDate),
-          migratableCutoffDate = Some(testMigratableDate)
-        )
-
         mockAuthorise()(Future.successful(Unit))
-        mockCheckVatNumberEligibility(testVatNumber)(Future.successful(Left(VatNumberIneligible(migratableDates))))
+        mockCheckVatNumberEligibility(testVatNumber)(Future.successful(Left(VatNumberIneligible(testMigratableDates))))
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
         status(res) shouldBe BAD_REQUEST
-        jsonBodyOf(res) shouldBe Json.toJson(migratableDates)
+        jsonBodyOf(res) shouldBe Json.toJson(testMigratableDates)
       }
     }
 

@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vatsignup.models
+package uk.gov.hmrc.vatsignup.utils.controllist
 
 import java.time.LocalDate
 
-import play.api.libs.json.{Json, OFormat}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
+class CurrentDateProviderSpec extends UnitSpec with GuiceOneAppPerSuite{
+  "getCurrentDate" should {
+    "return the current date" in {
+      val provider = app.injector.instanceOf[CurrentDateProvider]
 
-case class DateRange(startDate: LocalDate, endDate: LocalDate) {
-
-  def contains(date: LocalDate): Boolean =
-    date.isEqual(startDate) || date.isEqual(endDate) || (date.isAfter(startDate) && date.isBefore(endDate))
-
-}
-
-object DateRange {
-  implicit val format: OFormat[DateRange] = Json.format[DateRange]
+      provider.getCurrentDate() shouldBe LocalDate.now()
+    }
+  }
 }

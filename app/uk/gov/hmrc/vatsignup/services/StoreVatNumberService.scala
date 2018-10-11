@@ -120,8 +120,8 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
           case _ =>
             Right(success)
         }
-      case Left(ControlListEligibilityService.IneligibleVatNumber) =>
-        Left(Ineligible(MigratableDates.empty))
+      case Left(ControlListEligibilityService.IneligibleVatNumber(migratableDates)) =>
+        Left(Ineligible(migratableDates))
       case Left(ControlListEligibilityService.InvalidVatNumber) =>
         Left(VatInvalid)
       case Left(ControlListEligibilityService.VatNumberNotFound) =>

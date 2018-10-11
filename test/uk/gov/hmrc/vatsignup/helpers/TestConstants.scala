@@ -25,8 +25,9 @@ import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation.Migratable
 import uk.gov.hmrc.vatsignup.models.controllist._
-import uk.gov.hmrc.vatsignup.models.{CustomerDetails, DateRange, GeneralPartnership, LimitedCompany}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
 
@@ -65,7 +66,9 @@ object TestConstants {
     Some("testTradingName"))
 
   val testControlListInformation = ControlListInformation(
-    Stagger1, Company
+    controlList = Set(Stagger1, Company),
+    stagger = Stagger1,
+    businessEntity = Company
   )
 
   val testKnownFactsAndControlListInformation = KnownFactsAndControlListInformation(
@@ -109,5 +112,6 @@ object TestConstants {
   )
 
   val testMigratableDate: LocalDate = LocalDate.now()
+  val testMigratableDates: MigratableDates = MigratableDates(Some(testMigratableDate), Some(testMigratableDate))
 
 }

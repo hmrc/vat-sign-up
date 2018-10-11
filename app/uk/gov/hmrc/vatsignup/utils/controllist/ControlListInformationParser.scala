@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.utils.controllist
 
 import uk.gov.hmrc.vatsignup.models.controllist._
+import cats.implicits._
 
 object ControlListInformationParser {
 
@@ -26,25 +27,46 @@ object ControlListInformationParser {
   def tryParse(controlList: String): Either[ControlListParseError, ControlListInformation] = {
     val parameters = ControlListParameter.getParameterMap
     if (controlList matches "[0,1]{32}") {
-      val unsanitisedSet: Set[ControlListParameter] = (controlList.zipWithIndex flatMap {
+      val parameterSet: Set[ControlListParameter] = (controlList.zipWithIndex flatMap {
         case (CONTROL_LIST_TRUE, index) => parameters.get(index)
         case (CONTROL_LIST_FALSE, _) => None
       }).toSet
-      val sanitisedSet: Set[ControlListParameter] =
-        if (unsanitisedSet.exists(x => x.isInstanceOf[Stagger] && !x.isInstanceOf[NonStandardTaxPeriod.type])) {
-          unsanitisedSet - NonStandardTaxPeriod
-        } else {
-          unsanitisedSet
-        }
-      if ((sanitisedSet count (_.isInstanceOf[Stagger])) != 1) {
-        Left(StaggerConflict)
-      } else if ((sanitisedSet count (_.isInstanceOf[BusinessEntity])) != 1) {
-        Left(EntityConflict)
-      } else {
-        Right(ControlListInformation(sanitisedSet))
-      }
+      for {
+        staggerType <- getStaggerType(parameterSet)
+        businessEntity <- getBusinessEntity(parameterSet)
+      } yield ControlListInformation(parameterSet, staggerType, businessEntity)
+
     } else {
       Left(InvalidFormat)
+    }
+  }
+
+  private def getStaggerType(unsanitisedControlList: Set[ControlListParameter]): Either[StaggerConflict.type, Stagger] = {
+    val isNonStandardTaxPeriod = unsanitisedControlList contains NonStandardTaxPeriod
+    val staggerSet = unsanitisedControlList collect {
+      case staggerType: Stagger if staggerType != NonStandardTaxPeriod => staggerType
+    }
+
+    staggerSet.toList match {
+      case singleStagger :: Nil =>
+    Right(singleStagger)
+      case Nil if isNonStandardTaxPeriod =>
+    Right(NonStandardTaxPeriod)
+      case _ =>
+    Left(StaggerConflict)
+    }
+  }
+
+  private def getBusinessEntity(unsanitisedControlList: Set[ControlListParameter]): Either[EntityConflict.type, BusinessEntity] = {
+    val businessEntities = unsanitisedControlList collect {
+      case businessEntity: BusinessEntity => businessEntity
+    }
+
+    businessEntities.toList match {
+      case singleBusinessEntity :: Nil =>
+        Right(singleBusinessEntity)
+      case _ =>
+        Left(EntityConflict)
     }
   }
 

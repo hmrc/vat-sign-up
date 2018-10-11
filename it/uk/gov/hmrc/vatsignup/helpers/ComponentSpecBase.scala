@@ -25,15 +25,21 @@ import play.api.libs.json.Writes
 import play.api.libs.ws.{WSClient, WSResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
+import play.api.inject.bind
+import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
 trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with WiremockHelper
   with BeforeAndAfterAll with BeforeAndAfterEach with FeatureSwitching {
   lazy val ws = app.injector.instanceOf[WSClient]
 
+  lazy val currentDateProvider = new CurrentDateProvider()
+
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .in(Environment.simple(mode = Mode.Dev))
+    .bindings(bind[CurrentDateProvider].toInstance(currentDateProvider))
     .configure(config)
     .build
+
   val mockHost = WiremockHelper.wiremockHost
   val mockPort = WiremockHelper.wiremockPort.toString
   val mockUrl = s"http://$mockHost:$mockPort"

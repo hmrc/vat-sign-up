@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vatsignup.models
+package uk.gov.hmrc.vatsignup.utils.controllist.mocks
 
 import java.time.LocalDate
 
-import play.api.libs.json.{Json, OFormat}
+import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
+import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
+trait MockCurrentDateProvider extends MockitoSugar {
+  val mockCurrentDateProvider: CurrentDateProvider = mock[CurrentDateProvider]
 
-case class DateRange(startDate: LocalDate, endDate: LocalDate) {
-
-  def contains(date: LocalDate): Boolean =
-    date.isEqual(startDate) || date.isEqual(endDate) || (date.isAfter(startDate) && date.isBefore(endDate))
-
-}
-
-object DateRange {
-  implicit val format: OFormat[DateRange] = Json.format[DateRange]
+  def mockCurrentDate(date: LocalDate): Unit =
+    when(mockCurrentDateProvider.getCurrentDate()) thenReturn date
 }

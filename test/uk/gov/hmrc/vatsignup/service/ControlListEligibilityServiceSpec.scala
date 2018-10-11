@@ -25,22 +25,25 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
-import uk.gov.hmrc.vatsignup.models.controllist.Stagger1
+import uk.gov.hmrc.vatsignup.models.{DateRange, MigratableDates}
+import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, DirectDebit, Stagger1}
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
+import uk.gov.hmrc.vatsignup.service.mocks.MockDirectDebitMigrationCheckService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
-import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService
+import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, DirectDebitMigrationCheckService}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ControlListEligibilityServiceSpec extends UnitSpec
-  with MockKnownFactsAndControlListInformationConnector with MockAuditService with MockEligibilityConfig {
+  with MockKnownFactsAndControlListInformationConnector with MockAuditService with MockEligibilityConfig with MockDirectDebitMigrationCheckService {
 
   object TestControlListEligibilityService extends ControlListEligibilityService(
     mockKnownFactsAndControlListInformationConnector,
     mockEligibilityConfig,
+    mockDirectDebitMigrationCheckService,
     mockAuditService
   )
 
@@ -73,7 +76,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
       }
     }
 
-    "the control list indicates the user is ineligible" should {
+    "the control list indicates the user is ineligible with no migratable dates" should {
       "return IneligibleVatNumber" in {
         mockIneligibleParameters(Set(Stagger1))
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
@@ -81,8 +84,51 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-        res shouldBe Left(IneligibleVatNumber)
+        res shouldBe Left(IneligibleVatNumber(MigratableDates.empty))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(Stagger1.errorMessage)))
+      }
+    }
+
+    "the control list indicates the user ineligible due to direct debit migration restrictions" should {
+      "return IneligibleVatNumber" in {
+        val testDateRange = DateRange(testMigratableDate, testMigratableDate)
+
+        mockIneligibleParameters(Set.empty)
+        mockStaggerParameters(Map(Stagger1 -> Set(testDateRange)))
+
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
+
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(
+          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, testControlListInformation))))
+
+        mockCheckMigrationDate(Stagger1)(Left(testMigratableDates))
+
+        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+
+        res shouldBe Left(IneligibleVatNumber(testMigratableDates))
+        verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ControlListAuditing.directDebitMigrationRestrictionMessage)))
+
+      }
+    }
+
+    "the control list indicates the user eligible as the current date is not within direct debit timeframe restrictions" should {
+      "return IneligibleVatNumber" in {
+        val testDateRange = DateRange(testMigratableDate, testMigratableDate)
+
+        mockIneligibleParameters(Set.empty)
+        mockStaggerParameters(Map(Stagger1 -> Set(testDateRange)))
+
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
+
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(
+          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, testControlListInformation))))
+
+        mockCheckMigrationDate(Stagger1)(Right(DirectDebitMigrationCheckService.Eligible))
+
+        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+
+        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))
+        verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
       }
     }
 

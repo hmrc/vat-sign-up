@@ -134,18 +134,13 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
 
     "the user is ineligible with migratable dates included" should {
       "return UNPROCESSABLE_ENTITY with the dates in the body" in {
-        val migratableDates = MigratableDates(
-          migratableDate = Some(testMigratableDate),
-          migratableCutoffDate = Some(testMigratableDate)
-        )
-
         mockAuthRetrieveAgentEnrolment()
-        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible(migratableDates))))
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible(testMigratableDates))))
 
         val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
 
         status(res) shouldBe UNPROCESSABLE_ENTITY
-        jsonBodyOf(res) shouldBe Json.toJson(migratableDates)
+        jsonBodyOf(res) shouldBe Json.toJson(testMigratableDates)
       }
     }
 
