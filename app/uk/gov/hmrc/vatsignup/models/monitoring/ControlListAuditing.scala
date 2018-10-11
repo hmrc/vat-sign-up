@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformationFailure, KnownFactsInvalidVatNumber}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
@@ -28,6 +28,8 @@ object ControlListAuditing {
   val invalidVatNumber = "Invalid VAT number"
   val vatNumberNotFound = "VAT number not found"
   val unexpectedError = "Unexpected error"
+
+  val directDebitMigrationRestrictionMessage = "Sign up restricted by Direct Debit migration timeframe"
 
   case class ControlListAuditModel(vatNumber: String,
                                    isSuccess: Boolean,
@@ -71,6 +73,10 @@ object ControlListAuditing {
         case NonMigratable(nonMigratableReasons) =>
           ControlListAuditModel(vatNumber, isSuccess = true, nonMigratableReasons = nonMigratableReasons map (_.toString))
       }
+    }
+
+    def directDebitMigrationRestriction(vatNumber: String): ControlListAuditModel = {
+      ControlListAuditModel(vatNumber, isSuccess = false, failureReasons = Seq(directDebitMigrationRestrictionMessage))
     }
 
     def fromEligibilityState(vatNumber: String, controlListEligibility: ControlListInformation.Ineligible): ControlListAuditModel = {

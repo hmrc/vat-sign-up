@@ -23,6 +23,7 @@ import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.MigratableDates
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, NonStandardTaxPeriod}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
@@ -32,12 +33,28 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ControlListEligibilityService @Inject()(knownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector,
                                               eligibilityConfig: EligibilityConfig,
+                                              directDebitMigrationCheckService: DirectDebitMigrationCheckService,
                                               auditService: AuditService)(implicit ec: ExecutionContext) {
   def getEligibilityStatus(vatNumber: String
                           )(implicit hc: HeaderCarrier, request: Request[_]): Future[Eligibility] = {
     knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber) map {
-      case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlList)) =>
+      case Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, controlList@ControlListInformation(parameters, stagger, _))) =>
         controlList.validate(eligibilityConfig) match {
+          case Right(Migratable) if (parameters contains DirectDebit) && stagger != NonStandardTaxPeriod =>
+            directDebitMigrationCheckService.checkMigrationDate(stagger) match {
+              case Right(DirectDebitMigrationCheckService.Eligible) =>
+                auditService.audit(ControlListAuditModel.fromEligibilityState(vatNumber, Migratable))
+
+                Right(EligibilitySuccess(
+                  businessPostcode = businessPostcode,
+                  vatRegistrationDate = vatRegistrationDate,
+                  isMigratable = true
+                ))
+              case Left(migratableDates) =>
+                auditService.audit(ControlListAuditModel.directDebitMigrationRestriction(vatNumber))
+
+                Left(IneligibleVatNumber(migratableDates))
+            }
           case Right(eligibilityState) =>
             auditService.audit(ControlListAuditModel.fromEligibilityState(vatNumber, eligibilityState))
 
@@ -48,6 +65,7 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
             ))
           case Left(eligibilityState) =>
             auditService.audit(ControlListAuditModel.fromEligibilityState(vatNumber, eligibilityState))
+
             Left(IneligibleVatNumber(MigratableDates.empty))
         }
       case Left(errorReason) =>

@@ -50,6 +50,7 @@ object IntegrationTestConstants {
   object ControlList {
     val allFalse: String = "1" * CONTROL_INFORMATION_STRING_LENGTH
     val eligible: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
+    val directDebit: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', DIRECT_DEBIT -> '0')
     val ineligible: String = setupTestDataCore(allFalse)(ANNUAL_STAGGER -> '0', COMPANY -> '0')
 
     def setupTestData(amendments: (Int, Character)*): String = setupTestDataCore(eligible)(amendments: _*)
