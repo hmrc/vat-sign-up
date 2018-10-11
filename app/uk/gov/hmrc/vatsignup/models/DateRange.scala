@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.models
 
 import java.time.LocalDate
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 
 case class DateRange(startDate: LocalDate, endDate: LocalDate) {
@@ -29,5 +29,5 @@ case class DateRange(startDate: LocalDate, endDate: LocalDate) {
 }
 
 object DateRange {
-  implicit val format = Json.format[DateRange]
+  implicit val format: OFormat[DateRange] = Json.format[DateRange]
 }
