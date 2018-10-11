@@ -42,7 +42,9 @@ object IntegrationTestConstants {
   val testDateOfRegistration = "2017-01-01"
 
   val eligibleModel: ControlListInformation = ControlListInformation(
-    Stagger1, Company
+    controlList = Set(Stagger1, Company),
+    stagger = Stagger1,
+    businessEntity = Company
   )
 
   object ControlList {

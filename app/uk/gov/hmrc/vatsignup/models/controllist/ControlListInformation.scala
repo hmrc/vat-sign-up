@@ -19,8 +19,9 @@ package uk.gov.hmrc.vatsignup.models.controllist
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 
 
-case class ControlListInformation(controlList: Set[ControlListParameter]) {
-
+case class ControlListInformation(controlList: Set[ControlListParameter],
+                                  stagger: Stagger,
+                                  businessEntity: BusinessEntity) {
   import ControlListInformation._
 
   def validate(config: EligibilityConfig): Result = {
@@ -38,6 +39,7 @@ case class ControlListInformation(controlList: Set[ControlListParameter]) {
 
 
 object ControlListInformation {
+
   sealed trait Eligible
 
   case object Migratable extends Eligible
@@ -47,7 +49,4 @@ object ControlListInformation {
   case class Ineligible(reasons: Seq[ControlListParameter])
 
   type Result = Either[Ineligible, Eligible]
-
-  def apply(controlList: ControlListParameter*): ControlListInformation = new ControlListInformation(Set(controlList: _*))
-
 }

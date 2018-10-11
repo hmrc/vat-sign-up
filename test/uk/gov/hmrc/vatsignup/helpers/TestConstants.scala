@@ -66,7 +66,9 @@ object TestConstants {
     Some("testTradingName"))
 
   val testControlListInformation = ControlListInformation(
-    Stagger1, Company
+    controlList = Set(Stagger1, Company),
+    stagger = Stagger1,
+    businessEntity = Company
   )
 
   val testKnownFactsAndControlListInformation = KnownFactsAndControlListInformation(
