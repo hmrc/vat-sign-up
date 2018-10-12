@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -25,7 +25,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-@Inject
+@Singleton
 class GetCtReferenceConnector @Inject()(http: HttpClient,
                                         appConfig: AppConfig
                                        )(implicit ec: ExecutionContext) {

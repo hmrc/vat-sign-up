@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.services
 
 import cats.data._
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
@@ -33,6 +33,7 @@ import cats.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class ControlListEligibilityService @Inject()(knownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector,
                                               eligibilityConfig: EligibilityConfig,
                                               directDebitMigrationCheckService: DirectDebitMigrationCheckService,

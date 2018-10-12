@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.models.{DateRange, MigratableDates}
 import uk.gov.hmrc.vatsignup.models.controllist.Stagger
 import uk.gov.hmrc.vatsignup.services.DirectDebitMigrationCheckService._
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
+@Singleton
 class DirectDebitMigrationCheckService @Inject()(eligibilityConfig: EligibilityConfig,
                                                  currentDateProvider: CurrentDateProvider) {
 
