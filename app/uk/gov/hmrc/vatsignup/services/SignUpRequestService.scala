@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.services
 
 import cats.data.EitherT
 import cats.implicits._
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
@@ -31,6 +31,7 @@ import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class SignUpRequestService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                      emailVerificationConnector: EmailVerificationConnector
                                     )(implicit ec: ExecutionContext) {

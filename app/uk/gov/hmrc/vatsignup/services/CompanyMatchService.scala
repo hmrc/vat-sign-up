@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.GetCtReferenceConnector
@@ -26,6 +26,7 @@ import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class CompanyMatchService @Inject()(getCtReferenceConnector: GetCtReferenceConnector,
                                     auditService: AuditService
                                    )(implicit ec: ExecutionContext) {
