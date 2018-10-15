@@ -33,7 +33,10 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
   def storePartnershipInformation(vatNumber: String,
                                   partnershipInformation: PartnershipInformation
                                  )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
-    subscriptionRequestRepository.upsertPartnershipUtr(vatNumber, partnershipInformation.partnershipType, partnershipInformation.sautr) map {
+    subscriptionRequestRepository.upsertPartnership(
+      vatNumber = vatNumber,
+      partnershipInformation = partnershipInformation
+    ) map {
       _ => Right(StorePartnershipInformationSuccess)
     } recover {
       case e: NoSuchElementException => Left(PartnershipInformationDatabaseFailureNoVATNumber)

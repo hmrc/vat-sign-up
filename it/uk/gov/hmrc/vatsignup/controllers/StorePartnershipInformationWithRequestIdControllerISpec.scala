@@ -20,15 +20,15 @@ import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models.{PartnershipInformation, UnconfirmedSubscriptionRequest}
 import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.{PartnershipInformation, UnconfirmedSubscriptionRequest}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentSpecBase with CustomMatchers with TestUnconfirmedSubmissionRequestRepository {
 
 
-  val requestBody = PartnershipInformation(GeneralPartnership, testUtr)
+  val requestBody = PartnershipInformation(GeneralPartnership, testUtr, crn = None)
 
   override def beforeEach(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,13 +55,34 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
         dbRequest.partnershipUtr shouldBe Some(testUtr)
       }
     }
+    "enrolment matches the utr and a crn is provided" should {
+      "return NO_CONTENT" in {
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
+
+        await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
+
+        val res = post(s"/sign-up-request/request-id/$testToken/partnership-information")(
+          PartnershipInformation(GeneralPartnership, testUtr, Some(testCompanyNumber))
+        )
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+
+        val dbRequest = await(unconfirmedSubmissionRequestRepo.findById(testToken)).get
+        dbRequest.partnershipEntity shouldBe Some(GeneralPartnership)
+        dbRequest.partnershipUtr shouldBe Some(testUtr)
+        dbRequest.companyNumber shouldBe Some(testCompanyNumber)
+      }
+    }
     "enrolment does not matches the utr" should {
       "return NO_CONTENT" in {
         stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
 
-        val requestBody = PartnershipInformation(GeneralPartnership, testUtr.drop(1))
+        val requestBody = PartnershipInformation(GeneralPartnership, testUtr.drop(1), crn = None)
 
         val res = post(s"/sign-up-request/request-id/$testToken/partnership-information")(requestBody)
 

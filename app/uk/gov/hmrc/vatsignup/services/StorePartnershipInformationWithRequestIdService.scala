@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
+
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
@@ -29,13 +30,13 @@ import scala.concurrent.{ExecutionContext, Future}
 class StorePartnershipInformationWithRequestIdService @Inject()(unconfirmedSubscriptionRequestRepository: UnconfirmedSubscriptionRequestRepository)
                                                                (implicit ec: ExecutionContext) {
 
-  def storePartnershipInformation(vatNumber: String,
+  def storePartnershipInformation(requestId: String,
                                   partnershipInformation: PartnershipInformation
-                         )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
-    unconfirmedSubscriptionRequestRepository.upsertPartnershipUtr(vatNumber, partnershipInformation.partnershipType, partnershipInformation.sautr) map {
+                                 )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+    unconfirmedSubscriptionRequestRepository.upsertPartnership(requestId, partnershipInformation) map {
       _ => Right(StorePartnershipInformationSuccess)
     } recover {
-      case e: NoSuchElementException => Left(PartnershipInformationDatabaseFailureNoVATNumber)
+      case e: NoSuchElementException => Left(PartnershipInformationDatabaseFailureNoToken)
       case _ => Left(PartnershipInformationDatabaseFailure)
     }
   }
@@ -48,7 +49,7 @@ object StorePartnershipInformationWithRequestIdService {
 
   sealed trait StorePartnershipInformationFailure
 
-  case object PartnershipInformationDatabaseFailureNoVATNumber extends StorePartnershipInformationFailure
+  case object PartnershipInformationDatabaseFailureNoToken extends StorePartnershipInformationFailure
 
   case object PartnershipInformationDatabaseFailure extends StorePartnershipInformationFailure
 

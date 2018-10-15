@@ -22,7 +22,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
-import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipInformation, SubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,8 +40,8 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
     when(mockSubscriptionRequestRepository.upsertVatNumber(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(isMigratable)))
       .thenReturn(response)
 
-  def mockUpsertPartnershipUtr(vatNumber: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertPartnershipUtr(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(partnershipEntityType), ArgumentMatchers.eq(partnershipUtr)))
+  def mockUpsertPartnership(vatNumber: String, partnershipInformation: PartnershipInformation)(response: Future[UpdateWriteResult]): Unit =
+    when(mockSubscriptionRequestRepository.upsertPartnership(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(partnershipInformation)))
       .thenReturn(response)
 
   def mockUpsertCompanyNumber(vatNumber: String, companyNumber: String)(response: Future[UpdateWriteResult]): Unit =

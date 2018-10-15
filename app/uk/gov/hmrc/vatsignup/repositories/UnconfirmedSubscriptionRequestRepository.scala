@@ -30,7 +30,7 @@ import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, UnconfirmedSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipInformation, UnconfirmedSubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -80,20 +80,37 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext]).filter(_.n == 1)
   }
 
-  def upsertPartnershipUtr(requestId: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String): Future[UpdateWriteResult] = {
-    collection.update(
-      selector = Json.obj(idKey -> requestId),
-      update = Json.obj("$set" -> Json.obj(
-        entityTypeKey -> partnershipEntityType,
-        partnershipUtrKey -> partnershipUtr
-      ), "$unset" -> Json.obj(
-        ninoKey -> "",
-        ninoSourceKey -> "",
-        companyNumberKey -> "",
-        identityVerifiedKey -> ""
-      )),
-      upsert = false
-    ).filter(_.n == 1)
+  def upsertPartnership(requestId: String,
+                        partnershipInformation: PartnershipInformation): Future[UpdateWriteResult] = {
+
+    partnershipInformation.crn match {
+      case Some(crn) =>
+        collection.update(
+          selector = Json.obj(idKey -> requestId),
+          update = Json.obj("$set" -> Json.obj(
+            entityTypeKey -> partnershipInformation.partnershipType,
+            partnershipUtrKey -> partnershipInformation.sautr,
+            companyNumberKey -> crn
+          ), "$unset" -> Json.obj(
+            ninoKey -> "",
+            ninoSourceKey -> ""
+          )),
+          upsert = false
+        ).filter(_.n == 1)
+      case None =>
+        collection.update(
+          selector = Json.obj(idKey -> requestId),
+          update = Json.obj("$set" -> Json.obj(
+            entityTypeKey -> partnershipInformation.partnershipType,
+            partnershipUtrKey -> partnershipInformation.sautr
+          ), "$unset" -> Json.obj(
+            ninoKey -> "",
+            ninoSourceKey -> "",
+            companyNumberKey -> ""
+          )),
+          upsert = false
+        ).filter(_.n == 1)
+    }
   }
 
   def upsertCompanyNumber(requestId: String, companyNumber: String): Future[UpdateWriteResult] =

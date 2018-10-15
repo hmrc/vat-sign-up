@@ -22,8 +22,8 @@ import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockUnconfirmedSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService._
@@ -41,30 +41,45 @@ class StorePartnershipInformationWithRequestIdServiceSpec extends UnitSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request: Request[_] = FakeRequest()
 
-  val testPartnershipInfo = PartnershipInformation(GeneralPartnership, testUtr)
+  val testPartnershipInfo = PartnershipInformation(GeneralPartnership, testUtr, crn = None)
 
   "storePartnershipUtr" when {
-    "upsertPartnershipUtr is successful" should {
+    "upsertPartnership is successful" should {
       "return StorePartnershipUtrSuccess" in {
-        mockUpsertPartnershipUtr(testToken, GeneralPartnership, testUtr)(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertPartnership(testToken, testPartnershipInfo)(Future.successful(mock[UpdateWriteResult]))
 
         val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(testToken, testPartnershipInfo)
 
         await(res) shouldBe Right(StorePartnershipInformationSuccess)
       }
     }
-    "upsertPartnershipUtr thrown a NoSuchElementException" should {
-      "return PartnershipUtrDatabaseFailureNoVATNumber" in {
-        mockUpsertPartnershipUtr(testToken, GeneralPartnership, testUtr)(Future.failed(new NoSuchElementException))
+    "upsertPartnership with Limited Partnership is successful" should {
+      "return StorePartnershipUtrSuccess" in {
+        mockUpsertPartnership(
+          requestId = testToken,
+          partnershipInformation = PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
+        )(Future.successful(mock[UpdateWriteResult]))
+
+        val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(
+          requestId = testToken,
+          partnershipInformation = PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
+        )
+
+        await(res) shouldBe Right(StorePartnershipInformationSuccess)
+      }
+    }
+    "upsertPartnership thrown a NoSuchElementException" should {
+      "return PartnershipUtrDatabaseFailureNoToken" in {
+        mockUpsertPartnership(testToken, testPartnershipInfo)(Future.failed(new NoSuchElementException))
 
         val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(testToken, testPartnershipInfo)
 
-        await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
+        await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoToken)
       }
     }
-    "upsertPartnershipUtr failed any other way" should {
+    "upsertPartnership failed any other way" should {
       "return PartnershipUtrDatabaseFailure" in {
-        mockUpsertPartnershipUtr(testToken, GeneralPartnership, testUtr)(Future.failed(new Exception))
+        mockUpsertPartnership(testToken, testPartnershipInfo)(Future.failed(new Exception))
 
         val res = TestStorePartnershipInformationWithRequestIdService.storePartnershipInformation(testToken, testPartnershipInfo)
 
