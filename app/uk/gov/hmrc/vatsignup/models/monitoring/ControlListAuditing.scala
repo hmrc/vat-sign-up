@@ -56,7 +56,7 @@ object ControlListAuditing {
       val failureMessage = failure match {
         case KnownFactsInvalidVatNumber => invalidVatNumber
         case ControlListInformationVatNumberNotFound => vatNumberNotFound
-        case _ => unexpectedError
+        case UnexpectedKnownFactsAndControlListInformationFailure(status, body) => s"""$unexpectedError {"status":"$status","body":"$body"}"""
       }
 
       ControlListAuditModel(
