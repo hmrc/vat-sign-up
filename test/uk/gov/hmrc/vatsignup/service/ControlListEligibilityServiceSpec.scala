@@ -163,8 +163,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
+        val expectedErr = ControlListAuditing.unexpectedError + s""" {"status":"$BAD_REQUEST","body":""}"""
+
         res shouldBe Left(KnownFactsAndControlListFailure)
-        verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ControlListAuditing.unexpectedError)))
+        verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(expectedErr)))
       }
     }
   }
