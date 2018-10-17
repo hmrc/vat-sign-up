@@ -21,7 +21,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.commands.UpdateWriteResult
-import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipInformation, UnconfirmedSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, UnconfirmedSubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
 
 import scala.concurrent.Future
@@ -39,10 +39,24 @@ trait MockUnconfirmedSubscriptionRequestRepository extends MockitoSugar with Bef
     when(mockUnconfirmedSubscriptionRequestRepository.getRequestIdByCredential(ArgumentMatchers.eq(credentialId)))
       .thenReturn(response)
 
-  def mockUpsertPartnership(requestId: String, partnershipInformation: PartnershipInformation)(response: Future[UpdateWriteResult]): Unit =
+  def mockUpsertPartnership(requestId: String,
+                            sautr: String,
+                            partnershipType: PartnershipEntityType)(response: Future[UpdateWriteResult]): Unit =
     when(mockUnconfirmedSubscriptionRequestRepository.upsertPartnership(
       ArgumentMatchers.eq(requestId),
-      ArgumentMatchers.eq(partnershipInformation))
+      ArgumentMatchers.eq(sautr),
+      ArgumentMatchers.eq(partnershipType))
+    ).thenReturn(response)
+
+  def mockUpsertPartnershipLimited(requestId: String,
+                                   sautr: String,
+                                   crn: String,
+                                   partnershipType: PartnershipEntityType)(response: Future[UpdateWriteResult]): Unit =
+    when(mockUnconfirmedSubscriptionRequestRepository.upsertPartnershipLimited(
+      ArgumentMatchers.eq(requestId),
+      ArgumentMatchers.eq(sautr),
+      ArgumentMatchers.eq(crn),
+      ArgumentMatchers.eq(partnershipType))
     ).thenReturn(response)
 
   def mockUpsertCompanyNumber(requestId: String, companyNumber: String)(response: Future[UpdateWriteResult]): Unit =

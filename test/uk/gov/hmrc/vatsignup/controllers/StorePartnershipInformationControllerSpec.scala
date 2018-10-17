@@ -24,7 +24,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.service.mocks.MockStorePartnershipInformationService
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
@@ -66,6 +66,23 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
           mockStorePartnershipInformationSuccess(testVatNumber, testPartnershipInformation)
 
           val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+
+          status(result) shouldBe NO_CONTENT
+        }
+      }
+      "store partnership information returns StorePartnershipInformationSuccess for LimitedPartnership" should {
+        "return NO_CONTENT" in {
+          mockAuthRetrievePartnershipEnrolment()
+          mockStorePartnershipInformationSuccess(
+            vatNumber = testVatNumber,
+            partnershipInformation = PartnershipInformation(LimitedPartnership, testUtr, crn = Some(testCompanyNumber))
+          )
+
+          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
+            FakeRequest().withBody[PartnershipInformation](
+              PartnershipInformation(LimitedPartnership, testUtr, crn = Some(testCompanyNumber))
+            ))
+          )
 
           status(result) shouldBe NO_CONTENT
         }

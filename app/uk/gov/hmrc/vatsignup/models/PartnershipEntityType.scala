@@ -25,11 +25,21 @@ sealed trait PartnershipEntityType {
 object PartnershipEntityType {
 
   case object GeneralPartnership extends PartnershipEntityType {
-    val StringValue = "ordinaryPartnership"
+    val StringValue = "generalPartnership"
   }
 
-  case object LimitedPartnership extends PartnershipEntityType {
+  sealed trait LimitedPartnershipBase extends PartnershipEntityType
+
+  case object LimitedPartnership extends LimitedPartnershipBase {
     val StringValue = "limitedPartnership"
+  }
+
+  case object LimitedLiabilityPartnership extends LimitedPartnershipBase {
+    val StringValue = "limitedLiabilityPartnership"
+  }
+
+  case object ScottishLimitedPartnership extends LimitedPartnershipBase {
+    val StringValue = "scottishLimitedPartnership"
   }
 
   val partnershipEntityTypeFrontEndKey = "entityType"
@@ -39,6 +49,8 @@ object PartnershipEntityType {
   val reader: Reads[PartnershipEntityType] = JsPath.read[String].map {
     case GeneralPartnership.StringValue => GeneralPartnership
     case LimitedPartnership.StringValue => LimitedPartnership
+    case LimitedLiabilityPartnership.StringValue => LimitedLiabilityPartnership
+    case ScottishLimitedPartnership.StringValue => ScottishLimitedPartnership
   }
   val writer: Writes[PartnershipEntityType] = new Writes[PartnershipEntityType] {
     def writes(partnershipEntityType: PartnershipEntityType): JsValue =

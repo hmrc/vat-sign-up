@@ -23,9 +23,9 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest.credentialIdKey
-import uk.gov.hmrc.vatsignup.models.{PartnershipInformation, UnconfirmedSubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{UnconfirmedSubscriptionRequest, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -147,7 +147,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
 
     "throw NoSuchElementException where the request id doesn't exist" in {
       val res = for {
-        _ <- repo.upsertPartnership(testRequestId, PartnershipInformation(GeneralPartnership, testUtr, crn = None))
+        _ <- repo.upsertPartnership(testRequestId, testUtr, GeneralPartnership)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -159,7 +159,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
     "update the subscription request where there isn't already a partnership stored" in {
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertPartnership(testRequestId, PartnershipInformation(GeneralPartnership, testUtr, crn = None))
+        _ <- repo.upsertPartnership(testRequestId, testUtr, GeneralPartnership)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -171,7 +171,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
         _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
         withNino <- repo.findById(testRequestId)
-        _ <- repo.upsertPartnership(testRequestId, PartnershipInformation(GeneralPartnership, testUtr, crn = None))
+        _ <- repo.upsertPartnership(testRequestId, testUtr, GeneralPartnership)
         withoutNino <- repo.findById(testRequestId)
       } yield (withNino, withoutNino)
 
@@ -193,7 +193,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
         _ <- repo.upsertCompanyNumber(testRequestId, testCompanyNumber)
         withCompanyNumber <- repo.findById(testRequestId)
-        _ <- repo.upsertPartnership(testRequestId, PartnershipInformation(GeneralPartnership, testUtr, crn = None))
+        _ <- repo.upsertPartnership(testRequestId, testUtr, GeneralPartnership)
         withoutCompanyNumber <- repo.findById(testRequestId)
       } yield (withCompanyNumber, withoutCompanyNumber)
 
@@ -207,11 +207,11 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
       withoutCompanyNumber should contain(testUnconfirmedSubscriptionRequest)
     }
 
-    "replace an existing stored partnerhsip record" in {
+    "replace an existing stored partnership record" in {
       val newUtr = UUID.randomUUID().toString
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertPartnership(testRequestId, PartnershipInformation(GeneralPartnership, newUtr, crn = None))
+        _ <- repo.upsertPartnership(testRequestId, newUtr, GeneralPartnership)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -219,6 +219,75 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
         requestId = testRequestId,
         partnershipEntity = Some(GeneralPartnership),
         partnershipUtr = Some(newUtr)
+      ))
+    }
+
+  }
+
+  "upsertPartnershipLimited" should {
+    val testSubscriptionRequest = UnconfirmedSubscriptionRequest(
+      requestId = testRequestId,
+      partnershipEntity = Some(LimitedPartnership),
+      partnershipUtr = Some(testUtr),
+      companyNumber = Some(testCompanyNumber)
+    )
+
+    "throw NoSuchElementException where the vat number doesn't exist" in {
+      val res = for {
+        _ <- repo.upsertPartnershipLimited(testRequestId, testUtr, testCompanyNumber, LimitedPartnership)
+        model <- repo.findById(testRequestId)
+      } yield model
+
+      intercept[NoSuchElementException] {
+        await(res)
+      }
+    }
+
+    "update the subscription request where there isn't already a partnership stored" in {
+      val res = for {
+        _ <- repo.insert(testUnconfirmedSubscriptionRequest)
+        _ <- repo.upsertPartnershipLimited(testRequestId, testUtr, testCompanyNumber, LimitedPartnership)
+        model <- repo.findById(testRequestId)
+      } yield model
+
+      await(res) should contain(testSubscriptionRequest)
+    }
+
+    "delete the nino if it already exists" in {
+      val res = for {
+        _ <- repo.insert(testUnconfirmedSubscriptionRequest)
+        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
+        withNino <- repo.findById(testRequestId)
+        _ <- repo.upsertPartnershipLimited(testRequestId, testUtr, testCompanyNumber, LimitedPartnership)
+        withoutNino <- repo.findById(testRequestId)
+      } yield (withNino, withoutNino)
+
+      val (withNino, withoutNino) = await(res)
+
+      withNino should contain(testSubscriptionRequest.copy(
+        nino = Some(testNino),
+        ninoSource = Some(UserEntered),
+        partnershipEntity = None,
+        partnershipUtr = None,
+        companyNumber = None,
+        identityVerified = Some(false)
+      ))
+      withoutNino should contain(testSubscriptionRequest.copy(identityVerified = Some(false)))
+    }
+
+    "replace an existing stored partnership record" in {
+      val newUtr = UUID.randomUUID().toString
+      val res = for {
+        _ <- repo.insert(testSubscriptionRequest)
+        _ <- repo.upsertPartnershipLimited(testRequestId, newUtr, testCompanyNumber, LimitedPartnership)
+        model <- repo.findById(testRequestId)
+      } yield model
+
+      await(res) should contain(UnconfirmedSubscriptionRequest(
+        requestId = testRequestId,
+        partnershipEntity = Some(LimitedPartnership),
+        partnershipUtr = Some(newUtr),
+        companyNumber = Some(testCompanyNumber)
       ))
     }
 

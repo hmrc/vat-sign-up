@@ -42,35 +42,22 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
   implicit val request: Request[_] = FakeRequest()
 
   val testPartnershipInfo = PartnershipInformation(GeneralPartnership, testUtr, crn = None)
+  val testPartnershipLimitedInfo = PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
 
   "storePartnership" when {
     "upsertPartnership is successful" should {
       "return StorePartnershipUtrSuccess" in {
-        mockUpsertPartnership(testVatNumber,testPartnershipInfo)(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertPartnership(testVatNumber, testUtr, GeneralPartnership)(Future.successful(mock[UpdateWriteResult]))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, testPartnershipInfo)
 
         await(res) shouldBe Right(StorePartnershipInformationSuccess)
       }
     }
-    "upsertPartnership when partnership is Limited is successful" should {
-      "return StorePartnershipUtrSuccess" in {
-        mockUpsertPartnership(
-          vatNumber = testVatNumber,
-          partnershipInformation = PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
-        )(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(
-          vatNumber = testVatNumber,
-          PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
-        )
-
-        await(res) shouldBe Right(StorePartnershipInformationSuccess)
-      }
-    }
     "upsertPartnership thrown a NoSuchElementException" should {
       "return PartnershipUtrDatabaseFailureNoVATNumber" in {
-        mockUpsertPartnership(testVatNumber, testPartnershipInfo)(Future.failed(new NoSuchElementException))
+        mockUpsertPartnership(testVatNumber, testUtr, GeneralPartnership)(Future.failed(new NoSuchElementException))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, testPartnershipInfo)
 
@@ -79,10 +66,47 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
     }
     "upsertPartnership failed any other way" should {
       "return PartnershipInformationDatabaseFailure" in {
-        mockUpsertPartnership(testVatNumber, testPartnershipInfo)(Future.failed(new Exception))
+        mockUpsertPartnership(testVatNumber, testUtr, GeneralPartnership)(Future.failed(new Exception))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, testPartnershipInfo)
 
+        await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
+      }
+    }
+
+    "upsertPartnershipLimited when partnership is Limited is successful" should {
+      "return StorePartnershipUtrSuccess" in {
+        mockUpsertPartnershipLimited(testVatNumber, testUtr, testCompanyNumber, LimitedPartnership)(Future.successful(mock[UpdateWriteResult]))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(
+          vatNumber = testVatNumber,
+          testPartnershipLimitedInfo
+        )
+
+        await(res) shouldBe Right(StorePartnershipInformationSuccess)
+      }
+    }
+
+
+    "upsertPartnershipLimited thrown a NoSuchElementException" should {
+      "return PartnershipUtrDatabaseFailureNoVATNumber" in {
+        mockUpsertPartnershipLimited(testVatNumber, testUtr, testCompanyNumber, LimitedPartnership)(Future.failed(new NoSuchElementException))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(
+          vatNumber = testVatNumber,
+          testPartnershipLimitedInfo
+        )
+        await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
+      }
+    }
+    "upsertPartnershipLimited failed any other way" should {
+      "return PartnershipInformationDatabaseFailure" in {
+        mockUpsertPartnershipLimited(testVatNumber, testUtr, testCompanyNumber, LimitedPartnership)(Future.failed(new Exception))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(
+          vatNumber = testVatNumber,
+          PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
+        )
         await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
       }
     }

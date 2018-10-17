@@ -20,7 +20,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.{PartnershipInformation, UnconfirmedSubscriptionRequest}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -62,7 +62,7 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
         await(unconfirmedSubmissionRequestRepo.insert(UnconfirmedSubscriptionRequest(testToken)))
 
         val res = post(s"/sign-up-request/request-id/$testToken/partnership-information")(
-          PartnershipInformation(GeneralPartnership, testUtr, Some(testCompanyNumber))
+          PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
         )
 
         res should have(
@@ -71,7 +71,7 @@ class StorePartnershipInformationWithRequestIdControllerISpec extends ComponentS
         )
 
         val dbRequest = await(unconfirmedSubmissionRequestRepo.findById(testToken)).get
-        dbRequest.partnershipEntity shouldBe Some(GeneralPartnership)
+        dbRequest.partnershipEntity shouldBe Some(LimitedPartnership)
         dbRequest.partnershipUtr shouldBe Some(testUtr)
         dbRequest.companyNumber shouldBe Some(testCompanyNumber)
       }

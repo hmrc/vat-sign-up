@@ -17,8 +17,8 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnershipBase}
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService._
@@ -33,7 +33,22 @@ class StorePartnershipInformationWithRequestIdService @Inject()(unconfirmedSubsc
   def storePartnershipInformation(requestId: String,
                                   partnershipInformation: PartnershipInformation
                                  )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
-    unconfirmedSubscriptionRequestRepository.upsertPartnership(requestId, partnershipInformation) map {
+    val result = partnershipInformation.partnershipType match {
+      case GeneralPartnership =>
+        unconfirmedSubscriptionRequestRepository.upsertPartnership(
+          requestId = requestId,
+          sautr = partnershipInformation.sautr,
+          partnershipType = GeneralPartnership
+        )
+      case limited: LimitedPartnershipBase if partnershipInformation.crn.isDefined =>
+        unconfirmedSubscriptionRequestRepository.upsertPartnershipLimited(
+          requestId = requestId,
+          sautr = partnershipInformation.sautr,
+          crn = partnershipInformation.crn.getOrElse(""),
+          partnershipType = limited
+        )
+    }
+    result map {
       _ => Right(StorePartnershipInformationSuccess)
     } recover {
       case e: NoSuchElementException => Left(PartnershipInformationDatabaseFailureNoToken)
