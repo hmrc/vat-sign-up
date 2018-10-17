@@ -43,7 +43,7 @@ object KnownFactsAndControlListInformationHttpParser {
               Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, validControlList))
             case Left(parsingError) =>
               Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, parsingError.toString))
-          }) getOrElse Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, invalidJsonResponseMessage))
+          }) getOrElse Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, s"$invalidJsonResponseMessage ${response.body}"))
         case BAD_REQUEST =>
           Left(KnownFactsInvalidVatNumber)
         case NOT_FOUND =>

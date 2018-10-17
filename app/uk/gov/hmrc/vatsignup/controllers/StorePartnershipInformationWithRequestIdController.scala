@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
@@ -29,6 +29,7 @@ import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class StorePartnershipInformationWithRequestIdController @Inject()(val authConnector: AuthConnector,
                                                                    storePartnershipInformationWithRequestIdService: StorePartnershipInformationWithRequestIdService
                                                                   )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {

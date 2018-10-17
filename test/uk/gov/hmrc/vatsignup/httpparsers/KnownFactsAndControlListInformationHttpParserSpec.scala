@@ -50,18 +50,22 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
 
       s"the json is invalid" should {
         "return UnexpectedKnownFactsAndControlListInformationFailure" in {
+          val testJson = Json.obj(
+            "postcode" -> testPostCode,
+            "dateOfReg" -> testDateOfRegistration
+          )
           // No control list info
           val testResponse = HttpResponse(
             responseStatus = OK,
-            responseJson = Some(
-              Json.obj(
-                "postcode" -> testPostCode,
-                "dateOfReg" -> testDateOfRegistration
-              )
-            )
+            responseJson = Some(testJson)
           )
 
-          read(testMethod, testUrl, testResponse).left.value shouldBe UnexpectedKnownFactsAndControlListInformationFailure(OK, invalidJsonResponseMessage)
+          val res: UnexpectedKnownFactsAndControlListInformationFailure = read(testMethod, testUrl, testResponse).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
+
+          res.status shouldBe OK
+          res.body should include(invalidJsonResponseMessage)
+
+          Json.parse(res.body.replace(invalidJsonResponseMessage,"")) shouldBe testJson
         }
       }
     }
