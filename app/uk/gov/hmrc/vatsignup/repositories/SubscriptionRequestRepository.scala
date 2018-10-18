@@ -62,12 +62,14 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }
 
-  def upsertPartnershipUtr(vatNumber: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String): Future[UpdateWriteResult] = {
+  def upsertPartnership(vatNumber: String,
+                        sautr: String,
+                        partnershipType: PartnershipEntityType): Future[UpdateWriteResult] =
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
       update = Json.obj("$set" -> Json.obj(
-        entityTypeKey -> partnershipEntityType,
-        partnershipUtrKey -> partnershipUtr
+        entityTypeKey -> partnershipType,
+        partnershipUtrKey -> sautr
       ), "$unset" -> Json.obj(
         ninoKey -> "",
         ninoSourceKey -> "",
@@ -75,7 +77,23 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
       )),
       upsert = false
     ).filter(_.n == 1)
-  }
+
+  def upsertPartnershipLimited(vatNumber: String,
+                               sautr: String,
+                               crn: String,
+                               partnershipType: PartnershipEntityType): Future[UpdateWriteResult] =
+    collection.update(
+      selector = Json.obj(idKey -> vatNumber),
+      update = Json.obj("$set" -> Json.obj(
+        entityTypeKey -> partnershipType,
+        partnershipUtrKey -> sautr,
+        companyNumberKey -> crn
+      ), "$unset" -> Json.obj(
+        ninoKey -> "",
+        ninoSourceKey -> ""
+      )),
+      upsert = false
+    ).filter(_.n == 1)
 
   def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[UpdateWriteResult] =
     collection.update(

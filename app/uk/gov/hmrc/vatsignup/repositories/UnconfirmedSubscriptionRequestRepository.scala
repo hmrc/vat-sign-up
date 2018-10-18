@@ -80,17 +80,36 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext]).filter(_.n == 1)
   }
 
-  def upsertPartnershipUtr(requestId: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String): Future[UpdateWriteResult] = {
+  def upsertPartnershipLimited(requestId: String,
+                               sautr: String,
+                               crn: String,
+                               partnershipType: PartnershipEntityType): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
-        entityTypeKey -> partnershipEntityType,
-        partnershipUtrKey -> partnershipUtr
+        entityTypeKey -> partnershipType,
+        partnershipUtrKey -> sautr,
+        companyNumberKey -> crn
+      ), "$unset" -> Json.obj(
+        ninoKey -> "",
+        ninoSourceKey -> ""
+      )),
+      upsert = false
+    ).filter(_.n == 1)
+  }
+
+  def upsertPartnership(requestId: String,
+                        sautr: String,
+                        partnershipType: PartnershipEntityType): Future[UpdateWriteResult] = {
+    collection.update(
+      selector = Json.obj(idKey -> requestId),
+      update = Json.obj("$set" -> Json.obj(
+        entityTypeKey -> partnershipType,
+        partnershipUtrKey -> sautr
       ), "$unset" -> Json.obj(
         ninoKey -> "",
         ninoSourceKey -> "",
-        companyNumberKey -> "",
-        identityVerifiedKey -> ""
+        companyNumberKey -> ""
       )),
       upsert = false
     ).filter(_.n == 1)

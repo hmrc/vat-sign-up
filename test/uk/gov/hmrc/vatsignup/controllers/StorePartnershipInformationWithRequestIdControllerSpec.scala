@@ -24,8 +24,8 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.service.mocks.MockStorePartnershipInformationWithRequestIdService
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService._
 
@@ -42,7 +42,7 @@ class StorePartnershipInformationWithRequestIdControllerSpec extends UnitSpec wi
     mockStorePartnershipInformationWithRequestIdService
   )
 
-  val testPartnershipInformation = PartnershipInformation(GeneralPartnership, testUtr)
+  val testPartnershipInformation = PartnershipInformation(GeneralPartnership, testUtr, Some(testCompanyNumber))
 
   val request: Request[PartnershipInformation] = FakeRequest().withBody[PartnershipInformation](testPartnershipInformation)
 
@@ -50,42 +50,42 @@ class StorePartnershipInformationWithRequestIdControllerSpec extends UnitSpec wi
     "the UTR in the request json does not match the UTR in the enrolment" should {
       "return FORBIDDEN" in {
         mockAuthRetrievePartnershipEnrolment()
-        mockStorePartnershipInformationSuccess(testVatNumber, testPartnershipInformation)
+        mockStorePartnershipInformationSuccess(testToken, testPartnershipInformation)
 
         val request = FakeRequest().withBody[PartnershipInformation](testPartnershipInformation.copy(sautr = testUtr.drop(1)))
 
-        val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testVatNumber)(request))
+        val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testToken)(request))
 
         status(result) shouldBe FORBIDDEN
       }
     }
     "the UTR in the request json matches the UTR in the enrolment" should {
-      "store parternship information returns StorePartnershipInformationSuccess" should {
+      "store partnership information returns StorePartnershipInformationSuccess" should {
         "return NO_CONTENT" in {
           mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformationSuccess(testVatNumber, testPartnershipInformation)
+          mockStorePartnershipInformationSuccess(testToken, testPartnershipInformation)
 
-          val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testVatNumber)(request))
+          val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testToken)(request))
 
           status(result) shouldBe NO_CONTENT
         }
       }
-      "store parternship information returns PartnershipInformationDatabaseFailureNoVATNumber" should {
+      "store partnership information returns PartnershipInformationDatabaseFailureNoToken" should {
         "return NOT_FOUND" in {
           mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformation(testVatNumber, testPartnershipInformation)(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
+          mockStorePartnershipInformation(testToken, testPartnershipInformation)(Future.successful(Left(PartnershipInformationDatabaseFailureNoToken)))
 
-          val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testVatNumber)(request))
+          val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testToken)(request))
 
           status(result) shouldBe NOT_FOUND
         }
       }
-      "store parternship information returns PartnershipInformationDatabaseFailure" should {
+      "store partnership information returns PartnershipInformationDatabaseFailure" should {
         "return INTERNAL_SERVER_ERROR" in {
           mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformation(testVatNumber, testPartnershipInformation)(Future.successful(Left(PartnershipInformationDatabaseFailure)))
+          mockStorePartnershipInformation(testToken, testPartnershipInformation)(Future.successful(Left(PartnershipInformationDatabaseFailure)))
 
-          val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testVatNumber)(request))
+          val result: Result = await(TestStorePartnershipInformationWithRequestIdController.storePartnershipInformation(testToken)(request))
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
         }

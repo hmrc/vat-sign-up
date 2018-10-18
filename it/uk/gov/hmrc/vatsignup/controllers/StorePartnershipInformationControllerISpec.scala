@@ -20,7 +20,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class StorePartnershipInformationControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
 
-  val requestBody = PartnershipInformation(GeneralPartnership, testUtr)
+  val requestBody = PartnershipInformation(GeneralPartnership, testUtr, crn = None)
 
   "POST /subscription-request/vat-number/:vatNumber/partnership-information" when {
     "enrolment matches the utr" should {
@@ -49,13 +49,34 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         dbRequest.partnershipUtr shouldBe Some(testUtr)
       }
     }
+    "enrolment matches the utr and a crn is provided" should {
+      "return NO_CONTENT" in {
+        stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
+
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+
+        val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
+          PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
+        )
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+
+        val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
+        dbRequest.partnershipEntity shouldBe Some(LimitedPartnership)
+        dbRequest.partnershipUtr shouldBe Some(testUtr)
+        dbRequest.companyNumber shouldBe Some(testCompanyNumber)
+      }
+    }
     "enrolment does not matches the utr" should {
       "return NO_CONTENT" in {
         stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
-        val requestBody = PartnershipInformation(GeneralPartnership, testUtr.drop(1))
+        val requestBody = PartnershipInformation(GeneralPartnership, testUtr.drop(1), crn = None)
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
 

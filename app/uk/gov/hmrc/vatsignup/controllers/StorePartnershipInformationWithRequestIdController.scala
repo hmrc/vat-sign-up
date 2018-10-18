@@ -17,13 +17,14 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService.PartnershipInformationDatabaseFailureNoVATNumber
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService.PartnershipInformationDatabaseFailureNoToken
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,7 +43,7 @@ class StorePartnershipInformationWithRequestIdController @Inject()(val authConne
             case Some(`utr`) =>
               storePartnershipInformationWithRequestIdService.storePartnershipInformation(requestId, req.body) map {
                 case Right(_) => NoContent
-                case Left(PartnershipInformationDatabaseFailureNoVATNumber) => NotFound
+                case Left(PartnershipInformationDatabaseFailureNoToken) => NotFound
                 case Left(_) => InternalServerError
               }
             case Some(e) =>

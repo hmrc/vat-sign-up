@@ -40,8 +40,24 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
     when(mockSubscriptionRequestRepository.upsertVatNumber(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(isMigratable)))
       .thenReturn(response)
 
-  def mockUpsertPartnershipUtr(vatNumber: String, partnershipEntityType: PartnershipEntityType, partnershipUtr: String)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertPartnershipUtr(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(partnershipEntityType), ArgumentMatchers.eq(partnershipUtr)))
+  def mockUpsertPartnership(vatNumber: String,
+                            sautr: String,
+                            partnershipType: PartnershipEntityType)(response: Future[UpdateWriteResult]): Unit =
+    when(mockSubscriptionRequestRepository.upsertPartnership(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(sautr),
+      ArgumentMatchers.eq(partnershipType)))
+      .thenReturn(response)
+
+  def mockUpsertPartnershipLimited(vatNumber: String,
+                                   sautr: String,
+                                   crn: String,
+                                   partnershipType: PartnershipEntityType)(response: Future[UpdateWriteResult]): Unit =
+    when(mockSubscriptionRequestRepository.upsertPartnershipLimited(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(sautr),
+      ArgumentMatchers.eq(crn),
+      ArgumentMatchers.eq(partnershipType)))
       .thenReturn(response)
 
   def mockUpsertCompanyNumber(vatNumber: String, companyNumber: String)(response: Future[UpdateWriteResult]): Unit =
