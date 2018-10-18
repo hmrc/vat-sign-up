@@ -6,8 +6,8 @@ object AppDependencies {
 
   lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
-  private val scalaTestPlusVersion = "4.0.0-M4"
-  private val wiremockVersion = "2.19.0"
+  private val scalaTestPlusVersion = "2.0.0"
+  private val wiremockVersion = "2.5.1"
   private val mockitoVersion = "2.23.0"
   private val catsVersion = "1.4.0"
 
@@ -20,7 +20,7 @@ object AppDependencies {
 
   def test(scope: String = "test,it") = Seq(
     "uk.gov.hmrc" %% "hmrctest" % "3.2.0" % scope,
-    "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % scope,
+    "org.scalatest" %% "scalatest" % "2.2.6" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusVersion % scope,
