@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import javax.inject.{Inject, Singleton}
+
 import cats.data._
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
@@ -27,9 +28,9 @@ import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolutio
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EntityTypeRegistrationConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.SignUpAuditModel
-import uk.gov.hmrc.vatsignup.models.{GeneralPartnership, _}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubmissionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -70,9 +71,9 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             registerCompany(signUpRequest.vatNumber, companyNumber, optAgentReferenceNumber)
           case SoleTrader(nino) =>
             registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
-          case GeneralPartnership(_) =>
+          case _: PartnershipBusinessEntity =>
             EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("General partnerships are not supported on the legacy Register API"))
+              Future.failed(new InternalServerException("Partnerships are not supported on the legacy Register API"))
             )
         }
       }
@@ -98,10 +99,9 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     )
 
 
-  private def registerCompany(
-                               vatNumber: String,
-                               companyNumber: String,
-                               agentReferenceNumber: Option[String]
+  private def registerCompany(vatNumber: String,
+                              companyNumber: String,
+                              agentReferenceNumber: Option[String]
                              )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
     EitherT(registrationConnector.registerCompany(vatNumber, companyNumber)) bimap( {
       _ => {
@@ -124,10 +124,9 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       }
     })
 
-  private def registerIndividual(
-                                  vatNumber: String,
-                                  nino: String,
-                                  agentReferenceNumber: Option[String]
+  private def registerIndividual(vatNumber: String,
+                                 nino: String,
+                                 agentReferenceNumber: Option[String]
                                 )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
     EitherT(registrationConnector.registerIndividual(vatNumber, nino)) bimap( {
       _ => {

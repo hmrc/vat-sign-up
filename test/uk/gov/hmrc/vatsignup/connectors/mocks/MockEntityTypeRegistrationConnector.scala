@@ -38,8 +38,8 @@ trait MockEntityTypeRegistrationConnector extends MockitoSugar with BeforeAndAft
   val mockEntityTypeRegistrationConnector: EntityTypeRegistrationConnector = mock[EntityTypeRegistrationConnector]
 
   def mockRegisterBusinessEntity(vatNumber: String,
-                          businessEntity: BusinessEntity
-                         )(response: Future[RegisterWithMultipleIdentifiersResponse]): Unit = {
+                                 businessEntity: BusinessEntity
+                                )(response: Future[RegisterWithMultipleIdentifiersResponse]): Unit = {
     when(mockEntityTypeRegistrationConnector.registerBusinessEntity(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(businessEntity)

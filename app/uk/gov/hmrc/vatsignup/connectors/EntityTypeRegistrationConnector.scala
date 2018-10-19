@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
@@ -25,7 +26,7 @@ import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.connectors.EntityTypeRegistrationConnector._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, GeneralPartnership, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,8 +34,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class EntityTypeRegistrationConnector @Inject()(val http: HttpClient,
                                                 val applicationConfig: AppConfig) {
   def registerBusinessEntity(vatNumber: String,
-                                businessEntity: BusinessEntity
-                               )(implicit hc: HeaderCarrier): Future[RegisterWithMultipleIdentifiersResponse] = {
+                             businessEntity: BusinessEntity
+                            )(implicit hc: HeaderCarrier): Future[RegisterWithMultipleIdentifiersResponse] = {
     val headerCarrier = hc
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
       .copy(authorization = Some(Authorization(applicationConfig.desAuthorisationToken)))
@@ -56,6 +57,9 @@ object EntityTypeRegistrationConnector {
   val SoleTraderKey = "soleTrader"
   val LimitedCompanyKey = "company"
   val GeneralPartnershipKey = "ordinaryPartnership"
+  val LimitedPartnershipKey = "limitedPartnership"
+  val LimitedLiabilityPartnershipKey = "limitedLiabilityPartnership"
+  val ScottishLimitedPartnershipKey = "scottishLimitedPartnership"
 
   val VrnKey = "vrn"
   val NinoKey = "nino"
@@ -84,5 +88,30 @@ object EntityTypeRegistrationConnector {
           SautrKey -> sautr
         )
       )
+    case LimitedPartnership(sautr, companyNumber) =>
+      Json.obj(
+        LimitedPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr,
+          CrnKey -> companyNumber
+        )
+      )
+    case LimitedLiabilityPartnership(sautr, companyNumber) =>
+      Json.obj(
+        LimitedLiabilityPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr,
+          CrnKey -> companyNumber
+        )
+      )
+    case ScottishLimitedPartnership(sautr, companyNumber) =>
+      Json.obj(
+        ScottishLimitedPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr,
+          CrnKey -> companyNumber
+        )
+      )
   }
+
 }

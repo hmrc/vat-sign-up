@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, GeneralPartnership, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object RegisterWithMultipleIDsAuditing {
@@ -66,6 +66,30 @@ object RegisterWithMultipleIDsAuditing {
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
             sautr = Some(sautr),
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
+        case LimitedPartnership(sautr, companyNumber) =>
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            sautr = Some(sautr),
+            companyNumber = Some(companyNumber),
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
+        case LimitedLiabilityPartnership(sautr, companyNumber) =>
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            sautr = Some(sautr),
+            companyNumber = Some(companyNumber),
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
+        case ScottishLimitedPartnership(sautr, companyNumber) =>
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            sautr = Some(sautr),
+            companyNumber = Some(companyNumber),
             agentReferenceNumber = agentReferenceNumber,
             isSuccess = isSuccess
           )

@@ -22,10 +22,9 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, HybridSolution}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, FeatureSwitching, HybridSolution}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockCustomerSignUpConnector, MockEntityTypeRegistrationConnector, MockRegistrationConnector, MockTaxEnrolmentsConnector}
-import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
@@ -64,6 +63,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
   override def beforeEach(): Unit = {
     super.beforeEach()
     enable(HybridSolution)
+    disable(EtmpEntityType)
   }
 
   val testIsMigratable = true
@@ -132,20 +132,6 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 ))
                 verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
                   Some(testAgentReferenceNumber), isSuccess = true))
-              }
-              "fail for a partnership sign up when the ETMP entity type feature switch is disabled" in {
-                disable(HybridSolution)
-
-                val signUpRequest = SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = testGeneralPartnership,
-                  signUpEmail = Some(testSignUpEmail),
-                  transactionEmail = testSignUpEmail,
-                  isDelegated = true,
-                  isMigratable = testIsMigratable
-                )
-
-                intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
               }
             }
             "HybridSolution is enabled" should {
@@ -442,6 +428,199 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
           ))
         }
       }
+    }
+  }
+
+
+  "when ETMP entity type feature switch is disabled" should {
+    val enrolments = Enrolments(Set(testAgentEnrolment))
+
+    "fail for a general partnership sign up" in {
+      disable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testGeneralPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
+      e.message shouldBe "Partnerships are not supported on the legacy Register API"
+    }
+    "fail for a limited partnership sign up" in {
+      disable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testLimitedPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
+      e.message shouldBe "Partnerships are not supported on the legacy Register API"
+    }
+    "fail for a limited liability partnership sign up" in {
+      disable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testLimitedLiabilityPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
+      e.message shouldBe "Partnerships are not supported on the legacy Register API"
+    }
+    "fail for a scottish limited partnership sign up" in {
+      disable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testScottishLimitedPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
+      e.message shouldBe "Partnerships are not supported on the legacy Register API"
+    }
+  }
+
+  "when ETMP entity type feature switch is enabled" should {
+    val enrolments = Enrolments(Set(testAgentEnrolment))
+    "return a SignUpRequestSubmitted for a general partnership sign up" in {
+      disable(HybridSolution)
+      enable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testGeneralPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
+      mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+      res.right.value shouldBe SignUpRequestSubmitted
+
+      verifyAudit(RegisterWithMultipleIDsAuditModel(
+        vatNumber = testVatNumber,
+        sautr = Some(testUtr),
+        agentReferenceNumber = Some(testAgentReferenceNumber),
+        isSuccess = true
+      ))
+      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+        Some(testAgentReferenceNumber), isSuccess = true))
+    }
+    "return a SignUpRequestSubmitted for a limited partnership sign up" in {
+      disable(HybridSolution)
+      enable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testLimitedPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      mockRegisterBusinessEntity(testVatNumber, testLimitedPartnership)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
+      mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+      res.right.value shouldBe SignUpRequestSubmitted
+
+      verifyAudit(RegisterWithMultipleIDsAuditModel(
+        vatNumber = testVatNumber,
+        sautr = Some(testUtr),
+        companyNumber = Some(testCompanyNumber),
+        agentReferenceNumber = Some(testAgentReferenceNumber),
+        isSuccess = true
+      ))
+      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+        Some(testAgentReferenceNumber), isSuccess = true))
+    }
+    "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
+      disable(HybridSolution)
+      enable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testLimitedLiabilityPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      mockRegisterBusinessEntity(testVatNumber, testLimitedLiabilityPartnership)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
+      mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+      res.right.value shouldBe SignUpRequestSubmitted
+
+      verifyAudit(RegisterWithMultipleIDsAuditModel(
+        vatNumber = testVatNumber,
+        sautr = Some(testUtr),
+        companyNumber = Some(testCompanyNumber),
+        agentReferenceNumber = Some(testAgentReferenceNumber),
+        isSuccess = true
+      ))
+      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+        Some(testAgentReferenceNumber), isSuccess = true))
+    }
+    "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
+      disable(HybridSolution)
+      enable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = testScottishLimitedPartnership,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      mockRegisterBusinessEntity(testVatNumber, testScottishLimitedPartnership)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
+      mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+      res.right.value shouldBe SignUpRequestSubmitted
+
+      verifyAudit(RegisterWithMultipleIDsAuditModel(
+        vatNumber = testVatNumber,
+        sautr = Some(testUtr),
+        companyNumber = Some(testCompanyNumber),
+        agentReferenceNumber = Some(testAgentReferenceNumber),
+        isSuccess = true
+      ))
+      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+        Some(testAgentReferenceNumber), isSuccess = true))
     }
   }
 

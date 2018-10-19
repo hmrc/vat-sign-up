@@ -54,7 +54,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           ))
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
-          isMigratable  = subscriptionRequest.isMigratable
+          isMigratable = subscriptionRequest.isMigratable
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,
@@ -79,8 +79,12 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
       case (_, _, Some(PartnershipEntityType.GeneralPartnership), Some(sautr)) =>
         Right(GeneralPartnership(sautr))
       case (Some(companyNumber), _, Some(PartnershipEntityType.LimitedPartnership), Some(sautr)) =>
-        Right(LimitedPartnership(companyNumber, sautr))
-      case (Some(companyNumber), _, _, _) =>
+        Right(LimitedPartnership(sautr, companyNumber))
+      case (Some(companyNumber), _, Some(PartnershipEntityType.LimitedLiabilityPartnership), Some(sautr)) =>
+        Right(LimitedLiabilityPartnership(sautr, companyNumber))
+      case (Some(companyNumber), _, Some(PartnershipEntityType.ScottishLimitedPartnership), Some(sautr)) =>
+        Right(ScottishLimitedPartnership(sautr, companyNumber))
+      case (Some(companyNumber), _, None, _) =>
         Right(LimitedCompany(companyNumber))
       case _ =>
         Left(InsufficientData)
@@ -100,9 +104,13 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         Right(RequestAuthorised)
       case _: LimitedPartnership if hasPartnershipEnrolment =>
         Right(RequestAuthorised)
+      case _: LimitedLiabilityPartnership if hasPartnershipEnrolment =>
+        Right(RequestAuthorised)
+      case _: ScottishLimitedPartnership if hasPartnershipEnrolment =>
+        Right(RequestAuthorised)
       case _ if subscriptionRequest.identityVerified || isDelegated =>
         Right(RequestAuthorised)
-      case x =>
+      case _ =>
         Left(RequestNotAuthorised)
     }
 
