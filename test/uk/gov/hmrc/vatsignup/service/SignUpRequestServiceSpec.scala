@@ -20,6 +20,8 @@ import play.api.http.Status
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
+import uk.gov.hmrc.vatsignup.config.featureswitch.EtmpEntityType
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser
@@ -34,7 +36,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SignUpRequestServiceSpec extends UnitSpec
-  with MockSubscriptionRequestRepository with MockEmailVerificationConnector {
+  with MockSubscriptionRequestRepository with MockEmailVerificationConnector with FeatureSwitching {
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    disable(EtmpEntityType)
+  }
+
 
   object TestSignUpRequestService extends SignUpRequestService(
     mockSubscriptionRequestRepository,
@@ -358,6 +366,120 @@ class SignUpRequestServiceSpec extends UnitSpec
                     isMigratable = testIsMigratable
                   )
                 )
+              }
+            }
+          }
+        }
+        "the user is a limited partnership" when {
+          "the user has a partnership enrolment" when {
+            "the sign up email address is verified" when {
+              "there is not a transaction e-mail address" should {
+                "return a successful SignUpRequest" in {
+                  enable(EtmpEntityType)
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      companyNumber = Some(testCompanyNumber),
+                      partnershipEntity = Some(PartnershipEntityType.LimitedPartnership),
+                      partnershipUtr = Some(testUtr),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = LimitedPartnership(testUtr, testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
+                    )
+                  )
+                }
+              }
+            }
+          }
+        }
+        "the user is a limited liability partnership" when {
+          "the user has a partnership enrolment" when {
+            "the sign up email address is verified" when {
+              "there is not a transaction e-mail address" should {
+                "return a successful SignUpRequest" in {
+                  enable(EtmpEntityType)
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      companyNumber = Some(testCompanyNumber),
+                      partnershipEntity = Some(PartnershipEntityType.LimitedLiabilityPartnership),
+                      partnershipUtr = Some(testUtr),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
+                    )
+                  )
+                }
+              }
+            }
+          }
+        }
+        "the user is a scottish limited partnership" when {
+          "the user has a partnership enrolment" when {
+            "the sign up email address is verified" when {
+              "there is not a transaction e-mail address" should {
+                "return a successful SignUpRequest" in {
+                  enable(EtmpEntityType)
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      companyNumber = Some(testCompanyNumber),
+                      partnershipEntity = Some(PartnershipEntityType.ScottishLimitedPartnership),
+                      partnershipUtr = Some(testUtr),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
+                    )
+                  )
+                }
               }
             }
           }

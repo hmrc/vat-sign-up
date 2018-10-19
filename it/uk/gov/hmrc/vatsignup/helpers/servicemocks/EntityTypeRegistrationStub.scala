@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, Json}
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, GeneralPartnership, LimitedCompany, SoleTrader}
+import uk.gov.hmrc.vatsignup.models._
 
 object EntityTypeRegistrationStub extends WireMockMethods {
   private val registerUri = "/cross-regime/register/VATC"
@@ -44,6 +44,33 @@ object EntityTypeRegistrationStub extends WireMockMethods {
       "ordinaryPartnership" -> Json.obj(
         "vrn" -> vatNumber,
         "sautr" -> sautr
+      )
+    )
+
+  private def registerLimitedPartnershipJsonBody(vatNumber: String, sautr: String, companyNumber: String): JsObject =
+    Json.obj(
+      "limitedPartnership" -> Json.obj(
+        "vrn" -> vatNumber,
+        "sautr" -> sautr,
+        "crn" -> companyNumber
+      )
+    )
+
+  private def registerLimitedLiabilityPartnershipJsonBody(vatNumber: String, sautr: String, companyNumber: String): JsObject =
+    Json.obj(
+      "limitedLiabilityPartnership" -> Json.obj(
+        "vrn" -> vatNumber,
+        "sautr" -> sautr,
+        "crn" -> companyNumber
+      )
+    )
+
+  private def registerScottishLimitedPartnershipJsonBody(vatNumber: String, sautr: String, companyNumber: String): JsObject =
+    Json.obj(
+      "scottishLimitedPartnership" -> Json.obj(
+        "vrn" -> vatNumber,
+        "sautr" -> sautr,
+        "crn" -> companyNumber
       )
     )
 
@@ -75,6 +102,12 @@ object EntityTypeRegistrationStub extends WireMockMethods {
           registerCompanyJsonBody(vatNumber, companyNumber)
         case GeneralPartnership(sautr) =>
           registerGeneralPartnershipJsonBody(vatNumber, sautr)
+        case LimitedPartnership(sautr, companyNumber) =>
+          registerLimitedPartnershipJsonBody(vatNumber, sautr, companyNumber)
+        case LimitedLiabilityPartnership(sautr, companyNumber) =>
+          registerLimitedLiabilityPartnershipJsonBody(vatNumber, sautr, companyNumber)
+        case ScottishLimitedPartnership(sautr, companyNumber) =>
+          registerScottishLimitedPartnershipJsonBody(vatNumber, sautr, companyNumber)
       }
     ) thenReturn(OK, registerResponseBody(safeId))
   }

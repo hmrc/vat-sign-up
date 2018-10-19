@@ -22,4 +22,13 @@ case class LimitedCompany(companyNumber: String) extends BusinessEntity
 
 case class SoleTrader(nino: String) extends BusinessEntity
 
-case class GeneralPartnership(sautr: String) extends BusinessEntity
+
+sealed trait PartnershipBusinessEntity
+
+case class GeneralPartnership(sautr: String) extends BusinessEntity with PartnershipBusinessEntity
+
+case class LimitedPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
+
+case class LimitedLiabilityPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
+
+case class ScottishLimitedPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity

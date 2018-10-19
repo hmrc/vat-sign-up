@@ -44,6 +44,9 @@ object TestConstants {
   val testJourneyLink = s"/mdtp/journey/journeyId/${UUID.randomUUID().toString}"
   val testLimitedCompany = LimitedCompany(testCompanyNumber)
   val testGeneralPartnership = GeneralPartnership(testUtr)
+  val testLimitedPartnership = LimitedPartnership(testUtr, testCompanyNumber)
+  val testLimitedLiabilityPartnership = LimitedLiabilityPartnership(testUtr, testCompanyNumber)
+  val testScottishLimitedPartnership = ScottishLimitedPartnership(testUtr, testCompanyNumber)
   val testSoleTrader = uk.gov.hmrc.vatsignup.models.SoleTrader(testNino)
   val testSignUpEmail = EmailAddress(testEmail, isVerified = true)
 

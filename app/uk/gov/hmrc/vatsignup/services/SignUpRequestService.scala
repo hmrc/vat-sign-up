@@ -54,7 +54,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           ))
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
-          isMigratable  = subscriptionRequest.isMigratable
+          isMigratable = subscriptionRequest.isMigratable
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,
@@ -74,12 +74,18 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
   private def getBusinessEntity(subscriptionRequest: SubscriptionRequest): Either[GetSignUpRequestFailure, BusinessEntity] =
     (subscriptionRequest.companyNumber, subscriptionRequest.nino, subscriptionRequest.partnershipEntity, subscriptionRequest.partnershipUtr) match {
-      case (Some(companyNumber), _, _, _) =>
-        Right(LimitedCompany(companyNumber))
       case (_, Some(nino), _, _) =>
         Right(SoleTrader(nino))
       case (_, _, Some(PartnershipEntityType.GeneralPartnership), Some(sautr)) =>
         Right(GeneralPartnership(sautr))
+      case (Some(companyNumber), _, Some(PartnershipEntityType.LimitedPartnership), Some(sautr)) =>
+        Right(LimitedPartnership(sautr, companyNumber))
+      case (Some(companyNumber), _, Some(PartnershipEntityType.LimitedLiabilityPartnership), Some(sautr)) =>
+        Right(LimitedLiabilityPartnership(sautr, companyNumber))
+      case (Some(companyNumber), _, Some(PartnershipEntityType.ScottishLimitedPartnership), Some(sautr)) =>
+        Right(ScottishLimitedPartnership(sautr, companyNumber))
+      case (Some(companyNumber), _, None, _) =>
+        Right(LimitedCompany(companyNumber))
       case _ =>
         Left(InsufficientData)
     }
@@ -95,6 +101,12 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
       case _: SoleTrader if subscriptionRequest.ninoSource contains IRSA =>
         Right(RequestAuthorised)
       case _: GeneralPartnership if hasPartnershipEnrolment =>
+        Right(RequestAuthorised)
+      case _: LimitedPartnership if hasPartnershipEnrolment =>
+        Right(RequestAuthorised)
+      case _: LimitedLiabilityPartnership if hasPartnershipEnrolment =>
+        Right(RequestAuthorised)
+      case _: ScottishLimitedPartnership if hasPartnershipEnrolment =>
         Right(RequestAuthorised)
       case _ if subscriptionRequest.identityVerified || isDelegated =>
         Right(RequestAuthorised)

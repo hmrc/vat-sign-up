@@ -41,6 +41,42 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
     }
   }
 
+  "registerLimitedPartnership" when {
+    "DES returns a successful response" should {
+      "return a RegistrationSuccess with the SAFE ID" in {
+        stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+
+        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber)))
+
+        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+      }
+    }
+  }
+
+  "registerLimitedLiabilityPartnership" when {
+    "DES returns a successful response" should {
+      "return a RegistrationSuccess with the SAFE ID" in {
+        stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))(testSafeId)
+
+        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber)))
+
+        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+      }
+    }
+  }
+
+  "registerScottishLimitedPartnership" when {
+    "DES returns a successful response" should {
+      "return a RegistrationSuccess with the SAFE ID" in {
+        stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+
+        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber)))
+
+        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+      }
+    }
+  }
+
   "registerCompany" when {
     "DES returns a successful response" should {
       "return a RegistrationSuccess with the SAFE ID" in {
