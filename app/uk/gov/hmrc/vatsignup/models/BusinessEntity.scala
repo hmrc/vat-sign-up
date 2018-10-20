@@ -32,3 +32,5 @@ case class LimitedPartnership(sautr: String, companyNumber: String) extends Busi
 case class LimitedLiabilityPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
 
 case class ScottishLimitedPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
+
+case object VatGroup extends BusinessEntity
