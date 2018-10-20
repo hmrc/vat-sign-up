@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.repositories
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{Format, JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
@@ -30,19 +29,19 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.models.NinoSource._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, SubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
-                                              appConfig: AppConfig)(implicit ec: ExecutionContext)
+                                              appConfig: AppConfig)(implicit val ec: ExecutionContext)
   extends ReactiveRepository[SubscriptionRequest, String](
     "subscriptionRequestRepository",
     mongo.mongoConnector.db,
     SubscriptionRequest.mongoFormat,
     implicitly[Format[String]]
-  ) {
+  ) with PartnershipStorage {
 
   private def upsert(vatNumber: String, elementKey: String, elementValue: String): Future[UpdateWriteResult] = {
     collection.update(
@@ -61,39 +60,6 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
       upsert = true
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }
-
-  def upsertPartnership(vatNumber: String,
-                        sautr: String,
-                        partnershipType: PartnershipEntityType): Future[UpdateWriteResult] =
-    collection.update(
-      selector = Json.obj(idKey -> vatNumber),
-      update = Json.obj("$set" -> Json.obj(
-        entityTypeKey -> partnershipType,
-        partnershipUtrKey -> sautr
-      ), "$unset" -> Json.obj(
-        ninoKey -> "",
-        ninoSourceKey -> "",
-        companyNumberKey -> ""
-      )),
-      upsert = false
-    ).filter(_.n == 1)
-
-  def upsertPartnershipLimited(vatNumber: String,
-                               sautr: String,
-                               crn: String,
-                               partnershipType: PartnershipEntityType): Future[UpdateWriteResult] =
-    collection.update(
-      selector = Json.obj(idKey -> vatNumber),
-      update = Json.obj("$set" -> Json.obj(
-        entityTypeKey -> partnershipType,
-        partnershipUtrKey -> sautr,
-        companyNumberKey -> crn
-      ), "$unset" -> Json.obj(
-        ninoKey -> "",
-        ninoSourceKey -> ""
-      )),
-      upsert = false
-    ).filter(_.n == 1)
 
   def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[UpdateWriteResult] =
     collection.update(

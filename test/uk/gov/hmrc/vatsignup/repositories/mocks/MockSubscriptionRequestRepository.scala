@@ -22,7 +22,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
-import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipBusinessEntity, SubscriptionRequest}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,23 +41,10 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
       .thenReturn(response)
 
   def mockUpsertPartnership(vatNumber: String,
-                            sautr: String,
-                            partnershipType: PartnershipEntityType)(response: Future[UpdateWriteResult]): Unit =
+                            partnership: PartnershipBusinessEntity)(response: Future[UpdateWriteResult]): Unit =
     when(mockSubscriptionRequestRepository.upsertPartnership(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(sautr),
-      ArgumentMatchers.eq(partnershipType)))
-      .thenReturn(response)
-
-  def mockUpsertPartnershipLimited(vatNumber: String,
-                                   sautr: String,
-                                   crn: String,
-                                   partnershipType: PartnershipEntityType)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertPartnershipLimited(
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(sautr),
-      ArgumentMatchers.eq(crn),
-      ArgumentMatchers.eq(partnershipType)))
+      ArgumentMatchers.eq(partnership)))
       .thenReturn(response)
 
   def mockUpsertCompanyNumber(vatNumber: String, companyNumber: String)(response: Future[UpdateWriteResult]): Unit =

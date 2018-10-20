@@ -22,13 +22,12 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
-import uk.gov.hmrc.vatsignup.models.{SubscriptionRequest, UserEntered}
+import uk.gov.hmrc.vatsignup.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
-  val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
+  lazy val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
 
   private val testSubscriptionRequest = SubscriptionRequest(
     vatNumber = testVatNumber,
@@ -84,7 +83,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
             ctReference = Some(testCtReference),
             nino = Some(testNino),
             ninoSource = Some(UserEntered),
-            partnershipEntity = Some(GeneralPartnership),
+            partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
             partnershipUtr = Some(testUtr),
             email = Some(testEmail),
             identityVerified = true
@@ -102,13 +101,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   "upsertPartnership" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
-      partnershipEntity = Some(GeneralPartnership),
+      partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
       partnershipUtr = Some(testUtr)
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
       val res = for {
-        _ <- repo.upsertPartnership(testVatNumber, testUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(testUtr))
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -120,7 +119,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "update the subscription request where there isn't already a partnership stored" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
-        _ <- repo.upsertPartnership(testVatNumber, testUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(testUtr))
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -132,7 +131,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         withNino <- repo.findById(testVatNumber)
-        _ <- repo.upsertPartnership(testVatNumber, testUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(testUtr))
         withoutNino <- repo.findById(testVatNumber)
       } yield (withNino, withoutNino)
 
@@ -152,7 +151,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
         withCompanyNumber <- repo.findById(testVatNumber)
-        _ <- repo.upsertPartnership(testVatNumber, testUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(testUtr))
         withoutCompanyNumber <- repo.findById(testVatNumber)
       } yield (withCompanyNumber, withoutCompanyNumber)
 
@@ -170,30 +169,30 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       val newUtr = UUID.randomUUID().toString
       val res = for {
         _ <- repo.insert(testSubscriptionRequest)
-        _ <- repo.upsertPartnership(testVatNumber, newUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(newUtr))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
-        partnershipEntity = Some(GeneralPartnership),
+        partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
         partnershipUtr = Some(newUtr)
       ))
     }
 
   }
 
-  "upsertPartnershipLimited" should {
+  "upsertPartnership for a limited partnership" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
-      partnershipEntity = Some(LimitedPartnership),
+      partnershipEntity = Some(PartnershipEntityType.LimitedPartnership),
       partnershipUtr = Some(testUtr),
       companyNumber = Some(testCompanyNumber)
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
       val res = for {
-        _ <- repo.upsertPartnershipLimited(testVatNumber, testUtr, testCompanyNumber, LimitedPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -205,7 +204,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "update the subscription request where there isn't already a partnership stored" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
-        _ <- repo.upsertPartnershipLimited(testVatNumber, testUtr, testCompanyNumber, LimitedPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -217,7 +216,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         withNino <- repo.findById(testVatNumber)
-        _ <- repo.upsertPartnershipLimited(testVatNumber, testUtr, testCompanyNumber, LimitedPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))
         withoutNino <- repo.findById(testVatNumber)
       } yield (withNino, withoutNino)
 
@@ -237,13 +236,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       val newUtr = UUID.randomUUID().toString
       val res = for {
         _ <- repo.insert(testSubscriptionRequest)
-        _ <- repo.upsertPartnershipLimited(testVatNumber, newUtr, testCompanyNumber, LimitedPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, LimitedPartnership(newUtr, testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
-        partnershipEntity = Some(LimitedPartnership),
+        partnershipEntity = Some(PartnershipEntityType.LimitedPartnership),
         partnershipUtr = Some(newUtr),
         companyNumber = Some(testCompanyNumber)
       ))
@@ -300,7 +299,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "delete the partnership record if it already exists" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
-        _ <- repo.upsertPartnership(testVatNumber, testUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(testUtr))
         withPartnership <- repo.findById(testVatNumber)
         _ <- repo.upsertCompanyNumber(testVatNumber, testCompanyNumber)
         withoutPartnership <- repo.findById(testVatNumber)
@@ -309,7 +308,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       val (withPartnership, withoutPartnership) = await(res)
 
       withPartnership should contain(testSubscriptionRequest.copy(
-        partnershipEntity = Some(GeneralPartnership),
+        partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
         partnershipUtr = Some(testUtr),
         companyNumber = None
       ))
@@ -456,7 +455,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "delete the partnership record if it already exists" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
-        _ <- repo.upsertPartnership(testVatNumber, testUtr, GeneralPartnership)
+        _ <- repo.upsertPartnership(testVatNumber, GeneralPartnership(testUtr))
         withPartnership <- repo.findById(testVatNumber)
         _ <- repo.upsertNino(testVatNumber, testNino, UserEntered)
         withoutPartnership <- repo.findById(testVatNumber)
@@ -465,7 +464,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       val (withPartnership, withoutPartnership) = await(res)
 
       withPartnership should contain(testSubscriptionRequest.copy(
-        partnershipEntity = Some(GeneralPartnership),
+        partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
         partnershipUtr = Some(testUtr),
         nino = None,
         ninoSource = None
