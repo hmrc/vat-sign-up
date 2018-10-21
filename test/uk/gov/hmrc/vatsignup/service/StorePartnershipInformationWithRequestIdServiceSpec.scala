@@ -22,7 +22,7 @@ import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedLiabilityPartnership, LimitedPartnership}
+import uk.gov.hmrc.vatsignup.models.ExplicitEntityType.{GeneralPartnership, LimitedLiabilityPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockUnconfirmedSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService

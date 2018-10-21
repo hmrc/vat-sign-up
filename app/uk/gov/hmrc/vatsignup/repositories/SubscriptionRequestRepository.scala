@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.repositories
 
 import javax.inject.{Inject, Singleton}
-import play.api.libs.json.{Format, JsObject, Json}
+import play.api.libs.json.{Format, JsBoolean, JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import reactivemongo.api.indexes.IndexType.Ascending
@@ -27,9 +27,10 @@ import reactivemongo.play.json.JSONSerializationPack.Writer
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.models.BusinessEntity.BusinessEntityFormat.writes
 import uk.gov.hmrc.vatsignup.models.NinoSource._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{NinoSource, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, NinoSource, SubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,7 +42,7 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     mongo.mongoConnector.db,
     SubscriptionRequest.mongoFormat,
     implicitly[Format[String]]
-  ) with PartnershipStorage {
+  ) {
 
   private def upsert(vatNumber: String, elementKey: String, elementValue: String): Future[UpdateWriteResult] = {
     collection.update(
@@ -61,19 +62,13 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }
 
-  def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[UpdateWriteResult] =
+  def upsertBusinessEntity(vatNumber: String, businessEntity: BusinessEntity): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
-      update = Json.obj("$set" -> Json.obj(
-        companyNumberKey -> companyNumber
-      ), "$unset" -> Json.obj(
-        ninoKey -> "",
-        ninoSourceKey -> "",
-        entityTypeKey -> "",
-        partnershipUtrKey -> ""
-      )),
+      update = Json.obj("$set" -> (writes(businessEntity) + (identityVerifiedKey -> JsBoolean(false)))),
       upsert = false
-    ).filter(_.n == 1)
+    ) filter (_.n == 1)
+  }
 
   def upsertCtReference(vatNumber: String, ctReference: String): Future[UpdateWriteResult] =
     upsert(vatNumber, ctReferenceKey, ctReference)
@@ -84,17 +79,12 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
   def upsertTransactionEmail(vatNumber: String, transactionEmail: String): Future[UpdateWriteResult] =
     upsert(vatNumber, transactionEmailKey, transactionEmail)
 
-  def upsertNino(vatNumber: String, nino: String, ninoSource: NinoSource): Future[UpdateWriteResult] =
+  def upsertNinoSource(vatNumber: String, ninoSource: NinoSource): Future[UpdateWriteResult] =
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
       update = Json.obj("$set" -> Json.obj(
-        ninoKey -> nino,
         ninoSourceKey -> ninoSource,
         identityVerifiedKey -> false
-      ), "$unset" -> Json.obj(
-        companyNumberKey -> "",
-        entityTypeKey -> "",
-        partnershipUtrKey -> ""
       )),
       upsert = false
     ).filter(_.n == 1)

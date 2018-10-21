@@ -23,6 +23,7 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.models.LimitedCompany
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService.GetCtReferenceFailure
 
@@ -53,7 +54,7 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
   }.value
 
   private def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
-    subscriptionRequestRepository.upsertCompanyNumber(vatNumber, companyNumber) map {
+    subscriptionRequestRepository.upsertBusinessEntity(vatNumber, LimitedCompany(companyNumber)) map {
       _ => Right(StoreCompanyNumberSuccess)
     } recover {
       case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)

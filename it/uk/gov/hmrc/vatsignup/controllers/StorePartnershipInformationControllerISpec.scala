@@ -20,7 +20,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class StorePartnershipInformationControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
 
-  val requestBody = PartnershipInformation(GeneralPartnership, testUtr, crn = None)
+  val requestBody = PartnershipInformation(ExplicitEntityType.GeneralPartnership, testUtr, crn = None)
 
   "POST /subscription-request/vat-number/:vatNumber/partnership-information" when {
     "enrolment matches the utr" should {
@@ -45,8 +45,9 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         )
 
         val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-        dbRequest.partnershipEntity shouldBe Some(GeneralPartnership)
-        dbRequest.partnershipUtr shouldBe Some(testUtr)
+
+        println(dbRequest)
+        dbRequest.businessEntity shouldBe Some(GeneralPartnership(testUtr))
       }
     }
     "enrolment matches the utr and a crn is provided" should {
@@ -56,7 +57,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
-          PartnershipInformation(LimitedPartnership, testUtr, Some(testCompanyNumber))
+          PartnershipInformation(ExplicitEntityType.LimitedPartnership, testUtr, Some(testCompanyNumber))
         )
 
         res should have(
@@ -65,9 +66,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         )
 
         val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-        dbRequest.partnershipEntity shouldBe Some(LimitedPartnership)
-        dbRequest.partnershipUtr shouldBe Some(testUtr)
-        dbRequest.companyNumber shouldBe Some(testCompanyNumber)
+        dbRequest.businessEntity shouldBe Some(LimitedPartnership(testUtr, testCompanyNumber))
       }
     }
     "enrolment does not matches the utr" should {
@@ -76,7 +75,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
-        val requestBody = PartnershipInformation(GeneralPartnership, testUtr.drop(1), crn = None)
+        val requestBody = PartnershipInformation(ExplicitEntityType.GeneralPartnership, testUtr.drop(1), crn = None)
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
 
@@ -86,8 +85,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         )
 
         val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-        dbRequest.partnershipEntity shouldBe None
-        dbRequest.partnershipUtr shouldBe None
+        dbRequest.businessEntity shouldBe None
       }
     }
 

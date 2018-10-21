@@ -17,14 +17,13 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.connectors.AuthenticatorConnector
 import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatchingAuditModel
-import uk.gov.hmrc.vatsignup.models.{IRSA, NinoSource, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
@@ -72,14 +71,19 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
       case _ => Left(AuthenticatorFailure)
     }
 
-  private def storeNinoToMongo(vatNumber: String, nino: String, ninoSource: NinoSource): Future[Either[MongoFailure, StoreNinoSuccess.type]] =
-    subscriptionRequestRepository.upsertNino(vatNumber, nino, ninoSource) map {
+  private def storeNinoToMongo(vatNumber: String, nino: String, ninoSource: NinoSource): Future[Either[MongoFailure, StoreNinoSuccess.type]] = {
+    val res = for {
+      _ <- subscriptionRequestRepository.upsertBusinessEntity(vatNumber, SoleTrader(nino))
+      _ <- subscriptionRequestRepository.upsertNinoSource(vatNumber, ninoSource)
+    } yield StoreNinoSuccess
+
+    res map {
       _ => Right(StoreNinoSuccess)
     } recover {
       case e: NoSuchElementException => Left(NinoDatabaseFailureNoVATNumber)
       case _ => Left(NinoDatabaseFailure)
     }
-
+  }
 }
 
 object StoreNinoService {

@@ -28,7 +28,7 @@ case class UnconfirmedSubscriptionRequest(requestId: String,
                                           ctReference: Option[String] = None,
                                           nino: Option[String] = None,
                                           ninoSource: Option[NinoSource] = None,
-                                          partnershipEntity: Option[PartnershipEntityType] = None,
+                                          partnershipEntity: Option[ExplicitEntityType] = None,
                                           partnershipUtr: Option[String] = None,
                                           email: Option[String] = None,
                                           transactionEmail: Option[String] = None,
@@ -70,7 +70,7 @@ object UnconfirmedSubscriptionRequest {
             case (_, _) => None
           }
         }
-        partnershipEntityType <- (json \ entityTypeKey).validateOpt[PartnershipEntityType]
+        partnershipEntityType <- (json \ entityTypeKey).validateOpt[ExplicitEntityType]
         partnershipUtr <- (json \ partnershipUtrKey).validateOpt[String]
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]

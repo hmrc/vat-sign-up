@@ -44,7 +44,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         val hasVatEnrolment = enrolments.vatNumber contains subscriptionRequest.vatNumber
 
         val res: EitherT[Future, GetSignUpRequestFailure, SignUpRequest] = for {
-          businessEntity <- EitherT.fromEither[Future](getBusinessEntity(subscriptionRequest))
+          businessEntity <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
           _ <- EitherT.fromEither[Future](checkAuthorisation(
             businessEntity,
             subscriptionRequest,
@@ -70,25 +70,6 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
       case _ => Left(DatabaseFailure)
     }
   }
-
-
-  private def getBusinessEntity(subscriptionRequest: SubscriptionRequest): Either[GetSignUpRequestFailure, BusinessEntity] =
-    (subscriptionRequest.companyNumber, subscriptionRequest.nino, subscriptionRequest.partnershipEntity, subscriptionRequest.partnershipUtr) match {
-      case (_, Some(nino), _, _) =>
-        Right(SoleTrader(nino))
-      case (_, _, Some(PartnershipEntityType.GeneralPartnership), Some(sautr)) =>
-        Right(GeneralPartnership(sautr))
-      case (Some(companyNumber), _, Some(PartnershipEntityType.LimitedPartnership), Some(sautr)) =>
-        Right(LimitedPartnership(sautr, companyNumber))
-      case (Some(companyNumber), _, Some(PartnershipEntityType.LimitedLiabilityPartnership), Some(sautr)) =>
-        Right(LimitedLiabilityPartnership(sautr, companyNumber))
-      case (Some(companyNumber), _, Some(PartnershipEntityType.ScottishLimitedPartnership), Some(sautr)) =>
-        Right(ScottishLimitedPartnership(sautr, companyNumber))
-      case (Some(companyNumber), _, None, _) =>
-        Right(LimitedCompany(companyNumber))
-      case _ =>
-        Left(InsufficientData)
-    }
 
   private def checkAuthorisation(businessEntity: BusinessEntity,
                                  subscriptionRequest: SubscriptionRequest,

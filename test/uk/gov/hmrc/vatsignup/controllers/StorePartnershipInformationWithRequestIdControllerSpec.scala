@@ -24,7 +24,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.GeneralPartnership
+import uk.gov.hmrc.vatsignup.models.ExplicitEntityType.GeneralPartnership
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.service.mocks.MockStorePartnershipInformationWithRequestIdService
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService._
