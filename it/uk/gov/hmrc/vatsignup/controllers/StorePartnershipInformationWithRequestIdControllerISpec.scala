@@ -20,7 +20,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnership}
+import uk.gov.hmrc.vatsignup.models.ExplicitEntityType.{GeneralPartnership, LimitedPartnership}
 import uk.gov.hmrc.vatsignup.models.{PartnershipInformation, UnconfirmedSubscriptionRequest}
 
 import scala.concurrent.ExecutionContext.Implicits.global

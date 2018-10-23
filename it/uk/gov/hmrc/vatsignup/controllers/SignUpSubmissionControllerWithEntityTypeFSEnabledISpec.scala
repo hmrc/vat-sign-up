@@ -47,7 +47,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "return NO_CONTENT for individual sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            nino = Some(testNino),
+            businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             isMigratable = testIsMigratable
@@ -71,7 +71,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
             isMigratable = testIsMigratable
           )
@@ -94,7 +94,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "transaction email should not be sent to sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             transactionEmail = Some(testEmail),
             isMigratable = testIsMigratable
           )
@@ -121,7 +121,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "return NO_CONTENT for individual sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            nino = Some(testNino),
+            businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             identityVerified = true,
@@ -146,7 +146,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
             identityVerified = true,
             isMigratable = testIsMigratable
@@ -170,8 +170,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "return NO_CONTENT for general partnership sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
-            partnershipUtr = Some(testUtr),
+            businessEntity = Some(GeneralPartnership(testUtr)),
             email = Some(testEmail),
             identityVerified = true,
             isMigratable = testIsMigratable
@@ -196,7 +195,7 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
             isMigratable = testIsMigratable

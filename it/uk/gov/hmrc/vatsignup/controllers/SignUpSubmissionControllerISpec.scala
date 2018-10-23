@@ -48,7 +48,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for individual sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            nino = Some(testNino),
+            businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             isMigratable = testIsMigratable
@@ -72,7 +72,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
             isMigratable = testIsMigratable
           )
@@ -97,8 +97,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             enable(EtmpEntityType)
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              partnershipEntity = Some(PartnershipEntityType.GeneralPartnership),
-              partnershipUtr = Some(testUtr),
+              businessEntity = Some(GeneralPartnership(testUtr)),
               email = Some(testEmail),
               isMigratable = testIsMigratable
             )
@@ -121,9 +120,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             enable(EtmpEntityType)
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              companyNumber = Some(testCompanyNumber),
-              partnershipEntity = Some(PartnershipEntityType.LimitedPartnership),
-              partnershipUtr = Some(testUtr),
+              businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
               email = Some(testEmail),
               isMigratable = testIsMigratable
             )
@@ -146,9 +143,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             enable(EtmpEntityType)
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              companyNumber = Some(testCompanyNumber),
-              partnershipEntity = Some(PartnershipEntityType.LimitedLiabilityPartnership),
-              partnershipUtr = Some(testUtr),
+              businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
               email = Some(testEmail),
               isMigratable = testIsMigratable
             )
@@ -171,9 +166,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             enable(EtmpEntityType)
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              companyNumber = Some(testCompanyNumber),
-              partnershipEntity = Some(PartnershipEntityType.ScottishLimitedPartnership),
-              partnershipUtr = Some(testUtr),
+              businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
               email = Some(testEmail),
               isMigratable = testIsMigratable
             )
@@ -196,7 +189,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "transaction email should not be sent to sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             transactionEmail = Some(testEmail),
             isMigratable = testIsMigratable
           )
@@ -223,7 +216,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for individual sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            nino = Some(testNino),
+            businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             identityVerified = true,
@@ -248,7 +241,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
             identityVerified = true,
             isMigratable = testIsMigratable
@@ -273,7 +266,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            companyNumber = Some(testCompanyNumber),
+            businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
             isMigratable = testIsMigratable

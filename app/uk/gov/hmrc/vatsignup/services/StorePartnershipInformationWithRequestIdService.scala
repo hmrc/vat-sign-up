@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.models.PartnershipEntityType.{GeneralPartnership, LimitedPartnershipBase}
+import uk.gov.hmrc.vatsignup.models.ExplicitEntityType.{GeneralPartnership, LimitedPartnershipBase}
 import uk.gov.hmrc.vatsignup.models.PartnershipInformation
 import uk.gov.hmrc.vatsignup.repositories.UnconfirmedSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationWithRequestIdService._

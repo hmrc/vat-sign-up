@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthenticatorConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatchingAuditModel
-import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{IRSA, SoleTrader, UserDetailsModel, UserEntered}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.StoreNinoService._
@@ -67,7 +67,8 @@ class StoreNinoServiceSpec
       "user is matched" should {
         "store the record and return StoreNinoSuccess" in {
           mockMatchUserMatched(testUserDetails)
-          mockUpsertNino(testVatNumber, testNino, UserEntered)(Future.successful(mock[UpdateWriteResult]))
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
+          mockUpsertNinoSource(testVatNumber, UserEntered)(Future.successful(mock[UpdateWriteResult]))
 
           val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, agentUser, UserEntered)
           await(res) shouldBe Right(StoreNinoSuccess)
@@ -99,7 +100,7 @@ class StoreNinoServiceSpec
       "the VAT number is not in mongo" should {
         "return NinoDatabaseFailureNoVATNumber" in {
           mockMatchUserMatched(testUserDetails)
-          mockUpsertNino(testVatNumber, testNino, UserEntered)(Future.failed(new NoSuchElementException))
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
 
           val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
           await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
@@ -109,7 +110,7 @@ class StoreNinoServiceSpec
       "calls to mongo failed" should {
         "return NinoDatabaseFailure" in {
           mockMatchUserMatched(testUserDetails)
-          mockUpsertNino(testVatNumber, testNino, UserEntered)(Future.failed(new Exception))
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
           val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
           await(res) shouldBe Left(NinoDatabaseFailure)
@@ -119,14 +120,15 @@ class StoreNinoServiceSpec
 
     "Nino source is IRSA" when {
       "store the record and return StoreNinoSuccess" in {
-        mockUpsertNino(testVatNumber, testNino, IRSA)(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertNinoSource(testVatNumber, IRSA)(Future.successful(mock[UpdateWriteResult]))
 
         val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
         await(res) shouldBe Right(StoreNinoSuccess)
       }
       "the VAT number is not in mongo" should {
         "return NinoDatabaseFailureNoVATNumber" in {
-          mockUpsertNino(testVatNumber, testNino, IRSA)(Future.failed(new NoSuchElementException))
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
 
           val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
           await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
@@ -135,7 +137,7 @@ class StoreNinoServiceSpec
 
       "calls to mongo failed" should {
         "return NinoDatabaseFailure" in {
-          mockUpsertNino(testVatNumber, testNino, IRSA)(Future.failed(new Exception))
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
           val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
           await(res) shouldBe Left(NinoDatabaseFailure)

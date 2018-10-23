@@ -21,7 +21,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.models.PartnershipInformation
+import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.{StorePartnershipInformationFailure, StorePartnershipInformationSuccess}
 
@@ -38,17 +38,17 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
   }
 
   def mockStorePartnershipInformation(vatNumber: String,
-                                      partnershipInformation: PartnershipInformation
+                                      partnership: PartnershipBusinessEntity
                                      )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
     when(mockStorePartnershipInformationService.storePartnershipInformation(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(partnershipInformation)
+      ArgumentMatchers.eq(partnership)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
   def mockStorePartnershipInformationSuccess(vatNumber: String,
-                                             partnershipInformation: PartnershipInformation
+                                             partnership: PartnershipBusinessEntity
                                             ): Unit  =
-    mockStorePartnershipInformation(vatNumber, partnershipInformation)(Future.successful(Right(StorePartnershipInformationSuccess)))
+    mockStorePartnershipInformation(vatNumber, partnership)(Future.successful(Right(StorePartnershipInformationSuccess)))
 
 }

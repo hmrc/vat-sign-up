@@ -30,7 +30,7 @@ import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{NinoSource, PartnershipEntityType, UnconfirmedSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, ExplicitEntityType, UnconfirmedSubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -83,7 +83,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
   def upsertPartnershipLimited(requestId: String,
                                sautr: String,
                                crn: String,
-                               partnershipType: PartnershipEntityType): Future[UpdateWriteResult] = {
+                               partnershipType: ExplicitEntityType): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(
@@ -100,7 +100,7 @@ class UnconfirmedSubscriptionRequestRepository @Inject()(
 
   def upsertPartnership(requestId: String,
                         sautr: String,
-                        partnershipType: PartnershipEntityType): Future[UpdateWriteResult] = {
+                        partnershipType: ExplicitEntityType): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> requestId),
       update = Json.obj("$set" -> Json.obj(

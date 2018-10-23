@@ -29,74 +29,89 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
-  "registerPartnership" when {
-    "DES returns a successful response" should {
-      "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
+  "registerBusinessEntity" when {
+    "the business entity is a general partnership" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GeneralPartnership(testUtr)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GeneralPartnership(testUtr)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
       }
     }
-  }
 
-  "registerLimitedPartnership" when {
-    "DES returns a successful response" should {
-      "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber)))
+    "tbe business entity is a limited partnership" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber)))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
       }
     }
-  }
 
-  "registerLimitedLiabilityPartnership" when {
-    "DES returns a successful response" should {
-      "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))(testSafeId)
+    "the business entity is a limited liability partnership" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
       }
     }
-  }
 
-  "registerScottishLimitedPartnership" when {
-    "DES returns a successful response" should {
-      "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+    "the business entity is a scottish limited partnership" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
       }
     }
-  }
 
-  "registerCompany" when {
-    "DES returns a successful response" should {
-      "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
+    "the business entity is a limited company" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
       }
     }
-  }
 
-  "registerIndividual" when {
-    "DES returns a successful response" should {
-      "return a RegistrationSuccess with the SAFE ID" in {
-        stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
+    "the business entity is a sole trader" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
+      }
+    }
+
+    "the business entity is a VAT group" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
+
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, VatGroup))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
       }
     }
   }

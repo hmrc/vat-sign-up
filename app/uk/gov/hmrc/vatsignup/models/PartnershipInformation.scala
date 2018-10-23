@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.models
 import play.api.libs.json.Json
 
 
-case class PartnershipInformation(partnershipType: PartnershipEntityType, sautr: String, crn: Option[String] = None)
+case class PartnershipInformation(partnershipType: ExplicitEntityType, sautr: String, crn: Option[String] = None)
 
 object PartnershipInformation {
   implicit val format = Json.format[PartnershipInformation]

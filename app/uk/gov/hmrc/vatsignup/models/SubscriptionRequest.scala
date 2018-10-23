@@ -18,17 +18,14 @@ package uk.gov.hmrc.vatsignup.models
 
 import java.time.Instant
 
-import play.api.libs.json.{Json, OFormat}
-
+import play.api.libs.json.{Json, OFormat, OWrites}
 import NinoSource._
+import BusinessEntity.BusinessEntityFormat
 
 case class SubscriptionRequest(vatNumber: String,
-                               companyNumber: Option[String] = None,
                                ctReference: Option[String] = None,
-                               nino: Option[String] = None,
                                ninoSource: Option[NinoSource] = None,
-                               partnershipEntity: Option[PartnershipEntityType] = None,
-                               partnershipUtr: Option[String] = None,
+                               businessEntity: Option[BusinessEntity] = None,
                                email: Option[String] = None,
                                transactionEmail: Option[String] = None,
                                identityVerified: Boolean = false,
@@ -52,35 +49,31 @@ object SubscriptionRequest {
   val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
   val isMigratableKey = "isMigratable"
+  val businessEntityKey = "businessEntity"
 
   val mongoFormat: OFormat[SubscriptionRequest] = OFormat(
     json =>
       for {
         vatNumber <- (json \ idKey).validate[String]
-        companyNumber <- (json \ companyNumberKey).validateOpt[String]
         ctReference <- (json \ ctReferenceKey).validateOpt[String]
-        nino <- (json \ ninoKey).validateOpt[String]
-        ninoSource <- (json \ ninoSourceKey).validateOpt[NinoSource].map { source =>
-          (nino, source) match {
-            case (Some(_), None) => Some(UserEntered)
-            case (Some(_), Some(_)) => source
-            case (_, _) => None
+        //Need to manually recover as validateOpt does not return None in the case of the fields not being set
+        businessEntity <- json.validateOpt[BusinessEntity] recover { case _ => None }
+        ninoSource <- (json \ ninoSourceKey).validateOpt[NinoSource] map { ninoSource =>
+          (businessEntity, ninoSource) match {
+            case (Some(SoleTrader(_)), None) => Some(UserEntered)
+            case (Some(SoleTrader(_)), Some(source)) => Some(source)
+            case _ => None
           }
         }
-        partnershipEntityType <- (json \ entityTypeKey).validateOpt[PartnershipEntityType]
-        partnershipUtr <- (json \ partnershipUtrKey).validateOpt[String]
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
         isMigratable <- (json \ isMigratableKey).validate[Boolean]
       } yield SubscriptionRequest(
         vatNumber = vatNumber,
-        companyNumber = companyNumber,
         ctReference = ctReference,
-        nino = nino,
         ninoSource = ninoSource,
-        partnershipEntity = partnershipEntityType,
-        partnershipUtr = partnershipUtr,
+        businessEntity = businessEntity,
         email = email,
         transactionEmail = transactionEmail,
         identityVerified = identityVerified,
@@ -89,11 +82,7 @@ object SubscriptionRequest {
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
-        companyNumberKey -> subscriptionRequest.companyNumber,
-        ninoKey -> subscriptionRequest.nino,
         ninoSourceKey -> subscriptionRequest.ninoSource,
-        entityTypeKey -> subscriptionRequest.partnershipEntity,
-        partnershipUtrKey -> subscriptionRequest.partnershipUtr,
         emailKey -> subscriptionRequest.email,
         transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
@@ -104,7 +93,10 @@ object SubscriptionRequest {
           case Some(ref) => Json.obj(ctReferenceKey -> ref)
           case _ => Json.obj()
         }
-      )
+      ) ++ (subscriptionRequest.businessEntity match {
+        case Some(businessEntity) => BusinessEntityFormat.writes(businessEntity)
+        case None => Json.obj()
+      })
   )
 
 }

@@ -22,6 +22,7 @@ import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.models.LimitedCompany
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.MockCompanyMatchService
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService.CompanyVerified
@@ -46,7 +47,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
     "there is no CT reference provided" when {
       "the database stores the company number successfully" should {
         "return StoreCompanyNumberSuccess" in {
-          mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+          mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.successful(mock[UpdateWriteResult]))
 
           val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber)
 
@@ -56,7 +57,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
 
       "the database returns a NoSuchElementException" should {
         "return CompanyNumberDatabaseFailureNoVATNumber" in {
-          mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.failed(new NoSuchElementException))
+          mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.failed(new NoSuchElementException))
 
           val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber)
 
@@ -66,7 +67,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
 
       "the database returns any other failure" should {
         "return CompanyNumberDatabaseFailure" in {
-          mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.failed(new Exception))
+          mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.failed(new Exception))
 
           val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber)
 
@@ -80,7 +81,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
           "the database stores the CT reference successfully" should {
             "return StoreCompanyNumberSuccess" in {
               mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
-              mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.successful(mock[UpdateWriteResult]))
               mockUpsertCtReference(testVatNumber, testCtReference)(Future.successful(mock[UpdateWriteResult]))
 
               val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
@@ -91,7 +92,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
           "the database returns a NoSuchElementException" should {
             "return DatabaseFailureNoVATNumber" in {
               mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
-              mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.successful(mock[UpdateWriteResult]))
               mockUpsertCtReference(testVatNumber, testCtReference)(Future.failed(new NoSuchElementException))
 
               val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
@@ -103,7 +104,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
           "the database returns any other failure" should {
             "return CompanyNumberDatabaseFailure" in {
               mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
-              mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.successful(mock[UpdateWriteResult]))
               mockUpsertCtReference(testVatNumber, testCtReference)(Future.failed(new Exception))
 
               val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
@@ -116,7 +117,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
         "the database returns a NoSuchElementException" should {
           "return DatabaseFailureNoVATNumber" in {
             mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
-            mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.failed(new NoSuchElementException))
+            mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.failed(new NoSuchElementException))
 
             val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
 
@@ -127,7 +128,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
         "the database returns any other failure" should {
           "return CompanyNumberDatabaseFailure" in {
             mockCheckCompanyMatch(testCompanyNumber, testCtReference)(Future.successful(Right(CompanyVerified)))
-            mockUpsertCompanyNumber(testVatNumber, testCompanyNumber)(Future.failed(new Exception))
+            mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.failed(new Exception))
 
             val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)
 
