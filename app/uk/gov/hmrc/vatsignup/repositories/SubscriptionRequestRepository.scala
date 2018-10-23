@@ -65,7 +65,7 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
   def upsertBusinessEntity(vatNumber: String, businessEntity: BusinessEntity): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
-      update = Json.obj("$set" -> (writes(businessEntity) + (identityVerifiedKey -> JsBoolean(false)))),
+      update = Json.obj("$set" -> businessEntity),
       upsert = false
     ) filter (_.n == 1)
   }
