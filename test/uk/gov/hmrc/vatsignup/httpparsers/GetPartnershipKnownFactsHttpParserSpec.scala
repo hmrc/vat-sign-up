@@ -39,9 +39,7 @@ class GetPartnershipKnownFactsHttpParserSpec extends UnitSpec with EitherValues 
               correspondenceDetailsKey -> Json.obj(
                 correspondencePostCodeKey -> testCorrespondencePostCode
               ),
-              baseTaxpayerDetailsKey -> Json.obj(
-                basePostCodeKey -> testBasePostCode
-              ),
+              basePostCodeKey -> testBasePostCode,
               commsPostCodeKey -> testCommsPostCode,
               traderPostCodeKey -> testTraderPostCode
             ))
