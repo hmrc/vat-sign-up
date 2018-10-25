@@ -117,4 +117,8 @@ object TestConstants {
   val testMigratableDate: LocalDate = LocalDate.now()
   val testMigratableDates: MigratableDates = MigratableDates(Some(testMigratableDate), Some(testMigratableDate))
 
+  val testCorrespondencePostCode: String = UUID.randomUUID().toString
+  val testBasePostCode: String = UUID.randomUUID().toString
+  val testCommsPostCode: String = UUID.randomUUID().toString
+  val testTraderPostCode: String = UUID.randomUUID().toString
 }
