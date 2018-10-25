@@ -39,9 +39,7 @@ object PartnershipKnownFactsStub extends WireMockMethods {
     "correspondenceDetails" -> Json.obj(
       "corresPostCode" -> testCorrespondencePostCode
     ),
-    "baseTaxpayerDetails" -> Json.obj(
-      "basePostCode" -> testBasePostCode
-    ),
+    "basePostCode" -> testBasePostCode,
     "commsPostCode" -> testCommsPostCode,
     "traderPostCode" -> testTraderPostCode
   )

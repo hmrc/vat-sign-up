@@ -29,7 +29,6 @@ object GetPartnershipKnownFactsHttpParser {
   val correspondenceDetailsKey = "correspondenceDetails"
   val correspondencePostCodeKey = "corresPostCode"
 
-  val baseTaxpayerDetailsKey = "baseTaxpayerDetails"
   val basePostCodeKey = "basePostCode"
 
   val commsPostCodeKey = "commsPostCode"
@@ -45,7 +44,7 @@ object GetPartnershipKnownFactsHttpParser {
           val res = for {
             postCode <- (json \ postCodeKey).validateOpt[String]
             correspondencePostCode <- (json \ correspondenceDetailsKey \ correspondencePostCodeKey).validateOpt[String]
-            baseTaxpayerPostCode <- (json \ baseTaxpayerDetailsKey \ basePostCodeKey).validateOpt[String]
+            baseTaxpayerPostCode <- (json \ basePostCodeKey).validateOpt[String]
             commsPostCode <- (json \ commsPostCodeKey).validateOpt[String]
             traderPostCode <- (json \ traderPostCodeKey).validateOpt[String]
           } yield PartnershipKnownFacts(
