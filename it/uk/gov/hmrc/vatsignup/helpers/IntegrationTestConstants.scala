@@ -66,4 +66,9 @@ object IntegrationTestConstants {
     }
   }
 
+  val testCorrespondencePostCode: String = UUID.randomUUID().toString
+  val testBasePostCode: String = UUID.randomUUID().toString
+  val testCommsPostCode: String = UUID.randomUUID().toString
+  val testTraderPostCode: String = UUID.randomUUID().toString
+
 }

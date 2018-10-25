@@ -95,6 +95,9 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def allocateEnrolmentUrl(groupId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/groups/$groupId/enrolments/$enrolmentKey"
 
+  def getPartnershipKnownFactsUrl(sautr: String): String =
+    s"$desUrl/income-tax-self-assessment/known-facts/utr/$sautr"
+
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
   def isDisabled(featureSwitch: FeatureSwitch): Boolean = !isEnabled(featureSwitch)
