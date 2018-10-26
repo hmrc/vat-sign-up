@@ -20,4 +20,6 @@ case class PartnershipKnownFacts(postCode: Option[String],
                                  correspondencePostCode: Option[String],
                                  basePostCode: Option[String],
                                  commsPostCode: Option[String],
-                                 traderPostCode: Option[String])
+                                 traderPostCode: Option[String]) extends Iterable[String] {
+  override def iterator: Iterator[String] = Iterator(postCode, correspondencePostCode, basePostCode, commsPostCode, traderPostCode).flatten
+}
