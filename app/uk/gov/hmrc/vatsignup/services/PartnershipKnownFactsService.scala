@@ -25,24 +25,16 @@ import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class PartnershipKnownFactsService @Inject()(partnershipKnownFactsConnector: PartnershipKnownFactsConnector)(
-                                             implicit ec: ExecutionContext
-                                            ) {
-  def getMatchedKnownFacts(saUtr: String, postCode: String)(
-                           implicit hc: HeaderCarrier
-                          ): Future[PartnershipPostCodeResponse] =
+class PartnershipKnownFactsService @Inject()(partnershipKnownFactsConnector: PartnershipKnownFactsConnector
+                                            )(implicit ec: ExecutionContext) {
+  def checkKnownFactsMatch(saUtr: String,
+                           postCode: String
+                          )(implicit hc: HeaderCarrier): Future[CheckKnownFactsMatchResponse] =
     partnershipKnownFactsConnector.getPartnershipKnownFacts(saUtr) map {
       case Right(knownFacts) =>
-        val sanitisedStoredPostCodes: List[String] = knownFacts.iterator.toList.collect {
-          case postCode => (postCode filterNot { _.isWhitespace }).toUpperCase
-        }
-        val sanitisedPostCode = (postCode filterNot { _.isWhitespace }).toUpperCase
-        if(sanitisedStoredPostCodes.contains(sanitisedPostCode))
-          Right(PartnershipPostCodeMatched)
-        else if(sanitisedStoredPostCodes.isEmpty)
-          Left(NoPostCodesReturned)
-        else
-          Left(PostCodeDoesNotMatch)
+        if (knownFacts contains postCode) Right(PartnershipPostCodeMatched)
+        else if (knownFacts.isEmpty) Left(NoPostCodesReturned)
+        else Left(PostCodeDoesNotMatch)
       case Left(PartnershipKnownFactsNotFound) =>
         Left(InvalidSautr)
       case Left(UnexpectedGetPartnershipKnownFactsFailure(status, body)) =>
@@ -53,7 +45,7 @@ class PartnershipKnownFactsService @Inject()(partnershipKnownFactsConnector: Par
 
 object PartnershipKnownFactsService {
 
-  type PartnershipPostCodeResponse = Either[PartnershipPostCodeMatchFailure, PartnershipPostCodeMatched.type]
+  type CheckKnownFactsMatchResponse = Either[PartnershipPostCodeMatchFailure, PartnershipPostCodeMatched.type]
 
   case object PartnershipPostCodeMatched
 

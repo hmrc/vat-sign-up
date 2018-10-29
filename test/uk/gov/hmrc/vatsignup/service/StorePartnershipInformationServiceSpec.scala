@@ -18,25 +18,29 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.util.UUID
 
+import play.api.http.Status._
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.{GeneralPartnership, LimitedPartnership}
+import uk.gov.hmrc.vatsignup.models.GeneralPartnership
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
+import uk.gov.hmrc.vatsignup.service.mocks.MockPartnershipKnownFactsService
+import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService.{NoPostCodesReturned, PartnershipPostCodeMatched, PostCodeDoesNotMatch}
+import uk.gov.hmrc.vatsignup.services.{PartnershipKnownFactsService, StorePartnershipInformationService}
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StorePartnershipInformationServiceSpec extends UnitSpec
-  with MockSubscriptionRequestRepository {
+  with MockSubscriptionRequestRepository with MockPartnershipKnownFactsService {
 
   object TestStorePartnershipInformationService extends StorePartnershipInformationService(
-    mockSubscriptionRequestRepository
+    mockSubscriptionRequestRepository,
+    mockPartnershipKnownFactsService
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -49,7 +53,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
         "return StorePartnershipUtrSuccess" in {
           mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.successful(mock[UpdateWriteResult]))
 
-          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testUtr)
+          val res = TestStorePartnershipInformationService.storePartnershipInformationWithEnrolment(testVatNumber, GeneralPartnership(testUtr), testUtr)
 
           await(res) shouldBe Right(StorePartnershipInformationSuccess)
         }
@@ -59,7 +63,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
         "return PartnershipUtrDatabaseFailureNoVATNumber" in {
           mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.failed(new NoSuchElementException))
 
-          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testUtr)
+          val res = TestStorePartnershipInformationService.storePartnershipInformationWithEnrolment(testVatNumber, GeneralPartnership(testUtr), testUtr)
 
           await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
         }
@@ -68,7 +72,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
         "return PartnershipInformationDatabaseFailure" in {
           mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.failed(new Exception))
 
-          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testUtr)
+          val res = TestStorePartnershipInformationService.storePartnershipInformationWithEnrolment(testVatNumber, GeneralPartnership(testUtr), testUtr)
 
           await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
         }
@@ -78,9 +82,67 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
       "return EnrolmentMatchFailure" in {
         val nonMatchingUtr = UUID.randomUUID().toString
 
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), nonMatchingUtr)
+        val res = TestStorePartnershipInformationService.storePartnershipInformationWithEnrolment(testVatNumber, GeneralPartnership(testUtr), nonMatchingUtr)
 
         await(res) shouldBe Left(EnrolmentMatchFailure)
+      }
+    }
+
+    "the UTR does not exist on the enrolment but the provided postcode matches" when {
+      "upsertPartnership is successful" should {
+        "return StorePartnershipUtrSuccess" in {
+          mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Right(PartnershipPostCodeMatched)))
+          mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.successful(mock[UpdateWriteResult]))
+
+          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
+
+          await(res) shouldBe Right(StorePartnershipInformationSuccess)
+
+        }
+      }
+    }
+
+    "the UTR does not exist on the enrolment and the provided postcode does not match" should {
+      "return StorePartnershipUtrSuccess" in {
+        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(PostCodeDoesNotMatch)))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
+
+        await(res) shouldBe Left(KnownFactsMismatch)
+
+      }
+
+    }
+
+    "the UTR does not exist on the enrolment and there is not enough data to check the known facts" should {
+      "return StorePartnershipUtrSuccess" in {
+        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(NoPostCodesReturned)))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
+
+        await(res) shouldBe Left(InsufficientData)
+
+      }
+
+    }
+
+    "the UTR does not exist on the enrolment and it is an invalid SAUTR" should {
+      "return StorePartnershipUtrSuccess" in {
+        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.InvalidSautr)))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
+
+        await(res) shouldBe Left(InvalidSautr)
+      }
+    }
+
+    "the UTR does not exist on the enrolment and the call to get Known Facts fails" should {
+      "return StorePartnershipUtrSuccess" in {
+        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.GetPartnershipKnownFactsFailure(BAD_REQUEST, ""))))
+
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
+
+        await(res) shouldBe Left(GetPartnershipKnownFactsFailure)
       }
     }
   }

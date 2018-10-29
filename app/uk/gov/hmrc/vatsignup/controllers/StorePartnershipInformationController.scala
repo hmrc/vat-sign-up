@@ -42,7 +42,7 @@ class StorePartnershipInformationController @Inject()(val authConnector: AuthCon
         enrolments =>
           enrolments.partnershipUtr match {
             case Some(enrolmentUtr) =>
-              storePartnershipUtrService.storePartnershipInformation(vatNumber, req.body, enrolmentUtr) map {
+              storePartnershipUtrService.storePartnershipInformationWithEnrolment(vatNumber, req.body, enrolmentUtr) map {
                 case Right(_) => NoContent
                 case Left(EnrolmentMatchFailure) => Forbidden
                 case Left(PartnershipInformationDatabaseFailureNoVATNumber) => NotFound

@@ -41,7 +41,7 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
                                       partnership: PartnershipBusinessEntity,
                                       enrolmentSautr: String
                                      )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
-    when(mockStorePartnershipInformationService.storePartnershipInformation(
+    when(mockStorePartnershipInformationService.storePartnershipInformationWithEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(partnership),
       ArgumentMatchers.eq(enrolmentSautr)
