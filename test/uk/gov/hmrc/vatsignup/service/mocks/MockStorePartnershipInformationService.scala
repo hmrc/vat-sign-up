@@ -38,17 +38,13 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
   }
 
   def mockStorePartnershipInformation(vatNumber: String,
-                                      partnership: PartnershipBusinessEntity
+                                      partnership: PartnershipBusinessEntity,
+                                      enrolmentSautr: String
                                      )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
     when(mockStorePartnershipInformationService.storePartnershipInformation(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(partnership)
+      ArgumentMatchers.eq(partnership),
+      ArgumentMatchers.eq(enrolmentSautr)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
-
-  def mockStorePartnershipInformationSuccess(vatNumber: String,
-                                             partnership: PartnershipBusinessEntity
-                                            ): Unit  =
-    mockStorePartnershipInformation(vatNumber, partnership)(Future.successful(Right(StorePartnershipInformationSuccess)))
-
 }

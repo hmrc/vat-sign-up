@@ -16,11 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import cats.data.EitherT
+import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.{StorePartnershipInformationSuccess, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,9 +32,19 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
                                                   (implicit ec: ExecutionContext) {
 
   def storePartnershipInformation(vatNumber: String,
-                                  partnership: PartnershipBusinessEntity
+                                  partnershipInformation: PartnershipBusinessEntity,
+                                  enrolmentSautr: String
                                  )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+    if (enrolmentSautr == partnershipInformation.sautr) {
+      storePartnershipInformationCore(vatNumber, partnershipInformation)
+    } else {
+      Future.successful(Left(EnrolmentMatchFailure))
+    }
+  }
 
+  private def storePartnershipInformationCore(vatNumber: String,
+                                              partnership: PartnershipBusinessEntity
+                                             )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, partnership) map {
       _ => Right(StorePartnershipInformationSuccess)
     } recover {
@@ -53,5 +65,7 @@ object StorePartnershipInformationService {
   case object PartnershipInformationDatabaseFailureNoVATNumber extends StorePartnershipInformationFailure
 
   case object PartnershipInformationDatabaseFailure extends StorePartnershipInformationFailure
+
+  case object EnrolmentMatchFailure extends StorePartnershipInformationFailure
 
 }

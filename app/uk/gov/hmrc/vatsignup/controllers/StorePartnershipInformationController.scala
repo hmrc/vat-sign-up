@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.controllers.StorePartnershipInformationController.PartnershipBusinessEntityReader
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.PartnershipInformationDatabaseFailureNoVATNumber
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.{EnrolmentMatchFailure, PartnershipInformationDatabaseFailureNoVATNumber}
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,16 +40,14 @@ class StorePartnershipInformationController @Inject()(val authConnector: AuthCon
     Action.async(parse.json[PartnershipBusinessEntity](PartnershipBusinessEntityReader)) { implicit req =>
       authorised().retrieve(Retrievals.allEnrolments) {
         enrolments =>
-          val utr = req.body.sautr
           enrolments.partnershipUtr match {
-            case Some(`utr`) =>
-              storePartnershipUtrService.storePartnershipInformation(vatNumber, req.body) map {
+            case Some(enrolmentUtr) =>
+              storePartnershipUtrService.storePartnershipInformation(vatNumber, req.body, enrolmentUtr) map {
                 case Right(_) => NoContent
+                case Left(EnrolmentMatchFailure) => Forbidden
                 case Left(PartnershipInformationDatabaseFailureNoVATNumber) => NotFound
                 case Left(_) => InternalServerError
               }
-            case Some(e) =>
-              Future.successful(Forbidden)
             case None =>
               // TODO covered by a future story
               Future.successful(NotImplemented)

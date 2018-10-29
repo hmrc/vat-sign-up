@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import java.util.UUID
+
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
@@ -42,69 +44,43 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
 
 
   "storePartnership" when {
-    "upsertPartnership is successful" should {
-      "return StorePartnershipUtrSuccess" in {
-        mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.successful(mock[UpdateWriteResult]))
+    "the UTR exists on the enrolment and matches the provided UTR" when {
+      "upsertPartnership is successful" should {
+        "return StorePartnershipUtrSuccess" in {
+          mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr))
+          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testUtr)
 
-        await(res) shouldBe Right(StorePartnershipInformationSuccess)
+          await(res) shouldBe Right(StorePartnershipInformationSuccess)
+        }
+      }
+
+      "upsertPartnership thrown a NoSuchElementException" should {
+        "return PartnershipUtrDatabaseFailureNoVATNumber" in {
+          mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.failed(new NoSuchElementException))
+
+          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testUtr)
+
+          await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
+        }
+      }
+      "upsertPartnership failed any other way" should {
+        "return PartnershipInformationDatabaseFailure" in {
+          mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.failed(new Exception))
+
+          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testUtr)
+
+          await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
+        }
       }
     }
+    "the UTR exists on the enrolment but does not match" should {
+      "return EnrolmentMatchFailure" in {
+        val nonMatchingUtr = UUID.randomUUID().toString
 
-    "upsertPartnership thrown a NoSuchElementException" should {
-      "return PartnershipUtrDatabaseFailureNoVATNumber" in {
-        mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.failed(new NoSuchElementException))
+        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), nonMatchingUtr)
 
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr))
-
-        await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
-      }
-    }
-    "upsertPartnership failed any other way" should {
-      "return PartnershipInformationDatabaseFailure" in {
-        mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.failed(new Exception))
-
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr))
-
-        await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
-      }
-    }
-
-    "upsertPartnershipLimited when partnership is Limited is successful" should {
-      "return StorePartnershipUtrSuccess" in {
-        mockUpsertBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(Future.successful(mock[UpdateWriteResult]))
-
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(
-          vatNumber = testVatNumber,
-          LimitedPartnership(testUtr, testCompanyNumber)
-        )
-
-        await(res) shouldBe Right(StorePartnershipInformationSuccess)
-      }
-    }
-
-
-    "upsertPartnershipLimited thrown a NoSuchElementException" should {
-      "return PartnershipUtrDatabaseFailureNoVATNumber" in {
-        mockUpsertBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(Future.failed(new NoSuchElementException))
-
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(
-          vatNumber = testVatNumber,
-          LimitedPartnership(testUtr, testCompanyNumber)
-        )
-        await(res) shouldBe Left(PartnershipInformationDatabaseFailureNoVATNumber)
-      }
-    }
-    "upsertPartnershipLimited failed any other way" should {
-      "return PartnershipInformationDatabaseFailure" in {
-        mockUpsertBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(Future.failed(new Exception))
-
-        val res = TestStorePartnershipInformationService.storePartnershipInformation(
-          vatNumber = testVatNumber,
-          LimitedPartnership(testUtr, testCompanyNumber)
-        )
-        await(res) shouldBe Left(PartnershipInformationDatabaseFailure)
+        await(res) shouldBe Left(EnrolmentMatchFailure)
       }
     }
   }
