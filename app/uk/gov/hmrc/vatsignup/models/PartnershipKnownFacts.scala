@@ -16,10 +16,18 @@
 
 package uk.gov.hmrc.vatsignup.models
 
+import PartnershipKnownFacts._
+
 case class PartnershipKnownFacts(postCode: Option[String],
                                  correspondencePostCode: Option[String],
                                  basePostCode: Option[String],
                                  commsPostCode: Option[String],
                                  traderPostCode: Option[String]) extends Iterable[String] {
   override def iterator: Iterator[String] = Iterator(postCode, correspondencePostCode, basePostCode, commsPostCode, traderPostCode).flatten
+
+  def contains(postCode: String): Boolean = iterator map sanitisePostCode contains sanitisePostCode(postCode)
+}
+
+object PartnershipKnownFacts {
+  def sanitisePostCode(postCode: String): String = (postCode filterNot { _.isWhitespace }).toUpperCase
 }

@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
+import java.util.UUID
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import play.api.http.Status._
@@ -44,67 +46,67 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
   val request: Request[PartnershipBusinessEntity] = FakeRequest().withBody[PartnershipBusinessEntity](testGeneralPartnership)
 
   "storePartnershipInformation" when {
-    "the UTR in the request json does not match the UTR in the enrolment" should {
-      "return FORBIDDEN" in {
+    "store partnership information returns StorePartnershipInformationSuccess" should {
+      "return NO_CONTENT" in {
         mockAuthRetrievePartnershipEnrolment()
-        mockStorePartnershipInformationSuccess(testVatNumber, testGeneralPartnership)
-
-        val request: Request[PartnershipBusinessEntity] = FakeRequest().withBody(GeneralPartnership(testUtr.drop(1)))
+        mockStorePartnershipInformation(
+          testVatNumber,
+          testGeneralPartnership,
+          testUtr
+        )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
         val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
 
-        status(result) shouldBe FORBIDDEN
+        status(result) shouldBe NO_CONTENT
       }
     }
-    "the UTR in the request json matches the UTR in the enrolment" should {
-      "store partnership information returns StorePartnershipInformationSuccess" should {
-        "return NO_CONTENT" in {
-          mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformationSuccess(testVatNumber, testGeneralPartnership)
+    "store partnership information returns StorePartnershipInformationSuccess for LimitedPartnership" should {
+      "return NO_CONTENT" in {
+        mockAuthRetrievePartnershipEnrolment()
+        mockStorePartnershipInformation(
+          testVatNumber,
+          testLimitedPartnership,
+          testUtr
+        )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+        val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
+          FakeRequest().withBody[PartnershipBusinessEntity](
+            testLimitedPartnership
+          ))
+        )
 
-          status(result) shouldBe NO_CONTENT
-        }
-      }
-      "store partnership information returns StorePartnershipInformationSuccess for LimitedPartnership" should {
-        "return NO_CONTENT" in {
-          mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformationSuccess(
-            vatNumber = testVatNumber,
-            partnership = testLimitedPartnership
-          )
-
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
-            FakeRequest().withBody[PartnershipBusinessEntity](
-              testLimitedPartnership
-            ))
-          )
-
-          status(result) shouldBe NO_CONTENT
-        }
-      }
-      "store partnership information returns PartnershipInformationDatabaseFailureNoVATNumber" should {
-        "return NOT_FOUND" in {
-          mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformation(testVatNumber, testGeneralPartnership)(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
-
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
-
-          status(result) shouldBe NOT_FOUND
-        }
-      }
-      "store partnership information returns PartnershipInformationDatabaseFailure" should {
-        "return INTERNAL_SERVER_ERROR" in {
-          mockAuthRetrievePartnershipEnrolment()
-          mockStorePartnershipInformation(testVatNumber, testGeneralPartnership)(Future.successful(Left(PartnershipInformationDatabaseFailure)))
-
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
-
-          status(result) shouldBe INTERNAL_SERVER_ERROR
-        }
+        status(result) shouldBe NO_CONTENT
       }
     }
+    "store partnership information returns PartnershipInformationDatabaseFailureNoVATNumber" should {
+      "return NOT_FOUND" in {
+        mockAuthRetrievePartnershipEnrolment()
+        mockStorePartnershipInformation(
+          testVatNumber,
+          testGeneralPartnership,
+          testUtr
+        )(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
+
+        val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+
+        status(result) shouldBe NOT_FOUND
+      }
+    }
+    "store partnership information returns PartnershipInformationDatabaseFailure" should {
+      "return INTERNAL_SERVER_ERROR" in {
+        mockAuthRetrievePartnershipEnrolment()
+        mockStorePartnershipInformation(
+          testVatNumber,
+          testGeneralPartnership,
+          testUtr
+        )(Future.successful(Left(PartnershipInformationDatabaseFailure)))
+
+        val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+      }
+    }
+
   }
 
 }

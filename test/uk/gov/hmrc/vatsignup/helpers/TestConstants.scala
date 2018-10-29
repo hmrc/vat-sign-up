@@ -59,7 +59,11 @@ object TestConstants {
 
   val testAgentEnrolment: Enrolment = Enrolment(AgentEnrolmentKey).withIdentifier(AgentReferenceNumberKey, testAgentReferenceNumber)
   val testPrincipalEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, testVatNumber)
-  val testPartnershipEnrolment: Enrolment = Enrolment(PartnershipIrsaEnrolmentKey).withIdentifier(PartnershipIrsaReferenceNumberKey, testUtr)
+
+  def testPartnershipEnrolment(sautr: String): Enrolment =
+    Enrolment(PartnershipIrsaEnrolmentKey).withIdentifier(PartnershipIrsaReferenceNumberKey, sautr)
+
+  val testPartnershipEnrolment: Enrolment = testPartnershipEnrolment(testUtr)
 
   val testErrorMsg = "this is an error"
 

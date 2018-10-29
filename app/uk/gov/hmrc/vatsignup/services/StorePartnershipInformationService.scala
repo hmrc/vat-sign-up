@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import cats.data.EitherT
+import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
@@ -26,13 +28,46 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class StorePartnershipInformationService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)
+class StorePartnershipInformationService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
+                                                   partnershipKnownFactsService: PartnershipKnownFactsService
+                                                  )
                                                   (implicit ec: ExecutionContext) {
 
-  def storePartnershipInformation(vatNumber: String,
-                                  partnership: PartnershipBusinessEntity
-                                 )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+  def storePartnershipInformationWithEnrolment(vatNumber: String,
+                                               partnershipInformation: PartnershipBusinessEntity,
+                                               enrolmentSautr: String
+                                              )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+    if (enrolmentSautr == partnershipInformation.sautr) {
+      storePartnershipInformationCore(vatNumber, partnershipInformation)
+    } else {
+      Future.successful(Left(EnrolmentMatchFailure))
+    }
+  }
 
+  def storePartnershipInformation(vatNumber: String,
+                                  partnershipInformation: PartnershipBusinessEntity,
+                                  businessPostcode: String
+                                 )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+    for {
+      _ <- EitherT(partnershipKnownFactsService.checkKnownFactsMatch(partnershipInformation.sautr, businessPostcode)) leftMap {
+        case PartnershipKnownFactsService.PostCodeDoesNotMatch =>
+          KnownFactsMismatch
+        case PartnershipKnownFactsService.NoPostCodesReturned =>
+          InsufficientData
+        case PartnershipKnownFactsService.InvalidSautr =>
+          InvalidSautr
+        case _ =>
+          GetPartnershipKnownFactsFailure
+      }
+      _ <- EitherT(storePartnershipInformationCore(vatNumber, partnershipInformation)
+      )
+    } yield StorePartnershipInformationSuccess
+  }.value
+
+  private def storePartnershipInformationCore(vatNumber: String,
+                                              partnership: PartnershipBusinessEntity
+                                             )(implicit hc: HeaderCarrier)
+  : Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, partnership) map {
       _ => Right(StorePartnershipInformationSuccess)
     } recover {
@@ -53,5 +88,15 @@ object StorePartnershipInformationService {
   case object PartnershipInformationDatabaseFailureNoVATNumber extends StorePartnershipInformationFailure
 
   case object PartnershipInformationDatabaseFailure extends StorePartnershipInformationFailure
+
+  case object EnrolmentMatchFailure extends StorePartnershipInformationFailure
+
+  case object KnownFactsMismatch extends StorePartnershipInformationFailure
+
+  case object InvalidSautr extends StorePartnershipInformationFailure
+
+  case object InsufficientData extends StorePartnershipInformationFailure
+
+  case object GetPartnershipKnownFactsFailure extends StorePartnershipInformationFailure
 
 }

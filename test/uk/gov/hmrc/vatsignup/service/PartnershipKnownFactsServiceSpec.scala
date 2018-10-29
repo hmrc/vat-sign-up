@@ -51,7 +51,7 @@ class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnow
         traderPostCode = None
       ))))
 
-      val res = await(TestPartnershipKnownFactsService.getMatchedKnownFacts(testUtr, testPostCode))
+      val res = await(TestPartnershipKnownFactsService.checkKnownFactsMatch(testUtr, testPostCode))
 
       res shouldBe Right(PartnershipPostCodeMatched)
     }
@@ -66,7 +66,7 @@ class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnow
         traderPostCode = None
       ))))
 
-      val res = await(TestPartnershipKnownFactsService.getMatchedKnownFacts(testUtr, testPostCode))
+      val res = await(TestPartnershipKnownFactsService.checkKnownFactsMatch(testUtr, testPostCode))
 
       res shouldBe Right(PartnershipPostCodeMatched)
     }
@@ -80,7 +80,7 @@ class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnow
         traderPostCode = None
       ))))
 
-      val res = await(TestPartnershipKnownFactsService.getMatchedKnownFacts(testUtr, testPostCode))
+      val res = await(TestPartnershipKnownFactsService.checkKnownFactsMatch(testUtr, testPostCode))
 
       res shouldBe Left(PostCodeDoesNotMatch)
     }
@@ -94,7 +94,7 @@ class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnow
         traderPostCode = None
       ))))
 
-      val res = await(TestPartnershipKnownFactsService.getMatchedKnownFacts(testUtr, testPostCode))
+      val res = await(TestPartnershipKnownFactsService.checkKnownFactsMatch(testUtr, testPostCode))
 
       res shouldBe Left(NoPostCodesReturned)
     }
@@ -102,7 +102,7 @@ class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnow
       val testUnmatchedPostCode = "AA1 1AA"
       mockGetKnownFacts(saUtr = testUtr)(Future.successful(Left(PartnershipKnownFactsNotFound)))
 
-      val res = await(TestPartnershipKnownFactsService.getMatchedKnownFacts(testUtr, testPostCode))
+      val res = await(TestPartnershipKnownFactsService.checkKnownFactsMatch(testUtr, testPostCode))
 
       res shouldBe Left(InvalidSautr)
     }
@@ -112,7 +112,7 @@ class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnow
         Left(UnexpectedGetPartnershipKnownFactsFailure(BAD_REQUEST, ""))
       ))
 
-      val res = await(TestPartnershipKnownFactsService.getMatchedKnownFacts(testUtr, testPostCode))
+      val res = await(TestPartnershipKnownFactsService.checkKnownFactsMatch(testUtr, testPostCode))
 
       res shouldBe Left(GetPartnershipKnownFactsFailure(BAD_REQUEST, ""))
     }
