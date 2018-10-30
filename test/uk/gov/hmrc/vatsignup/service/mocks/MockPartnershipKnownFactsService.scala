@@ -17,11 +17,12 @@
 package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
-import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService
 import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService
 import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService.CheckKnownFactsMatchResponse
 
 import scala.concurrent.Future
@@ -30,12 +31,16 @@ trait MockPartnershipKnownFactsService extends MockitoSugar with BeforeAndAfterE
   self: Suite =>
   val mockPartnershipKnownFactsService: PartnershipKnownFactsService = mock[PartnershipKnownFactsService]
 
-  def mockCheckKnownFactsMatch(saUtr: String,
+  def mockCheckKnownFactsMatch(vatNumber: String,
+                               saUtr: String,
                                postCode: String
                               )(response: Future[CheckKnownFactsMatchResponse]): Unit =
     when(mockPartnershipKnownFactsService.checkKnownFactsMatch(
+      ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(saUtr),
       ArgumentMatchers.eq(postCode)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+    )(ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]])
+    ) thenReturn response
 
 }

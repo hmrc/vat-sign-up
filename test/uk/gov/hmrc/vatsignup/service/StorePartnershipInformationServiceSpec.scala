@@ -91,7 +91,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
     "the UTR does not exist on the enrolment but the provided postcode matches" when {
       "upsertPartnership is successful" should {
         "return StorePartnershipUtrSuccess" in {
-          mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Right(PartnershipPostCodeMatched)))
+          mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Right(PartnershipPostCodeMatched)))
           mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(Future.successful(mock[UpdateWriteResult]))
 
           val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
@@ -104,7 +104,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
 
     "the UTR does not exist on the enrolment and the provided postcode does not match" should {
       "return StorePartnershipUtrSuccess" in {
-        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(PostCodeDoesNotMatch)))
+        mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(PostCodeDoesNotMatch)))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
 
@@ -116,7 +116,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
 
     "the UTR does not exist on the enrolment and there is not enough data to check the known facts" should {
       "return StorePartnershipUtrSuccess" in {
-        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(NoPostCodesReturned)))
+        mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(NoPostCodesReturned)))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
 
@@ -128,7 +128,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
 
     "the UTR does not exist on the enrolment and it is an invalid SAUTR" should {
       "return StorePartnershipUtrSuccess" in {
-        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.InvalidSautr)))
+        mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.InvalidSautr)))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
 
@@ -138,7 +138,7 @@ class StorePartnershipInformationServiceSpec extends UnitSpec
 
     "the UTR does not exist on the enrolment and the call to get Known Facts fails" should {
       "return StorePartnershipUtrSuccess" in {
-        mockCheckKnownFactsMatch(testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.GetPartnershipKnownFactsFailure(BAD_REQUEST, ""))))
+        mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.GetPartnershipKnownFactsFailure(BAD_REQUEST, ""))))
 
         val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(testUtr), testPostCode)
 

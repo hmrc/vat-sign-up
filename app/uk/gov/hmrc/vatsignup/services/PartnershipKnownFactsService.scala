@@ -17,25 +17,48 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
+
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.PartnershipKnownFactsConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetPartnershipKnownFactsHttpParser.{PartnershipKnownFactsNotFound, UnexpectedGetPartnershipKnownFactsFailure}
+import uk.gov.hmrc.vatsignup.models.monitoring.PartnershipKnownFactsAuditing.PartnershipKnownFactsAuditingModel
 import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService._
+import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class PartnershipKnownFactsService @Inject()(partnershipKnownFactsConnector: PartnershipKnownFactsConnector
+class PartnershipKnownFactsService @Inject()(partnershipKnownFactsConnector: PartnershipKnownFactsConnector,
+                                             auditService: AuditService
                                             )(implicit ec: ExecutionContext) {
-  def checkKnownFactsMatch(saUtr: String,
+  def checkKnownFactsMatch(vatNumber: String,
+                           saUtr: String,
                            postCode: String
-                          )(implicit hc: HeaderCarrier): Future[CheckKnownFactsMatchResponse] =
+                          )(implicit hc: HeaderCarrier, request: Request[_]): Future[CheckKnownFactsMatchResponse] =
     partnershipKnownFactsConnector.getPartnershipKnownFacts(saUtr) map {
       case Right(knownFacts) =>
-        if (knownFacts contains postCode) Right(PartnershipPostCodeMatched)
+        val matched = knownFacts contains postCode
+        auditService.audit(
+          PartnershipKnownFactsAuditingModel(
+            vatNumber = vatNumber,
+            sautr = saUtr,
+            postCode = postCode,
+            partnershipKownFacts = knownFacts,
+            isMatch = matched
+          )
+        )
+        if (matched) Right(PartnershipPostCodeMatched)
         else if (knownFacts.isEmpty) Left(NoPostCodesReturned)
         else Left(PostCodeDoesNotMatch)
       case Left(PartnershipKnownFactsNotFound) =>
+        auditService.audit(
+          PartnershipKnownFactsAuditingModel(
+            vatNumber = vatNumber,
+            sautr = saUtr,
+            postCode = postCode
+          )
+        )
         Left(InvalidSautr)
       case Left(UnexpectedGetPartnershipKnownFactsFailure(status, body)) =>
         Left(GetPartnershipKnownFactsFailure(status, body))
