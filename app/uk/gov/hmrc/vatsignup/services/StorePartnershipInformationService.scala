@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import javax.inject.{Inject, Singleton}
+
 import cats.data.EitherT
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
@@ -47,9 +49,9 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
   def storePartnershipInformation(vatNumber: String,
                                   partnershipInformation: PartnershipBusinessEntity,
                                   businessPostcode: String
-                                 )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+                                 )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
     for {
-      _ <- EitherT(partnershipKnownFactsService.checkKnownFactsMatch(partnershipInformation.sautr, businessPostcode)) leftMap {
+      _ <- EitherT(partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, partnershipInformation.sautr, businessPostcode)) leftMap {
         case PartnershipKnownFactsService.PostCodeDoesNotMatch =>
           KnownFactsMismatch
         case PartnershipKnownFactsService.NoPostCodesReturned =>
