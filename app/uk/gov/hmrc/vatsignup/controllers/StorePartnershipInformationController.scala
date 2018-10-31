@@ -17,17 +17,18 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.libs.json.{JsResult, JsValue, Reads}
+
+import play.api.libs.json._
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.http.BadRequestException
+import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.controllers.StorePartnershipInformationController.PartnershipBusinessEntityReader
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.{EnrolmentMatchFailure, PartnershipInformationDatabaseFailureNoVATNumber}
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
+import StorePartnershipInformationController._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,41 +37,35 @@ class StorePartnershipInformationController @Inject()(val authConnector: AuthCon
                                                       storePartnershipUtrService: StorePartnershipInformationService
                                                      )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
-  def storePartnershipInformation(vatNumber: String): Action[PartnershipBusinessEntity] = {
-    Action.async(parse.json[PartnershipBusinessEntity](PartnershipBusinessEntityReader)) { implicit req =>
+  def storePartnershipInformation(vatNumber: String): Action[StorePartnershipRequest] =
+    Action.async(parse.json[StorePartnershipRequest](StorePartnershipRequest.reader)) { implicit req =>
       authorised().retrieve(Retrievals.allEnrolments) {
         enrolments =>
-          enrolments.partnershipUtr match {
-            case Some(enrolmentUtr) =>
-              storePartnershipUtrService.storePartnershipInformationWithEnrolment(vatNumber, req.body, enrolmentUtr) map {
+          (enrolments.partnershipUtr, req.body.postCode) match {
+            case (Some(enrolmentUtr), _) =>
+              storePartnershipUtrService.storePartnershipInformationWithEnrolment(vatNumber, req.body.partnership, enrolmentUtr) map {
                 case Right(_) => NoContent
                 case Left(EnrolmentMatchFailure) => Forbidden
-                case Left(PartnershipInformationDatabaseFailureNoVATNumber) => NotFound
+                case Left(PartnershipInformationDatabaseFailureNoVATNumber) => PreconditionFailed
                 case Left(_) => InternalServerError
               }
-            case None =>
-              // TODO covered by a future story
-              Future.successful(NotImplemented)
+            case (None, Some(postCode)) =>
+              storePartnershipUtrService.storePartnershipInformation(vatNumber, req.body.partnership, postCode) map {
+                case Right(_) => NoContent
+                case Left(KnownFactsMismatch) => Forbidden
+                case Left(InsufficientData) => throw new InternalServerException("No postcodes returned for the partnership")
+                case Left(InvalidSautr) => PreconditionFailed(Json.obj("statusCode" -> PRECONDITION_FAILED, "message" -> invalidSautrKey))
+                case Left(PartnershipInformationDatabaseFailureNoVATNumber) => PreconditionFailed
+                case Left(_) => InternalServerError
+              }
+            case _ =>
+              Future.successful(PreconditionFailed(Json.obj("statusCode" -> PRECONDITION_FAILED, "message" -> "no enrolment or postcode")))
           }
       }
     }
-  }
 
 }
 
 object StorePartnershipInformationController {
-  implicit object PartnershipBusinessEntityReader extends Reads[PartnershipBusinessEntity] {
-    override def reads(json: JsValue): JsResult[PartnershipBusinessEntity] =
-      for {
-        sautr <- (json \ "sautr").validate[String]
-        optCompanyNumber <- (json \ "crn").validateOpt[String]
-        partnershipType <- (json \ "partnershipType").validate[String]
-      } yield (partnershipType, optCompanyNumber) match {
-        case ("generalPartnership", _) => GeneralPartnership(sautr)
-        case ("limitedPartnership", Some(companyNumber)) => LimitedPartnership(sautr, companyNumber)
-        case ("limitedLiabilityPartnership", Some(companyNumber)) => LimitedLiabilityPartnership(sautr, companyNumber)
-        case ("scottishLimitedPartnership", Some(companyNumber)) => ScottishLimitedPartnership(sautr, companyNumber)
-        case _ => throw new BadRequestException(s"Invalid Partnership Information ${json.toString()}")
-      }
-  }
+  val invalidSautrKey = "Invalid Sautr"
 }
