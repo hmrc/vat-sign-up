@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
@@ -37,14 +38,25 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
     reset(mockStorePartnershipInformationService)
   }
 
-  def mockStorePartnershipInformation(vatNumber: String,
-                                      partnership: PartnershipBusinessEntity,
-                                      enrolmentSautr: String
-                                     )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
+  def mockStorePartnershipInformationWithEnrolment(vatNumber: String,
+                                                   partnership: PartnershipBusinessEntity,
+                                                   enrolmentSautr: String
+                                                  )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
     when(mockStorePartnershipInformationService.storePartnershipInformationWithEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(partnership),
       ArgumentMatchers.eq(enrolmentSautr)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+  }
+
+  def mockStorePartnershipInformation(vatNumber: String,
+                                      partnershipInformation: PartnershipBusinessEntity,
+                                      businessPostcode: String
+                                     )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
+    when(mockStorePartnershipInformationService.storePartnershipInformation(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(partnershipInformation),
+      ArgumentMatchers.eq(businessPostcode)
+    )(ArgumentMatchers.any[HeaderCarrier], ArgumentMatchers.any[Request[_]])) thenReturn response
   }
 }
