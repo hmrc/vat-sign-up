@@ -81,14 +81,9 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         Right(RequestAuthorised)
       case _: SoleTrader if subscriptionRequest.ninoSource contains IRSA =>
         Right(RequestAuthorised)
-      case _: GeneralPartnership if hasPartnershipEnrolment =>
+      case  _: PartnershipBusinessEntity =>
         Right(RequestAuthorised)
-      case _: LimitedPartnership if hasPartnershipEnrolment =>
-        Right(RequestAuthorised)
-      case _: LimitedLiabilityPartnership if hasPartnershipEnrolment =>
-        Right(RequestAuthorised)
-      case _: ScottishLimitedPartnership if hasPartnershipEnrolment =>
-        Right(RequestAuthorised)
+
       case _ if subscriptionRequest.identityVerified || isDelegated =>
         Right(RequestAuthorised)
       case _ =>

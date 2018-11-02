@@ -477,21 +477,74 @@ class SignUpRequestServiceSpec extends UnitSpec
             }
           }
         }
-        "the user does not have a partnership enrolment" should {
-          "return RequestNotAuthorised" in {
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(GeneralPartnership(testUtr)),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
-              )
+        "the user is a scottish limited partnership" when {
+          "the sign up email address is verified" when {
+            "the user does not have a partnership enrolment" when {
+              "there is not a transaction e-mail address" should {
+                "return a successful SignUpRequest" in {
+                  enable(EtmpEntityType)
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            await(res) shouldBe Left(RequestNotAuthorised)
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
+                    )
+                  )
+                }
+              }
+            }
+          }
+        }
+        "the user is a limited liability partnership" when {
+          "the sign up email address is verified" when {
+            "the user does not have a partnership enrolment" when {
+              "there is not a transaction e-mail address" should {
+                "return a successful SignUpRequest" in {
+                  enable(EtmpEntityType)
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable
+                    )
+                  )
+                }
+              }
+            }
           }
         }
       }
