@@ -478,20 +478,32 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
         "the user does not have a partnership enrolment" should {
-          "return RequestNotAuthorised" in {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
             val testSubscriptionRequest =
               SubscriptionRequest(
                 vatNumber = testVatNumber,
-                businessEntity = Some(GeneralPartnership(testUtr)),
+                businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
                 email = Some(testEmail),
                 isMigratable = testIsMigratable
               )
 
             mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
             val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            await(res) shouldBe Left(RequestNotAuthorised)
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable
+              )
+            )
           }
         }
       }
