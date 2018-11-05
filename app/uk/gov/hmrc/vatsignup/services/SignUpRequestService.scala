@@ -83,7 +83,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         Right(RequestAuthorised)
       case  _: PartnershipBusinessEntity =>
         Right(RequestAuthorised)
-
+      case VatGroup =>
+        Right(RequestAuthorised)
       case _ if subscriptionRequest.identityVerified || isDelegated =>
         Right(RequestAuthorised)
       case _ =>
