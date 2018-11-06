@@ -75,6 +75,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             EitherT.apply[Future, Nothing, Nothing](
               Future.failed(new InternalServerException("Partnerships are not supported on the legacy Register API"))
             )
+          case VatGroup =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("VAT Groups are not supported on the legacy Register API"))
+            )
         }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
@@ -134,7 +138,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
           vatNumber = vatNumber,
           nino = Some(nino),
           agentReferenceNumber = agentReferenceNumber,
-          isSuccess = true
+          isSuccess = false
         ))
         RegistrationFailure
       }
