@@ -49,11 +49,11 @@ object ControlListInformationParser {
 
     staggerSet.toList match {
       case singleStagger :: Nil =>
-    Right(singleStagger)
+        Right(singleStagger)
       case Nil if isNonStandardTaxPeriod =>
-    Right(NonStandardTaxPeriod)
+        Right(NonStandardTaxPeriod)
       case _ =>
-    Left(StaggerConflict)
+        Left(StaggerConflict)
     }
   }
 
@@ -65,6 +65,8 @@ object ControlListInformationParser {
     businessEntities.toList match {
       case singleBusinessEntity :: Nil =>
         Right(singleBusinessEntity)
+      case _ if businessEntities.equals(Set(Company, Group)) =>
+        Right(Group)
       case _ =>
         Left(EntityConflict)
     }
