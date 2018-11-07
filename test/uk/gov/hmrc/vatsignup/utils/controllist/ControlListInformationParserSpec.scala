@@ -126,6 +126,7 @@ class ControlListInformationParserSpec extends UnitSpec with EitherValues {
           tryParse(setupTestData(COMPANY -> '0')).right.value.controlList should contain(Company)
           tryParse(setupTestData(COMPANY -> '1', DIVISION -> '0')).right.value.controlList should contain(Division)
           tryParse(setupTestData(COMPANY -> '1', GROUP -> '0')).right.value.controlList should contain(Group)
+          tryParse(setupTestData(COMPANY -> '0', GROUP -> '0')).right.value.controlList should contain(Group)
           tryParse(setupTestData(COMPANY -> '1', PARTNERSHIP -> '0')).right.value.controlList should contain(Partnership)
           tryParse(setupTestData(COMPANY -> '1', PUBLIC_CORPORATION -> '0')).right.value.controlList should contain(PublicCorporation)
           tryParse(setupTestData(COMPANY -> '1', SOLE_TRADER -> '0')).right.value.controlList should contain(SoleTrader)
