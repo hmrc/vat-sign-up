@@ -41,47 +41,6 @@ class StoreNinoWithRequestIdControllerISpec extends ComponentSpecBase
 
   "POST /sign-up-request/:requestId/nino" when {
     "nino source is not supplied" should {
-      lazy val requestBody: UserDetailsModel = UserDetailsModel(
-        UUID.randomUUID().toString,
-        UUID.randomUUID().toString,
-        LocalDate.now(),
-        testNino
-      )
-      "if requestId exists return no content when the nino has been stored successfully" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(requestBody)(matched = true)
-
-        val res = post(s"/sign-up-request/request-id/$testToken/nino")(requestBody)
-
-        res should have(
-          httpStatus(NO_CONTENT),
-          emptyBody
-        )
-        await(unconfirmedSubmissionRequestRepo.findById(testToken)).get.ninoSource shouldBe Some(UserEntered)
-      }
-
-      "if the user is not matched in CID then return FORBIDDEN" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(requestBody)(matched = false)
-
-        val res = post(s"/sign-up-request/request-id/$testToken/nino")(requestBody)
-
-        res should have(
-          httpStatus(FORBIDDEN)
-        )
-      }
-
-      "return BAD_REQUEST when the json is invalid" in {
-        stubAuth(OK, successfulAuthResponse())
-
-        val res = post(s"/sign-up-request/request-id/$testToken/nino")(Json.obj())
-
-        res should have(
-          httpStatus(BAD_REQUEST)
-        )
-      }
-    }
-    "nino source is supplied" should {
       val userDetails: UserDetailsModel = UserDetailsModel(
         UUID.randomUUID().toString,
         UUID.randomUUID().toString,
@@ -103,6 +62,31 @@ class StoreNinoWithRequestIdControllerISpec extends ComponentSpecBase
         )
 
         await(unconfirmedSubmissionRequestRepo.findById(testToken)).get.ninoSource shouldBe Some(IRSA)
+      }
+
+      "the nino source is UserEntered" should {
+        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> UserEntered.toString))
+
+        "if the user is not matched in CID then return FORBIDDEN" in {
+          stubAuth(OK, successfulAuthResponse())
+          stubMatchUser(userDetails)(matched = false)
+
+          val res = post(s"/sign-up-request/request-id/$testToken/nino")(requestBody)
+
+          res should have(
+            httpStatus(FORBIDDEN)
+          )
+        }
+      }
+
+      "return BAD_REQUEST when the json is invalid" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = post(s"/sign-up-request/request-id/$testToken/nino")(Json.obj())
+
+        res should have(
+          httpStatus(BAD_REQUEST)
+        )
       }
     }
   }

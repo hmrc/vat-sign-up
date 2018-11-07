@@ -34,17 +34,21 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
 
   "PUT /subscription-request/:vrn/nino" when {
     "nino source is not supplied" should {
-      lazy val requestBody: UserDetailsModel = UserDetailsModel(
+      val userDetails: UserDetailsModel = UserDetailsModel(
         UUID.randomUUID().toString,
         UUID.randomUUID().toString,
         LocalDate.now(),
         testNino
       )
+
+      lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSA.toString))
+
       "if vat number exists return no content when the nino has been stored successfully" in {
         stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(requestBody)(matched = true)
+        stubMatchUser(userDetails)(matched = true)
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+
         val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
 
         res should have(
@@ -52,24 +56,26 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
           emptyBody
         )
 
-        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(UserEntered)
+        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(IRSA)
       }
 
-      "if the user is not matched in CID then return FORBIDDEN" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(requestBody)(matched = false)
+      "the nino source is UserEntered" should {
+        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> UserEntered.toString))
 
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+        "if the user is not matched in CID then return FORBIDDEN" in {
+          stubAuth(OK, successfulAuthResponse())
+          stubMatchUser(userDetails)(matched = false)
 
-        res should have(
-          httpStatus(FORBIDDEN)
-        )
+          val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+
+          res should have(
+            httpStatus(FORBIDDEN)
+          )
+        }
       }
-
 
       "if the vat number does not already exist then return NOT_FOUND" in {
         stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(requestBody)(matched = true)
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
 
@@ -86,31 +92,6 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
         res should have(
           httpStatus(BAD_REQUEST)
         )
-      }
-    }
-    "nino source is supplied" should {
-      val userDetails: UserDetailsModel = UserDetailsModel(
-        UUID.randomUUID().toString,
-        UUID.randomUUID().toString,
-        LocalDate.now(),
-        testNino
-      )
-
-      lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSA.toString))
-
-      "if vat number exists return no content when the nino has been stored successfully" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(userDetails)(matched = true)
-
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
-
-        res should have(
-          httpStatus(NO_CONTENT),
-          emptyBody
-        )
-
-        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(IRSA)
       }
     }
   }
