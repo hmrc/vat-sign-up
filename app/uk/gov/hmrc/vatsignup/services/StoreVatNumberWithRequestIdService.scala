@@ -17,13 +17,13 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
+
 import cats.data._
 import cats.implicits._
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.ClaimSubscription
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, MandationStatusConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
 import uk.gov.hmrc.vatsignup.models._
@@ -143,7 +143,7 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
     EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
         Future.successful(Right(NotSubscribed))
-      case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty && appConfig.isEnabled(ClaimSubscription) =>
+      case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty =>
         claimSubscriptionService.claimSubscription(
           vatNumber = vatNumber,
           businessPostcode = businessPostcode,

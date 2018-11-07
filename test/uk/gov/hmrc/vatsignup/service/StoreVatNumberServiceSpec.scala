@@ -26,7 +26,6 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.ClaimSubscription
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
@@ -182,7 +181,7 @@ class StoreVatNumberServiceSpec
               mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, Some(false)))
               res shouldBe Right(StoreVatNumberSuccess)
             }
           }
@@ -192,22 +191,14 @@ class StoreVatNumberServiceSpec
               mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, Some(false)))
               res shouldBe Left(VatNumberDatabaseFailure)
             }
           }
         }
-        "the VAT number is already subscribed for MTD-VAT" should {
-          "return AlreadySubscribed" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-
-            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None))
-            res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
-          }
-        }
         "the vat number does not match enrolment" should {
           "return DoesNotMatchEnrolment" in {
-            val res = await(TestStoreVatNumberService.storeVatNumber(UUID.randomUUID().toString, principalUser, None, None, None))
+            val res = await(TestStoreVatNumberService.storeVatNumber(UUID.randomUUID().toString, principalUser, None, None, Some(false)))
             res shouldBe Left(DoesNotMatchEnrolment)
           }
         }
@@ -215,7 +206,7 @@ class StoreVatNumberServiceSpec
 
       "the user does not have either enrolment" should {
         "return InsufficientEnrolments" in {
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, Enrolments(Set.empty), None, None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, Enrolments(Set.empty), None, None, Some(false)))
           res shouldBe Left(InsufficientEnrolments)
         }
       }
@@ -284,49 +275,34 @@ class StoreVatNumberServiceSpec
         }
       }
       "the VAT number is already subscribed for MTD-VAT" when {
-        "the claim subscription feature switch is enabled" when {
-          "the claim subscription is successful" should {
-            "return AlreadySubscribed with the subscription claimed" in {
-              enable(ClaimSubscription)
-
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Right(SubscriptionClaimed)))
-
-              val res = await(call)
-              res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
-            }
-          }
-          "the claim subscription returned known facts mismatch" should {
-            "return StoreVatNumberService.KnownFactsMismatch" in {
-              enable(ClaimSubscription)
-
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(ClaimSubscriptionService.KnownFactsMismatch)))
-
-              val res = await(call)
-              res shouldBe Left(StoreVatNumberService.KnownFactsMismatch)
-            }
-          }
-          "the claim subscription fails" should {
-            "return ClaimSubscriptionFailure" in {
-              enable(ClaimSubscription)
-
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-              mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(KnownFactsFailure)))
-
-              val res = await(call)
-              res shouldBe Left(ClaimSubscriptionFailure)
-            }
-          }
-        }
-        "the claim subscription feature switch is not enabled" should {
-          "return AlreadySubscribed" in {
+        "the claim subscription is successful" should {
+          "return AlreadySubscribed with the subscription claimed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+            mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Right(SubscriptionClaimed)))
 
             val res = await(call)
-            res shouldBe Left(AlreadySubscribed(subscriptionClaimed = false))
+            res shouldBe Left(AlreadySubscribed(subscriptionClaimed = true))
           }
         }
+        "the claim subscription returned known facts mismatch" should {
+          "return StoreVatNumberService.KnownFactsMismatch" in {
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+            mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(ClaimSubscriptionService.KnownFactsMismatch)))
+
+            val res = await(call)
+            res shouldBe Left(StoreVatNumberService.KnownFactsMismatch)
+          }
+        }
+        "the claim subscription fails" should {
+          "return ClaimSubscriptionFailure" in {
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+            mockClaimSubscription(testVatNumber, Some(testPostCode), Some(testDateOfRegistration), isFromBta = false)(Future.successful(Left(KnownFactsFailure)))
+
+            val res = await(call)
+            res shouldBe Left(ClaimSubscriptionFailure)
+          }
+        }
+
       }
       "the user does not have either enrolment and did not provide both known facts" should {
         "return InsufficientEnrolments" in {
