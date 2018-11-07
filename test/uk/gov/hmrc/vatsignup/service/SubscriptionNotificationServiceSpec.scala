@@ -16,20 +16,18 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import com.github.tomakehurst.wiremock.core.WireMockApp
 import play.api.http.Status.BAD_REQUEST
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.EmailNotification
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailConnector
-import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
-import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.models.SubscriptionState.{AuthRefreshed, Failure, Success}
+import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,14 +47,11 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   "sendEmailNotification" when {
-    "the EmailNotification feature is enabled" when {
       "the email request exists in the database" when {
         "the subscription request was for a principal user" when {
           "the e-mail request is successful" when {
             "the subscription was successful" should {
               "return NotificationSent" in {
-                enable(EmailNotification)
-
                 val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
@@ -69,8 +64,6 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             }
             "the subscription failed" should {
               "return no email" in {
-                enable(EmailNotification)
-
                 val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -80,8 +73,6 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
                 res shouldBe Right(TaxEnrolmentFailure)
               }
               "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
-                enable(EmailNotification)
-
                 val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -94,8 +85,6 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
           }
           "the e-mail request fails" should {
             "return EmailServiceFailure" in {
-              enable(EmailNotification)
-
               val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = false)
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -107,8 +96,6 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
           }
           "the e-mail request fails and it was delegated" should {
             "return EmailServiceFailure" in {
-              enable(EmailNotification)
-
               val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -122,8 +109,6 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
         }
         "the subscription request was for a delegated user" when {
           "return DelegatedSubscription" in {
-            enable(EmailNotification)
-
             val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
 
             mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -138,8 +123,6 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
       }
       "the e-mail request does not exist in the database" should {
         "return EmailRequestDataNotFound" in {
-          enable(EmailNotification)
-
           mockFindEmailRequestById(testVatNumber)(None)
           val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
@@ -147,14 +130,5 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
         }
       }
     }
-    "the EmailNotification feature is disabled" should {
-      "return FeatureSwitchDisabled" in {
-        disable(EmailNotification)
 
-        val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
-
-        res shouldBe Right(FeatureSwitchDisabled)
-      }
-    }
-  }
 }

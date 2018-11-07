@@ -19,17 +19,15 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.EmailNotification
 import uk.gov.hmrc.vatsignup.connectors.EmailConnector
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
-import play.api.Logger
-
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,17 +39,13 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
   def sendEmailNotification(vatNumber: String,
                             subscriptionState: SubscriptionState
                            )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
-    if (appConfig.isEnabled(EmailNotification)) {
-      (for {
-        emailRequest <- getEmailRequest(vatNumber)
-        notificationResult <- sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated)
-        _ <- deleteEmailRequest(vatNumber)
-      } yield notificationResult).value
-    }
-    else {
-      Future.successful(Right(FeatureSwitchDisabled))
-    }
+    (for {
+      emailRequest <- getEmailRequest(vatNumber)
+      notificationResult <- sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated)
+      _ <- deleteEmailRequest(vatNumber)
+    } yield notificationResult).value
   }
+
 
   private def getEmailRequest(vatNumber: String): EitherT[Future, NotificationFailure, EmailRequest] =
     EitherT.fromOptionF(emailRequestRepository.findById(vatNumber), EmailRequestDataNotFound)
@@ -66,7 +60,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                         isDelegated: Boolean
                        )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
     if (isDelegated) {
-      EitherT(emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber))) bimap (
+      EitherT(emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber))) bimap(
         _ => EmailServiceFailure,
         _ => DelegatedSubscription
       )

@@ -27,7 +27,6 @@ object FeatureSwitch {
   val prefix = "feature-switch"
 
   val switches: Set[FeatureSwitch] = Set(
-    EmailNotification,
     StubDESFeature,
     StubAgentServicesFeature,
     HybridSolution,
@@ -55,11 +54,6 @@ object StubDESFeature extends FeatureSwitch {
 object StubAgentServicesFeature extends FeatureSwitch {
   val displayName = s"Use stub for Agent Services connection"
   val name = s"$prefix.stub-agent-services"
-}
-
-object EmailNotification extends FeatureSwitch {
-  val displayName = s"Send notification e-mail on tax enrolments callback"
-  val name = s"$prefix.email-notification"
 }
 
 object HybridSolution extends FeatureSwitch {
