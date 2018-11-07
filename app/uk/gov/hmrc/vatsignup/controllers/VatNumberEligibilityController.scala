@@ -21,26 +21,24 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
+import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
 import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
 class VatNumberEligibilityController @Inject()(val authConnector: AuthConnector,
-                                               vatNumberEligibilityService: VatNumberEligibilityService)
+                                               controlListEligibilityService: ControlListEligibilityService)
                                               (implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
   def checkVatNumberEligibility(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {
-        vatNumberEligibilityService.checkVatNumberEligibility(vatNumber) map {
-          case Right(VatNumberEligible) =>
+        controlListEligibilityService.getEligibilityStatus(vatNumber) map {
+          case Right(_: EligibilitySuccess) =>
             NoContent
-          case Left(AlreadySubscribed) =>
-            Conflict
-          case Left(VatNumberIneligible(migratableDates)) =>
+          case Left(ControlListEligibilityService.IneligibleVatNumber(migratableDates)) =>
             BadRequest(Json.toJson(migratableDates))
           case Left(VatNumberNotFound | InvalidVatNumber) =>
             NotFound

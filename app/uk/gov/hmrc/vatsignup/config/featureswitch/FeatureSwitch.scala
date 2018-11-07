@@ -30,7 +30,6 @@ object FeatureSwitch {
     EmailNotification,
     StubDESFeature,
     StubAgentServicesFeature,
-    ClaimSubscription,
     HybridSolution,
     EtmpEntityType
   )
@@ -61,11 +60,6 @@ object StubAgentServicesFeature extends FeatureSwitch {
 object EmailNotification extends FeatureSwitch {
   val displayName = s"Send notification e-mail on tax enrolments callback"
   val name = s"$prefix.email-notification"
-}
-
-object ClaimSubscription extends FeatureSwitch {
-  val displayName = s"Allow users to claim their subscription"
-  val name = s"$prefix.claim-subscription"
 }
 
 object HybridSolution extends FeatureSwitch {
