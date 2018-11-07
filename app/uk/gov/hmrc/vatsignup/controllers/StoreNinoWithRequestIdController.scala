@@ -17,13 +17,14 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.{JsSuccess, JsValue}
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
-import uk.gov.hmrc.vatsignup.models.{NinoSource, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{NinoSource, UserDetailsModel}
 import uk.gov.hmrc.vatsignup.services.StoreNinoWithRequestIdService
 import uk.gov.hmrc.vatsignup.services.StoreNinoWithRequestIdService._
 
@@ -42,9 +43,8 @@ class StoreNinoWithRequestIdController @Inject()(val authConnector: AuthConnecto
         // TODO spike 2) in the IR-SA flow, orchestrate or verify the nino using IR-SA
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-            req.body.validate[UserDetailsModel] match {
-              case JsSuccess(userDetails, _) =>
-                val ninoSource = (req.body \ ninoSourceFrontEndKey).validate[NinoSource].getOrElse(UserEntered)
+            (req.body.validate[UserDetailsModel], (req.body \ ninoSourceFrontEndKey).validate[NinoSource]) match {
+              case (JsSuccess(userDetails, _), JsSuccess(ninoSource, _)) =>
                 storeNinoWithRequestIdService.storeNino(requestId, userDetails, enrolments, ninoSource) map {
                   case Right(StoreNinoSuccess) => NoContent
                   case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")

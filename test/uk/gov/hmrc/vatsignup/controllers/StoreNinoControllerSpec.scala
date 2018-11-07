@@ -28,7 +28,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.NinoSource._
-import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel}
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreNinoService
 import uk.gov.hmrc.vatsignup.services.StoreNinoService._
 
@@ -52,35 +52,33 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
 
   "storeNino" when {
 
-    "nino source is not supplied" when {
-      val request = FakeRequest().withBody(Json.toJson(testUserDetails))
+    val request = FakeRequest().withBody(Json.toJson(testUserDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSA)))
 
-      "the Nino has been stored correctly" should {
-        "return NO_CONTENT" in {
-          mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, UserEntered)(Future.successful(Right(StoreNinoSuccess)))
+    "the Nino has been stored correctly" should {
+      "return NO_CONTENT" in {
+        mockAuthRetrievePrincipalEnrolment()
+        mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Right(StoreNinoSuccess)))
 
-          val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
+        val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
 
-          status(res) shouldBe NO_CONTENT
-        }
+        status(res) shouldBe NO_CONTENT
       }
+    }
 
-      "if user doesn't match with a record in CID" should {
-        "return FORBIDDEN" in {
-          mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, UserEntered)(Future.successful(Left(NoMatchFoundFailure)))
+    "if user doesn't match with a record in CID" should {
+      "return FORBIDDEN" in {
+        mockAuthRetrievePrincipalEnrolment()
+        mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(NoMatchFoundFailure)))
 
-          val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
+        val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
 
-          status(res) shouldBe FORBIDDEN
-        }
+        status(res) shouldBe FORBIDDEN
       }
 
       "if calls to CID failed" should {
         "return INTERNAL_SERVER_ERROR" in {
           mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, UserEntered)(Future.successful(Left(AuthenticatorFailure)))
+          mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(AuthenticatorFailure)))
 
           val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
 
@@ -91,7 +89,7 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
       "if the vat doesn't exist in mongo" should {
         "return NOT_FOUND" in {
           mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, UserEntered)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
+          mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
 
           val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
 
@@ -102,70 +100,11 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
       "the Nino storage has failed" should {
         "return INTERNAL_SERVER_ERROR" in {
           mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, UserEntered)(Future.successful(Left(NinoDatabaseFailure)))
+          mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(NinoDatabaseFailure)))
 
           val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
-        }
-      }
-    }
-
-    "nino source is supplied" when {
-      val request = FakeRequest().withBody(Json.toJson(testUserDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSA)))
-
-      "the Nino has been stored correctly" should {
-        "return NO_CONTENT" in {
-          mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Right(StoreNinoSuccess)))
-
-          val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
-
-          status(res) shouldBe NO_CONTENT
-        }
-      }
-
-      "if user doesn't match with a record in CID" should {
-        "return FORBIDDEN" in {
-          mockAuthRetrievePrincipalEnrolment()
-          mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(NoMatchFoundFailure)))
-
-          val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
-
-          status(res) shouldBe FORBIDDEN
-        }
-
-        "if calls to CID failed" should {
-          "return INTERNAL_SERVER_ERROR" in {
-            mockAuthRetrievePrincipalEnrolment()
-            mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(AuthenticatorFailure)))
-
-            val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
-
-            status(res) shouldBe INTERNAL_SERVER_ERROR
-          }
-        }
-
-        "if the vat doesn't exist in mongo" should {
-          "return NOT_FOUND" in {
-            mockAuthRetrievePrincipalEnrolment()
-            mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
-
-            val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
-
-            status(res) shouldBe NOT_FOUND
-          }
-        }
-
-        "the Nino storage has failed" should {
-          "return INTERNAL_SERVER_ERROR" in {
-            mockAuthRetrievePrincipalEnrolment()
-            mockStoreNino(testVatNumber, testUserDetails, enrolments, IRSA)(Future.successful(Left(NinoDatabaseFailure)))
-
-            val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(request))
-
-            status(res) shouldBe INTERNAL_SERVER_ERROR
-          }
         }
       }
     }

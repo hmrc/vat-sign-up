@@ -43,9 +43,8 @@ class StoreNinoController @Inject()(val authConnector: AuthConnector,
         // TODO spike 2) in the IR-SA flow, orchestrate or verify the nino using IR-SA
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-            req.body.validate[UserDetailsModel] match {
-              case JsSuccess(userDetails, _) =>
-                val ninoSource = (req.body \ ninoSourceFrontEndKey).validate[NinoSource].getOrElse(UserEntered)
+            (req.body.validate[UserDetailsModel], (req.body \ ninoSourceFrontEndKey).validate[NinoSource]) match {
+              case (JsSuccess(userDetails, _), JsSuccess(ninoSource, _)) =>
                 storeNinoService.storeNino(vatNumber, userDetails, enrolments, ninoSource) map {
                   case Right(StoreNinoSuccess) => NoContent
                   case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")
