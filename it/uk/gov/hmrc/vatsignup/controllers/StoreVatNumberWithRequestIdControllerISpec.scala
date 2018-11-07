@@ -22,7 +22,6 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
-import uk.gov.hmrc.vatsignup.config.featureswitch.ClaimSubscription
 import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberWithRequestIdController.SubscriptionClaimedCode
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
@@ -119,22 +118,7 @@ class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
           )
         }
 
-        "return CONFLICT when the user is already subscribed" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
-          stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
-
-          val res = post(s"/sign-up-request/request-id/$testToken/vat-number")(jsonVatRequest)
-
-          res should have(
-            httpStatus(CONFLICT),
-            emptyBody
-          )
-        }
-
-        "claim the enrolment when the user is already subscribed and the Claim Enrolment feature switch is enabled" in {
-          enable(ClaimSubscription)
-
+        "claim the enrolment when the user is already subscribed" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
