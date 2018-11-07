@@ -32,7 +32,6 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
       "the user is eligible" should {
         "return OK" in {
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(NOT_FOUND)
           stubGetKnownFactsAndControlListInformation(testVatNumber, testPostCode, testDateOfRegistration)
 
           val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
@@ -47,7 +46,6 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
       "the user is ineligible" should {
         "return BAD_REQUEST" in {
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(NOT_FOUND)
           stubIneligibleControlListInformation(testVatNumber)
 
           val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
@@ -56,18 +54,6 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             httpStatus(BAD_REQUEST)
           )
         }
-      }
-    }
-    "the user is already subscribed" should {
-      "return CONFLICT" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
-
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
-
-        res should have(
-          httpStatus(CONFLICT)
-        )
       }
     }
   }
