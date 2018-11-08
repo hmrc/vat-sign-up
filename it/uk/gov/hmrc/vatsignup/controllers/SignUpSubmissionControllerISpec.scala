@@ -265,8 +265,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
+            ctReference = Some(testCtReference),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = testIsMigratable
           )
 

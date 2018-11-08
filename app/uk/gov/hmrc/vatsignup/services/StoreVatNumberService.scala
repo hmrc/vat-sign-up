@@ -32,7 +32,7 @@ import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAudi
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.SubscriptionClaimed
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
-import uk.gov.hmrc.vatsignup.services.StoreVatNumberService.{Ineligible, _}
+import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
