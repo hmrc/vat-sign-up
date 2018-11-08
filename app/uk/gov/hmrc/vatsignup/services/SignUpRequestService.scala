@@ -77,15 +77,15 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
                                  hasVatEnrolment: Boolean,
                                  hasPartnershipEnrolment: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
     businessEntity match {
-      case _: LimitedCompany if subscriptionRequest.ctReference.isDefined || hasVatEnrolment =>
+      case _: LimitedCompany if subscriptionRequest.ctReference.isDefined =>
         Right(RequestAuthorised)
-      case _: SoleTrader if subscriptionRequest.ninoSource contains IRSA =>
+      case _: SoleTrader if (subscriptionRequest.ninoSource contains IRSA) || subscriptionRequest.identityVerified=>
         Right(RequestAuthorised)
       case  _: PartnershipBusinessEntity =>
         Right(RequestAuthorised)
       case VatGroup =>
         Right(RequestAuthorised)
-      case _ if subscriptionRequest.identityVerified || isDelegated =>
+      case _ if isDelegated =>
         Right(RequestAuthorised)
       case _ =>
         Left(RequestNotAuthorised)

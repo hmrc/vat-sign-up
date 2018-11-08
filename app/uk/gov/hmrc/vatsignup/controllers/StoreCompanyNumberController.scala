@@ -17,8 +17,10 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import play.api.libs.json.{JsResult, JsValue, Json, Reads}
 import play.api.mvc.Action
+import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.Constants._
@@ -27,7 +29,8 @@ import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
 import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService
 import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 @Singleton
 class StoreCompanyNumberController @Inject()(val authConnector: AuthConnector,
@@ -35,23 +38,26 @@ class StoreCompanyNumberController @Inject()(val authConnector: AuthConnector,
                                             )(implicit ec: ExecutionContext)
   extends BaseController with AuthorisedFunctions {
 
+  private def handleStoreCompanyNumberResult(result: Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]]) = result map {
+    case Right(StoreCompanyNumberSuccess) => NoContent
+    case Left(DatabaseFailureNoVATNumber) => NotFound
+    case Left(CompanyNumberDatabaseFailure | CtReferenceDatabaseFailure) => InternalServerError
+    case Left(CtReferenceMismatch) => BadRequest(Json.obj(HttpCodeKey -> CtReferenceMismatchCode))
+    case Left(MatchCtReferenceFailure) => BadGateway
+  }
+
   def storeCompanyNumber(vatNumber: String): Action[(String, Option[String])] =
     Action.async(parse.json(StoreCompanyNumberReader)) {
       implicit req =>
-        authorised() {
-          (req.body match {
+        authorised().retrieve(Retrievals.allEnrolments) { enrolments =>
+          req.body match {
+            case (companyNumber, None) if enrolments.agentReferenceNumber.isDefined =>
+              handleStoreCompanyNumberResult(storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber))
             case (companyNumber, None) =>
-              storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber)
+              Future.successful(Forbidden)
             case (companyNumber, Some(ctReference)) =>
-              storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber, ctReference)
-          }) map {
-            case Right(StoreCompanyNumberSuccess) => NoContent
-            case Left(DatabaseFailureNoVATNumber) => NotFound
-            case Left(CompanyNumberDatabaseFailure | CtReferenceDatabaseFailure) => InternalServerError
-            case Left(CtReferenceMismatch) => BadRequest(Json.obj(HttpCodeKey -> CtReferenceMismatchCode))
-            case Left(MatchCtReferenceFailure) => BadGateway
+              handleStoreCompanyNumberResult(storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber, ctReference))
           }
-
         }
     }
 

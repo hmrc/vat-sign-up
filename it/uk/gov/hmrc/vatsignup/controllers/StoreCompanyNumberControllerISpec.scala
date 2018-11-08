@@ -25,28 +25,61 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetCtReferenceStub.{ctReferenc
 
 class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
-  "PUT /subscription-request/:vrn/company-number" should {
-    "if vat number exists return no content when the company number has been stored successfully" in {
-      stubAuth(OK, successfulAuthResponse())
+  "PUT /subscription-request/:vrn/company-number" when {
+    "the user is principal" should {
+      "for principal user return NO_CONTENT the provided CT reference matches the one returned by DES" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
 
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
+          "companyNumber" -> testCompanyNumber,
+          "ctReference" -> testCtReference
+        ))
 
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
+        res should have(
+          httpStatus(NO_CONTENT)
+        )
 
-      res should have(
-        httpStatus(NO_CONTENT),
-        emptyBody
-      )
+      }
+
+      "if the vat number does not already exist then return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
+          "companyNumber" -> testCompanyNumber,
+          "ctReference" -> testCtReference
+        ))
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+      }
     }
+    "the user is an agent" should {
+      "for agent user return NO_CONTENT when the company number has been stored successfully" in {
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
-    "if the vat number does not already exist then return NOT_FOUND" in {
-      stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
 
-      res should have(
-        httpStatus(NOT_FOUND)
-      )
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+      }
+
+      "if the vat number does not already exist then return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+      }
     }
 
     "return BAD_REQUEST when the json is invalid" in {
@@ -59,21 +92,6 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
       )
     }
 
-    "return NO_CONTENT when the provided CT reference matches the one returned by DES" in {
-      stubAuth(OK, successfulAuthResponse())
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
-      stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
-
-      val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
-        "companyNumber" -> testCompanyNumber,
-        "ctReference" -> testCtReference
-      ))
-
-      res should have(
-        httpStatus(NO_CONTENT)
-      )
-
-    }
   }
 
 }

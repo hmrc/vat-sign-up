@@ -22,7 +22,6 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
@@ -42,95 +41,110 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   "storeCompanyNumber" when {
-    "the CRN has been stored correctly" should {
-      "return NO_CONTENT" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Right(StoreCompanyNumberSuccess)))
+    "the user is principal" should {
+      "the provided CT reference matches what is returned from DES" should {
+        "return NO_CONTENT" in {
+          mockAuthRetrievePrincipalEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Right(StoreCompanyNumberSuccess)))
 
-        val request = FakeRequest() withBody(testCompanyNumber, None)
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
 
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
-        status(res) shouldBe NO_CONTENT
+          status(res) shouldBe NO_CONTENT
+        }
+      }
+
+      "the CTUTR is not provided" should {
+        "return FORBIDDEN" in {
+          mockAuthRetrievePrincipalEnrolment()
+
+          val request = FakeRequest() withBody(testCompanyNumber, None)
+
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+
+          status(res) shouldBe FORBIDDEN
+        }
+      }
+
+      "the provided CT reference does not match" should {
+        "return BAD_REQUEST with the CtReferenceMismatch code" in {
+          mockAuthRetrievePrincipalEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceMismatch)))
+
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+
+          status(res) shouldBe BAD_REQUEST
+          jsonBodyOf(res) shouldBe Json.obj(Constants.HttpCodeKey -> StoreCompanyNumberController.CtReferenceMismatchCode)
+        }
+      }
+
+      "if vat doesn't exist" should {
+        "return NOT_FOUND" in {
+          mockAuthRetrievePrincipalEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(DatabaseFailureNoVATNumber)))
+
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+
+          status(res) shouldBe NOT_FOUND
+        }
+      }
+
+      "the CRN storage has failed" should {
+        "return INTERNAL_SERVER_ERROR" in {
+          mockAuthRetrievePrincipalEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CompanyNumberDatabaseFailure)))
+
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+
+          status(res) shouldBe INTERNAL_SERVER_ERROR
+        }
+      }
+
+      "the CT reference storage has failed" should {
+        "return INTERNAL_SERVER_ERROR" in {
+          mockAuthRetrievePrincipalEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceDatabaseFailure)))
+
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+
+          status(res) shouldBe INTERNAL_SERVER_ERROR
+        }
       }
     }
+    "the user is agent" should {
+      "the company number is stored correctly" should {
+        "return NO_CONTENT" in {
+          mockAuthRetrieveAgentEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Right(StoreCompanyNumberSuccess)))
 
-    "if vat doesn't exist" should {
-      "return NOT_FOUND" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(DatabaseFailureNoVATNumber)))
+          val request = FakeRequest() withBody(testCompanyNumber, None)
 
-        val request = FakeRequest() withBody(testCompanyNumber, None)
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
-
-        status(res) shouldBe NOT_FOUND
+          status(res) shouldBe NO_CONTENT
+        }
       }
-    }
 
-    "the CRN storage has failed" should {
-      "return INTERNAL_SERVER_ERROR" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(CompanyNumberDatabaseFailure)))
+      "the call to match CT reference fails" should {
+        "return BAD_GATEWAY" in {
+          mockAuthRetrieveAgentEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(MatchCtReferenceFailure)))
 
-        val request = FakeRequest() withBody(testCompanyNumber, None)
+          val request = FakeRequest() withBody(testCompanyNumber, None)
 
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
-        status(res) shouldBe INTERNAL_SERVER_ERROR
-      }
-    }
-
-    "the CT reference storage has failed" should {
-      "return INTERNAL_SERVER_ERROR" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(CtReferenceDatabaseFailure)))
-
-        val request = FakeRequest() withBody(testCompanyNumber, None)
-
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
-
-        status(res) shouldBe INTERNAL_SERVER_ERROR
-      }
-    }
-
-    "the provided CT reference matches what is returned from DES" should {
-      "return NO_CONTENT" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Right(StoreCompanyNumberSuccess)))
-
-        val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
-
-        status(res) shouldBe NO_CONTENT
-      }
-    }
-
-    "the provided CT reference does not match" should {
-      "return BAD_REQUEST with the CtReferenceMismatch code" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceMismatch)))
-
-        val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
-
-        status(res) shouldBe BAD_REQUEST
-        jsonBodyOf(res) shouldBe Json.obj(Constants.HttpCodeKey -> StoreCompanyNumberController.CtReferenceMismatchCode)
-      }
-    }
-
-    "the call to match CT reference fails" should {
-      "return BAD_GATEWAY" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(MatchCtReferenceFailure)))
-
-        val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
-        val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
-
-        status(res) shouldBe BAD_GATEWAY
+          status(res) shouldBe BAD_GATEWAY
+        }
       }
     }
   }
