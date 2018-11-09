@@ -62,6 +62,17 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
 
   }.value
 
+  def claimSubscriptionWithEnrolment(vatNumber: String,
+                                     isFromBta: Boolean
+                                    )(implicit hc: HeaderCarrier,
+                                      request: Request[_]
+                                    ): Future[ClaimSubscriptionResponse] = {
+    for {
+      knownFacts <- getKnownFacts(vatNumber)
+      _ <- upsertAndAllocateEnrolment(vatNumber, knownFacts, isFromBta)
+    } yield SubscriptionClaimed
+  }.value
+
   private def checkKnownFactsMatch(optBusinessPostcode: Option[String],
                                    optVatRegistrationDate: Option[String],
                                    storedKnownFacts: KnownFacts): Either[ClaimSubscriptionService.KnownFactsMismatch.type, KnownFactsMatch] = {
