@@ -46,4 +46,14 @@ trait MockClaimSubscriptionService extends BeforeAndAfterEach with MockitoSugar 
       ArgumentMatchers.any[Request[_]]
     )) thenReturn response
 
+  def mockClaimSubscriptionWithEnrolment(vatNumber: String,
+                            isFromBta: Boolean)(response: Future[ClaimSubscriptionResponse]): Unit =
+    when(mockClaimSubscriptionService.claimSubscriptionWithEnrolment(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(isFromBta)
+    )(
+      ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]]
+    )) thenReturn response
+
 }
