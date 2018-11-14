@@ -44,13 +44,9 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
 
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-            storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate, requestObj.isFromBta) map {
+            storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate) map {
               case Right(StoreVatNumberSuccess) =>
                 Created
-              case Left(AlreadySubscribed(true)) =>
-                Ok(Json.obj(HttpCodeKey -> SubscriptionClaimedCode))
-              case Left(AlreadySubscribed(false)) =>
-                Conflict
               case Left(failure) =>
                 getErrorResponse(failure)
             }
@@ -59,6 +55,8 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
 
   def getErrorResponse(failure: StoreVatNumberFailure): Result =
     failure match {
+      case AlreadySubscribed =>
+        Conflict
       case DoesNotMatchEnrolment =>
         Forbidden(Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment"))
       case InsufficientEnrolments =>
@@ -73,7 +71,7 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
         UnprocessableEntity(Json.toJson(migratableDates))
       case VatNumberDatabaseFailure =>
         InternalServerError
-      case AgentServicesConnectionFailure | VatSubscriptionConnectionFailure | ClaimSubscriptionFailure =>
+      case AgentServicesConnectionFailure | VatSubscriptionConnectionFailure | KnownFactsAndControlListInformationConnectionFailure =>
         BadGateway
     }
 

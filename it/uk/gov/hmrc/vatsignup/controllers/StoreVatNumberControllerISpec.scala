@@ -109,19 +109,11 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubAllocateEnrolment(
-            vatNumber = testVatNumber,
-            groupId = testGroupId,
-            credentialId = testCredentialId,
-            postcode = testPostCode,
-            vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
-          )(CREATED)
 
-          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber, "isFromBta" -> true))
+          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 
           res should have(
-            httpStatus(OK),
-            jsonBodyAs(Json.obj(HttpCodeKey -> SubscriptionClaimedCode))
+            httpStatus(CONFLICT)
           )
         }
 

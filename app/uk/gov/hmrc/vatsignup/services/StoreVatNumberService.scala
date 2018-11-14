@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data._
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -30,7 +29,6 @@ import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.SubscriptionClaimed
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -43,7 +41,6 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                       agentClientRelationshipsConnector: AgentClientRelationshipsConnector,
                                       mandationStatusConnector: MandationStatusConnector,
                                       controlListEligibilityService: ControlListEligibilityService,
-                                      claimSubscriptionService: ClaimSubscriptionService,
                                       auditService: AuditService,
                                       appConfig: AppConfig
                                      )(implicit ec: ExecutionContext) {
@@ -51,12 +48,11 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   def storeVatNumber(vatNumber: String,
                      enrolments: Enrolments,
                      businessPostcode: Option[String],
-                     vatRegistrationDate: Option[String],
-                     isFromBta: Option[Boolean]
+                     vatRegistrationDate: Option[String]
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate, isFromBta)
+      _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
       eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
     } yield StoreVatNumberSuccess
@@ -134,28 +130,13 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   private def checkExistingVatSubscription(vatNumber: String,
                                            enrolments: Enrolments,
                                            businessPostcode: Option[String],
-                                           vatRegistrationDate: Option[String],
-                                           isFromBta: Option[Boolean]
+                                           vatRegistrationDate: Option[String]
                                           )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
     EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
         Future.successful(Right(NotSubscribed))
-      case Right(MTDfBMandated | MTDfBVoluntary) if enrolments.agentReferenceNumber.isEmpty =>
-        claimSubscriptionService.claimSubscription(
-          vatNumber = vatNumber,
-          businessPostcode = businessPostcode,
-          vatRegistrationDate = vatRegistrationDate,
-          isFromBta = isFromBta.get
-        ) map {
-          case Right(SubscriptionClaimed) =>
-            Left(AlreadySubscribed(subscriptionClaimed = true))
-          case Left(ClaimSubscriptionService.KnownFactsMismatch) =>
-            Left(StoreVatNumberService.KnownFactsMismatch)
-          case Left(_) =>
-            Left(ClaimSubscriptionFailure)
-        }
       case Right(MTDfBMandated | MTDfBVoluntary) =>
-        Future.successful(Left(AlreadySubscribed(subscriptionClaimed = false)))
+        Future.successful(Left(AlreadySubscribed))
       case _ =>
         Future.successful(Left(VatSubscriptionConnectionFailure))
     })
@@ -182,7 +163,7 @@ object StoreVatNumberService {
 
   sealed trait StoreVatNumberFailure
 
-  case class AlreadySubscribed(subscriptionClaimed: Boolean) extends StoreVatNumberFailure
+  case object AlreadySubscribed extends StoreVatNumberFailure
 
   case object DoesNotMatchEnrolment extends StoreVatNumberFailure
 
@@ -205,8 +186,6 @@ object StoreVatNumberService {
   case object VatSubscriptionConnectionFailure extends StoreVatNumberFailure
 
   case object VatNumberDatabaseFailure extends StoreVatNumberFailure
-
-  case object ClaimSubscriptionFailure extends StoreVatNumberFailure
 
 }
 
