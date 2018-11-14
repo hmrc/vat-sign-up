@@ -48,7 +48,7 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
   "storeVatNumber" when {
 
     //n.b. since the service is mocked, we don't care what the input is only how we handle what the service returns
-    val request = FakeRequest() withBody StoreVatNumberRequest(testVatNumber, None, None, isFromBta = None)
+    val request = FakeRequest() withBody StoreVatNumberRequest(testVatNumber, None, None)
 
     "the VAT number has been stored correctly" should {
       "return CREATED" in {
