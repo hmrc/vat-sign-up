@@ -38,6 +38,8 @@ case class ScottishLimitedPartnership(sautr: String, companyNumber: String) exte
 
 case object VatGroup extends BusinessEntity
 
+case object AdministrativeDivision extends BusinessEntity
+
 object BusinessEntity {
   val EntityTypeKey = "entityType"
   val LimitedCompanyKey = "limitedCompany"
@@ -47,6 +49,7 @@ object BusinessEntity {
   val LimitedLiabilityPartnershipKey = "limitedLiabilityPartnershipKey"
   val ScottishLimitedPartnershipKey = "scottishLimitedPartnershipKey"
   val VatGroupKey = "vatGroup"
+  val AdministrativeDivisionKey = "administrativeDivision"
 
   val NinoKey = "nino"
   val CompanyNumberKey = "companyNumber"
@@ -91,6 +94,10 @@ object BusinessEntity {
         Json.obj(
           EntityTypeKey -> VatGroupKey
         )
+      case AdministrativeDivision =>
+        Json.obj(
+          EntityTypeKey -> AdministrativeDivisionKey
+        )
     }
 
     override def reads(json: JsValue): JsResult[BusinessEntity] =
@@ -126,6 +133,8 @@ object BusinessEntity {
             } yield ScottishLimitedPartnership(sautr, companyNumber)
           case VatGroupKey =>
             JsSuccess(VatGroup)
+          case AdministrativeDivisionKey =>
+            JsSuccess(AdministrativeDivision)
         }
       } yield businessEntity
   }
