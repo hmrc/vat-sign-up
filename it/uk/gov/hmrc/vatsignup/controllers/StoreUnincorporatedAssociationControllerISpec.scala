@@ -21,13 +21,14 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
+import uk.gov.hmrc.vatsignup.models.UnincorporatedAssociation
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StoreUnincorporatedAssociationControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
   "POST /subscription-request/vat-number/:vatNumber/unincorporated-association" should {
-    "return NOT_IMPLEMENTED" in {
+    "return NO_CONTENT" in {
       stubAuth(OK, successfulAuthResponse())
 
       await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
@@ -35,11 +36,12 @@ class StoreUnincorporatedAssociationControllerISpec extends ComponentSpecBase wi
       val res = post(s"/subscription-request/vat-number/$testVatNumber/unincorporated-association")(Json.obj())
 
       res should have(
-        httpStatus(NOT_IMPLEMENTED)
+        httpStatus(NO_CONTENT),
+        emptyBody
       )
 
       val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-      dbRequest.businessEntity shouldBe None
+      dbRequest.businessEntity shouldBe Some(UnincorporatedAssociation)
     }
   }
 }

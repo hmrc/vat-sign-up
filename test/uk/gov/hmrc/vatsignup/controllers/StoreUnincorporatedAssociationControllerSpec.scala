@@ -25,27 +25,56 @@ import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.service.mocks.MockStoreUnincorporatedAssociationService
+import uk.gov.hmrc.vatsignup.services.StoreUnincorporatedAssociationService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreUnincorporatedAssociationControllerSpec extends UnitSpec with MockAuthConnector {
+class StoreUnincorporatedAssociationControllerSpec extends UnitSpec with MockAuthConnector with MockStoreUnincorporatedAssociationService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreUnincorporatedAssociationController extends StoreUnincorporatedAssociationController(
-    mockAuthConnector
+    mockAuthConnector,
+    mockStoreUnincorporatedAssociationService
   )
 
-  "storeUnincorporatedAssociation" should {
-    "return NOT_IMPLEMENTED" in {
-      mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
 
-      val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
+  "storeUnincorporatedAssociation" when {
+    "is successful" should {
+      "return NO_CONTENT" in {
+        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+        mockStoreUnincorporatedAssociation(testVatNumber)(Future.successful(Right(StoreUnincorporatedAssociationSuccess)))
 
-      status(result) shouldBe NOT_IMPLEMENTED
+        val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
 
+        status(result) shouldBe NO_CONTENT
+
+      }
+    }
+    "fails with UnincorporatedAssociationDatabaseFailureNoVATNumber" should {
+      "return NOT_FOUND" in {
+        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+        mockStoreUnincorporatedAssociation(testVatNumber)(Future.successful(Left(UnincorporatedAssociationDatabaseFailureNoVATNumber)))
+
+        val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
+
+        status(result) shouldBe NOT_FOUND
+
+      }
+    }
+    "fails with VatGroupDatabaseFailure" should {
+      "return INTERNAL_SERVER_ERROR" in {
+        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+        mockStoreUnincorporatedAssociation(testVatNumber)(Future.successful(Left(UnincorporatedAssociationDatabaseFailure)))
+
+        val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+
+      }
     }
   }
 

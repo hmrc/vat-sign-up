@@ -20,17 +20,25 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.services.StoreUnincorporatedAssociationService
+import uk.gov.hmrc.vatsignup.services.StoreUnincorporatedAssociationService.UnincorporatedAssociationDatabaseFailureNoVATNumber
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
-class StoreUnincorporatedAssociationController @Inject()(val authConnector: AuthConnector)(
+class StoreUnincorporatedAssociationController @Inject()(val authConnector: AuthConnector,
+                                                         storeUnincorporatedAssociationService: StoreUnincorporatedAssociationService
+                                                        )(
                                                          implicit ec: ExecutionContext
                                                         ) extends BaseController with AuthorisedFunctions {
 
   def storeUnincorporatedAssociation(vatNumber: String): Action[AnyContent] =  Action.async {
     implicit req => authorised() {
-      Future.successful(NotImplemented)
+      storeUnincorporatedAssociationService.storeUnincorporatedAssociation(vatNumber) map {
+        case Right(_) => NoContent
+        case Left(UnincorporatedAssociationDatabaseFailureNoVATNumber) => NotFound
+        case Left(_) => InternalServerError
+      }
     }
   }
 
