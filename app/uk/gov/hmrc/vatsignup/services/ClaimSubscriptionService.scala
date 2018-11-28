@@ -127,7 +127,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       postcode = knownFacts.businessPostcode,
       vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
     )) bimap( {
-      case enrolFailure@AllocateEnrolmentResponseHttpParser.EnrolFailure(message) =>
+      case unexpectedEnrolFailure: AllocateEnrolmentResponseHttpParser.UnexpectedEnrolFailure =>
         val upsertEnrolmentFailureMessage = upsertEnrolmentResponse match {
           case UpsertEnrolmentSuccess => None
           case IgnoredUpsertEnrolmentFailure(upsertEnrolmentErrorMessage) => Some(upsertEnrolmentErrorMessage)
@@ -138,7 +138,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
           vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
           isFromBta = isFromBta,
           isSuccess = false,
-          allocateEnrolmentFailureMessage = Some(enrolFailure.message),
+          allocateEnrolmentFailureMessage = Some(unexpectedEnrolFailure.message),
           upsertEnrolmentFailureMessage = upsertEnrolmentFailureMessage
         ))
         ClaimSubscriptionService.EnrolFailure

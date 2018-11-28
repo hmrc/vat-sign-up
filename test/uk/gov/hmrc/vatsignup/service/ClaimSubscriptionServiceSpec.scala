@@ -95,7 +95,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 testVatNumber,
                 testPostCode,
                 testDateOfRegistration.toTaxEnrolmentsFormat
-              )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentFailureMessage))))
+              )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.UnexpectedEnrolFailure(allocateEnrolmentFailureMessage))))
 
               val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
@@ -158,7 +158,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 testVatNumber,
                 testPostCode,
                 testDateOfRegistration.toTaxEnrolmentsFormat
-              )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentErrorMessage))))
+              )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.UnexpectedEnrolFailure(allocateEnrolmentErrorMessage))))
 
               val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
 
