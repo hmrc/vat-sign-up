@@ -47,8 +47,8 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
       }
 
     ninoSource match {
-      case IRSA =>
-        storeNinoToMongo(vatNumber, userDetailsModel.nino, IRSA)
+      case ninoSource @ (IRSA | AuthProfile) =>
+        storeNinoToMongo(vatNumber, userDetailsModel.nino, ninoSource)
       case UserEntered =>
         matchUser(userDetailsModel, optAgentReferenceNumber) flatMap {
           case Right(nino) => storeNinoToMongo(vatNumber, nino, UserEntered)
@@ -61,11 +61,11 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
                        (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[UserMatchingFailure, String]] =
     authenticatorConnector.matchUser(userDetailsModel).map {
       case Right(Some(nino)) => {
-        auditService.audit(UserMatchingAuditModel(userDetailsModel, agentReferenceNumber, true))
+        auditService.audit(UserMatchingAuditModel(userDetailsModel, agentReferenceNumber, isSuccess = true))
         Right(nino)
       }
       case Right(None) => {
-        auditService.audit(UserMatchingAuditModel(userDetailsModel, agentReferenceNumber, false))
+        auditService.audit(UserMatchingAuditModel(userDetailsModel, agentReferenceNumber, isSuccess = false))
         Left(NoMatchFoundFailure)
       }
       case _ => Left(AuthenticatorFailure)

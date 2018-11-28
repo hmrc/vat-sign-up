@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthenticatorConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatchingAuditModel
-import uk.gov.hmrc.vatsignup.models.{IRSA, SoleTrader, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.StoreNinoService._
@@ -140,6 +140,33 @@ class StoreNinoServiceSpec
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
           val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
+          await(res) shouldBe Left(NinoDatabaseFailure)
+        }
+      }
+    }
+    
+    "Nino source is auth profile" should {
+      "store the record and return StoreNinoSuccess" in {
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertNinoSource(testVatNumber, AuthProfile)(Future.successful(mock[UpdateWriteResult]))
+
+        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, AuthProfile)
+        await(res) shouldBe Right(StoreNinoSuccess)
+      }
+      "the VAT number is not in mongo" should {
+        "return NinoDatabaseFailureNoVATNumber" in {
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, AuthProfile)
+          await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
+        }
+      }
+
+      "calls to mongo failed" should {
+        "return NinoDatabaseFailure" in {
+          mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
+
+          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, AuthProfile)
           await(res) shouldBe Left(NinoDatabaseFailure)
         }
       }
