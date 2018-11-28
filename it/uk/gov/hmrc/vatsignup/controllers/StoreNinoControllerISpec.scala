@@ -25,8 +25,8 @@ import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthenticatorStub._
-import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
-import uk.gov.hmrc.vatsignup.models.{IRSA, UserDetailsModel, UserEntered}
+import uk.gov.hmrc.vatsignup.models.NinoSource._
+import uk.gov.hmrc.vatsignup.models.{AuthProfile, IRSA, UserDetailsModel}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -41,11 +41,10 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
         testNino
       )
 
-      lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSA.toString))
+      lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSAKey))
 
       "if vat number exists return no content when the nino has been stored successfully" in {
         stubAuth(OK, successfulAuthResponse())
-        stubMatchUser(userDetails)(matched = true)
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
@@ -60,7 +59,7 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
       }
 
       "the nino source is UserEntered" should {
-        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> UserEntered.toString))
+        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> UserEnteredKey))
 
         "if the user is not matched in CID then return FORBIDDEN" in {
           stubAuth(OK, successfulAuthResponse())
@@ -72,6 +71,22 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
             httpStatus(FORBIDDEN)
           )
         }
+      }
+
+      "the nino source is auth profile return no content when the nino has been stored successfully" in {
+        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> AuthProfileKey))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+
+        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(AuthProfile)
       }
 
       "if the vat number does not already exist then return NOT_FOUND" in {

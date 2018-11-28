@@ -79,9 +79,9 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
     businessEntity match {
       case _: LimitedCompany if subscriptionRequest.ctReference.isDefined =>
         Right(RequestAuthorised)
-      case _: SoleTrader if (subscriptionRequest.ninoSource contains IRSA) || subscriptionRequest.identityVerified=>
+      case _: SoleTrader if (subscriptionRequest.ninoSource exists (_.isFromEnrolment)) || subscriptionRequest.identityVerified =>
         Right(RequestAuthorised)
-      case  _: PartnershipBusinessEntity =>
+      case _: PartnershipBusinessEntity =>
         Right(RequestAuthorised)
       case VatGroup =>
         Right(RequestAuthorised)

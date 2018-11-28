@@ -69,6 +69,54 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           )
         }
 
+        "return NO_CONTENT for individual sign up when ninoSource is IRSA" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(SoleTrader(testNino)),
+            ninoSource = Some(IRSA),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
+        "return NO_CONTENT for individual sign up when ninoSource is Auth Profile" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(SoleTrader(testNino)),
+            ninoSource = Some(AuthProfile),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
         "return NO_CONTENT for company sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
