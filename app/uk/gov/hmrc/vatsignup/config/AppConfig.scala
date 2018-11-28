@@ -51,6 +51,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   lazy val desEnvironmentHeader: (String, String) =
     "Environment" -> loadConfig("microservice.services.des.environment")
 
+  lazy val enrolmentStoreProxyUrl: String = baseUrl("enrolment-store-proxy")
+
   def registerWithMultipleIdentifiersUrl: String = s"$desUrl/cross-regime/register/VATC"
 
   lazy val authenticatorUrl: String = baseUrl("authenticator")
@@ -97,6 +99,9 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def getPartnershipKnownFactsUrl(sautr: String): String =
     s"$desUrl/income-tax-self-assessment/known-facts/utr/$sautr"
+
+  def getAllocatedEnrolmentUrl(vatNumber: String): String =
+    s"$enrolmentStoreProxyUrl/enrolment-store/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/group"
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
