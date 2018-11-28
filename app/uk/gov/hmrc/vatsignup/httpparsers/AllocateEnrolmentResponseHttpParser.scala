@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status.CREATED
+import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object AllocateEnrolmentResponseHttpParser {
@@ -26,11 +26,16 @@ object AllocateEnrolmentResponseHttpParser {
     override def read(method: String, url: String, response: HttpResponse): AllocateEnrolmentResponse =
       response.status match {
         case CREATED => Right(EnrolSuccess)
-        case _ => Left(EnrolFailure(response.body))
+        case BAD_REQUEST => Left(EnrolBadRequest)
+        case _ => Left(UnexpectedEnrolFailure(response.body))
       }
   }
 
   case object EnrolSuccess
 
-  case class EnrolFailure(message: String)
+  sealed trait EnrolFailure
+
+  case object EnrolBadRequest extends EnrolFailure
+
+  case class UnexpectedEnrolFailure(message: String) extends EnrolFailure
 }

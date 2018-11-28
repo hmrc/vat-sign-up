@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub
-import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolFailure, EnrolSuccess}
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolBadRequest, EnrolSuccess, UnexpectedEnrolFailure}
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
 
@@ -76,7 +76,7 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
   }
 
   "allocateEnrolment" when {
-    "Tax Enrolments returns a successful response" should {
+    "Tax Enrolments returns a Created" should {
       "return an EnrolSuccess" in {
         TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(CREATED)
 
@@ -86,13 +86,23 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
       }
     }
 
-    "Tax Enrolments returns an unsuccessful response" should {
-      "return an EnrolFailure" in {
+    "Tax Enrolments returns a Bad Request" should {
+      "return an EnrolBadRequest" in {
         TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(BAD_REQUEST)
 
         val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration)
 
-        await(res) shouldBe Left(EnrolFailure(""))
+        await(res) shouldBe Left(EnrolBadRequest)
+      }
+    }
+
+    "Tax Enrolments returns any other status code" should {
+      "return an EnrolFailure" in {
+        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(FORBIDDEN)
+
+        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Left(UnexpectedEnrolFailure(""))
       }
     }
   }
