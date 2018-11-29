@@ -61,6 +61,7 @@ object EntityTypeRegistrationConnector {
   val LimitedLiabilityPartnershipKey = "limitedLiabilityPartnership"
   val ScottishLimitedPartnershipKey = "scottishLimitedPartnership"
   val VatGroupKey = "vatGroup"
+  val AdministrativeDivisionKey = "division"
 
   val VrnKey = "vrn"
   val NinoKey = "nino"
@@ -116,6 +117,12 @@ object EntityTypeRegistrationConnector {
     case VatGroup =>
       Json.obj(
         VatGroupKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case AdministrativeDivision =>
+      Json.obj(
+        AdministrativeDivisionKey -> Json.obj(
           VrnKey -> vatNumber
         )
       )

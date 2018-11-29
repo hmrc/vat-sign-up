@@ -114,5 +114,16 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
         }
       }
     }
+    "the business entity is a Division" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(testSafeId)
+
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, AdministrativeDivision))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
+      }
+    }
   }
 }
