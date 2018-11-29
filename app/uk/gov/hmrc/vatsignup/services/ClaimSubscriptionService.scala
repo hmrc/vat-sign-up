@@ -42,6 +42,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                          knownFactsConnector: KnownFactsConnector,
                                          taxEnrolmentsConnector: TaxEnrolmentsConnector,
+                                         checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                          auditService: AuditService
                                         )(implicit ec: ExecutionContext) {
 
@@ -92,8 +93,20 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     EitherT(knownFactsConnector.getKnownFacts(vatNumber)) leftMap {
       case KnownFactsHttpParser.InvalidVatNumber => InvalidVatNumber
       case KnownFactsHttpParser.VatNumberNotFound => VatNumberNotFound
-      case err => KnownFactsFailure
+      case _ => KnownFactsFailure
     }
+
+  private def getEnrolmentAllocationStatus(vatNumber: String)
+                                          (implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, EnrolmentNotAllocated.type] = {
+    EitherT(checkEnrolmentAllocationService.getEnrolmentAllocationStatus(vatNumber)) transform {
+      case Right(_) =>
+        Right(EnrolmentNotAllocated)
+      case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated) =>
+        Left(EnrolmentAlreadyAllocated)
+      case Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status)) =>
+        Left(CheckEnrolmentAllocationFailed(status))
+    }
+  }
 
   private def upsertAndAllocateEnrolment(vatNumber: String,
                                          knownFacts: KnownFacts,
@@ -103,6 +116,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)) flatMap {
       case Credentials(credentialId, GGProviderId) ~ Some(groupId) =>
         for {
+          _ <- getEnrolmentAllocationStatus(vatNumber)
           upsertEnrolmentResponse <- upsertEnrolment(vatNumber, knownFacts, isFromBta)
           res <- allocateEnrolment(vatNumber, knownFacts, isFromBta, groupId, credentialId, upsertEnrolmentResponse)
         } yield res
@@ -176,6 +190,8 @@ object ClaimSubscriptionService {
 
   case object SubscriptionClaimed
 
+  case object EnrolmentNotAllocated
+
   sealed trait KnownFactsMatch
 
   case object KnownFactsMatched extends KnownFactsMatch
@@ -183,6 +199,8 @@ object ClaimSubscriptionService {
   case object KnownFactsNotSupplied extends KnownFactsMatch
 
   sealed trait ClaimSubscriptionFailure
+
+  case object EnrolmentAlreadyAllocated extends ClaimSubscriptionFailure
 
   case object VatNumberNotFound extends ClaimSubscriptionFailure
 
@@ -193,6 +211,8 @@ object ClaimSubscriptionService {
   case object KnownFactsFailure extends ClaimSubscriptionFailure
 
   case object EnrolFailure extends ClaimSubscriptionFailure
+
+  case class CheckEnrolmentAllocationFailed(status: Int) extends ClaimSubscriptionFailure
 
   sealed trait UpsertEnrolmentResponse
 
