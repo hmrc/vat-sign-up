@@ -79,6 +79,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             EitherT.apply[Future, Nothing, Nothing](
               Future.failed(new InternalServerException("VAT Groups are not supported on the legacy Register API"))
             )
+          case AdministrativeDivision =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("Administrative Divisions are not supported on the legacy Register API"))
+            )
         }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)

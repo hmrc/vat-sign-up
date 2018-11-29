@@ -741,6 +741,37 @@ class SignUpRequestServiceSpec extends UnitSpec
           )
         }
       }
+      "the user is a Division" when {
+        "return a successful SignUpRequest" in {
+          enable(EtmpEntityType)
+
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(AdministrativeDivision),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable
+            )
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = AdministrativeDivision,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable
+            )
+          )
+        }
+      }
     }
   }
 

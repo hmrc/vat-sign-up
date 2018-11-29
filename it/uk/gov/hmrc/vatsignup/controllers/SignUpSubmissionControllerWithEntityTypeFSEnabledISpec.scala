@@ -216,6 +216,52 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
           )
         }
       }
+      "return NO_CONTENT for VAT group sign up" in {
+        val testSubscriptionRequest = SubscriptionRequest(
+          vatNumber = testVatNumber,
+          businessEntity = Some(VatGroup),
+          email = Some(testEmail),
+          identityVerified = true,
+          isMigratable = testIsMigratable
+        )
+
+        stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+        stubGetEmailVerified(testEmail)
+        stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
+        stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+        stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+        await(submissionRequestRepo.insert(testSubscriptionRequest))
+        val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+      }
+      "return NO_CONTENT for Division sign up" in {
+        val testSubscriptionRequest = SubscriptionRequest(
+          vatNumber = testVatNumber,
+          businessEntity = Some(AdministrativeDivision),
+          email = Some(testEmail),
+          identityVerified = true,
+          isMigratable = testIsMigratable
+        )
+
+        stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+        stubGetEmailVerified(testEmail)
+        stubRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(testSafeId)
+        stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+        stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+        await(submissionRequestRepo.insert(testSubscriptionRequest))
+        val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+      }
     }
   }
 }
