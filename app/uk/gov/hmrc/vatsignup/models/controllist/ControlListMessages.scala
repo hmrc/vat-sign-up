@@ -42,4 +42,5 @@ object ControlListMessages {
   val anythingUnderAppealMessage = "Anything under appeal"
   val repaymentTraderMessage = "Repayment trader"
   val mossTraderMessage = "MOSS trader"
+  val flatRateMessage = "Flat rate"
 }

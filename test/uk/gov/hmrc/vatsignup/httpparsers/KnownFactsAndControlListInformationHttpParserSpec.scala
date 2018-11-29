@@ -39,7 +39,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
               Json.obj(
                 "postcode" -> testPostCode,
                 "dateOfReg" -> testDateOfRegistration,
-                "controlListInformation" -> ControlList.valid
+                "controlListInformation" -> ControlList32.valid
               )
             )
           )
