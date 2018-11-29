@@ -51,5 +51,7 @@ object Constants {
     val EmailVerifiedKey = "emailVerified"
   }
 
-  val CONTROL_INFORMATION_STRING_LENGTH: Int = 32
+  val CONTROL_INFORMATION32_STRING_LENGTH: Int = 32
+
+  val CONTROL_INFORMATION33_STRING_LENGTH: Int = 33
 }

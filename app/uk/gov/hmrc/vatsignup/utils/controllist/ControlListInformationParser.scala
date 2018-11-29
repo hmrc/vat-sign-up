@@ -26,7 +26,7 @@ object ControlListInformationParser {
 
   def tryParse(controlList: String): Either[ControlListParseError, ControlListInformation] = {
     val parameters = ControlListParameter.getParameterMap
-    if (controlList matches "[0,1]{32}") {
+    if (controlList matches "[0,1]{32,33}") {
       val parameterSet: Set[ControlListParameter] = (controlList.zipWithIndex flatMap {
         case (CONTROL_LIST_TRUE, index) => parameters.get(index)
         case (CONTROL_LIST_FALSE, _) => None

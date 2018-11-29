@@ -66,7 +66,8 @@ object ControlListParameter {
       DIFIC_TRADER -> DificTrader,
       ANYTHING_UNDER_APPEAL -> AnythingUnderAppeal,
       REPAYMENT_TRADER -> RepaymentTrader,
-      MOSS_TRADER -> MossTrader
+      MOSS_TRADER -> MossTrader,
+      FLAT_RATE -> FlatRate
     )
 }
 
@@ -261,4 +262,10 @@ case object MossTrader extends ControlListParameter {
   val configKey: String = "oss_trader"
   val ordinal = MOSS_TRADER
   val errorMessage: String = mossTraderMessage
+}
+
+case object FlatRate extends ControlListParameter {
+  val configKey: String = "flat_rate"
+  val ordinal = FLAT_RATE
+  val errorMessage: String = flatRateMessage
 }
