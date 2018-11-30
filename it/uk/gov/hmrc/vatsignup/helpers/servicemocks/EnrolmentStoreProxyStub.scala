@@ -36,7 +36,7 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
     """
   )
 
-  def stubGetAllocatedEnrolment(vatNumber: String)(status: Int): StubMapping = {
+  def stubGetAllocatedEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
     when(method = GET, uri = s"/enrolment-store/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/group")
       .thenReturn(status = status, body = jsonResponseBody)
   }

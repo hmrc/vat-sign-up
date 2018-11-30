@@ -33,7 +33,7 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
   "The enrolment is already allocated" when {
     "EnrolmentStoreProxy ES1 returns an OK and Json Response" should {
       "return a success" in {
-        EnrolmentStoreProxyStub.stubGetAllocatedEnrolment(testVatNumber)(OK)
+        EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
 
         val res = connector.getAllocatedEnrolments(testVatNumber)
 
@@ -45,7 +45,7 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
   "The enrolment is not allocated" when {
     "EnrolmentStoreProxy ES1 returns No Content" should {
       "return a success" in {
-        EnrolmentStoreProxyStub.stubGetAllocatedEnrolment(testVatNumber)(NO_CONTENT)
+        EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
 
         val res = connector.getAllocatedEnrolments(testVatNumber)
 
@@ -58,7 +58,7 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
   "The request is invalid" when {
     "EnrolmentStoreProxy ES1 returns Bad Request" should {
       "return a success" in {
-        EnrolmentStoreProxyStub.stubGetAllocatedEnrolment(testVatNumber)(BAD_REQUEST)
+        EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(BAD_REQUEST)
 
         val res = connector.getAllocatedEnrolments(testVatNumber)
 

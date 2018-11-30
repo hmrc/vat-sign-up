@@ -18,17 +18,13 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status.{PRECONDITION_FAILED, UNPROCESSABLE_ENTITY, _}
-import play.api.libs.json.Json
-import play.api.mvc.Result
+import play.api.http.Status._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser
-import uk.gov.hmrc.vatsignup.models.{MigratableDates, ClaimSubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
 import uk.gov.hmrc.vatsignup.service.mocks.MockClaimSubscriptionService
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 
@@ -88,7 +84,21 @@ class ClaimSubscriptionControllerSpec extends UnitSpec with MockAuthConnector wi
           status(res) shouldBe BAD_GATEWAY
         }
       }
+      "claim subscription finds the enrolment is already allocated" should {
+        "return Conflict" in {
+          val isFromBta = true
+          val request = FakeRequest().withBody(ClaimSubscriptionRequest(None, None, isFromBta))
+          mockAuthRetrievePrincipalEnrolment()
+          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(Future.successful(Left(EnrolmentAlreadyAllocated)))
+
+          val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
+
+          status(res) shouldBe CONFLICT
+        }
+      }
+
     }
+
     "the user has provided known facts" when {
       "the known facts match and claim subscription is successful" should {
         "return NO_CONTENT" in {
@@ -173,6 +183,25 @@ class ClaimSubscriptionControllerSpec extends UnitSpec with MockAuthConnector wi
           val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
 
           status(res) shouldBe BAD_REQUEST
+        }
+      }
+      "claim subscription finds the enrolment is already allocated" should {
+        "return Conflict" in {
+          val isFromBta = true
+          val request = FakeRequest().withBody(ClaimSubscriptionRequest(None, None, isFromBta))
+          mockAuthRetrievePrincipalEnrolment()
+          mockClaimSubscription(
+            testVatNumber,
+            Some(testPostCode),
+            Some(testDateOfRegistration),
+            isFromBta
+          )(
+            Future.successful(Left(EnrolmentAlreadyAllocated))
+          )
+
+          val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
+
+          status(res) shouldBe CONFLICT
         }
       }
     }

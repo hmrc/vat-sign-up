@@ -124,7 +124,7 @@ class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
           stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedEnrolment(testVatNumber)(NO_CONTENT)
+          stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,
