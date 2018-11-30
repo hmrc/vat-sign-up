@@ -26,16 +26,11 @@ object AllocateEnrolmentResponseHttpParser {
     override def read(method: String, url: String, response: HttpResponse): AllocateEnrolmentResponse =
       response.status match {
         case CREATED => Right(EnrolSuccess)
-        case BAD_REQUEST => Left(EnrolBadRequest)
-        case _ => Left(UnexpectedEnrolFailure(response.body))
+        case _ => Left(EnrolFailure(response.body))
       }
   }
 
   case object EnrolSuccess
 
-  sealed trait EnrolFailure
-
-  case object EnrolBadRequest extends EnrolFailure
-
-  case class UnexpectedEnrolFailure(message: String) extends EnrolFailure
+  case class EnrolFailure(message: String)
 }
