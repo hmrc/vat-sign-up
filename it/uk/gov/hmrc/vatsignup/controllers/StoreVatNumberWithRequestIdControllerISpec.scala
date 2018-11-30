@@ -29,6 +29,7 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
@@ -123,6 +124,7 @@ class StoreVatNumberWithRequestIdControllerISpec extends ComponentSpecBase
           stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
           stubSuccessGetKnownFacts(testVatNumber)
+          stubGetAllocatedEnrolment(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,

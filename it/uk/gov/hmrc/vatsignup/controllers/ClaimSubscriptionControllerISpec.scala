@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.controllers
 import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse, vatDecEnrolment}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub.stubGetAllocatedEnrolment
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
@@ -32,6 +33,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubSuccessGetKnownFacts(testVatNumber)
+          stubGetAllocatedEnrolment(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,
@@ -53,6 +55,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFacts(testVatNumber)
+          stubGetAllocatedEnrolment(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,
