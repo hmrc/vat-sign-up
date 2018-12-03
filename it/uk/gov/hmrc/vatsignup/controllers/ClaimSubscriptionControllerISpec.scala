@@ -49,7 +49,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           )
         }
       }
-      "the MTD VAT enrolment is not claimed" should {
+      "the enrolment is already allocatedd" should {
         "return Conflict" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubSuccessGetKnownFacts(testVatNumber)
@@ -91,10 +91,9 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         }
       }
     }
-    "the MTD VAT enrolment is not claimed" should {
+    "the enrolment is already allocated" should {
       "return Conflict" in {
         stubAuth(OK, successfulAuthResponse())
-        stubSuccessGetKnownFacts(testVatNumber)
         stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
 
         val res = post(s"/claim-subscription/vat-number/$testVatNumber")(

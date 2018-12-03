@@ -236,6 +236,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
         "the supplied known facts do not match what is held on ETMP" should {
           "return KnownFactsMismatch" in {
             mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+            mockGetEnrolmentAllocationStatus(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
             mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
 
             val nonMatchingPostcode = "ZZ2 2ZZ"
@@ -254,6 +255,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
       "auth does not return a valid credential" should {
         "return InvalidCredential" in {
           mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+          mockGetEnrolmentAllocationStatus(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
           val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false)
@@ -265,6 +267,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
     "the known facts connector returns invalid VAT number" should {
       "return InvalidVatNumber" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
+        mockGetEnrolmentAllocationStatus(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
@@ -274,6 +277,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
     "the known facts connector returns VAT number not found" should {
       "return InvalidVatNumber" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
+        mockGetEnrolmentAllocationStatus(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
@@ -286,6 +290,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
           status = Status.BAD_REQUEST,
           body = ""
         ))))
+        mockGetEnrolmentAllocationStatus(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 

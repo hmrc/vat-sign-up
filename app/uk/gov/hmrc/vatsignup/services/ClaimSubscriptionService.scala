@@ -52,6 +52,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                         isFromBta: Boolean
                        )(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
+      _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- EitherT.fromEither[Future](checkKnownFactsMatch(
         businessPostcode,
@@ -69,6 +70,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                       request: Request[_]
                                     ): Future[ClaimSubscriptionResponse] = {
     for {
+      _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertAndAllocateEnrolment(vatNumber, knownFacts, isFromBta)
     } yield SubscriptionClaimed
@@ -116,7 +118,6 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)) flatMap {
       case Credentials(credentialId, GGProviderId) ~ Some(groupId) =>
         for {
-          _ <- getEnrolmentAllocationStatus(vatNumber)
           upsertEnrolmentResponse <- upsertEnrolment(vatNumber, knownFacts, isFromBta)
           res <- allocateEnrolment(vatNumber, knownFacts, isFromBta, groupId, credentialId, upsertEnrolmentResponse)
         } yield res
