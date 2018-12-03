@@ -338,6 +338,21 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 ))
               }
             }
+            "the enrolment is already allocated, CheckEnrolmentAllocation" should {
+              "return a EnrolmentAlreadyAllocated" in {
+                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+                mockGetEnrolmentAllocationStatus(testVatNumber)(
+                  Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated))
+                )
+
+                val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
+                  vatNumber = testVatNumber,
+                  isFromBta = true)
+                )
+
+                res shouldBe Left(EnrolmentAlreadyAllocated)
+              }
+            }
           }
         }
       }
