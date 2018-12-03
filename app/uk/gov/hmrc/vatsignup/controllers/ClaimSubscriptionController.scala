@@ -51,6 +51,7 @@ class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
             case Left(KnownFactsMismatch) => Forbidden
             case Left(VatNumberNotFound|InvalidVatNumber) => BadRequest
             case Left(KnownFactsFailure|EnrolFailure) => BadGateway
+            case Left(EnrolmentAlreadyAllocated) => Conflict
           }
       }
     }

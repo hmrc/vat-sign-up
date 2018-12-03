@@ -42,6 +42,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                          knownFactsConnector: KnownFactsConnector,
                                          taxEnrolmentsConnector: TaxEnrolmentsConnector,
+                                         checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                          auditService: AuditService
                                         )(implicit ec: ExecutionContext) {
 
@@ -51,6 +52,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                         isFromBta: Boolean
                        )(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
+      _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- EitherT.fromEither[Future](checkKnownFactsMatch(
         businessPostcode,
@@ -68,6 +70,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                       request: Request[_]
                                     ): Future[ClaimSubscriptionResponse] = {
     for {
+      _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertAndAllocateEnrolment(vatNumber, knownFacts, isFromBta)
     } yield SubscriptionClaimed
@@ -92,8 +95,20 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     EitherT(knownFactsConnector.getKnownFacts(vatNumber)) leftMap {
       case KnownFactsHttpParser.InvalidVatNumber => InvalidVatNumber
       case KnownFactsHttpParser.VatNumberNotFound => VatNumberNotFound
-      case err => KnownFactsFailure
+      case _ => KnownFactsFailure
     }
+
+  private def getEnrolmentAllocationStatus(vatNumber: String)
+                                          (implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, EnrolmentNotAllocated.type] = {
+    EitherT(checkEnrolmentAllocationService.getEnrolmentAllocationStatus(vatNumber)) transform {
+      case Right(_) =>
+        Right(EnrolmentNotAllocated)
+      case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated) =>
+        Left(EnrolmentAlreadyAllocated)
+      case Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status)) =>
+        Left(CheckEnrolmentAllocationFailed(status))
+    }
+  }
 
   private def upsertAndAllocateEnrolment(vatNumber: String,
                                          knownFacts: KnownFacts,
@@ -127,7 +142,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       postcode = knownFacts.businessPostcode,
       vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
     )) bimap( {
-      case unexpectedEnrolFailure: AllocateEnrolmentResponseHttpParser.UnexpectedEnrolFailure =>
+      enrolFailure: AllocateEnrolmentResponseHttpParser.EnrolFailure =>
         val upsertEnrolmentFailureMessage = upsertEnrolmentResponse match {
           case UpsertEnrolmentSuccess => None
           case IgnoredUpsertEnrolmentFailure(upsertEnrolmentErrorMessage) => Some(upsertEnrolmentErrorMessage)
@@ -138,7 +153,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
           vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
           isFromBta = isFromBta,
           isSuccess = false,
-          allocateEnrolmentFailureMessage = Some(unexpectedEnrolFailure.message),
+          allocateEnrolmentFailureMessage = Some(enrolFailure.message),
           upsertEnrolmentFailureMessage = upsertEnrolmentFailureMessage
         ))
         ClaimSubscriptionService.EnrolFailure
@@ -176,6 +191,8 @@ object ClaimSubscriptionService {
 
   case object SubscriptionClaimed
 
+  case object EnrolmentNotAllocated
+
   sealed trait KnownFactsMatch
 
   case object KnownFactsMatched extends KnownFactsMatch
@@ -183,6 +200,8 @@ object ClaimSubscriptionService {
   case object KnownFactsNotSupplied extends KnownFactsMatch
 
   sealed trait ClaimSubscriptionFailure
+
+  case object EnrolmentAlreadyAllocated extends ClaimSubscriptionFailure
 
   case object VatNumberNotFound extends ClaimSubscriptionFailure
 
@@ -193,6 +212,8 @@ object ClaimSubscriptionService {
   case object KnownFactsFailure extends ClaimSubscriptionFailure
 
   case object EnrolFailure extends ClaimSubscriptionFailure
+
+  case class CheckEnrolmentAllocationFailed(status: Int) extends ClaimSubscriptionFailure
 
   sealed trait UpsertEnrolmentResponse
 
