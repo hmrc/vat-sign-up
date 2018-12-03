@@ -771,8 +771,38 @@ class SignUpRequestServiceSpec extends UnitSpec
             )
           )
         }
+        "the user is a Unincorporated Association" when {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(UnincorporatedAssociation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = UnincorporatedAssociation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable
+              )
+            )
+          }
+        }
       }
     }
   }
-
 }
