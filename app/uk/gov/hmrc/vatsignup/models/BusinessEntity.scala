@@ -52,7 +52,7 @@ object BusinessEntity {
   val ScottishLimitedPartnershipKey = "scottishLimitedPartnershipKey"
   val VatGroupKey = "vatGroup"
   val AdministrativeDivisionKey = "administrativeDivision"
-  val UnincorporatedAssociationKey = "unincorporated-association"
+  val UnincorporatedAssociationKey = "unincorporatedAssociation"
 
   val NinoKey = "nino"
   val CompanyNumberKey = "companyNumber"

@@ -87,6 +87,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         Right(RequestAuthorised)
       case AdministrativeDivision =>
         Right(RequestAuthorised)
+      case UnincorporatedAssociation =>
+        Right(RequestAuthorised)
       case _ if isDelegated =>
         Right(RequestAuthorised)
       case _ =>
