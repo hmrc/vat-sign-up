@@ -233,18 +233,18 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               emptyBody
             )
           }
-          "return NO_CONTENT for VAT group sign up" in {
+          "return NO_CONTENT for Trust sign up" in {
             enable(EtmpEntityType)
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              businessEntity = Some(VatGroup),
+              businessEntity = Some(Trust),
               email = Some(testEmail),
               isMigratable = testIsMigratable
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
             stubGetEmailVerified(testEmail)
-            stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
+            stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
             stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
             stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -451,12 +451,12 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             emptyBody
           )
         }
-        "return NO_CONTENT for VAT group sign up" in {
+        "return NO_CONTENT for Trust sign up" in {
           enable(EtmpEntityType)
 
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(VatGroup),
+            businessEntity = Some(Trust),
             email = Some(testEmail),
             identityVerified = true,
             isMigratable = testIsMigratable
@@ -464,7 +464,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 

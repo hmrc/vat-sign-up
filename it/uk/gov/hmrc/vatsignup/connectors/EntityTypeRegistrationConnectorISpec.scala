@@ -125,5 +125,16 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
         }
       }
     }
+    "the business entity is a Trust" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
+
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, Trust))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
+      }
+    }
   }
 }
