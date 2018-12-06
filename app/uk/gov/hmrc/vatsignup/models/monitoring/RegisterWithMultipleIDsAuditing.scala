@@ -93,7 +93,7 @@ object RegisterWithMultipleIDsAuditing {
             agentReferenceNumber = agentReferenceNumber,
             isSuccess = isSuccess
           )
-        case VatGroup | AdministrativeDivision | UnincorporatedAssociation =>
+        case VatGroup | AdministrativeDivision | UnincorporatedAssociation | Trust =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
             sautr = None,

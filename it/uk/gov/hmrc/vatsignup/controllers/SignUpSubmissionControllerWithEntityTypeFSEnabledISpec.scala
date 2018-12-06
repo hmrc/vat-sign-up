@@ -262,6 +262,29 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
           emptyBody
         )
       }
+        "return NO_CONTENT for Trust sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(Trust),
+            email = Some(testEmail),
+            identityVerified = true,
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+      }
     }
-  }
 }
