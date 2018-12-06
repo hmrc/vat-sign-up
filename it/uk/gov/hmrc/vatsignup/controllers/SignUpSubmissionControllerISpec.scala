@@ -233,18 +233,18 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               emptyBody
             )
           }
-          "return NO_CONTENT for Trust sign up" in {
+          "return NO_CONTENT for Vat group sign up" in {
             enable(EtmpEntityType)
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              businessEntity = Some(Trust),
+              businessEntity = Some(VatGroup),
               email = Some(testEmail),
               isMigratable = testIsMigratable
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
             stubGetEmailVerified(testEmail)
-            stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
+            stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
             stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
             stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
