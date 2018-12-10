@@ -44,6 +44,8 @@ case object UnincorporatedAssociation extends BusinessEntity
 
 case object Trust extends BusinessEntity
 
+case object RegisteredSociety extends BusinessEntity
+
 object BusinessEntity {
   val EntityTypeKey = "entityType"
   val LimitedCompanyKey = "limitedCompany"
@@ -56,6 +58,7 @@ object BusinessEntity {
   val AdministrativeDivisionKey = "administrativeDivision"
   val UnincorporatedAssociationKey = "unincorporatedAssociation"
   val TrustKey = "trust"
+  val RegisteredSocietyKey = "registeredSociety"
 
   val NinoKey = "nino"
   val CompanyNumberKey = "companyNumber"
@@ -112,6 +115,10 @@ object BusinessEntity {
         Json.obj(
           EntityTypeKey -> TrustKey
         )
+      case RegisteredSociety =>
+        Json.obj(
+          EntityTypeKey -> RegisteredSocietyKey
+        )
     }
 
     override def reads(json: JsValue): JsResult[BusinessEntity] =
@@ -153,6 +160,8 @@ object BusinessEntity {
             JsSuccess(UnincorporatedAssociation)
           case TrustKey =>
             JsSuccess(Trust)
+          case RegisteredSocietyKey =>
+            JsSuccess(RegisteredSociety)
         }
       } yield businessEntity
   }

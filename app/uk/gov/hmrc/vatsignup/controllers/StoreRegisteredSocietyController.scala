@@ -20,22 +20,22 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.services.StoreTrustService
-import uk.gov.hmrc.vatsignup.services.StoreTrustService.TrustDatabaseFailureNoVATNumber
+import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService
+import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService.RegisteredSocietyDatabaseFailureNoVATNumber
 
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class StoreTrustController @Inject()(val authConnector: AuthConnector,
-                                     storeTrustService: StoreTrustService
-                                    )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+class StoreRegisteredSocietyController @Inject()(val authConnector: AuthConnector,
+                                                 storeRegisteredSocietyService: StoreRegisteredSocietyService
+                                                )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
-  def storeTrust(vatNumber: String): Action[AnyContent] = Action.async {
+  def storeRegisteredSociety(vatNumber: String): Action[AnyContent] = Action.async {
     implicit req =>
       authorised() {
-        storeTrustService.storeTrust(vatNumber) map {
+        storeRegisteredSocietyService.storeRegisteredSociety(vatNumber) map {
           case Right(_) => NoContent
-          case Left(TrustDatabaseFailureNoVATNumber) => NotFound
+          case Left(RegisteredSocietyDatabaseFailureNoVATNumber) => NotFound
           case Left(_) => InternalServerError
         }
       }

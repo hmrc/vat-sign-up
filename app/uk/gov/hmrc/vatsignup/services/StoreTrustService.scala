@@ -27,25 +27,18 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreTrustService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(
-                                     implicit ec: ExecutionContext
-                                    ) {
+  implicit ec: ExecutionContext
+) {
 
   def storeTrust(vatNumber: String)(
-                    implicit hc: HeaderCarrier
-                   ): Future[Either[StoreTrustFailure, StoreTrustSuccess.type]] = {
+    implicit hc: HeaderCarrier
+  ): Future[Either[StoreTrustFailure, StoreTrustSuccess.type]] = {
 
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, Trust) map {
-      _ => {
-        println("ssd")
-
-        Right(StoreTrustSuccess)
-      }
+      _ => Right(StoreTrustSuccess)
     } recover {
       case e: NoSuchElementException => Left(TrustDatabaseFailureNoVATNumber)
-      case _ => {
-        println("bsd")
-        Left(TrustDatabaseFailure)
-      }
+      case _ => Left(TrustDatabaseFailure)
     }
   }
 }
