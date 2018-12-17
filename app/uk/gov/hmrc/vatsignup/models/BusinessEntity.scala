@@ -44,7 +44,7 @@ case object UnincorporatedAssociation extends BusinessEntity
 
 case object Trust extends BusinessEntity
 
-case object RegisteredSociety extends BusinessEntity
+case class RegisteredSociety(companyNumber: String) extends BusinessEntity
 
 object BusinessEntity {
   val EntityTypeKey = "entityType"
@@ -115,9 +115,10 @@ object BusinessEntity {
         Json.obj(
           EntityTypeKey -> TrustKey
         )
-      case RegisteredSociety =>
+      case RegisteredSociety(companyNumber) =>
         Json.obj(
-          EntityTypeKey -> RegisteredSocietyKey
+          EntityTypeKey -> RegisteredSocietyKey,
+          CompanyNumberKey -> companyNumber
         )
     }
 
@@ -161,7 +162,9 @@ object BusinessEntity {
           case TrustKey =>
             JsSuccess(Trust)
           case RegisteredSocietyKey =>
-            JsSuccess(RegisteredSociety)
+            for {
+              companyNumber <- (json \ CompanyNumberKey).validate[String]
+            } yield RegisteredSociety(companyNumber)
         }
       } yield businessEntity
   }

@@ -36,9 +36,10 @@ trait MockStoreRegisteredSocietyService extends MockitoSugar with BeforeAndAfter
     reset(mockStoreRegisteredSocietyService)
   }
 
-  def mockStoreRegisteredSociety(vatNumber: String)(response: Future[Either[StoreRegisteredSocietyFailure, StoreRegisteredSocietySuccess.type]]): Unit = {
+  def mockStoreRegisteredSociety(vatNumber: String, companyNumber: String)(response: Future[Either[StoreRegisteredSocietyFailure, StoreRegisteredSocietySuccess.type]]): Unit = {
     when(mockStoreRegisteredSocietyService.storeRegisteredSociety(
-      ArgumentMatchers.eq(vatNumber)
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(companyNumber)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
