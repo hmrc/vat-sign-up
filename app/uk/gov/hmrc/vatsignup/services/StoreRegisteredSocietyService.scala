@@ -21,28 +21,25 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.RegisteredSociety
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
 class StoreRegisteredSocietyService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(
-                                     implicit ec: ExecutionContext
-                                    ) {
+  implicit ec: ExecutionContext
+) {
 
-  def storeRegisteredSociety(vatNumber: String)(
-                    implicit hc: HeaderCarrier
-                   ): Future[Either[StoreRegisteredSocietyFailure, StoreRegisteredSocietySuccess.type]] = {
+  def storeRegisteredSociety(vatNumber: String, companyNumber: String)(
+                             implicit hc: HeaderCarrier
+                            ): Future[Either[StoreRegisteredSocietyFailure, StoreRegisteredSocietySuccess.type]] =
 
-    subscriptionRequestRepository.upsertBusinessEntity(vatNumber, RegisteredSociety) map {
-      _ => {
-
-        Right(StoreRegisteredSocietySuccess)
-      }
+    subscriptionRequestRepository.upsertBusinessEntity(vatNumber, RegisteredSociety(companyNumber)) map {
+      _ => Right(StoreRegisteredSocietySuccess)
     } recover {
       case e: NoSuchElementException => Left(RegisteredSocietyDatabaseFailureNoVATNumber)
       case _ => Left(RegisteredSocietyDatabaseFailure)
     }
-  }
 }
 
 object StoreRegisteredSocietyService {

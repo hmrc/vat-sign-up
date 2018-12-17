@@ -17,11 +17,13 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent}
+import play.api.libs.json.JsPath
+import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService
 import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService.RegisteredSocietyDatabaseFailureNoVATNumber
+import uk.gov.hmrc.vatsignup.models.SubscriptionRequest.companyNumberKey
 
 import scala.concurrent.ExecutionContext
 
@@ -30,10 +32,12 @@ class StoreRegisteredSocietyController @Inject()(val authConnector: AuthConnecto
                                                  storeRegisteredSocietyService: StoreRegisteredSocietyService
                                                 )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
-  def storeRegisteredSociety(vatNumber: String): Action[AnyContent] = Action.async {
+  def storeRegisteredSociety(vatNumber: String): Action[String] =
+    Action.async(parse.json((JsPath \ companyNumberKey).read[String])) {
     implicit req =>
       authorised() {
-        storeRegisteredSocietyService.storeRegisteredSociety(vatNumber) map {
+        val companyNumber = req.body
+        storeRegisteredSocietyService.storeRegisteredSociety(vatNumber, companyNumber) map {
           case Right(_) => NoContent
           case Left(RegisteredSocietyDatabaseFailureNoVATNumber) => NotFound
           case Left(_) => InternalServerError

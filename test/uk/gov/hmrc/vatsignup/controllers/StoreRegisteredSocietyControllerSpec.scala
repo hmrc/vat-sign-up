@@ -41,14 +41,17 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
     mockStoreRegisteredSocietyService
   )
 
+  val request = FakeRequest() withBody testCompanyNumber
 
   "storeRegisteredSociety" when {
     "is successful" should {
       "return NO_CONTENT" in {
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreRegisteredSociety(testVatNumber)(Future.successful(Right(StoreRegisteredSocietySuccess)))
+        mockStoreRegisteredSociety(testVatNumber, testCompanyNumber)(
+          Future.successful(Right(StoreRegisteredSocietySuccess))
+        )
 
-        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(FakeRequest()))
+        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
 
         status(result) shouldBe NO_CONTENT
 
@@ -57,9 +60,11 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
     "fails with RegisteredSocietyDatabaseFailureNoVATNumber" should {
       "return NOT_FOUND" in {
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreRegisteredSociety(testVatNumber)(Future.successful(Left(RegisteredSocietyDatabaseFailureNoVATNumber)))
+        mockStoreRegisteredSociety(testVatNumber, testCompanyNumber)(
+          Future.successful(Left(RegisteredSocietyDatabaseFailureNoVATNumber))
+        )
 
-        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(FakeRequest()))
+        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
 
         status(result) shouldBe NOT_FOUND
 
@@ -68,9 +73,11 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
     "fails with RegisteredSocietyDatabaseFailure" should {
       "return INTERNAL_SERVER_ERROR" in {
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreRegisteredSociety(testVatNumber)(Future.successful(Left(RegisteredSocietyDatabaseFailure)))
+        mockStoreRegisteredSociety(testVatNumber, testCompanyNumber)(
+          Future.successful(Left(RegisteredSocietyDatabaseFailure))
+        )
 
-        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(FakeRequest()))
+        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
 

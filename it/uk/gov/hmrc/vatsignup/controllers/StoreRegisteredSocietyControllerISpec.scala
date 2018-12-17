@@ -33,7 +33,7 @@ class StoreRegisteredSocietyControllerISpec extends ComponentSpecBase with Custo
 
       await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
 
-      val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(Json.obj())
+      val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(Json.obj("companyNumber" -> testCompanyNumber))
 
       res should have(
         httpStatus(NO_CONTENT),
@@ -41,7 +41,7 @@ class StoreRegisteredSocietyControllerISpec extends ComponentSpecBase with Custo
       )
 
       val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-      dbRequest.businessEntity shouldBe Some(RegisteredSociety)
+      dbRequest.businessEntity shouldBe Some(RegisteredSociety(testCompanyNumber))
     }
   }
 }
