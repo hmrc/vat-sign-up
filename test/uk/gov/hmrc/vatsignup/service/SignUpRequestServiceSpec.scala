@@ -558,25 +558,79 @@ class SignUpRequestServiceSpec extends UnitSpec
               )
             )
           }
+          "sign up email is not verified" should {
+            "return a EmailVerificationRequired" in {
+              enable(EtmpEntityType)
+
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(VatGroup),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Left(EmailVerificationRequired)
+            }
+          }
         }
-        "sign up email is not verified" should {
-          "return a EmailVerificationRequired" in {
+      }
+
+      "the user is a Registered Society" when {
+        "sign up email is verified" should {
+          "return a successful SignUpRequest" in {
             enable(EtmpEntityType)
 
             val testSubscriptionRequest =
               SubscriptionRequest(
                 vatNumber = testVatNumber,
-                businessEntity = Some(VatGroup),
+                businessEntity = Some(RegisteredSociety(testCompanyNumber)),
                 email = Some(testEmail),
                 isMigratable = testIsMigratable
               )
 
             mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
             val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-            await(res) shouldBe Left(EmailVerificationRequired)
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = RegisteredSociety(testCompanyNumber),
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable
+              )
+            )
+          }
+          "sign up email is not verified" should {
+            "return a EmailVerificationRequired" in {
+              enable(EtmpEntityType)
+
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Left(EmailVerificationRequired)
+            }
           }
         }
       }
@@ -710,7 +764,8 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
       }
-      "the user is a VAT group" when {
+
+      "the user is a VAT group" should {
         "return a successful SignUpRequest" in {
           enable(EtmpEntityType)
 
@@ -741,7 +796,8 @@ class SignUpRequestServiceSpec extends UnitSpec
           )
         }
       }
-      "the user is a Division" when {
+
+      "the user is a Division" should {
         "return a successful SignUpRequest" in {
           enable(EtmpEntityType)
 
@@ -771,38 +827,72 @@ class SignUpRequestServiceSpec extends UnitSpec
             )
           )
         }
-        "the user is a Unincorporated Association" when {
-          "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
+      }
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(UnincorporatedAssociation),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
-              )
+      "the user is a Unincorporated Association" should {
+        "return a successful SignUpRequest" in {
+          enable(EtmpEntityType)
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = UnincorporatedAssociation,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(UnincorporatedAssociation),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable
             )
-          }
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = UnincorporatedAssociation,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable
+            )
+          )
         }
       }
+
+      "the user is a Registered Society" should {
+        "return a successful SignUpRequest" in {
+          enable(EtmpEntityType)
+
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable
+            )
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = RegisteredSociety(testCompanyNumber),
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable
+            )
+          )
+        }
+      }
+
     }
   }
 }

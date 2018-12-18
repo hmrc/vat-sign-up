@@ -85,6 +85,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         Right(RequestAuthorised)
       case VatGroup | AdministrativeDivision | UnincorporatedAssociation | Trust =>
         Right(RequestAuthorised)
+      case _: RegisteredSociety =>
+        Right(RequestAuthorised)
       case _ if isDelegated =>
         Right(RequestAuthorised)
       case _ =>
