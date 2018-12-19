@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
@@ -64,6 +63,7 @@ object EntityTypeRegistrationConnector {
   val AdministrativeDivisionKey = "division"
   val UnincorporatedAssociationKey = "unincorporatedAssociation"
   val TrustKey = "trust"
+  val RegisteredSocietyKey = "registeredSociety"
 
   val VrnKey = "vrn"
   val NinoKey = "nino"
@@ -138,6 +138,13 @@ object EntityTypeRegistrationConnector {
       Json.obj(
         TrustKey -> Json.obj(
           VrnKey -> vatNumber
+        )
+      )
+    case RegisteredSociety(companyNumber) =>
+      Json.obj(
+        RegisteredSocietyKey -> Json.obj(
+          VrnKey -> vatNumber,
+          CrnKey -> companyNumber
         )
       )
   }
