@@ -91,6 +91,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             EitherT.apply[Future, Nothing, Nothing](
               Future.failed(new InternalServerException("Trusts are not supported on the legacy Register API"))
             )
+          case RegisteredSociety(companyNumber) =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("Registered Societies are not supported on the legacy Register API"))
+            )
         }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
