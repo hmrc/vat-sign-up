@@ -74,6 +74,13 @@ class GetMandationStatusHttpParserSpec extends UnitSpec with EitherValues {
         read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpParser.VatNumberNotFound
       }
     }
+    "the http status is Precondition Failed" should {
+      "return MigrationInProgress" in {
+        val testResponse = HttpResponse(PRECONDITION_FAILED)
+
+        read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpParser.MigrationInProgress
+      }
+    }
 
     "the http status is anything else" should {
       "return GetMandationStatusHttpFailure" in {

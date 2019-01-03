@@ -166,6 +166,18 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
       }
     }
 
+    "the vat number is being migrated" should {
+      "return BAD_REQUEST with reason in body" in {
+        mockAuthRetrieveAgentEnrolment()
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(VatMigrationInProgress)))
+
+        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+
+        status(res) shouldBe BAD_REQUEST
+        jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> "VatMigrationInProgress")
+      }
+    }
+
     "the call to agent services failed" should {
       "return FORBIDDEN" in {
         mockAuthRetrieveAgentEnrolment()

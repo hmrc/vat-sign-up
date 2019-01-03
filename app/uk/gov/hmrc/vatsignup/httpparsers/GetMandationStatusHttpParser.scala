@@ -35,6 +35,8 @@ object GetMandationStatusHttpParser {
           case NonMTDfB.Name => NonMTDfB
           case NonDigital.Name => NonDigital
         } toRight GetMandationStatusHttpFailure(OK, response.body)
+        case PRECONDITION_FAILED =>
+          Left(MigrationInProgress)
         case NOT_FOUND =>
           Left(VatNumberNotFound)
         case status =>
@@ -44,6 +46,7 @@ object GetMandationStatusHttpParser {
 
   sealed trait GetMandationStatusFailure
   case object VatNumberNotFound extends GetMandationStatusFailure
+  case object MigrationInProgress extends GetMandationStatusFailure
   case class GetMandationStatusHttpFailure(status: Int, body: String) extends GetMandationStatusFailure
 
 }

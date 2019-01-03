@@ -24,7 +24,7 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, MandationStatusConnector}
-import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
+import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{MigrationInProgress, VatNumberNotFound}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
@@ -137,6 +137,8 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
         Future.successful(Right(NotSubscribed))
       case Right(MTDfBMandated | MTDfBVoluntary) =>
         Future.successful(Left(AlreadySubscribed))
+      case Left(MigrationInProgress) =>
+        Future.successful(Left(VatMigrationInProgress))
       case _ =>
         Future.successful(Left(VatSubscriptionConnectionFailure))
     })
@@ -186,6 +188,8 @@ object StoreVatNumberService {
   case object VatSubscriptionConnectionFailure extends StoreVatNumberFailure
 
   case object VatNumberDatabaseFailure extends StoreVatNumberFailure
+
+  case object VatMigrationInProgress extends StoreVatNumberFailure
 
 }
 
