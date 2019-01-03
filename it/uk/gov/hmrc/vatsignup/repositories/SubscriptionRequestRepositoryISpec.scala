@@ -279,6 +279,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber))
       ))
     }
+
     "store a VAT Group" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
@@ -304,6 +305,20 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(RegisteredSociety(testCompanyNumber))
+      ))
+    }
+
+    "store a Charity" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertBusinessEntity(testVatNumber, Charity)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) shouldBe Some(SubscriptionRequest(
+        vatNumber = testVatNumber,
+        isMigratable = true,
+        businessEntity = Some(Charity)
       ))
     }
   }

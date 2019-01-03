@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ case object Trust extends BusinessEntity
 
 case class RegisteredSociety(companyNumber: String) extends BusinessEntity
 
+case object Charity extends BusinessEntity
+
 object BusinessEntity {
   val EntityTypeKey = "entityType"
   val LimitedCompanyKey = "limitedCompany"
@@ -59,6 +61,7 @@ object BusinessEntity {
   val UnincorporatedAssociationKey = "unincorporatedAssociation"
   val TrustKey = "trust"
   val RegisteredSocietyKey = "registeredSociety"
+  val CharityKey = "charity"
 
   val NinoKey = "nino"
   val CompanyNumberKey = "companyNumber"
@@ -120,6 +123,10 @@ object BusinessEntity {
           EntityTypeKey -> RegisteredSocietyKey,
           CompanyNumberKey -> companyNumber
         )
+      case Charity =>
+        Json.obj(
+          EntityTypeKey -> CharityKey
+        )
     }
 
     override def reads(json: JsValue): JsResult[BusinessEntity] =
@@ -165,6 +172,8 @@ object BusinessEntity {
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]
             } yield RegisteredSociety(companyNumber)
+          case CharityKey =>
+            JsSuccess(Charity)
         }
       } yield businessEntity
   }

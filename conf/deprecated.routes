@@ -13,6 +13,7 @@ POST        /subscription-request/vat-number/:vatNumber/administrative-division 
 POST        /subscription-request/vat-number/:vatNumber/unincorporated-association   @uk.gov.hmrc.vatsignup.controllers.StoreUnincorporatedAssociationController.storeUnincorporatedAssociation(vatNumber: String)
 POST        /subscription-request/vat-number/:vatNumber/trust                        @uk.gov.hmrc.vatsignup.controllers.StoreTrustController.storeTrust(vatNumber: String)
 POST        /subscription-request/vat-number/:vatNumber/registered-society           @uk.gov.hmrc.vatsignup.controllers.StoreRegisteredSocietyController.storeRegisteredSociety(vatNumber: String)
+POST        /subscription-request/vat-number/:vatNumber/charity                      @uk.gov.hmrc.vatsignup.controllers.StoreCharityController.storeCharity(vatNumber: String)
 
 GET         /subscription-request/vat-number/:vatNumber/mtdfb-eligibility            @uk.gov.hmrc.vatsignup.controllers.VatNumberEligibilityController.checkVatNumberEligibility(vatNumber: String)
 
