@@ -30,6 +30,7 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.MigrationInProgress
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -118,6 +119,17 @@ class StoreVatNumberServiceSpec
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
           }
+          "the VAT number migration is already in progress for MTD-VAT" should {
+            "return VatMigrationInProgress" in {
+              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
+              mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
+
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+              res shouldBe Left(VatMigrationInProgress)
+
+              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+            }
+          }
         }
         "the VAT number is eligible but non migratable" should {
           "return StoreVatNumberSuccess" in {
@@ -191,6 +203,15 @@ class StoreVatNumberServiceSpec
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
               res shouldBe Left(VatNumberDatabaseFailure)
             }
+          }
+        }
+        "the vat number is currently being migrated" should {
+          "return a VatMigrationInProgress" in {
+            mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+
+            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
+            res shouldBe Left(VatMigrationInProgress)
           }
         }
         "the vat number does not match enrolment" should {
@@ -269,6 +290,15 @@ class StoreVatNumberServiceSpec
             val res = await(call)
             res shouldBe Left(VatNumberDatabaseFailure)
           }
+        }
+      }
+      "the vat number migration is currently in progress" should {
+        "return a VatMigrationInProgress" in {
+          mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
+          mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
+          res shouldBe Left(VatMigrationInProgress)
         }
       }
       "the user does not have either enrolment and did not provide both known facts" should {

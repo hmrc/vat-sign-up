@@ -66,6 +66,19 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         )
       }
 
+      "return BAD REQUEST when the client's VAT migration is in progress" in {
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
+
+        val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
+
+        res should have(
+          httpStatus(BAD_REQUEST),
+          jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "VatMigrationInProgress"))
+        )
+      }
+
       "return FORBIDDEN when there is no relationship" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
@@ -128,6 +141,18 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
 
+        "return BAD REQUEST when the user's VAT migration is in progress" in {
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
+
+          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
+
+          res should have(
+            httpStatus(BAD_REQUEST),
+            jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "VatMigrationInProgress"))
+          )
+        }
+
         "return BAD_REQUEST when the json is invalid" in {
           stubAuth(OK, successfulAuthResponse())
 
@@ -157,6 +182,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           emptyBody
         )
       }
+
       "return FORBIDDEN when known facts mismatch" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -173,6 +199,23 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
         )
       }
+
+      "return BAD REQUEST when the user's VAT migration is in progress" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
+
+        val res = post("/subscription-request/vat-number")(Json.obj(
+          "vatNumber" -> testVatNumber,
+          "postCode" -> testVatNumber,
+          "registrationDate" -> testVatNumber
+        ))
+
+        res should have(
+          httpStatus(BAD_REQUEST),
+          jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "VatMigrationInProgress"))
+        )
+      }
+
       "return PRECONDITION_FAILED when vat number is not found" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -188,6 +231,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           httpStatus(PRECONDITION_FAILED)
         )
       }
+
       "return PRECONDITION_FAILED when vat number is invalid" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))

@@ -57,6 +57,8 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
     failure match {
       case AlreadySubscribed =>
         Conflict
+      case VatMigrationInProgress =>
+        BadRequest(Json.obj(HttpCodeKey -> "VatMigrationInProgress"))
       case DoesNotMatchEnrolment =>
         Forbidden(Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment"))
       case InsufficientEnrolments =>
