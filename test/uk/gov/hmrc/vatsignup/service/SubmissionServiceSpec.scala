@@ -591,6 +591,21 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
       val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
       e.message shouldBe "Registered Societies are not supported on the legacy Register API"
     }
+    "fail for a Charity sign up" in {
+      disable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = Charity,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
+      e.message shouldBe "Charities are not supported on the legacy Register API"
+    }
   }
 
   "when ETMP entity type feature switch is enabled" should {
@@ -869,6 +884,42 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = Some(testCompanyNumber),
+        agentReferenceNumber = Some(testAgentReferenceNumber),
+        isSuccess = true
+      ))
+      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+        Some(testAgentReferenceNumber), isSuccess = true))
+    }
+
+    "return a SignUpRequestSubmitted for a Charity sign up" in {
+      disable(HybridSolution)
+      enable(EtmpEntityType)
+
+      val signUpRequest = SignUpRequest(
+        vatNumber = testVatNumber,
+        businessEntity = Charity,
+        signUpEmail = Some(testSignUpEmail),
+        transactionEmail = testSignUpEmail,
+        isDelegated = true,
+        isMigratable = testIsMigratable
+      )
+
+      mockRegisterBusinessEntity(testVatNumber, Charity)(
+        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+      )
+      mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(
+        Future.successful(Right(CustomerSignUpResponseSuccess))
+      )
+      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+      res.right.value shouldBe SignUpRequestSubmitted
+
+      verifyAudit(RegisterWithMultipleIDsAuditModel(
+        vatNumber = testVatNumber,
+        sautr = None,
+        companyNumber = None,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
