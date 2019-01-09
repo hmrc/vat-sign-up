@@ -20,9 +20,10 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService
 import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService._
+import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.Future
 
@@ -36,11 +37,14 @@ trait MockStoreRegisteredSocietyService extends MockitoSugar with BeforeAndAfter
     reset(mockStoreRegisteredSocietyService)
   }
 
-  def mockStoreRegisteredSociety(vatNumber: String, companyNumber: String)(response: Future[Either[StoreRegisteredSocietyFailure, StoreRegisteredSocietySuccess.type]]): Unit = {
+  def mockStoreRegisteredSociety(vatNumber: String, companyNumber: String, ctReference: Option[String])(
+    response: Future[Either[StoreRegisteredSocietyFailure, StoreRegisteredSocietySuccess.type]]
+  ): Unit = {
     when(mockStoreRegisteredSocietyService.storeRegisteredSociety(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(companyNumber)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+      ArgumentMatchers.eq(companyNumber),
+      ArgumentMatchers.eq(ctReference)
+    )(ArgumentMatchers.any[HeaderCarrier], ArgumentMatchers.any[Request[_]])) thenReturn response
   }
 
 }
