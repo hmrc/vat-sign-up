@@ -17,13 +17,15 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.libs.json.JsPath
+import play.api.libs.json.{JsResult, JsValue, Json, Reads}
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.vatsignup.controllers.StoreRegisteredSocietyController._
+import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
 import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService
-import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService.RegisteredSocietyDatabaseFailureNoVATNumber
-import uk.gov.hmrc.vatsignup.models.SubscriptionRequest.companyNumberKey
+import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService._
 
 import scala.concurrent.ExecutionContext
 
@@ -32,17 +34,32 @@ class StoreRegisteredSocietyController @Inject()(val authConnector: AuthConnecto
                                                  storeRegisteredSocietyService: StoreRegisteredSocietyService
                                                 )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
 
-  def storeRegisteredSociety(vatNumber: String): Action[String] =
-    Action.async(parse.json((JsPath \ companyNumberKey).read[String])) {
-    implicit req =>
+  def storeRegisteredSociety(vatNumber: String): Action[(String, Option[String])] =
+    Action.async(parse.json(StoreRegisteredSocietyReads)) { implicit req =>
       authorised() {
-        val companyNumber = req.body
-        storeRegisteredSocietyService.storeRegisteredSociety(vatNumber, companyNumber) map {
-          case Right(_) => NoContent
-          case Left(RegisteredSocietyDatabaseFailureNoVATNumber) => NotFound
-          case Left(_) => InternalServerError
+        req.body match {
+          case (companyNumber, ctReferenceOpt) =>
+            storeRegisteredSocietyService.storeRegisteredSociety(vatNumber, companyNumber, ctReferenceOpt) map {
+              case Right(_) => NoContent
+              case Left(DatabaseFailureNoVATNumber) => NotFound
+              case Left(CtReferenceMismatch) => BadRequest(Json.obj(HttpCodeKey -> CtReferenceMismatchCode))
+              case Left(MatchCtReferenceFailure) => BadGateway
+              case Left(_) => InternalServerError
+            }
         }
-      }
-  }
 
+      }
+    }
+
+}
+
+object StoreRegisteredSocietyController {
+  val CtReferenceMismatchCode = "CtReferenceMismatch"
+
+  object StoreRegisteredSocietyReads extends Reads[(String, Option[String])] {
+    override def reads(json: JsValue): JsResult[(String, Option[String])] = for {
+      companyNumber <- (json \ companyNumberKey).validate[String]
+      ctReference <- (json \ ctReferenceKey).validateOpt[String]
+    } yield (companyNumber, ctReference)
+  }
 }

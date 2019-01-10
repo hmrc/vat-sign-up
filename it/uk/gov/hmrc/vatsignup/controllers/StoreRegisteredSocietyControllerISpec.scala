@@ -21,27 +21,92 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetCtReferenceStub.{ctReferenceBody, stubGetCtReference}
+import uk.gov.hmrc.vatsignup.models.RegisteredSociety
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StoreRegisteredSocietyControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
-  "POST /subscription-request/vat-number/:vatNumber/registered-society" should {
-    "return NO_CONTENT" in {
+  "PUT /subscription-request/:vrn/registered-society" when {
+    "a ct reference is provided" should {
+      "return NO_CONTENT if the provided CT reference matches the one returned by DES" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
+
+        val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(
+          Json.obj(
+           "companyNumber" -> testCompanyNumber,
+           "ctReference" -> testCtReference
+          )
+        )
+
+        res should have(
+          httpStatus(NO_CONTENT)
+        )
+        val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
+        dbRequest.businessEntity shouldBe Some(RegisteredSociety(testCompanyNumber))
+      }
+
+      "if the vat number does not already exist then return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
+
+        val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(
+          Json.obj(
+           "companyNumber" -> testCompanyNumber,
+           "ctReference" -> testCtReference
+          )
+        )
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+
+      }
+    }
+    "a ct reference is not provided" should {
+      "return NO_CONTENT when the registered society has been stored successfully" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+
+        val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(
+          Json.obj("companyNumber" -> testCompanyNumber)
+        )
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+        val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
+        dbRequest.businessEntity shouldBe Some(RegisteredSociety(testCompanyNumber))
+
+      }
+
+      "if the vat number does not already exist then return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(
+          Json.obj("companyNumber" -> testCompanyNumber)
+        )
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+      }
+    }
+
+    "return BAD_REQUEST when the json is invalid" in {
       stubAuth(OK, successfulAuthResponse())
 
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
-
-      val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(Json.obj("companyNumber" -> testCompanyNumber))
+      val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(Json.obj())
 
       res should have(
-        httpStatus(NO_CONTENT),
-        emptyBody
+        httpStatus(BAD_REQUEST)
       )
-
-      val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-      dbRequest.businessEntity shouldBe Some(RegisteredSociety(testCompanyNumber))
     }
+
   }
+
 }

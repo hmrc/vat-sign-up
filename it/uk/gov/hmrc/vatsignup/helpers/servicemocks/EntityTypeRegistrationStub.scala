@@ -108,6 +108,14 @@ object EntityTypeRegistrationStub extends WireMockMethods {
       )
     )
 
+  private def registerRegisteredSocietyJsonBody(vatNumber: String, companyNumber: String): JsObject =
+    Json.obj(
+      "registeredSociety" -> Json.obj(
+        "vrn" -> vatNumber,
+        "crn" -> companyNumber
+      )
+    )
+
   private def registerResponseBody(safeId: String): JsObject =
     Json.obj(
       "identification" -> Json.arr(
@@ -152,6 +160,8 @@ object EntityTypeRegistrationStub extends WireMockMethods {
           registerTrustJsonBody(vatNumber)
         case Charity =>
           registerCharityJsonBody(vatNumber)
+        case RegisteredSociety(companyNumber) =>
+          registerRegisteredSocietyJsonBody(vatNumber, companyNumber)
       }
     ) thenReturn(OK, registerResponseBody(safeId))
   }

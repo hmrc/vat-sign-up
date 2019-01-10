@@ -19,10 +19,12 @@ package uk.gov.hmrc.vatsignup.controllers
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import play.api.http.Status._
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreRegisteredSocietyService
@@ -33,54 +35,104 @@ import scala.concurrent.Future
 
 class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnector with MockStoreRegisteredSocietyService {
 
+  object TestStoreRegisteredSocietyController
+    extends StoreRegisteredSocietyController(mockAuthConnector, mockStoreRegisteredSocietyService)
+
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  object TestStoreRegisteredSocietyController extends StoreRegisteredSocietyController(
-    mockAuthConnector,
-    mockStoreRegisteredSocietyService
-  )
+  "storeCompanyNumber" when {
+    "a ct reference is provided" should {
+      "the provided CT reference matches what is returned from DES" should {
+        "return NO_CONTENT" in {
+          mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+          mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, Some(testCtReference))(
+            Future.successful(Right(StoreRegisteredSocietySuccess))
+          )
 
-  val request = FakeRequest() withBody testCompanyNumber
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
 
-  "storeRegisteredSociety" when {
-    "is successful" should {
-      "return NO_CONTENT" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreRegisteredSociety(testVatNumber, testCompanyNumber)(
-          Future.successful(Right(StoreRegisteredSocietySuccess))
-        )
+          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
 
-        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          status(res) shouldBe NO_CONTENT
+        }
+      }
 
-        status(result) shouldBe NO_CONTENT
+      "the provided CT reference does not match" should {
+        "return BAD_REQUEST with the CtReferenceMismatch code" in {
+          mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+          mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, Some(testCtReference))(Future.successful(Left(CtReferenceMismatch)))
 
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+
+          status(res) shouldBe BAD_REQUEST
+          jsonBodyOf(res) shouldBe Json.obj(
+            Constants.HttpCodeKey -> StoreRegisteredSocietyController.CtReferenceMismatchCode
+          )
+        }
+      }
+
+      "if vat doesn't exist" should {
+        "return NOT_FOUND" in {
+          mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+          mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, Some(testCtReference))(
+            Future.successful(Left(DatabaseFailureNoVATNumber))
+          )
+
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+
+          status(res) shouldBe NOT_FOUND
+        }
+      }
+
+      "the registered society storage has failed" should {
+        "return INTERNAL_SERVER_ERROR" in {
+          mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+          mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, Some(testCtReference))(
+            Future.successful(Left(RegisteredSocietyDatabaseFailure))
+          )
+
+          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+
+          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+
+          status(res) shouldBe INTERNAL_SERVER_ERROR
+        }
       }
     }
-    "fails with RegisteredSocietyDatabaseFailureNoVATNumber" should {
-      "return NOT_FOUND" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreRegisteredSociety(testVatNumber, testCompanyNumber)(
-          Future.successful(Left(RegisteredSocietyDatabaseFailureNoVATNumber))
-        )
+    "a ct reference is not provided" should {
+      "the registered society is stored correctly" should {
+        "return NO_CONTENT" in {
+          mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+          mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, None)(
+            Future.successful(Right(StoreRegisteredSocietySuccess))
+          )
 
-        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val request = FakeRequest() withBody(testCompanyNumber, None)
 
-        status(result) shouldBe NOT_FOUND
+          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
 
+          status(res) shouldBe NO_CONTENT
+        }
       }
-    }
-    "fails with RegisteredSocietyDatabaseFailure" should {
-      "return INTERNAL_SERVER_ERROR" in {
-        mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
-        mockStoreRegisteredSociety(testVatNumber, testCompanyNumber)(
-          Future.successful(Left(RegisteredSocietyDatabaseFailure))
-        )
 
-        val result: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+      "the registered society storage has failed" should {
+        "return INTERNAL_SERVER_ERROR" in {
+          mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
+          mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, None)(
+            Future.successful(Left(RegisteredSocietyDatabaseFailure))
+          )
 
-        status(result) shouldBe INTERNAL_SERVER_ERROR
+          val request = FakeRequest() withBody(testCompanyNumber, None)
 
+          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+
+          status(res) shouldBe INTERNAL_SERVER_ERROR
+        }
       }
     }
   }
