@@ -21,8 +21,8 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.GetCtReferenceFailure
 import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.GetCtReferenceHttpReads.read
+import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.{CtReferenceNotFound, GetCtReferenceFailure}
 
 class GetCtReferenceHttpParserSpec extends UnitSpec {
   "GetCtReferenceHttpReads#read" when {
@@ -48,7 +48,16 @@ class GetCtReferenceHttpParserSpec extends UnitSpec {
         }
       }
     }
-    "the response is INTERNAL_SERVER_ERRER" should {
+    "the response is NOT_FOUND" should {
+      "return a CtReferenceNotFound" in {
+        val httpResponse = HttpResponse(
+          responseStatus = NOT_FOUND
+        )
+
+        read("", "", httpResponse) shouldBe Left(CtReferenceNotFound)
+      }
+    }
+    "the response is INTERNAL_SERVER_ERROR" should {
       "return a failure" in {
         val httpResponse = HttpResponse(
           responseStatus = INTERNAL_SERVER_ERROR
