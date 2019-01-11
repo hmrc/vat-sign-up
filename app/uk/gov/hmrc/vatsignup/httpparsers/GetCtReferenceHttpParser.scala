@@ -21,7 +21,7 @@ import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object GetCtReferenceHttpParser {
-  type GetCtReferenceResponse = Either[GetCtReferenceFailure, String]
+  type GetCtReferenceResponse = Either[GetCtReferenceFailureResponse, String]
 
   val CtReferenceKey = "CTUTR"
 
@@ -35,11 +35,17 @@ object GetCtReferenceHttpParser {
             case _ =>
               Left(GetCtReferenceFailure(response.status, response.body))
           }
+        case NOT_FOUND =>
+          Left(CtReferenceNotFound)
         case _ =>
           Left(GetCtReferenceFailure(response.status, response.body))
       }
   }
 
-  case class GetCtReferenceFailure(status: Int, body: String)
+  sealed trait GetCtReferenceFailureResponse
+
+  case object CtReferenceNotFound extends GetCtReferenceFailureResponse
+
+  case class GetCtReferenceFailure(status: Int, body: String) extends GetCtReferenceFailureResponse
 
 }
