@@ -55,6 +55,17 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
         }
       }
 
+      "the database stores a non UK Company without UK Establishment" should {
+        "return StoreCompanyNumberSuccess" in {
+          mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testNonUkNoEstablishmentCompanyNumber))(
+            Future.successful(mock[UpdateWriteResult])
+          )
+          val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testNonUkNoEstablishmentCompanyNumber)
+
+          await(res) shouldBe Right(StoreCompanyNumberSuccess)
+        }
+      }
+
       "the database returns a NoSuchElementException" should {
         "return CompanyNumberDatabaseFailureNoVATNumber" in {
           mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(Future.failed(new NoSuchElementException))

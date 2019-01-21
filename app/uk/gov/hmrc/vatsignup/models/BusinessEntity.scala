@@ -62,6 +62,7 @@ object BusinessEntity {
   val TrustKey = "trust"
   val RegisteredSocietyKey = "registeredSociety"
   val CharityKey = "charity"
+  val NonUkWithUKEstablishmentKey = "nonUKCompanyWithUKEstablishment"
 
   val NinoKey = "nino"
   val CompanyNumberKey = "companyNumber"
@@ -70,8 +71,9 @@ object BusinessEntity {
   implicit object BusinessEntityFormat extends OFormat[BusinessEntity] {
     override def writes(businessEntity: BusinessEntity): JsObject = businessEntity match {
       case LimitedCompany(companyNumber) =>
+        val companyBusinessEntity = limitedCompaniesBE(companyNumber).getOrElse(LimitedCompanyKey)
         Json.obj(
-          EntityTypeKey -> LimitedCompanyKey,
+          EntityTypeKey -> companyBusinessEntity,
           CompanyNumberKey -> companyNumber
         )
       case SoleTrader(nino) =>
@@ -133,7 +135,7 @@ object BusinessEntity {
       for {
         entityType <- (json \ EntityTypeKey).validate[String]
         businessEntity <- entityType match {
-          case LimitedCompanyKey =>
+          case LimitedCompanyKey | NonUkWithUKEstablishmentKey =>
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]
             } yield LimitedCompany(companyNumber)
@@ -178,5 +180,12 @@ object BusinessEntity {
       } yield businessEntity
   }
 
+  def limitedCompaniesBE(companyNumber: String): Option[String] = {
+    val NonUkWithUkEstablishmentPrefix = "BR"
+    companyNumber match {
+      case x if x.toUpperCase.startsWith(NonUkWithUkEstablishmentPrefix) => Some(NonUkWithUKEstablishmentKey)
+      case _ => None
+    }
+  }
 }
 
