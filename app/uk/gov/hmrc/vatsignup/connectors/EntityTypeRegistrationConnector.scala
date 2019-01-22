@@ -81,7 +81,7 @@ object EntityTypeRegistrationConnector {
       )
     case LimitedCompany(companyNumber) =>
       Json.obj(
-        LimitedCompanyKey -> Json.obj(
+        BusinessEntity.limitedCompaniesBE(companyNumber).getOrElse(LimitedCompanyKey) -> Json.obj(
           VrnKey -> vatNumber,
           CrnKey -> companyNumber
         )
