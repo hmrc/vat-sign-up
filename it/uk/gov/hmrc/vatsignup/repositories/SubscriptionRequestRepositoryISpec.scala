@@ -227,19 +227,6 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         businessEntity = Some(LimitedCompany(testCompanyNumber))
       ))
     }
-    "store a non UK company with UK establishment" in {
-      val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
-        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumber))
-        model <- repo.findById(testVatNumber)
-      } yield model
-
-      await(res) shouldBe Some(SubscriptionRequest(
-        vatNumber = testVatNumber,
-        isMigratable = true,
-        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumber))
-      ))
-    }
     "store a General Partnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)

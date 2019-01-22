@@ -43,22 +43,6 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
 
       }
 
-      "for principal user return NO_CONTENT for non uk with uk establishment companies" in {
-        stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
-        stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumber)(OK, ctReferenceBody(testCtReference))
-
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
-          "companyNumber" -> testNonUKCompanyWithUKEstablishmentCompanyNumber,
-          "ctReference" -> testCtReference
-        ))
-
-        res should have(
-          httpStatus(NO_CONTENT)
-        )
-
-      }
-
       "if the vat number does not already exist then return NOT_FOUND" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))

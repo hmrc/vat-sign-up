@@ -68,7 +68,6 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
       case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)
       case _ => Left(CtReferenceDatabaseFailure)
     }
-
 }
 
 object StoreCompanyNumberService {
@@ -89,4 +88,5 @@ object StoreCompanyNumberService {
   case object CtReferenceMismatch extends StoreCompanyNumberFailure
 
   case object MatchCtReferenceFailure extends StoreCompanyNumberFailure
+
 }

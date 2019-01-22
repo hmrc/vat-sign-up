@@ -91,21 +91,6 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
       }
     }
 
-    "the business entity is a non uk with uk establishment limited company" when {
-      "DES returns a successful response" should {
-        "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterNonUkWithUkEstablishment(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumber)(testSafeId)
-
-          val res = await(registrationConnector.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumber)
-          ))
-
-          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
-        }
-      }
-    }
-
     "the business entity is a sole trader" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {

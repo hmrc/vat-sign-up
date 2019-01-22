@@ -50,7 +50,6 @@ object TestConstants {
   val testSoleTrader = uk.gov.hmrc.vatsignup.models.SoleTrader(testNino)
   val testSignUpEmail = EmailAddress(testEmail, isVerified = true)
   val testRegisteredSociety = RegisteredSociety(testCompanyNumber)
-  val testNonUkNoEstablishmentCompanyNumber = "BR123321"
 
 
   val testCredentialId: String = UUID.randomUUID().toString

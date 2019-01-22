@@ -120,7 +120,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
         }
       }
     }
-
     "the user is agent" should {
       "the company number is stored correctly" should {
         "return NO_CONTENT" in {

@@ -166,18 +166,4 @@ object EntityTypeRegistrationStub extends WireMockMethods {
     ) thenReturn(OK, registerResponseBody(safeId))
   }
 
-  def stubRegisterNonUkWithUkEstablishment(vatNumber: String, companyNumber: String)(safeId: String): Unit = {
-    when(
-      method = POST,
-      uri = registerUri,
-      headers = desHeaders,
-      body = Json.obj(
-        "nonUKCompanyWithUKEstablishment" -> Json.obj(
-          "vrn" -> vatNumber,
-          "crn" -> companyNumber
-        )
-      )
-    ) thenReturn(OK, registerResponseBody(safeId))
-  }
-
 }

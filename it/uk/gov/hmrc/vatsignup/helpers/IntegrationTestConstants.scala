@@ -37,7 +37,6 @@ object IntegrationTestConstants {
   val testGroupId: String = UUID.randomUUID().toString
   val testCredentialId: String = UUID.randomUUID().toString
   val testRequestId: String = UUID.randomUUID().toString
-  val testNonUKCompanyWithUKEstablishmentCompanyNumber = "BR123321"
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
