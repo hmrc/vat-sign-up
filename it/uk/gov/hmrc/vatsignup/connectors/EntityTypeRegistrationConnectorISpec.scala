@@ -162,6 +162,17 @@ class EntityTypeRegistrationConnectorISpec extends ComponentSpecBase with Either
         }
       }
     }
+    "the business entity is a Government Organisation" when {
+      "DES returns a success" should {
+        "return a RegistrationSuccess with the SAFEID" in {
+          stubRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(testSafeId)
+
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GovernmentOrganisation))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
+      }
+    }
 
   }
 }

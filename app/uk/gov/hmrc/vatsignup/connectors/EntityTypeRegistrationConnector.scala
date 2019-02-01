@@ -65,6 +65,7 @@ object EntityTypeRegistrationConnector {
   val TrustKey = "trust"
   val RegisteredSocietyKey = "registeredSociety"
   val CharityKey = "charitableIncorporatedOrganisation"
+  val GovernmentOrganisationKey = "publicBody"
 
   val VrnKey = "vrn"
   val NinoKey = "nino"
@@ -151,6 +152,12 @@ object EntityTypeRegistrationConnector {
     case Charity =>
       Json.obj(
         CharityKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case GovernmentOrganisation =>
+      Json.obj(
+        GovernmentOrganisationKey -> Json.obj(
           VrnKey -> vatNumber
         )
       )
