@@ -104,7 +104,7 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
                                optVatRegistrationDate: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
-      case Right(success@EligibilitySuccess(businessPostcode, vatRegistrationDate, _)) =>
+      case Right(success@EligibilitySuccess(businessPostcode, vatRegistrationDate, _, _)) =>
         (optBusinessPostcode, optVatRegistrationDate) match {
           case (Some(userBusinessPostcode), Some(userVatRegistrationDate)) =>
             val knownFactsMatched =
