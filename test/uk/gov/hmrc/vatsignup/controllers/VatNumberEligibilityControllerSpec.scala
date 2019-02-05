@@ -42,7 +42,7 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
     "the service returns EligibilitySuccess" should {
       "return NO_CONTENT" in {
         mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
         status(res) shouldBe NO_CONTENT
       }

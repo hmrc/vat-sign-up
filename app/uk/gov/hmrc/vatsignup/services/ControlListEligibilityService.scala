@@ -24,7 +24,7 @@ import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.MigratableDates
-import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, NonStandardTaxPeriod}
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, NonStandardTaxPeriod, OverseasTrader}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
@@ -51,7 +51,8 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
       EligibilitySuccess(
         businessPostcode = knownFactsAndControlListInformation.businessPostcode,
         vatRegistrationDate = knownFactsAndControlListInformation.vatRegistrationDate,
-        isMigratable = migratableStatus == Migratable
+        isMigratable = migratableStatus == Migratable,
+        isOverseas = controlListInformation.controlList contains OverseasTrader
       )
     }
   }.value
@@ -106,7 +107,7 @@ object ControlListEligibilityService {
 
   type Eligibility = Either[EligibilityFailure, EligibilitySuccess]
 
-  case class EligibilitySuccess(businessPostcode: String, vatRegistrationDate: String, isMigratable: Boolean)
+  case class EligibilitySuccess(businessPostcode: String, vatRegistrationDate: String, isMigratable: Boolean, isOverseas: Boolean)
 
   sealed trait EligibilityFailure
 

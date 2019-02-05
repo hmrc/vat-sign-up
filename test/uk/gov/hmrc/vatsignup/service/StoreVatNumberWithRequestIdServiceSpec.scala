@@ -78,7 +78,7 @@ class StoreVatNumberWithRequestIdServiceSpec
                 )
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
-                  Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))
+                  Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))
                 ))
                 mockUpsertVatNumber(
                   requestId = testToken,
@@ -110,7 +110,7 @@ class StoreVatNumberWithRequestIdServiceSpec
                 )
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
-                  Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))
+                  Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))
                 ))
                 mockUpsertVatNumber(
                   requestId = testToken,
@@ -192,7 +192,7 @@ class StoreVatNumberWithRequestIdServiceSpec
             )
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(
-              Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false)))
+              Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false, isOverseas = false)))
             )
             mockUpsertVatNumber(
               requestId = testToken,
@@ -296,7 +296,7 @@ class StoreVatNumberWithRequestIdServiceSpec
             "return StoreVatNumberSuccess" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(
-                EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true)
+                EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false)
               )))
               mockUpsertVatNumber(
                 requestId = testToken,
@@ -319,7 +319,7 @@ class StoreVatNumberWithRequestIdServiceSpec
             "return a VatNumberDatabaseFailure" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(
-                EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true)
+                EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false)
               )))
               mockUpsertVatNumber(testToken, testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
@@ -381,7 +381,7 @@ class StoreVatNumberWithRequestIdServiceSpec
           "return StoreVatNumberSuccess" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(
-              EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true)
+              EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false)
             )))
             mockUpsertVatNumber(testToken, testVatNumber, isMigratable = true)(
               Future.successful(mock[UpdateWriteResult])
@@ -428,7 +428,7 @@ class StoreVatNumberWithRequestIdServiceSpec
           "return a KnownFactsMismatch" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(
-              EligibilitySuccess(testPostCode.drop(1), testDateOfRegistration, isMigratable = false)
+              EligibilitySuccess(testPostCode.drop(1), testDateOfRegistration, isMigratable = false, isOverseas = false)
             )))
 
             val res = await(call)
@@ -439,7 +439,7 @@ class StoreVatNumberWithRequestIdServiceSpec
           "return a VatNumberDatabaseFailure" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
             mockGetEligibilityStatus(testVatNumber)(
-              Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true)))
+              Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false)))
             )
             mockUpsertVatNumber(testToken, testVatNumber, isMigratable = true)(Future.failed(new Exception))
 

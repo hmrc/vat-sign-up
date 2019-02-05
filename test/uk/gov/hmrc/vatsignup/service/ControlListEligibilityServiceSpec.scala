@@ -26,7 +26,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInform
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.{DateRange, MigratableDates}
-import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, DirectDebit, Stagger1}
+import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
 import uk.gov.hmrc.vatsignup.service.mocks.MockDirectDebitMigrationCheckService
@@ -51,15 +51,35 @@ class ControlListEligibilityServiceSpec extends UnitSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "getEligibilityStatus" when {
-    "the Control List indicates the user is eligible and migratable" should {
-      "return EligibilitySuccess with the known facts and a migration status of true" in {
-        mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, testControlListInformation))))
+    "the Control List indicates the user is eligible and migratable" when {
+      "the user is an overseas trader" should {
+        "return EligibilitySuccess with the known facts, a migration status of true and an overseas status of true" in {
+          val overseasControlListInformation = ControlListInformation(
+            controlList = Set(Stagger1, Company, OverseasTrader),
+            stagger = Stagger1,
+            businessEntity = Company
+          )
 
-        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+          mockGetKnownFactsAndControlListInformation(testVatNumber)(
+            Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, overseasControlListInformation)))
+          )
 
-        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))
-        verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
+          val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+
+          res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = true))
+          verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
+        }
+      }
+      "the user is not an overseas trader" should {
+        "return EligibilitySuccess with the known facts, a migration status of true and an overseas status of true" in {
+          mockGetKnownFactsAndControlListInformation(testVatNumber)(
+            Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, testControlListInformation))))
+
+          val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+
+          res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))
+          verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
+        }
       }
     }
 
@@ -71,7 +91,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false))
+        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false, isOverseas = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = Seq(Stagger1.errorMessage)))
       }
     }
@@ -127,7 +147,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true))
+        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
       }
     }
