@@ -40,11 +40,20 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
 
   "checkVatNumberEligibility" when {
     "the service returns EligibilitySuccess" should {
-      "return NO_CONTENT" in {
+      "return OK with a Json body if the user is an overseas trader" in {
+        mockAuthorise()(Future.successful(Unit))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = true))))
+        val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
+        status(res) shouldBe OK
+        jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> true)
+      }
+
+      "return OK with a Json body if the overseas flag is set to false" in {
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
-        status(res) shouldBe NO_CONTENT
+        status(res) shouldBe OK
+        jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> false)
       }
     }
 
