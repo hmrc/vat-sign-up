@@ -50,6 +50,8 @@ case object Charity extends BusinessEntity
 
 case object GovernmentOrganisation extends BusinessEntity
 
+case object Overseas extends BusinessEntity
+
 object BusinessEntity {
   val EntityTypeKey = "entityType"
   val LimitedCompanyKey = "limitedCompany"
@@ -65,6 +67,7 @@ object BusinessEntity {
   val RegisteredSocietyKey = "registeredSociety"
   val CharityKey = "charity"
   val NonUkWithUKEstablishmentKey = "nonUKCompanyWithUKEstablishment"
+  val OverseasKey = "nonUKCompanyNoUKEstablishment"
   val GovernmentOrganisationKey = "governmentOrganisation"
 
   val NinoKey = "nino"
@@ -136,6 +139,10 @@ object BusinessEntity {
         Json.obj(
           EntityTypeKey -> GovernmentOrganisationKey
         )
+      case Overseas =>
+        Json.obj(
+          EntityTypeKey -> OverseasKey
+        )
     }
 
     override def reads(json: JsValue): JsResult[BusinessEntity] =
@@ -185,6 +192,8 @@ object BusinessEntity {
             JsSuccess(Charity)
           case GovernmentOrganisationKey =>
             JsSuccess(GovernmentOrganisation)
+          case OverseasKey =>
+            JsSuccess(Overseas)
         }
       } yield businessEntity
   }
