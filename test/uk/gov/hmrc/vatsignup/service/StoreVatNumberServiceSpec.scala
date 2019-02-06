@@ -78,7 +78,7 @@ class StoreVatNumberServiceSpec
                 mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
-                res shouldBe Right(StoreVatNumberSuccess)
+                res shouldBe Right(StoreVatNumberSuccess(false))
 
                 verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
               }
@@ -139,7 +139,7 @@ class StoreVatNumberServiceSpec
             mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
-            res shouldBe Right(StoreVatNumberSuccess)
+            res shouldBe Right(StoreVatNumberSuccess(false))
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
@@ -191,7 +191,7 @@ class StoreVatNumberServiceSpec
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
-              res shouldBe Right(StoreVatNumberSuccess)
+              res shouldBe Right(StoreVatNumberSuccess(false))
             }
           }
           "the vat number is not stored successfully" should {
@@ -242,7 +242,7 @@ class StoreVatNumberServiceSpec
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
-            res shouldBe Right(StoreVatNumberSuccess)
+            res shouldBe Right(StoreVatNumberSuccess(false))
           }
         }
         "Known facts and control list returned ineligible" should {

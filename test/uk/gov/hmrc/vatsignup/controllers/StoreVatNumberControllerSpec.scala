@@ -53,11 +53,11 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
     "the VAT number has been stored correctly" should {
       "return CREATED" in {
         mockAuthRetrieveAgentEnrolment()
-        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess)))
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = false))))
 
         val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
 
-        status(res) shouldBe CREATED
+        status(res) shouldBe OK
       }
     }
 
