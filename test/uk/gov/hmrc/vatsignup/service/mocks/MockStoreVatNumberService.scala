@@ -37,7 +37,7 @@ trait MockStoreVatNumberService extends MockitoSugar {
                          enrolments: Enrolments,
                          businessPostcode: Option[String] = None,
                          vatRegistrationDate: Option[String] = None
-                        )(response: Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]]): Unit =
+                        )(response: Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]]): Unit =
     when(mockStoreVatNumberService.storeVatNumber(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.any[Enrolments],

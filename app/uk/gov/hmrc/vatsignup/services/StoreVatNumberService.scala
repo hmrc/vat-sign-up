@@ -49,13 +49,13 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                      enrolments: Enrolments,
                      businessPostcode: Option[String],
                      vatRegistrationDate: Option[String]
-                    )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess.type]] = {
+                    )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
       _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
       eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
-    } yield StoreVatNumberSuccess
+    } yield StoreVatNumberSuccess(eligibilitySuccess.isOverseas)
   }.value
 
   private def checkUserAuthority(vatNumber: String,
@@ -145,7 +145,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
   private def insertVatNumber(vatNumber: String,
                               isMigratable: Boolean
-                             )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, StoreVatNumberSuccess.type] =
+                             )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, (StoreVatNumberSuccess.type)] =
     EitherT(subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable) map {
       _ => Right(StoreVatNumberSuccess)
     } recover {
@@ -155,7 +155,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
 object StoreVatNumberService {
 
-  case object StoreVatNumberSuccess
+  case class StoreVatNumberSuccess (isOverseas: Boolean)
 
   case object NotSubscribed
 
