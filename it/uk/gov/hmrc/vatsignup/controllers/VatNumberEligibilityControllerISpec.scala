@@ -18,6 +18,8 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
+import play.api.libs.json.Json
+import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{mandationStatusBody, stubGetMandationStatus}
@@ -38,7 +40,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 
             res should have(
-              httpStatus(NO_CONTENT)
+              httpStatus(OK)
             )
           }
         }
@@ -54,7 +56,26 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 
             res should have(
-              httpStatus(NO_CONTENT)
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(
+                OverseasKey -> false
+              ))
+            )
+          }
+        }
+
+        "the user is overseas" should {
+          "return OK" in {
+            stubAuth(OK, successfulAuthResponse())
+            stubOverseasControlListInformation(testVatNumber)
+
+            val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+
+            res should have (
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(
+                OverseasKey -> true
+              ))
             )
           }
         }

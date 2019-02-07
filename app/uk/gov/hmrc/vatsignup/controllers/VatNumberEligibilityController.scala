@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.controllers
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
@@ -36,8 +37,8 @@ class VatNumberEligibilityController @Inject()(val authConnector: AuthConnector,
     implicit request =>
       authorised() {
         controlListEligibilityService.getEligibilityStatus(vatNumber) map {
-          case Right(_: EligibilitySuccess) =>
-            NoContent
+          case Right(success) =>
+            Ok(Json.obj(OverseasKey -> success.isOverseas))
           case Left(ControlListEligibilityService.IneligibleVatNumber(migratableDates)) =>
             BadRequest(Json.toJson(migratableDates))
           case Left(VatNumberNotFound | InvalidVatNumber) =>
