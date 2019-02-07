@@ -52,7 +52,7 @@ object Constants {
   }
 
   object ControlList {
-    val Overseas = "overseas"
+    val OverseasKey = "isOverseas"
   }
 
   val CONTROL_INFORMATION32_STRING_LENGTH: Int = 32

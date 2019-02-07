@@ -22,7 +22,7 @@ import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.config.Constants.ControlList.Overseas
+import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController._
 import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
@@ -48,7 +48,7 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
             storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate) map {
               case Right(success) =>
                 Ok(Json.obj(
-                  Overseas -> success.isOverseas)
+                  OverseasKey -> success.isOverseas)
                 )
               case Left(failure) =>
                 getErrorResponse(failure)

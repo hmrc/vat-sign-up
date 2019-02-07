@@ -21,7 +21,7 @@ import java.util.UUID
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
-import uk.gov.hmrc.vatsignup.config.Constants.ControlList.Overseas
+import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
@@ -47,7 +47,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(
-            Overseas -> false
+            OverseasKey -> false
           ))
         )
       }
@@ -113,7 +113,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(OK),
             jsonBodyAs(Json.obj(
-              Overseas -> false
+              OverseasKey -> false
             ))
           )
         }
@@ -181,7 +181,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(
-            Overseas -> false
+            OverseasKey -> false
           ))
         )
       }
@@ -292,7 +292,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       res should have(
         httpStatus(OK),
         jsonBodyAs(Json.obj(
-          Overseas -> true
+          OverseasKey -> true
         ))
       )
     }
