@@ -687,6 +687,60 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
       }
+
+      "the user is a Government Organisation" when {
+        "sign up email is verified" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(GovernmentOrganisation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable
+              )
+            )
+          }
+          "sign up email is not verified" should {
+            "return a EmailVerificationRequired" in {
+              enable(EtmpEntityType)
+
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(GovernmentOrganisation),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Left(EmailVerificationRequired)
+            }
+          }
+        }
+      }
     }
 
     "the request is delegated" when {
@@ -969,6 +1023,37 @@ class SignUpRequestServiceSpec extends UnitSpec
             SignUpRequest(
               vatNumber = testVatNumber,
               businessEntity = Charity,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable
+            )
+          )
+        }
+      }
+      "the user is a Government Organisation" should {
+        "return a successful SignUpRequest" in {
+          enable(EtmpEntityType)
+
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(GovernmentOrganisation),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable
+            )
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = GovernmentOrganisation,
               signUpEmail = Some(verifiedEmail),
               transactionEmail = verifiedEmail,
               isDelegated = true,
