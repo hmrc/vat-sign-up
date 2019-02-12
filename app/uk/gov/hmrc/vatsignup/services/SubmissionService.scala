@@ -103,6 +103,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             EitherT.apply[Future, Nothing, Nothing](
               Future.failed(new InternalServerException("Government Organisations are not supported on the legacy Register API"))
             )
+          case Overseas =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("Overseas are not supported on the legacy Register API"))
+            )
         }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
