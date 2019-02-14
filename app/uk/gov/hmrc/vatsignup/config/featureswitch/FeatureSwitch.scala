@@ -31,7 +31,8 @@ object FeatureSwitch {
     StubAgentServicesFeature,
     HybridSolution,
     EtmpEntityType,
-    CaptureRegisteredSocietyCTUTR
+    CaptureRegisteredSocietyCTUTR,
+    AdditionalKnownFacts
   )
 
   def apply(str: String): FeatureSwitch =
@@ -70,4 +71,9 @@ object EtmpEntityType extends FeatureSwitch {
 object CaptureRegisteredSocietyCTUTR extends FeatureSwitch {
   val displayName = s"Enable CTUTR support for Registered Societies"
   val name = s"$prefix.capture-registered-society-ctutr"
+}
+
+object AdditionalKnownFacts extends FeatureSwitch {
+  val displayName: String = "Enable additional known facts check (Box 5 and filing month)"
+  val name: String = s"$prefix.additional-known-facts"
 }
