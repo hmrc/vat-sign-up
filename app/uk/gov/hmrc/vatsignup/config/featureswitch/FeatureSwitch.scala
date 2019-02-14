@@ -31,7 +31,6 @@ object FeatureSwitch {
     StubAgentServicesFeature,
     HybridSolution,
     EtmpEntityType,
-    CaptureRegisteredSocietyCTUTR,
     CaptureContactPreference,
     AdditionalKnownFacts
   )
