@@ -34,7 +34,7 @@ class CustomerSignUpConnectorISpec extends ComponentSpecBase {
           implicit val hc = HeaderCarrier()
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(OK)
 
-          val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)
+          val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None, None)
 
           await(res) shouldBe Right(CustomerSignUpResponseSuccess)
         }
@@ -46,7 +46,7 @@ class CustomerSignUpConnectorISpec extends ComponentSpecBase {
           implicit val hc = HeaderCarrier()
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(testIsPartialMigration))(OK)
 
-          val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(testIsPartialMigration))
+          val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(testIsPartialMigration), None)
 
           await(res) shouldBe Right(CustomerSignUpResponseSuccess)
         }

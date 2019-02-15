@@ -51,6 +51,7 @@ object TestConstants {
   val testSignUpEmail = EmailAddress(testEmail, isVerified = true)
   val testRegisteredSociety = RegisteredSociety(testCompanyNumber)
   val testNonUkNoEstablishmentCompanyNumber = "BR123321"
+  val testContactPreference = "Digital"
 
 
   val testCredentialId: String = UUID.randomUUID().toString

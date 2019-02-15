@@ -62,6 +62,8 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     }
     val isPartialMigration = !signUpRequest.isMigratable
 
+    val contactPreference = signUpRequest.contactPreference
+
     val result = for {
       safeId <- if (appConfig.isEnabled(EtmpEntityType)) {
         registerBusinessEntity(signUpRequest.vatNumber, signUpRequest.businessEntity, optAgentReferenceNumber)
@@ -109,7 +111,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             )
         }
       }
-      _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration)
+      _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration, contactPreference)
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
     } yield SignUpRequestSubmitted
 
@@ -187,21 +189,40 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                      emailAddress: Option[String],
                      emailAddressVerified: Option[Boolean],
                      agentReferenceNumber: Option[String],
-                     isPartialMigration: Boolean
+                     isPartialMigration: Boolean,
+                     contactPreference: Option[String]
                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, CustomerSignUpResponseSuccess.type] =
     EitherT(customerSignUpConnector.signUp(
       safeId,
       vatNumber,
       emailAddress,
       emailAddressVerified,
-      optIsPartialMigration = if (appConfig.isEnabled(HybridSolution)) Some(isPartialMigration) else None)) bimap( {
+      optIsPartialMigration = if (appConfig.isEnabled(HybridSolution)) Some(isPartialMigration) else None,
+      contactPreference
+    )) bimap( {
       _ => {
-        auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, isSuccess = false))
+        auditService.audit(SignUpAuditModel(
+          safeId,
+          vatNumber,
+          emailAddress,
+          emailAddressVerified,
+          agentReferenceNumber,
+          isSuccess = false,
+          contactPreference = contactPreference
+        ))
         SignUpFailure
       }
     }, {
       customerSignUpSuccess => {
-        auditService.audit(SignUpAuditModel(safeId, vatNumber, emailAddress, emailAddressVerified, agentReferenceNumber, isSuccess = true))
+        auditService.audit(SignUpAuditModel(
+          safeId,
+          vatNumber,
+          emailAddress,
+          emailAddressVerified,
+          agentReferenceNumber,
+          isSuccess = true,
+          contactPreference = contactPreference
+        ))
         customerSignUpSuccess
       }
     })

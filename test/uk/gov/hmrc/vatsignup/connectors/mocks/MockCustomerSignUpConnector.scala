@@ -39,14 +39,16 @@ trait MockCustomerSignUpConnector extends MockitoSugar with BeforeAndAfterEach {
                  vatNumber: String,
                  email: Option[String],
                  emailVerified: Option[Boolean],
-                 optIsPartialMigration: Option[Boolean]
+                 optIsPartialMigration: Option[Boolean],
+                 optContactPreference: Option[String]
                 )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(email),
       ArgumentMatchers.eq(emailVerified),
-      ArgumentMatchers.eq(optIsPartialMigration)
+      ArgumentMatchers.eq(optIsPartialMigration),
+      ArgumentMatchers.eq(optContactPreference)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 }

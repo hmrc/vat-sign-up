@@ -22,6 +22,8 @@ import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
+import uk.gov.hmrc.vatsignup.config.Constants.Des._
+import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models._
@@ -34,7 +36,8 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SignUpRequestService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                      emailVerificationConnector: EmailVerificationConnector
-                                    )(implicit ec: ExecutionContext) {
+                                    )(implicit ec: ExecutionContext)
+  extends FeatureSwitching {
   def getSignUpRequest(vatNumber: String, enrolments: Enrolments)(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, SignUpRequest]] = {
     val isDelegated = enrolments.agentReferenceNumber.isDefined
     val hasPartnershipEnrolment = enrolments.partnershipUtr.isDefined
@@ -55,13 +58,15 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable = subscriptionRequest.isMigratable
+          contactPreference = if (isEnabled(CaptureContactPreference)) Some(contactPreferenceDigital) else None
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,
           optSignUpEmail,
           transactionEmail,
           isDelegated,
-          isMigratable
+          isMigratable,
+          contactPreference
         )
         res.value
       case None =>

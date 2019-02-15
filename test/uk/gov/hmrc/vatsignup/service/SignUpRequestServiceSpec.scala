@@ -20,7 +20,7 @@ import play.api.http.Status
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, EtmpEntityType, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser
@@ -59,33 +59,71 @@ class SignUpRequestServiceSpec extends UnitSpec
           "there is a stored sign up email address" when {
             "the sign up email address is verified" when {
               "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(LimitedCompany(testCompanyNumber)),
-                      ctReference = Some(testCtReference),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
+                "the CaptureContactPreference feature switch is enabled" when {
+                  "return a successful SignUpRequest" in {
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                        ctReference = Some(testCtReference),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedCompany(testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" when {
+                  "return a successful SignUpRequest" in {
+                    disable(CaptureContactPreference)
 
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                        ctReference = Some(testCtReference),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
 
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = LimitedCompany(testCompanyNumber),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedCompany(testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
                     )
-                  )
+                  }
                 }
               }
             }
@@ -170,88 +208,17 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the NINO source is IR-SA" when {
           "there is a stored sign up email address" when {
             "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(SoleTrader(testNino)),
-                      ninoSource = Some(IRSA),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
-                    )
-
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = SoleTrader(testNino),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
-                    )
-                  )
-                }
-              }
-            }
-          }
-        }
-        "the NINO source is auth profile" when {
-          "there is a stored sign up email address" when {
-            "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(SoleTrader(testNino)),
-                      ninoSource = Some(AuthProfile),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
-                    )
-
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = SoleTrader(testNino),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
-                    )
-                  )
-                }
-              }
-            }
-          }
-        }
-        "the NINO source is UserEntered" when {
-          "there is a stored identity verified flag" when {
-            "there is a stored sign up email address" when {
-              "the sign up email address is verified" when {
-                "there is not a transaction e-mail address" should {
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
                   "return a successful SignUpRequest" in {
+                    enable(CaptureContactPreference)
+
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
                         businessEntity = Some(SoleTrader(testNino)),
-                        ninoSource = Some(UserEntered),
+                        ninoSource = Some(IRSA),
                         email = Some(testEmail),
-                        identityVerified = true,
                         isMigratable = testIsMigratable
                       )
 
@@ -269,9 +236,195 @@ class SignUpRequestServiceSpec extends UnitSpec
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
-                        isMigratable = testIsMigratable
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
                       )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    disable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(SoleTrader(testNino)),
+                        ninoSource = Some(IRSA),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = SoleTrader(testNino),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
+                    )
+                  }
+                }
+              }
+            }
+          }
+        }
+        "the NINO source is auth profile" when {
+          "there is a stored sign up email address" when {
+            "the sign up email address is verified" when {
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(SoleTrader(testNino)),
+                        ninoSource = Some(AuthProfile),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = SoleTrader(testNino),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
+                    )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    disable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(SoleTrader(testNino)),
+                        ninoSource = Some(AuthProfile),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = SoleTrader(testNino),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
+                    )
+                  }
+                }
+              }
+            }
+          }
+        }
+        "the NINO source is UserEntered" when {
+          "there is a stored identity verified flag" when {
+            "there is a stored sign up email address" when {
+              "the sign up email address is verified" when {
+                "there is not a transaction e-mail address" when {
+                  "the CaptureContactPreference feature switch is enabled" should {
+                    "return a successful SignUpRequest" in {
+                      enable(CaptureContactPreference)
+
+                      val testSubscriptionRequest =
+                        SubscriptionRequest(
+                          vatNumber = testVatNumber,
+                          businessEntity = Some(SoleTrader(testNino)),
+                          ninoSource = Some(UserEntered),
+                          email = Some(testEmail),
+                          identityVerified = true,
+                          isMigratable = testIsMigratable
+                        )
+
+                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                      await(res) shouldBe Right(
+                        SignUpRequest(
+                          vatNumber = testVatNumber,
+                          businessEntity = SoleTrader(testNino),
+                          signUpEmail = Some(verifiedEmail),
+                          transactionEmail = verifiedEmail,
+                          isDelegated = false,
+                          isMigratable = testIsMigratable,
+                          contactPreference = Some(testContactPreference)
+                        )
+                      )
+                    }
+                  }
+                  "the CaptureContactPreference feature switch is disabled" should {
+                    "return a successful SignUpRequest" in {
+                      disable(CaptureContactPreference)
+
+                      val testSubscriptionRequest =
+                        SubscriptionRequest(
+                          vatNumber = testVatNumber,
+                          businessEntity = Some(SoleTrader(testNino)),
+                          ninoSource = Some(UserEntered),
+                          email = Some(testEmail),
+                          identityVerified = true,
+                          isMigratable = testIsMigratable
+                        )
+
+                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                      await(res) shouldBe Right(
+                        SignUpRequest(
+                          vatNumber = testVatNumber,
+                          businessEntity = SoleTrader(testNino),
+                          signUpEmail = Some(verifiedEmail),
+                          transactionEmail = verifiedEmail,
+                          isDelegated = false,
+                          isMigratable = testIsMigratable,
+                          contactPreference = None
+                        )
+                      )
+                    }
                   }
                 }
               }
@@ -300,33 +453,70 @@ class SignUpRequestServiceSpec extends UnitSpec
       "there is stored general partnership information" when {
         "the user has a partnership enrolment" when {
           "the sign up email address is verified" when {
-            "there is not a transaction e-mail address" should {
-              "return a successful SignUpRequest" in {
-                val testSubscriptionRequest =
-                  SubscriptionRequest(
-                    vatNumber = testVatNumber,
-                    businessEntity = Some(GeneralPartnership(testUtr)),
-                    email = Some(testEmail),
-                    isMigratable = testIsMigratable
+            "there is not a transaction e-mail address" when {
+              "the CaptureContactPreference feature switch is enabled" should {
+                "return a successful SignUpRequest" in {
+                  enable(CaptureContactPreference)
+
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(GeneralPartnership(testUtr)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = GeneralPartnership(testUtr),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = Some(testContactPreference)
+                    )
                   )
+                }
+              }
+              "the CaptureContactPreference feature switch is disabled" should {
+                "return a successful SignUpRequest" in {
+                  disable(CaptureContactPreference)
 
-                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(GeneralPartnership(testUtr)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable
+                    )
 
-                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
 
-                await(res) shouldBe Right(
-                  SignUpRequest(
-                    vatNumber = testVatNumber,
-                    businessEntity = GeneralPartnership(testUtr),
-                    signUpEmail = Some(verifiedEmail),
-                    transactionEmail = verifiedEmail,
-                    isDelegated = false,
-                    isMigratable = testIsMigratable
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = GeneralPartnership(testUtr),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = None
+                    )
                   )
-                )
+                }
               }
             }
           }
@@ -334,34 +524,72 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the user is a limited partnership" when {
           "the user has a partnership enrolment" when {
             "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  enable(EtmpEntityType)
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    disable(CaptureContactPreference)
 
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    enable(EtmpEntityType)
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
 
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
 
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = LimitedPartnership(testUtr, testCompanyNumber),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
                     )
-                  )
+                  }
                 }
               }
             }
@@ -370,34 +598,72 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the user is a limited liability partnership" when {
           "the user has a partnership enrolment" when {
             "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  enable(EtmpEntityType)
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    disable(CaptureContactPreference)
 
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
 
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
 
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
                     )
-                  )
+                  }
                 }
               }
             }
@@ -406,34 +672,72 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the user is a scottish limited partnership" when {
           "the user has a partnership enrolment" when {
             "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  enable(EtmpEntityType)
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    disable(CaptureContactPreference)
 
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
 
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
 
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
                     )
-                  )
+                  }
                 }
               }
             }
@@ -442,33 +746,70 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the user is a scottish limited partnership" when {
           "the sign up email address is verified" when {
             "the user does not have a partnership enrolment" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  enable(EtmpEntityType)
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    disable(CaptureContactPreference)
 
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
 
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
                     )
-                  )
+                  }
                 }
               }
             }
@@ -477,33 +818,70 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the user is a limited liability partnership" when {
           "the sign up email address is verified" when {
             "the user does not have a partnership enrolment" when {
-              "there is not a transaction e-mail address" should {
-                "return a successful SignUpRequest" in {
-                  enable(EtmpEntityType)
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable
+              "there is not a transaction e-mail address" when {
+                "the CaptureContactPreference feature switch is enabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    enable(CaptureContactPreference)
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Some(testContactPreference)
+                      )
                     )
+                  }
+                }
+                "the CaptureContactPreference feature switch is disabled" should {
+                  "return a successful SignUpRequest" in {
+                    enable(EtmpEntityType)
+                    disable(CaptureContactPreference)
 
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable
+                      )
 
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = None
+                      )
                     )
-                  )
+                  }
                 }
               }
             }
@@ -528,35 +906,72 @@ class SignUpRequestServiceSpec extends UnitSpec
       }
 
       "the user is a VAT group" when {
-        "sign up email is verified" should {
-          "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
+        "sign up email is verified" when {
+          "the CaptureContactPreference feature switch is enabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              enable(CaptureContactPreference)
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(VatGroup),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(VatGroup),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = VatGroup,
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
+                )
               )
+            }
+          }
+          "the CaptureContactPreference feature switch is disabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              disable(CaptureContactPreference)
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(VatGroup),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
 
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = VatGroup,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = false,
-                isMigratable = testIsMigratable
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = VatGroup,
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = None
+                )
               )
-            )
+            }
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
@@ -582,35 +997,72 @@ class SignUpRequestServiceSpec extends UnitSpec
       }
 
       "the user is a Registered Society" when {
-        "sign up email is verified" should {
-          "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
+        "sign up email is verified" when {
+          "the CaptureContactPreference feature switch is enabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              enable(CaptureContactPreference)
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(RegisteredSociety(testCompanyNumber)),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = RegisteredSociety(testCompanyNumber),
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
+                )
               )
+            }
+          }
+          "the CaptureContactPreference feature switch is disabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              disable(CaptureContactPreference)
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
 
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = RegisteredSociety(testCompanyNumber),
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = false,
-                isMigratable = testIsMigratable
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = RegisteredSociety(testCompanyNumber),
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = None
+                )
               )
-            )
+            }
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
@@ -635,35 +1087,72 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
       }
       "the user is a Charity" when {
-        "sign up email is verified" should {
-          "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
+        "sign up email is verified" when {
+          "the CaptureContactPreference feature switch is enabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              enable(CaptureContactPreference)
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(Charity),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(Charity),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Charity,
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
+                )
               )
+            }
+          }
+          "the CaptureContactPreference feature switch is disabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              disable(CaptureContactPreference)
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(Charity),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
 
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Charity,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = false,
-                isMigratable = testIsMigratable
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Charity,
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = None
+                )
               )
-            )
+            }
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
@@ -689,35 +1178,72 @@ class SignUpRequestServiceSpec extends UnitSpec
       }
 
       "the user is a Government Organisation" when {
-        "sign up email is verified" should {
-          "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
+        "sign up email is verified" when {
+          "the CaptureContactPreference feature switch is enabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              enable(CaptureContactPreference)
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(GovernmentOrganisation),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(GovernmentOrganisation),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = GovernmentOrganisation,
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
+                )
               )
+            }
+          }
+          "the CaptureContactPreference feature switch is disabled" should {
+            "return a successful SignUpRequest" in {
+              enable(EtmpEntityType)
+              disable(CaptureContactPreference)
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(GovernmentOrganisation),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
 
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = GovernmentOrganisation,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = false,
-                isMigratable = testIsMigratable
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = GovernmentOrganisation,
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = false,
+                  isMigratable = testIsMigratable,
+                  contactPreference = None
+                )
               )
-            )
+            }
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
@@ -745,63 +1271,137 @@ class SignUpRequestServiceSpec extends UnitSpec
 
     "the request is delegated" when {
       "there is a stored NINO" when {
-        "there is an unverified sign up e-mail" should {
-          "return a successful SignUpRequest" in {
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(SoleTrader(testNino)),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            val unverifiedEmail = EmailAddress(testEmail, isVerified = false)
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = SoleTrader(testNino),
-                signUpEmail = Some(unverifiedEmail),
-                transactionEmail = unverifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable
-              )
-            )
-          }
-        }
-        "there is not a sign up e-mail" when {
-          "there is a verified transaction e-mail" should {
+        "there is an unverified sign up e-mail" when {
+          "the CaptureContactPreference feature switch is enabled" should {
             "return a successful SignUpRequest" in {
+              enable(CaptureContactPreference)
+
               val testSubscriptionRequest =
                 SubscriptionRequest(
                   vatNumber = testVatNumber,
                   businessEntity = Some(SoleTrader(testNino)),
-                  transactionEmail = Some(testEmail),
+                  email = Some(testEmail),
                   isMigratable = testIsMigratable
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
 
               val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
 
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+              val unverifiedEmail = EmailAddress(testEmail, isVerified = false)
 
               await(res) shouldBe Right(
                 SignUpRequest(
                   vatNumber = testVatNumber,
                   businessEntity = SoleTrader(testNino),
-                  signUpEmail = None,
-                  transactionEmail = verifiedEmail,
+                  signUpEmail = Some(unverifiedEmail),
+                  transactionEmail = unverifiedEmail,
                   isDelegated = true,
-                  isMigratable = testIsMigratable
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
                 )
               )
+            }
+          }
+          "the CaptureContactPreference feature switch is disabled" should {
+            "return a successful SignUpRequest" in {
+              disable(CaptureContactPreference)
+
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(SoleTrader(testNino)),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+              val unverifiedEmail = EmailAddress(testEmail, isVerified = false)
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = SoleTrader(testNino),
+                  signUpEmail = Some(unverifiedEmail),
+                  transactionEmail = unverifiedEmail,
+                  isDelegated = true,
+                  isMigratable = testIsMigratable,
+                  contactPreference = None
+                )
+              )
+            }
+          }
+        }
+        "there is not a sign up e-mail" when {
+          "there is a verified transaction e-mail" when {
+            "the CaptureContactPreference feature switch is enabled" should {
+              "return a successful SignUpRequest" in {
+                enable(CaptureContactPreference)
+
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = Some(SoleTrader(testNino)),
+                    transactionEmail = Some(testEmail),
+                    isMigratable = testIsMigratable
+                  )
+
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = SoleTrader(testNino),
+                    signUpEmail = None,
+                    transactionEmail = verifiedEmail,
+                    isDelegated = true,
+                    isMigratable = testIsMigratable,
+                    contactPreference = Some(testContactPreference)
+                  )
+                )
+              }
+            }
+            "the CaptureContactPreference feature switch is disabled" should {
+              "return a successful SignUpRequest" in {
+                disable(CaptureContactPreference)
+
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = Some(SoleTrader(testNino)),
+                    transactionEmail = Some(testEmail),
+                    isMigratable = testIsMigratable
+                  )
+
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = SoleTrader(testNino),
+                    signUpEmail = None,
+                    transactionEmail = verifiedEmail,
+                    isDelegated = true,
+                    isMigratable = testIsMigratable,
+                    contactPreference = None
+                  )
+                )
+              }
             }
           }
           "there is an unverified transaction e-mail" should {
@@ -839,227 +1439,487 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
 
-        "The request is a company" should {
-          "there is a verified transaction e-mail" should {
-            "return a successful SignUpRequest" in {
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(LimitedCompany(testCompanyNumber)),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable
+        "The request is a company" when {
+          "there is a verified transaction e-mail" when {
+            "the CaptureContactPreference feature switch is enabled" should {
+              "return a successful SignUpRequest" in {
+                enable(CaptureContactPreference)
+
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable
+                  )
+
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = LimitedCompany(testCompanyNumber),
+                    signUpEmail = Some(verifiedEmail),
+                    transactionEmail = verifiedEmail,
+                    isDelegated = true,
+                    isMigratable = testIsMigratable,
+                    contactPreference = Some(testContactPreference)
+                  )
                 )
+              }
+            }
+            "the CaptureContactPreference feature switch is disabled" should {
+              "return a successful SignUpRequest" in {
+                disable(CaptureContactPreference)
 
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable
+                  )
 
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
 
-              await(res) shouldBe Right(
-                SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = LimitedCompany(testCompanyNumber),
-                  signUpEmail = Some(verifiedEmail),
-                  transactionEmail = verifiedEmail,
-                  isDelegated = true,
-                  isMigratable = testIsMigratable
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = LimitedCompany(testCompanyNumber),
+                    signUpEmail = Some(verifiedEmail),
+                    transactionEmail = verifiedEmail,
+                    isDelegated = true,
+                    isMigratable = testIsMigratable,
+                    contactPreference = None
+                  )
                 )
-              )
+              }
             }
           }
         }
       }
 
-      "the user is a VAT group" should {
-        "return a successful SignUpRequest" in {
-          enable(EtmpEntityType)
+      "the user is a VAT group" when {
+        "the CaptureContactPreference feature switch is enabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            enable(CaptureContactPreference)
 
-          val testSubscriptionRequest =
-            SubscriptionRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Some(VatGroup),
-              email = Some(testEmail),
-              isMigratable = testIsMigratable
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(VatGroup),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = VatGroup,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
             )
+          }
+        }
+        "the CaptureContactPreference feature switch is disabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            disable(CaptureContactPreference)
 
-          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(VatGroup),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
 
-          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-          await(res) shouldBe Right(
-            SignUpRequest(
-              vatNumber = testVatNumber,
-              businessEntity = VatGroup,
-              signUpEmail = Some(verifiedEmail),
-              transactionEmail = verifiedEmail,
-              isDelegated = true,
-              isMigratable = testIsMigratable
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = VatGroup,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
             )
-          )
+          }
         }
       }
 
-      "the user is a Division" should {
-        "return a successful SignUpRequest" in {
-          enable(EtmpEntityType)
+      "the user is a Division" when {
+        "the CaptureContactPreference feature switch is enabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            enable(CaptureContactPreference)
 
-          val testSubscriptionRequest =
-            SubscriptionRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Some(AdministrativeDivision),
-              email = Some(testEmail),
-              isMigratable = testIsMigratable
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(AdministrativeDivision),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = AdministrativeDivision,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
             )
+          }
+        }
+        "the CaptureContactPreference feature switch is disabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            disable(CaptureContactPreference)
 
-          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(AdministrativeDivision),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
 
-          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-          await(res) shouldBe Right(
-            SignUpRequest(
-              vatNumber = testVatNumber,
-              businessEntity = AdministrativeDivision,
-              signUpEmail = Some(verifiedEmail),
-              transactionEmail = verifiedEmail,
-              isDelegated = true,
-              isMigratable = testIsMigratable
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = AdministrativeDivision,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
             )
-          )
+          }
         }
       }
 
       "the user is a Unincorporated Association" should {
-        "return a successful SignUpRequest" in {
-          enable(EtmpEntityType)
+        "the CaptureContactPreference feature switch is enabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            enable(CaptureContactPreference)
 
-          val testSubscriptionRequest =
-            SubscriptionRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Some(UnincorporatedAssociation),
-              email = Some(testEmail),
-              isMigratable = testIsMigratable
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(UnincorporatedAssociation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = UnincorporatedAssociation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
             )
+          }
+        }
+        "the CaptureContactPreference feature switch is disabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            disable(CaptureContactPreference)
 
-          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(UnincorporatedAssociation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
 
-          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-          await(res) shouldBe Right(
-            SignUpRequest(
-              vatNumber = testVatNumber,
-              businessEntity = UnincorporatedAssociation,
-              signUpEmail = Some(verifiedEmail),
-              transactionEmail = verifiedEmail,
-              isDelegated = true,
-              isMigratable = testIsMigratable
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = UnincorporatedAssociation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
             )
-          )
+          }
         }
       }
 
       "the user is a Registered Society" should {
-        "return a successful SignUpRequest" in {
-          enable(EtmpEntityType)
+        "the CaptureContactPreference feature switch is enabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            enable(CaptureContactPreference)
 
-          val testSubscriptionRequest =
-            SubscriptionRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Some(RegisteredSociety(testCompanyNumber)),
-              email = Some(testEmail),
-              isMigratable = testIsMigratable
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = RegisteredSociety(testCompanyNumber),
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
             )
+          }
+        }
+        "the CaptureContactPreference feature switch is disabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            disable(CaptureContactPreference)
 
-          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
 
-          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-          await(res) shouldBe Right(
-            SignUpRequest(
-              vatNumber = testVatNumber,
-              businessEntity = RegisteredSociety(testCompanyNumber),
-              signUpEmail = Some(verifiedEmail),
-              transactionEmail = verifiedEmail,
-              isDelegated = true,
-              isMigratable = testIsMigratable
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = RegisteredSociety(testCompanyNumber),
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
             )
-          )
+          }
         }
       }
 
       "the user is a Charity" should {
-        "return a successful SignUpRequest" in {
-          enable(EtmpEntityType)
+        "the CaptureContactPreference feature switch is enabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            enable(CaptureContactPreference)
 
-          val testSubscriptionRequest =
-            SubscriptionRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Some(Charity),
-              email = Some(testEmail),
-              isMigratable = testIsMigratable
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(Charity),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Charity,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
             )
+          }
+        }
+        "the CaptureContactPreference feature switch is disabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            disable(CaptureContactPreference)
 
-          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(Charity),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
 
-          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-          await(res) shouldBe Right(
-            SignUpRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Charity,
-              signUpEmail = Some(verifiedEmail),
-              transactionEmail = verifiedEmail,
-              isDelegated = true,
-              isMigratable = testIsMigratable
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Charity,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
             )
-          )
+          }
         }
       }
+
       "the user is a Government Organisation" should {
-        "return a successful SignUpRequest" in {
-          enable(EtmpEntityType)
+        "the CaptureContactPreference feature switch is enabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            enable(CaptureContactPreference)
 
-          val testSubscriptionRequest =
-            SubscriptionRequest(
-              vatNumber = testVatNumber,
-              businessEntity = Some(GovernmentOrganisation),
-              email = Some(testEmail),
-              isMigratable = testIsMigratable
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(GovernmentOrganisation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
             )
+          }
+        }
+        "the CaptureContactPreference feature switch is disabled" should {
+          "return a successful SignUpRequest" in {
+            enable(EtmpEntityType)
+            disable(CaptureContactPreference)
 
-          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(GovernmentOrganisation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable
+              )
 
-          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-          await(res) shouldBe Right(
-            SignUpRequest(
-              vatNumber = testVatNumber,
-              businessEntity = GovernmentOrganisation,
-              signUpEmail = Some(verifiedEmail),
-              transactionEmail = verifiedEmail,
-              isDelegated = true,
-              isMigratable = testIsMigratable
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
             )
-          )
+          }
         }
       }
     }

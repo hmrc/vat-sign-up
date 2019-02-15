@@ -36,6 +36,9 @@ object Constants {
 
     val RegistrationRequestKey = "registrationRequest"
     val IdentificationKey = "identification"
+
+    val contactPreferenceDigital = "Digital"
+    val contactPreferencePaper = "Paper"
   }
 
   object TaxEnrolments {

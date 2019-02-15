@@ -17,8 +17,7 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
-
-import play.api.libs.json.{JsObject, Json, Writes}
+import play.api.libs.json._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -40,7 +39,8 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
              vatNumber: String,
              email: Option[String],
              emailVerified: Option[Boolean],
-             optIsPartialMigration: Option[Boolean]
+             optIsPartialMigration: Option[Boolean],
+             optContactPreference: Option[String]
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
     val headerCarrier = hc
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
@@ -48,7 +48,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
 
     http.POST[JsObject, CustomerSignUpResponse](
       url = url,
-      body = buildRequest(safeId, vatNumber, email, emailVerified, optIsPartialMigration)
+      body = buildRequest(safeId, vatNumber, email, emailVerified, optIsPartialMigration, optContactPreference)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[CustomerSignUpResponse]],
@@ -63,35 +63,44 @@ object CustomerSignUpConnector {
 
   import uk.gov.hmrc.vatsignup.config.Constants.Des._
 
-  private[connectors] def buildRequest(safeId: String, vatNumber: String, email: Option[String], emailVerified: Option[Boolean], optIsPartialMigration: Option[Boolean]): JsObject = {
+  private[connectors] def buildRequest(safeId: String,
+                                       vatNumber: String,
+                                       email: Option[String],
+                                       emailVerified: Option[Boolean],
+                                       optIsPartialMigration: Option[Boolean],
+                                       optContactPreference: Option[String]
+                                      ): JsObject = {
     Json.obj(
       "signUpRequest" -> Json.obj(
-        "identification" ->
-          Json.arr(
-            Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
-            Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
-          ))
-        .++(
-          (email, emailVerified) match {
-            case (Some(address), Some(isVerified)) =>
-              Json.obj("additionalInformation" ->
-                Json.arr(
-                  Json.obj(
-                    "typeOfField" -> emailKey,
-                    "fieldContents" -> address,
-                    "infoVerified" -> isVerified
-                  )
+        "identification" -> Json.arr(
+          Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
+          Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
+        )
+      )
+      .++(
+        (email, emailVerified) match {
+          case (Some(address), Some(isVerified)) =>
+            Json.obj("additionalInformation" ->
+              Json.arr(
+                Json.obj(
+                  "typeOfField" -> emailKey,
+                  "fieldContents" -> address,
+                  "infoVerified" -> isVerified
                 )
               )
-            case _ => Json.obj()
-          }
-        ).++(
-        optIsPartialMigration match {
-          case Some(isPartialMigration) => Json.obj("isPartialMigration" -> isPartialMigration)
+            )
           case _ => Json.obj()
         }
       )
+      .++(optionalField("isPartialMigration", optIsPartialMigration))
+      .++(optionalField("channel", optContactPreference))
     )
+  }
+
+  private def optionalField[T](key: String, optValue: Option[T])(implicit writes: Writes[T]): JsObject =
+    optValue match {
+    case Some(value) => Json.obj(key -> Json.toJson(value))
+    case _ => Json.obj()
   }
 
 }
