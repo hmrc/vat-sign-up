@@ -89,6 +89,8 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
     Json.obj(
       "postcode" -> testPostCode,
       "dateOfReg" -> testDateOfRegistration,
+      "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+      "lastNetDue" -> testLastNetDue,
       "controlListInformation" -> ControlList33.eligible
     )
 

@@ -41,6 +41,8 @@ object IntegrationTestConstants {
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
+  val testLastReturnMonthPeriod: String = "MAR"
+  val testLastNetDue: Double = 10000.02
 
   val eligibleModel: ControlListInformation = ControlListInformation(
     controlList = Set(Stagger1, Company),

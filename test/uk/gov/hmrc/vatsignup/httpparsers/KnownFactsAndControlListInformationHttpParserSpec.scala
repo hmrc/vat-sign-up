@@ -39,12 +39,20 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
               Json.obj(
                 "postcode" -> testPostCode,
                 "dateOfReg" -> testDateOfRegistration,
+                "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+                "lastNetDue" -> testLastNetDue,
                 "controlListInformation" -> ControlList32.valid
               )
             )
           )
 
-          read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, testControlListInformation))
+          read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
+            testPostCode,
+            testDateOfRegistration,
+            Some(testLastReturnMonthPeriod),
+            Some(testLastNetDue),
+            testControlListInformation
+          ))
         }
       }
 
@@ -60,7 +68,11 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
             responseJson = Some(testJson)
           )
 
-          val res: UnexpectedKnownFactsAndControlListInformationFailure = read(testMethod, testUrl, testResponse).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
+          val res: UnexpectedKnownFactsAndControlListInformationFailure = read(
+            method = testMethod,
+            url = testUrl,
+            response = testResponse
+          ).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
 
           res.status shouldBe OK
           res.body should include(invalidJsonResponseMessage)

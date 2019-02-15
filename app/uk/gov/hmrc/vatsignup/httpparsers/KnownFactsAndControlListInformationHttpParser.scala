@@ -26,6 +26,8 @@ object KnownFactsAndControlListInformationHttpParser {
 
   val postcodeKey = "postcode"
   val registrationDateKey = "dateOfReg"
+  val lastReturnMonthPeriodKey = "lastReturnMonthPeriod"
+  val lastNetDueKey = "lastNetDue"
   val controlListInformationKey = "controlListInformation"
 
   val invalidJsonResponseMessage = "Invalid JSON response"
@@ -37,10 +39,18 @@ object KnownFactsAndControlListInformationHttpParser {
           (for {
             businessPostcode <- (response.json \ postcodeKey).validate[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
+            lastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
+            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
             case Right(validControlList) =>
-              Right(KnownFactsAndControlListInformation(businessPostcode, vatRegistrationDate, validControlList))
+              Right(KnownFactsAndControlListInformation(
+                businessPostcode = businessPostcode,
+                vatRegistrationDate = vatRegistrationDate,
+                lastReturnMonthPeriod = lastReturnMonthPeriod,
+                lastNetDue = lastNetDue,
+                controlListInformation = validControlList
+              ))
             case Left(parsingError) =>
               Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, parsingError.toString))
           }) getOrElse Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, s"$invalidJsonResponseMessage ${response.body}"))
@@ -54,7 +64,13 @@ object KnownFactsAndControlListInformationHttpParser {
     }
   }
 
-  case class KnownFactsAndControlListInformation(businessPostcode: String, vatRegistrationDate: String, controlListInformation: ControlListInformation)
+  case class KnownFactsAndControlListInformation(
+    businessPostcode: String,
+    vatRegistrationDate: String,
+    lastReturnMonthPeriod: Option[String],
+    lastNetDue: Option[Double],
+    controlListInformation: ControlListInformation
+  )
 
   sealed trait KnownFactsAndControlListInformationFailure
 
