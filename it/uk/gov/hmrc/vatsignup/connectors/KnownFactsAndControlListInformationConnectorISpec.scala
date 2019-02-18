@@ -37,7 +37,13 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
 
         val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
 
-        res.right.value shouldBe KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, eligibleModel)
+        res.right.value shouldBe KnownFactsAndControlListInformation(
+          businessPostcode = testPostCode,
+          vatRegistrationDate = testDateOfRegistration,
+          lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+          lastNetDue = Some(testLastNetDue),
+          controlListInformation = eligibleModel
+        )
       }
     }
   }
