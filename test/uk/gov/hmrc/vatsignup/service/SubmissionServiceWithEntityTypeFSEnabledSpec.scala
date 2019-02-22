@@ -86,12 +86,19 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   signUpEmail = Some(testSignUpEmail),
                   transactionEmail = testSignUpEmail,
                   isDelegated = true,
-                  isMigratable = testIsMigratable
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
                 )
 
                 mockRegisterBusinessEntity(testVatNumber, testSoleTrader)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
 
-                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                mockSignUp(testSafeId,
+                  testVatNumber,
+                  Some(testEmail),
+                  emailVerified = Some(true),
+                  optIsPartialMigration = None,
+                  optContactPreference = Some(testContactPreference)
+                )(Future.successful(Right(CustomerSignUpResponseSuccess)))
                 mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
                 val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -114,11 +121,18 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   signUpEmail = Some(testSignUpEmail),
                   transactionEmail = testSignUpEmail,
                   isDelegated = true,
-                  isMigratable = testIsMigratable
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
                 )
 
                 mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                mockSignUp(testSafeId,
+                  testVatNumber,
+                  Some(testEmail),
+                  emailVerified = Some(true),
+                  optIsPartialMigration = None,
+                  optContactPreference = Some(testContactPreference)
+                )(Future.successful(Right(CustomerSignUpResponseSuccess)))
                 mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
                 val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -132,7 +146,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   isSuccess = true)
                 )
                 verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
-                  Some(testAgentReferenceNumber), isSuccess = true))
+                  Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                ))
               }
 
               "return a SignUpRequestSubmitted for a general partnership sign up" in {
@@ -144,11 +159,18 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   signUpEmail = Some(testSignUpEmail),
                   transactionEmail = testSignUpEmail,
                   isDelegated = true,
-                  isMigratable = testIsMigratable
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
                 )
 
                 mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                mockSignUp(testSafeId,
+                  testVatNumber,
+                  Some(testEmail),
+                  emailVerified = Some(true),
+                  optIsPartialMigration = None,
+                  optContactPreference = Some(testContactPreference)
+                )(Future.successful(Right(CustomerSignUpResponseSuccess)))
                 mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
                 val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -162,7 +184,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   isSuccess = true)
                 )
                 verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
-                  Some(testAgentReferenceNumber), isSuccess = true))
+                  Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                ))
               }
             }
             "HybridSolution is enabled" should {
@@ -175,12 +198,19 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   signUpEmail = Some(testSignUpEmail),
                   transactionEmail = testSignUpEmail,
                   isDelegated = true,
-                  isMigratable = testIsMigratable
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
                 )
 
                 mockRegisterBusinessEntity(testVatNumber, testSoleTrader)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
 
-                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                mockSignUp(testSafeId,
+                  testVatNumber,
+                  Some(testEmail),
+                  emailVerified = Some(true),
+                  optIsPartialMigration = Some(!testIsMigratable),
+                  optContactPreference = Some(testContactPreference)
+                )(Future.successful(Right(CustomerSignUpResponseSuccess)))
                 mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
                 val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -201,11 +231,18 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   signUpEmail = Some(testSignUpEmail),
                   transactionEmail = testSignUpEmail,
                   isDelegated = true,
-                  isMigratable = testIsMigratable
+                  isMigratable = testIsMigratable,
+                  contactPreference = Some(testContactPreference)
                 )
 
                 mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-                mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Right(CustomerSignUpResponseSuccess)))
+                mockSignUp(testSafeId,
+                  testVatNumber,
+                  Some(testEmail),
+                  emailVerified = Some(true),
+                  optIsPartialMigration = Some(!testIsMigratable),
+                  optContactPreference = Some(testContactPreference)
+                )(Future.successful(Right(CustomerSignUpResponseSuccess)))
                 mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
                 val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -219,7 +256,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   isSuccess = true)
                 )
                 verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
-                  Some(testAgentReferenceNumber), isSuccess = true))
+                  Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                ))
               }
             }
           }
@@ -231,11 +269,18 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 signUpEmail = Some(testSignUpEmail),
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
-                isMigratable = testIsMigratable
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
               )
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-              mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Right(CustomerSignUpResponseSuccess)))
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                optIsPartialMigration = Some(!testIsMigratable),
+                optContactPreference = Some(testContactPreference)
+              )(Future.successful(Right(CustomerSignUpResponseSuccess)))
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Left(FailedTaxEnrolment(BAD_REQUEST))))
 
               val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -249,7 +294,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 isSuccess = true)
               )
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true))
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
             }
           }
         }
@@ -261,11 +307,18 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               signUpEmail = Some(testSignUpEmail),
               transactionEmail = testSignUpEmail,
               isDelegated = true,
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              contactPreference = Some(testContactPreference)
             )
 
             mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-            mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
+            mockSignUp(testSafeId,
+              testVatNumber,
+              Some(testEmail),
+              emailVerified = Some(true),
+              optIsPartialMigration = Some(!testIsMigratable),
+              optContactPreference = Some(testContactPreference)
+            )(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
 
             val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
@@ -278,8 +331,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               isSuccess = true)
             )
             verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
-              Some(testAgentReferenceNumber), isSuccess = false))
-
+              Some(testAgentReferenceNumber), isSuccess = false, contactPreference = Some(testContactPreference)
+            ))
           }
         }
       }
@@ -291,7 +344,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
             signUpEmail = Some(testSignUpEmail),
             transactionEmail = testSignUpEmail,
             isDelegated = true,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            contactPreference = Some(testContactPreference)
           )
 
           mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(
@@ -325,12 +379,19 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 signUpEmail = Some(testSignUpEmail),
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
-                isMigratable = testIsMigratable
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
               )
 
 
               mockRegisterBusinessEntity(testVatNumber, testSoleTrader)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-              mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Right(CustomerSignUpResponseSuccess)))
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                optIsPartialMigration = Some(!testIsMigratable),
+                optContactPreference = Some(testContactPreference)
+              )(Future.successful(Right(CustomerSignUpResponseSuccess)))
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
               val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -343,7 +404,9 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = None,
                 isSuccess = true)
               )
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true), None, isSuccess = true))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
             }
             "return a SignUpRequestSubmitted for a company sign up" in {
               val signUpRequest = SignUpRequest(
@@ -352,12 +415,19 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 signUpEmail = Some(testSignUpEmail),
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
-                isMigratable = testIsMigratable
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
               )
 
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-              mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Right(CustomerSignUpResponseSuccess)))
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                optIsPartialMigration = Some(!testIsMigratable),
+                optContactPreference = Some(testContactPreference)
+              )(Future.successful(Right(CustomerSignUpResponseSuccess)))
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
               val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -370,7 +440,9 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true), None, isSuccess = true))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
             }
           }
           "the enrolment call fails" should {
@@ -381,12 +453,19 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 signUpEmail = Some(testSignUpEmail),
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
-                isMigratable = testIsMigratable
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
               )
 
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-              mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Right(CustomerSignUpResponseSuccess)))
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                optIsPartialMigration = Some(!testIsMigratable),
+                optContactPreference = Some(testContactPreference)
+              )(Future.successful(Right(CustomerSignUpResponseSuccess)))
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Left(FailedTaxEnrolment(BAD_REQUEST))))
 
               val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
@@ -399,7 +478,9 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true), None, isSuccess = true))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
             }
           }
         }
@@ -411,12 +492,19 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               signUpEmail = Some(testSignUpEmail),
               transactionEmail = testSignUpEmail,
               isDelegated = false,
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              contactPreference = Some(testContactPreference)
             )
 
 
             mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId))))
-            mockSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
+            mockSignUp(testSafeId,
+              testVatNumber,
+              Some(testEmail),
+              emailVerified = Some(true),
+              optIsPartialMigration = Some(!testIsMigratable),
+              optContactPreference = Some(testContactPreference)
+            )(Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST))))
 
             val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
@@ -428,7 +516,9 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               agentReferenceNumber = None,
               isSuccess = true
             ))
-            verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true), None, isSuccess = false))
+            verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+              Some(true), None, isSuccess = false, contactPreference = Some(testContactPreference)
+            ))
           }
         }
       }
@@ -440,7 +530,8 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
             signUpEmail = Some(testSignUpEmail),
             transactionEmail = testSignUpEmail,
             isDelegated = false,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            contactPreference = Some(testContactPreference)
           )
 
           mockRegisterBusinessEntity(testVatNumber, testLimitedCompany)(

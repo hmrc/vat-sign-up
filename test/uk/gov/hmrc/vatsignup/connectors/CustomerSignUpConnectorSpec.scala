@@ -18,15 +18,21 @@ package uk.gov.hmrc.vatsignup.connectors
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testEmail, testSafeId, testVatNumber}
-
+import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 
 class CustomerSignUpConnectorSpec extends UnitSpec {
 
   "CustomerSignUpConnector" should {
     import CustomerSignUpConnector._
     "convert the request into the correct DES format" in {
-      val requestJson = buildRequest(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(true))
+      val requestJson = buildRequest(testSafeId,
+        testVatNumber,
+        Some(testEmail),
+        emailVerified = Some(true),
+        optIsPartialMigration = Some(true),
+        Some(testContactPreference)
+      )
+
       val expectedJson = Json.parse(
         s"""
            |{
@@ -48,7 +54,8 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |        "infoVerified": true
            |      }
            |    ],
-           |    "isPartialMigration" : true
+           |    "isPartialMigration" : true,
+           |    "channel" : "Digital"
            |  }
            |}
         """.stripMargin
@@ -57,7 +64,14 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
     }
 
     "convert the request into the correct DES format when email is not defined" in {
-      val requestJson = buildRequest(testSafeId, testVatNumber, None, emailVerified = None, optIsPartialMigration = Some(false))
+      val requestJson = buildRequest(testSafeId,
+        testVatNumber,
+        None,
+        emailVerified = None,
+        optIsPartialMigration = Some(false),
+        Some(testContactPreference)
+      )
+
       val expectedJson = Json.parse(
         s"""
            |{
@@ -72,7 +86,8 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |        "idValue": "$testVatNumber"
            |      }
            |    ],
-           |    "isPartialMigration" : false
+           |    "isPartialMigration" : false,
+           |    "channel" : "Digital"
            |  }
            |}
         """.stripMargin
@@ -81,7 +96,13 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
     }
 
     "convert the request into the correct DES format when isPartialMigration is not defined" in {
-      val requestJson = buildRequest(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)
+      val requestJson = buildRequest(testSafeId,
+        testVatNumber,
+        Some(testEmail),
+        emailVerified = Some(true),
+        optIsPartialMigration = None,
+        Some(testContactPreference)
+      )
       val expectedJson = Json.parse(
         s"""
            |{
@@ -102,7 +123,8 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |        "fieldContents": "$testEmail",
            |        "infoVerified": true
            |      }
-           |    ]
+           |    ],
+           |    "channel" : "Digital"
            |  }
            |}
         """.stripMargin
