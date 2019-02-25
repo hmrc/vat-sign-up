@@ -24,6 +24,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformationHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
+import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 
 class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with EitherValues {
   val testMethod = "GET"
@@ -46,7 +47,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
             )
           )
 
-          read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
+          read(testMethod, testUrl, testResponse) shouldBe Right(VatKnownFacts(
             testPostCode,
             testDateOfRegistration,
             Some(testLastReturnMonthPeriod),

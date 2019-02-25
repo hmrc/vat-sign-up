@@ -18,11 +18,11 @@ package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation
+import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser
 
 object KnownFactsAndControlListInformationHttpParser {
-  type KnownFactsAndControlListInformationHttpParserResponse = Either[KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation]
+  type KnownFactsAndControlListInformationHttpParserResponse = Either[KnownFactsAndControlListInformationFailure, VatKnownFacts]
 
   val postcodeKey = "postcode"
   val registrationDateKey = "dateOfReg"
@@ -40,11 +40,11 @@ object KnownFactsAndControlListInformationHttpParser {
             businessPostcode <- (response.json \ postcodeKey).validate[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
             lastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
-            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
+            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[String]
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
             case Right(validControlList) =>
-              Right(KnownFactsAndControlListInformation(
+              Right(VatKnownFacts(
                 businessPostcode = businessPostcode,
                 vatRegistrationDate = vatRegistrationDate,
                 lastReturnMonthPeriod = lastReturnMonthPeriod,
@@ -64,13 +64,7 @@ object KnownFactsAndControlListInformationHttpParser {
     }
   }
 
-  case class KnownFactsAndControlListInformation(
-    businessPostcode: String,
-    vatRegistrationDate: String,
-    lastReturnMonthPeriod: Option[String],
-    lastNetDue: Option[Double],
-    controlListInformation: ControlListInformation
-  )
+  type KnownFactsAndControlListInformationResponse = Either[KnownFactsAndControlListInformationFailure, VatKnownFacts]
 
   sealed trait KnownFactsAndControlListInformationFailure
 

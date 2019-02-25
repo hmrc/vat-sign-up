@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
-import uk.gov.hmrc.vatsignup.models.MigratableDates
+import uk.gov.hmrc.vatsignup.models.{MigratableDates, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, NonStandardTaxPeriod, OverseasTrader}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
@@ -59,7 +59,7 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
 
   private def getKnownFactsAndControlListInformation(vatNumber: String
                                                     )(implicit hc: HeaderCarrier,
-                                                      request: Request[_]): EitherT[Future, EligibilityFailure, KnownFactsAndControlListInformation] =
+                                                      request: Request[_]): EitherT[Future, EligibilityFailure, VatKnownFacts] =
     EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) leftMap {
       errorReason =>
         auditService.audit(ControlListAuditModel.fromFailure(vatNumber, errorReason))
