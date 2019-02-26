@@ -18,10 +18,11 @@ package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser
 
-object KnownFactsAndControlListInformationHttpParser {
+object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
   type KnownFactsAndControlListInformationHttpParserResponse = Either[KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation]
 
   val postcodeKey = "postcode"
@@ -32,28 +33,60 @@ object KnownFactsAndControlListInformationHttpParser {
 
   val invalidJsonResponseMessage = "Invalid JSON response"
 
+  val lastReturnMonthDefault: String = "N/A"
+  val lastNetDueDefault:String = "0"
+
   implicit object KnownFactsAndControlListInformationHttpReads extends HttpReads[KnownFactsAndControlListInformationHttpParserResponse] {
     override def read(method: String, url: String, response: HttpResponse): KnownFactsAndControlListInformationHttpParserResponse = {
       response.status match {
-        case OK =>
+        case OK  if isEnabled(AdditionalKnownFacts) =>
           (for {
             businessPostcode <- (response.json \ postcodeKey).validate[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
             lastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
-            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
+            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[String]
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
             case Right(validControlList) =>
+              val lrmp = lastReturnMonthPeriod filterNot (_ == lastReturnMonthDefault)
+              val lnd = lastNetDue filterNot (_ == lastNetDueDefault && lrmp.isEmpty)
               Right(KnownFactsAndControlListInformation(
-                businessPostcode = businessPostcode,
-                vatRegistrationDate = vatRegistrationDate,
-                lastReturnMonthPeriod = lastReturnMonthPeriod,
-                lastNetDue = lastNetDue,
+                VatKnownFacts(
+                  businessPostcode = businessPostcode,
+                  vatRegistrationDate = vatRegistrationDate,
+                  lastReturnMonthPeriod = lrmp,
+                  lastNetDue = lnd
+                ),
                 controlListInformation = validControlList
               ))
             case Left(parsingError) =>
               Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, parsingError.toString))
-          }) getOrElse Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, s"$invalidJsonResponseMessage ${response.body}"))
+          }) getOrElse Left(
+            UnexpectedKnownFactsAndControlListInformationFailure(OK, s"$invalidJsonResponseMessage ${response.body}")
+          )
+
+        case OK =>
+          (for {
+            businessPostcode <- (response.json \ postcodeKey).validate[String]
+            vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
+            controlList <- (response.json \ controlListInformationKey).validate[String]
+          } yield ControlListInformationParser.tryParse(controlList) match {
+            case Right(validControlList) =>
+              Right(KnownFactsAndControlListInformation(
+                VatKnownFacts(
+                  businessPostcode = businessPostcode,
+                  vatRegistrationDate = vatRegistrationDate,
+                  lastReturnMonthPeriod = None,
+                  lastNetDue = None
+                ),
+                controlListInformation = validControlList
+              ))
+            case Left(parsingError) =>
+              Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, parsingError.toString))
+          }) getOrElse Left(
+            UnexpectedKnownFactsAndControlListInformationFailure(OK, s"$invalidJsonResponseMessage ${response.body}")
+          )
+
         case BAD_REQUEST =>
           Left(KnownFactsInvalidVatNumber)
         case NOT_FOUND =>
@@ -64,13 +97,6 @@ object KnownFactsAndControlListInformationHttpParser {
     }
   }
 
-  case class KnownFactsAndControlListInformation(
-    businessPostcode: String,
-    vatRegistrationDate: String,
-    lastReturnMonthPeriod: Option[String],
-    lastNetDue: Option[Double],
-    controlListInformation: ControlListInformation
-  )
 
   sealed trait KnownFactsAndControlListInformationFailure
 
