@@ -59,10 +59,7 @@ object KnownFactsHttpParser {
     }
   }
 
-  case class KnownFacts(businessPostcode: String,
-                        vatRegistrationDate: String,
-                        lastReturnMonthPeriod: Option[String] = None,
-                        lastNetDue: Option[Double] = None)
+  case class KnownFacts(businessPostcode: String, vatRegistrationDate: String)
 
   sealed trait KnownFactsFailure
 

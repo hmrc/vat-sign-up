@@ -82,6 +82,20 @@ object TestConstants {
     businessEntity = Company
   )
 
+  val testFourKnownFacts = VatKnownFacts(
+    businessPostcode = testPostCode,
+    vatRegistrationDate = testDateOfRegistration,
+    lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+    lastNetDue = Some(testLastNetDue)
+  )
+
+  val testTwoKnownFacts = VatKnownFacts(
+    businessPostcode = testPostCode,
+    vatRegistrationDate = testDateOfRegistration,
+    lastReturnMonthPeriod = None,
+    lastNetDue = None
+  )
+
   val testKnownFactsAndControlListInformation = KnownFactsAndControlListInformation(
     VatKnownFacts(
       testPostCode,
