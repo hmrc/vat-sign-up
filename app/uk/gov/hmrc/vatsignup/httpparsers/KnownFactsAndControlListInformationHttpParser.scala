@@ -34,7 +34,7 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
   val invalidJsonResponseMessage = "Invalid JSON response"
 
   val lastReturnMonthDefault: String = "N/A"
-  val lastNetDueDefault:String = "0"
+  val lastNetDueDefault:String = "0.00"
 
   implicit object KnownFactsAndControlListInformationHttpReads extends HttpReads[KnownFactsAndControlListInformationHttpParserResponse] {
     override def read(method: String, url: String, response: HttpResponse): KnownFactsAndControlListInformationHttpParserResponse = {
@@ -44,12 +44,12 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
             businessPostcode <- (response.json \ postcodeKey).validate[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
             lastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
-            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[String]
+            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
             case Right(validControlList) =>
               val lrmp = lastReturnMonthPeriod filterNot (_ == lastReturnMonthDefault)
-              val lnd = lastNetDue filterNot (_ == lastNetDueDefault && lrmp.isEmpty)
+              val lnd = lastNetDue.map { x => "%.2f".format(x) } filterNot (_ == lastNetDueDefault && lrmp.isEmpty)
               Right(KnownFactsAndControlListInformation(
                 VatKnownFacts(
                   businessPostcode = businessPostcode,

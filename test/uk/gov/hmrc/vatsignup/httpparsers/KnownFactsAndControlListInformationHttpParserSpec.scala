@@ -44,7 +44,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                   "postcode" -> testPostCode,
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
-                  "lastNetDue" -> testLastNetDue,
+                  "lastNetDue" -> testLastNetDue.toDouble,
                   "controlListInformation" -> ControlList32.valid
                 )
               )
@@ -71,7 +71,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                   "postcode" -> testPostCode,
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> "N/A",
-                  "lastNetDue" -> testLastNetDue,
+                  "lastNetDue" -> testLastNetDue.toDouble,
                   "controlListInformation" -> ControlList32.valid
                 )
               )
@@ -99,7 +99,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                   "postcode" -> testPostCode,
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> "N/A",
-                  "lastNetDue" -> "0",
+                  "lastNetDue" -> 0.00,
                   "controlListInformation" -> ControlList32.valid
                 )
               )
