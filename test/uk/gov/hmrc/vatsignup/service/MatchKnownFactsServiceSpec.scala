@@ -50,10 +50,10 @@ class MatchKnownFactsServiceSpec
         mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
         val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
           vatNumber = testVatNumber,
-          vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
-          businessPostcode = testKnownFactsAndControlListInformation.businessPostcode,
-          lastNetDue = testKnownFactsAndControlListInformation.lastNetDue,
-          lastReturnMonthPeriod = testKnownFactsAndControlListInformation.lastReturnMonthPeriod
+          vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+          businessPostcode = testKnownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
+          lastNetDue = testKnownFactsAndControlListInformation.vatKnownFacts.lastNetDue,
+          lastReturnMonthPeriod = testKnownFactsAndControlListInformation.vatKnownFacts.lastReturnMonthPeriod
         ))
         res shouldBe Right(KnownFactsMatch)
       }
@@ -63,10 +63,10 @@ class MatchKnownFactsServiceSpec
         mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
         val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
           vatNumber = testVatNumber,
-          vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
-          businessPostcode = testKnownFactsAndControlListInformation.businessPostcode,
-          lastNetDue = Some(12345.50d),
-          lastReturnMonthPeriod = testKnownFactsAndControlListInformation.lastReturnMonthPeriod
+          vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+          businessPostcode = testKnownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
+          lastNetDue = Some("12345.50d"),
+          lastReturnMonthPeriod = testKnownFactsAndControlListInformation.vatKnownFacts.lastReturnMonthPeriod
         ))
         res shouldBe Left(KnownFactsDoNotMatch)
       }
@@ -80,8 +80,8 @@ class MatchKnownFactsServiceSpec
         mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
         val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
           vatNumber = testVatNumber,
-          vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
-          businessPostcode = testKnownFactsAndControlListInformation.businessPostcode,
+          vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+          businessPostcode = testKnownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
           lastNetDue = None,
           lastReturnMonthPeriod = None
         ))
@@ -94,7 +94,7 @@ class MatchKnownFactsServiceSpec
         mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(testKnownFactsAndControlListInformation)))
         val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
           vatNumber = testVatNumber,
-          vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
+          vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
           businessPostcode = "ST11 1ZZ",
           lastNetDue = None,
           lastReturnMonthPeriod = None
@@ -109,10 +109,10 @@ class MatchKnownFactsServiceSpec
       mockGetKnownFactsAndControlListInformation("123456789")(Future.successful(Left(KnownFactsInvalidVatNumber)))
       val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
         vatNumber = "123456789",
-        vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
-        businessPostcode = testKnownFactsAndControlListInformation.businessPostcode,
-        lastNetDue = testKnownFactsAndControlListInformation.lastNetDue,
-        lastReturnMonthPeriod = testKnownFactsAndControlListInformation.lastReturnMonthPeriod
+        vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+        businessPostcode = testKnownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
+        lastNetDue = testKnownFactsAndControlListInformation.vatKnownFacts.lastNetDue,
+        lastReturnMonthPeriod = testKnownFactsAndControlListInformation.vatKnownFacts.lastReturnMonthPeriod
       ))
       res shouldBe Left(InvalidVatNumber)
     }
@@ -124,10 +124,10 @@ class MatchKnownFactsServiceSpec
 
       val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
         vatNumber = testVatNumber,
-        vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
-        businessPostcode = testKnownFactsAndControlListInformation.businessPostcode,
-        lastNetDue = testKnownFactsAndControlListInformation.lastNetDue,
-        lastReturnMonthPeriod = testKnownFactsAndControlListInformation.lastReturnMonthPeriod
+        vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+        businessPostcode = testKnownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
+        lastNetDue = testKnownFactsAndControlListInformation.vatKnownFacts.lastNetDue,
+        lastReturnMonthPeriod = testKnownFactsAndControlListInformation.vatKnownFacts.lastReturnMonthPeriod
       ))
       res shouldBe Left(VatNumberNotFound)
     }
@@ -141,10 +141,10 @@ class MatchKnownFactsServiceSpec
 
       val res = await(TestKnownFactsMatchingService.checkVatKnownFactsMatch(
         vatNumber = testVatNumber,
-        vatRegistrationDate = testKnownFactsAndControlListInformation.vatRegistrationDate,
-        businessPostcode = testKnownFactsAndControlListInformation.businessPostcode,
-        lastNetDue = testKnownFactsAndControlListInformation.lastNetDue,
-        lastReturnMonthPeriod = testKnownFactsAndControlListInformation.lastReturnMonthPeriod
+        vatRegistrationDate = testKnownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+        businessPostcode = testKnownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
+        lastNetDue = testKnownFactsAndControlListInformation.vatKnownFacts.lastNetDue,
+        lastReturnMonthPeriod = testKnownFactsAndControlListInformation.vatKnownFacts.lastReturnMonthPeriod
       ))
       res shouldBe Left(UnexpectedError(BAD_GATEWAY, "Unexpected error"))
     }

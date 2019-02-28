@@ -22,12 +22,10 @@ import java.util.UUID
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformation
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation.Migratable
-import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
+import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
 
@@ -61,7 +59,7 @@ object TestConstants {
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
   val testLastReturnMonthPeriod: String = "MAR"
-  val testLastNetDue: Double = 10000.02
+  val testLastNetDue: String = "10000.02"
 
   val testAgentEnrolment: Enrolment = Enrolment(AgentEnrolmentKey).withIdentifier(AgentReferenceNumberKey, testAgentReferenceNumber)
   val testPrincipalEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, testVatNumber)
@@ -85,10 +83,12 @@ object TestConstants {
   )
 
   val testKnownFactsAndControlListInformation = KnownFactsAndControlListInformation(
-    testPostCode,
-    testDateOfRegistration,
-    Some(testLastReturnMonthPeriod),
-    Some(testLastNetDue),
+    VatKnownFacts(
+      testPostCode,
+      testDateOfRegistration,
+      Some(testLastReturnMonthPeriod),
+      Some(testLastNetDue)
+    ),
     testControlListInformation
   )
 

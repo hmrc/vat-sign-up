@@ -18,12 +18,14 @@ package uk.gov.hmrc.vatsignup.connectors
 
 import org.scalatest.EitherValues
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformation, KnownFactsInvalidVatNumber}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber}
+import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
 
-class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBase with EitherValues {
+class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBase with EitherValues with FeatureSwitching {
 
   private lazy val KnownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector =
     app.injector.instanceOf[KnownFactsAndControlListInformationConnector]
@@ -31,21 +33,43 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   "getKnownFactsAndControlListInformation" when {
-    "DES returns a successful response" should {
+    "DES returns a successful response and the fs is enabled" should {
       "return the known facts and control list information" in {
+        enable(AdditionalKnownFacts)
         KnownFactsAndControlListInformationStub.stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
         val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
 
         res.right.value shouldBe KnownFactsAndControlListInformation(
-          businessPostcode = testPostCode,
-          vatRegistrationDate = testDateOfRegistration,
-          lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
-          lastNetDue = Some(testLastNetDue),
+          VatKnownFacts(
+            businessPostcode = testPostCode,
+            vatRegistrationDate = testDateOfRegistration,
+            lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+            lastNetDue = Some(testLastNetDue)
+          ),
           controlListInformation = eligibleModel
         )
       }
     }
+    "DES returns a successful response and the fs is disabled" should {
+      "return the known facts and control list information" in {
+        disable(AdditionalKnownFacts)
+        KnownFactsAndControlListInformationStub.stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+        val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
+
+        res.right.value shouldBe KnownFactsAndControlListInformation(
+          VatKnownFacts(
+            businessPostcode = testPostCode,
+            vatRegistrationDate = testDateOfRegistration,
+            lastReturnMonthPeriod = None,
+            lastNetDue = None
+          ),
+          controlListInformation = eligibleModel
+        )
+      }
+    }
+
   }
 
   "getKnownFactsAndControlListInformation" when {

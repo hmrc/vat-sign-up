@@ -18,11 +18,11 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsAndControlListInformation, KnownFactsInvalidVatNumber, UnexpectedKnownFactsAndControlListInformationFailure}
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
-import KnownFactsMatchingService._
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
+import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
+import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,11 +35,11 @@ class KnownFactsMatchingService @Inject()(knownFactsAndControlListConnector: Kno
   def checkVatKnownFactsMatch(vatNumber: String,
                               vatRegistrationDate: String,
                               businessPostcode: String,
-                              lastNetDue: Option[Double],
+                              lastNetDue: Option[String],
                               lastReturnMonthPeriod: Option[String]
                              ): Future[KnownFactsMatchingResponse] = {
 
-    val enteredKFs = KnownFacts(
+    val enteredKFs = VatKnownFacts(
       businessPostcode,
       vatRegistrationDate,
       lastReturnMonthPeriod,
@@ -60,17 +60,17 @@ class KnownFactsMatchingService @Inject()(knownFactsAndControlListConnector: Kno
     }
   }
 
-  private def knownFactsMatch(enteredKFs: KnownFacts,
+  private def knownFactsMatch(enteredKFs: VatKnownFacts,
                               retrievedKfs: KnownFactsAndControlListInformation): Boolean = {
 
-    val baseKnownFactsValid = enteredKFs.vatRegistrationDate == retrievedKfs.vatRegistrationDate &&
-      enteredKFs.businessPostcode == retrievedKfs.businessPostcode
+    val baseKnownFactsValid = enteredKFs.vatRegistrationDate == retrievedKfs.vatKnownFacts.vatRegistrationDate &&
+      enteredKFs.businessPostcode == retrievedKfs.vatKnownFacts.businessPostcode
 
     (enteredKFs.lastNetDue, enteredKFs.lastReturnMonthPeriod) match {
       case (Some(lastNetDue) ,Some(lastReturnMonthPeriod)) =>
         if (isEnabled(AdditionalKnownFacts)) {
-          baseKnownFactsValid && retrievedKfs.lastNetDue.contains(lastNetDue) &&
-            retrievedKfs.lastReturnMonthPeriod.contains(lastReturnMonthPeriod)
+          baseKnownFactsValid && retrievedKfs.vatKnownFacts.lastNetDue.contains(lastNetDue) &&
+            retrievedKfs.vatKnownFacts.lastReturnMonthPeriod.contains(lastReturnMonthPeriod)
         }
         else baseKnownFactsValid
       case _ => baseKnownFactsValid

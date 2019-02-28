@@ -25,14 +25,14 @@ import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
-import uk.gov.hmrc.vatsignup.models.{DateRange, MigratableDates}
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
+import uk.gov.hmrc.vatsignup.models.{DateRange, KnownFactsAndControlListInformation, MigratableDates, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.service.mocks.MockDirectDebitMigrationCheckService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
-import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, DirectDebitMigrationCheckService}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
+import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, DirectDebitMigrationCheckService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -61,7 +61,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
           )
 
           mockGetKnownFactsAndControlListInformation(testVatNumber)(
-            Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, None, None, overseasControlListInformation)))
+            Future.successful(Right(KnownFactsAndControlListInformation(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+              overseasControlListInformation
+            )))
           )
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
@@ -73,7 +76,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
       "the user is not an overseas trader" should {
         "return EligibilitySuccess with the known facts, a migration status of true and an overseas status of true" in {
           mockGetKnownFactsAndControlListInformation(testVatNumber)(
-            Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, None, None, testControlListInformation))))
+            Future.successful(Right(KnownFactsAndControlListInformation(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+              testControlListInformation
+            ))))
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
@@ -87,7 +93,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
       "return EligibilitySuccess with the known facts and a migration status of true" in {
         mockNonMigratableParameters(Set(Stagger1))
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, None, None, testControlListInformation))))
+          Future.successful(Right(KnownFactsAndControlListInformation(
+            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+            testControlListInformation
+          ))))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
@@ -100,7 +109,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
       "return IneligibleVatNumber" in {
         mockIneligibleParameters(Set(Stagger1))
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, None, None, testControlListInformation))))
+          Future.successful(Right(KnownFactsAndControlListInformation(
+            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+            testControlListInformation
+          ))))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
@@ -119,7 +131,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, None, None, testControlListInformation))))
+          Future.successful(Right(KnownFactsAndControlListInformation(
+            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+            testControlListInformation
+          ))))
 
         mockCheckMigrationDate(Stagger1)(Left(testMigratableDates))
 
@@ -141,7 +156,10 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(testPostCode, testDateOfRegistration, None, None, testControlListInformation))))
+          Future.successful(Right(KnownFactsAndControlListInformation(
+            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+            testControlListInformation
+          ))))
 
         mockCheckMigrationDate(Stagger1)(Right(DirectDebitMigrationCheckService.Eligible))
 
