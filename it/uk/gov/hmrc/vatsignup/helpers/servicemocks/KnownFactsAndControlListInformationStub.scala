@@ -90,7 +90,7 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
       "postcode" -> testPostCode,
       "dateOfReg" -> testDateOfRegistration,
       "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
-      "lastNetDue" -> testLastNetDue,
+      "lastNetDue" -> testLastNetDue.toDouble,
       "controlListInformation" -> ControlList33.eligible
     )
 
