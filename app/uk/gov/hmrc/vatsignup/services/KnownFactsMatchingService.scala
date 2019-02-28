@@ -19,80 +19,45 @@ package uk.gov.hmrc.vatsignup.services
 import javax.inject._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
-import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
-import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
+import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class KnownFactsMatchingService @Inject()(knownFactsAndControlListConnector: KnownFactsAndControlListInformationConnector
-                                         )(implicit ec: ExecutionContext, hc: HeaderCarrier) extends FeatureSwitching {
+class KnownFactsMatchingService @Inject()(implicit hc: HeaderCarrier) extends FeatureSwitching {
 
   type KnownFactsMatchingResponse = Either[KnownFactsMatchingFailure, KnownFactsMatchingSuccess]
 
-  def checkVatKnownFactsMatch(vatNumber: String,
-                              vatRegistrationDate: String,
-                              businessPostcode: String,
-                              lastNetDue: Option[String],
-                              lastReturnMonthPeriod: Option[String]
-                             ): Future[KnownFactsMatchingResponse] = {
+  def checkKnownFactsMatch(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts): KnownFactsMatchingResponse = {
 
-    val enteredKFs = VatKnownFacts(
-      businessPostcode,
-      vatRegistrationDate,
-      lastReturnMonthPeriod,
-      lastNetDue
-    )
+    val businessPostCodeMatch = enteredKfs.businessPostcode == retrievedKfs.businessPostcode
+    val vatRegDateMatch = enteredKfs.vatRegistrationDate == retrievedKfs.vatRegistrationDate
+    val lastNetDueMatch = enteredKfs.lastNetDue == retrievedKfs.lastNetDue
+    val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
 
-    knownFactsAndControlListConnector.getKnownFactsAndControlListInformation(vatNumber) map {
-      case Right(retrievedKFs) if knownFactsMatch(enteredKFs, retrievedKFs) =>
-        Right(KnownFactsMatch)
-      case Right(_) =>
+    if (isEnabled(AdditionalKnownFacts))
+      if (businessPostCodeMatch && vatRegDateMatch && lastNetDueMatch && lastReturnMonthPeriodMatch)
+        Right(FourKnownFactsMatch)
+      else
         Left(KnownFactsDoNotMatch)
-      case Left(KnownFactsInvalidVatNumber) =>
-        Left(InvalidVatNumber)
-      case Left(ControlListInformationVatNumberNotFound) =>
-        Left(VatNumberNotFound)
-      case Left(UnexpectedKnownFactsAndControlListInformationFailure(status, body)) =>
-        Left(UnexpectedError(status, body))
-    }
-  }
-
-  private def knownFactsMatch(enteredKFs: VatKnownFacts,
-                              retrievedKfs: KnownFactsAndControlListInformation): Boolean = {
-
-    val baseKnownFactsValid = enteredKFs.vatRegistrationDate == retrievedKfs.vatKnownFacts.vatRegistrationDate &&
-      enteredKFs.businessPostcode == retrievedKfs.vatKnownFacts.businessPostcode
-
-    (enteredKFs.lastNetDue, enteredKFs.lastReturnMonthPeriod) match {
-      case (Some(lastNetDue) ,Some(lastReturnMonthPeriod)) =>
-        if (isEnabled(AdditionalKnownFacts)) {
-          baseKnownFactsValid && retrievedKfs.vatKnownFacts.lastNetDue.contains(lastNetDue) &&
-            retrievedKfs.vatKnownFacts.lastReturnMonthPeriod.contains(lastReturnMonthPeriod)
-        }
-        else baseKnownFactsValid
-      case _ => baseKnownFactsValid
-    }
+    else if (businessPostCodeMatch && vatRegDateMatch)
+      Right(TwoKnownFactsMatch)
+    else
+      Left(KnownFactsDoNotMatch)
   }
 
 }
 
 object KnownFactsMatchingService {
+
   sealed trait KnownFactsMatchingSuccess
 
-  case object KnownFactsMatch extends KnownFactsMatchingSuccess
+  case object FourKnownFactsMatch extends KnownFactsMatchingSuccess
+
+  case object TwoKnownFactsMatch extends KnownFactsMatchingSuccess
 
   sealed trait KnownFactsMatchingFailure
 
   case object KnownFactsDoNotMatch extends KnownFactsMatchingFailure
 
-  case object InvalidVatNumber extends KnownFactsMatchingFailure
-
-  case object VatNumberNotFound extends KnownFactsMatchingFailure
-
-  case class UnexpectedError(status: Int, body: String) extends KnownFactsMatchingFailure
 }
-
-
