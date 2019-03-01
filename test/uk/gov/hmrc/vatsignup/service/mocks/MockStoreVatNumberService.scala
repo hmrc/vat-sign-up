@@ -36,13 +36,17 @@ trait MockStoreVatNumberService extends MockitoSugar {
   def mockStoreVatNumber(vatNumber: String,
                          enrolments: Enrolments,
                          businessPostcode: Option[String] = None,
-                         vatRegistrationDate: Option[String] = None
+                         vatRegistrationDate: Option[String] = None,
+                         lastReturnMonthPeriod: Option[String] = None,
+                         lastNetDue: Option[String] = None
                         )(response: Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]]): Unit =
     when(mockStoreVatNumberService.storeVatNumber(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.any[Enrolments],
       ArgumentMatchers.eq(businessPostcode),
-      ArgumentMatchers.eq(vatRegistrationDate)
+      ArgumentMatchers.eq(vatRegistrationDate),
+      ArgumentMatchers.eq(lastReturnMonthPeriod),
+      ArgumentMatchers.eq(lastNetDue)
     )(ArgumentMatchers.any[HeaderCarrier],
       ArgumentMatchers.any[Request[_]])) thenReturn response
 

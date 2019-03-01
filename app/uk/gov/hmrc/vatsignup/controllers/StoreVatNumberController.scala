@@ -45,7 +45,14 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
 
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-            storeVatNumberService.storeVatNumber(requestObj.vatNumber, enrolments, requestObj.postCode, requestObj.registrationDate) map {
+            storeVatNumberService.storeVatNumber(
+              vatNumber = requestObj.vatNumber,
+              enrolments = enrolments,
+              businessPostcode = requestObj.postCode,
+              vatRegistrationDate = requestObj.registrationDate,
+              lastReturnMonthPeriod = requestObj.lastReturnMonthPeriod,
+              lastNetDue = requestObj.lastNetDue
+            ) map {
               case Right(success) =>
                 Ok(Json.obj(
                   OverseasKey -> success.isOverseas)
