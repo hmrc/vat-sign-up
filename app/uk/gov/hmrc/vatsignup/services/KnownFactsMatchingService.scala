@@ -26,8 +26,6 @@ import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 @Singleton
 class KnownFactsMatchingService @Inject()(implicit hc: HeaderCarrier) extends FeatureSwitching {
 
-  type KnownFactsMatchingResponse = Either[KnownFactsMatchingFailure, KnownFactsMatchingSuccess]
-
   def checkKnownFactsMatch(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts): KnownFactsMatchingResponse = {
 
     val businessPostCodeMatch = enteredKfs.businessPostcode == retrievedKfs.businessPostcode
@@ -49,6 +47,8 @@ class KnownFactsMatchingService @Inject()(implicit hc: HeaderCarrier) extends Fe
 }
 
 object KnownFactsMatchingService {
+
+  type KnownFactsMatchingResponse = Either[KnownFactsMatchingFailure, KnownFactsMatchingSuccess]
 
   sealed trait KnownFactsMatchingSuccess
 
