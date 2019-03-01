@@ -20,12 +20,9 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService.KnownFactsMatchingResponse
-
-import scala.concurrent.Future
 
 trait MockKnownFactsMatchingService extends BeforeAndAfterEach with MockitoSugar {
   this: Suite =>
@@ -37,11 +34,10 @@ trait MockKnownFactsMatchingService extends BeforeAndAfterEach with MockitoSugar
 
   val mockKnownFactsMatchingService: KnownFactsMatchingService = mock[KnownFactsMatchingService]
 
-  def mockKnownFactsMatching(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts)(response: Future[KnownFactsMatchingResponse]): Unit = {
+  def mockKnownFactsMatching(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts)(response: KnownFactsMatchingResponse): Unit = {
     when(mockKnownFactsMatchingService.checkKnownFactsMatch(
       ArgumentMatchers.eq(enteredKfs),
       ArgumentMatchers.eq(retrievedKfs)
-    )(ArgumentMatchers.any[HeaderCarrier])
-    ) thenReturn response
+    )) thenReturn response
   }
 }

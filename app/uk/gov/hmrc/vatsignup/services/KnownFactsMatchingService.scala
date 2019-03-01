@@ -17,14 +17,13 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject._
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 
 
 @Singleton
-class KnownFactsMatchingService @Inject()(implicit hc: HeaderCarrier) extends FeatureSwitching {
+class KnownFactsMatchingService @Inject() extends FeatureSwitching {
 
   def checkKnownFactsMatch(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts): KnownFactsMatchingResponse = {
 
