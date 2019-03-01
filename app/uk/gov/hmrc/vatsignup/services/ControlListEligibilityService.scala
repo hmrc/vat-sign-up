@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
-import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, MigratableDates}
+import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, MigratableDates, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, NonStandardTaxPeriod, OverseasTrader}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
@@ -49,8 +49,7 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
       auditService.audit(ControlListAuditModel.fromEligibilityState(vatNumber, migratableStatus))
 
       EligibilitySuccess(
-        businessPostcode = knownFactsAndControlListInformation.vatKnownFacts.businessPostcode,
-        vatRegistrationDate = knownFactsAndControlListInformation.vatKnownFacts.vatRegistrationDate,
+        vatKnownFacts = knownFactsAndControlListInformation.vatKnownFacts,
         isMigratable = migratableStatus == Migratable,
         isOverseas = controlListInformation.controlList contains OverseasTrader
       )
@@ -107,7 +106,7 @@ object ControlListEligibilityService {
 
   type Eligibility = Either[EligibilityFailure, EligibilitySuccess]
 
-  case class EligibilitySuccess(businessPostcode: String, vatRegistrationDate: String, isMigratable: Boolean, isOverseas: Boolean)
+  case class EligibilitySuccess(vatKnownFacts: VatKnownFacts, isMigratable: Boolean, isOverseas: Boolean)
 
   sealed trait EligibilityFailure
 

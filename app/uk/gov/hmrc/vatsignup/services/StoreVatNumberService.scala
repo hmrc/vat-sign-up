@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.A
 import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
-import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
+import uk.gov.hmrc.vatsignup.services.StoreVatNumberService.{KnownFactsMismatch, _}
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
@@ -41,6 +41,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                       agentClientRelationshipsConnector: AgentClientRelationshipsConnector,
                                       mandationStatusConnector: MandationStatusConnector,
                                       controlListEligibilityService: ControlListEligibilityService,
+                                      knownFactsMatchingService: KnownFactsMatchingService,
                                       auditService: AuditService,
                                       appConfig: AppConfig
                                      )(implicit ec: ExecutionContext) {
@@ -48,12 +49,20 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   def storeVatNumber(vatNumber: String,
                      enrolments: Enrolments,
                      businessPostcode: Option[String],
-                     vatRegistrationDate: Option[String]
+                     vatRegistrationDate: Option[String],
+                     lastReturnMonthPeriod: Option[String],
+                     lastNetDue: Option[String]
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]] = {
     for {
       _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
       _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      eligibilitySuccess <- checkEligibility(vatNumber, businessPostcode, vatRegistrationDate)
+      eligibilitySuccess <- checkEligibility(
+        vatNumber = vatNumber,
+        optBusinessPostcode = businessPostcode,
+        optVatRegistrationDate = vatRegistrationDate,
+        lastReturnMonthPeriod = lastReturnMonthPeriod,
+        lastNetDue = lastNetDue
+      )
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
     } yield StoreVatNumberSuccess(eligibilitySuccess.isOverseas)
   }.value
@@ -94,25 +103,36 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
   private def checkEligibility(vatNumber: String,
                                optBusinessPostcode: Option[String],
-                               optVatRegistrationDate: Option[String]
+                               optVatRegistrationDate: Option[String],
+                               lastReturnMonthPeriod: Option[String],
+                               lastNetDue: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
-      case Right(success@EligibilitySuccess(businessPostcode, vatRegistrationDate, _, _)) =>
+      case Right(success@EligibilitySuccess(vatKnownFacts, _, _)) =>
         (optBusinessPostcode, optVatRegistrationDate) match {
           case (Some(userBusinessPostcode), Some(userVatRegistrationDate)) =>
-            val knownFactsMatched =
-              (userBusinessPostcode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
-                (userVatRegistrationDate == vatRegistrationDate)
-            auditService.audit(KnownFactsAuditModel(
-              vatNumber = vatNumber,
-              enteredPostCode = userBusinessPostcode,
-              enteredVatRegistrationDate = userVatRegistrationDate,
-              desPostCode = businessPostcode,
-              desVatRegistrationDate = vatRegistrationDate,
-              matched = knownFactsMatched
-            ))
-            if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess](success)
-            else Left[StoreVatNumberFailure, EligibilitySuccess](KnownFactsMismatch)
+            knownFactsMatchingService.checkKnownFactsMatch(
+              enteredKfs = VatKnownFacts(
+                businessPostcode = userBusinessPostcode,
+                vatRegistrationDate = userVatRegistrationDate,
+                lastReturnMonthPeriod = lastReturnMonthPeriod,
+                lastNetDue = lastNetDue
+              ),
+              retrievedKfs = vatKnownFacts
+            ) match {
+              case Right(_) =>
+                auditService.audit(KnownFactsAuditModel(
+                  vatNumber = vatNumber,
+                  enteredPostCode = userBusinessPostcode,
+                  enteredVatRegistrationDate = userVatRegistrationDate,
+                  desPostCode = vatKnownFacts.businessPostcode,
+                  desVatRegistrationDate = vatKnownFacts.vatRegistrationDate,
+                  matched = true
+                ))
+                Right[StoreVatNumberFailure , EligibilitySuccess](success)
+              case Left(_) =>
+                Left[StoreVatNumberFailure, EligibilitySuccess](KnownFactsMismatch)
+            }
           case _ =>
             Right(success)
         }

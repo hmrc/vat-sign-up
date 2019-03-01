@@ -69,7 +69,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-          res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = true))
+          res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = true))
           verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
         }
       }
@@ -83,7 +83,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-          res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))
+          res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))
           verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
         }
       }
@@ -100,7 +100,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false, isOverseas = false))
+        res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = false, isOverseas = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = Seq(Stagger1.errorMessage)))
       }
     }
@@ -165,7 +165,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-        res shouldBe Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))
+        res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
       }
     }

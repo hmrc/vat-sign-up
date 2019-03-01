@@ -85,6 +85,15 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
   def stubFailureKnownFactsInvalidVatNumber(vatNumber: String): StubMapping =
     stubGetKnownFactsAndControlListInformation(vatNumber)(BAD_REQUEST, None)
 
+  def stubSuccessNotFiled(vatNumber: String): Unit =
+    stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(Json.obj(
+      "postcode" -> testPostCode,
+      "dateOfReg" -> testDateOfRegistration,
+      "lastReturnMonthPeriod" -> "N/A",
+      "lastNetDue" -> 0,
+      "controlListInformation" -> ControlList33.eligible
+    )))
+
   private def successResponseBody =
     Json.obj(
       "postcode" -> testPostCode,

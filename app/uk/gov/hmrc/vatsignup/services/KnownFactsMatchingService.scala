@@ -32,15 +32,29 @@ class KnownFactsMatchingService @Inject() extends FeatureSwitching {
     val lastNetDueMatch = enteredKfs.lastNetDue == retrievedKfs.lastNetDue
     val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
 
+    lazy val fourKFMatch: Boolean = (
+      businessPostCodeMatch
+        && vatRegDateMatch
+        && lastNetDueMatch
+        && lastReturnMonthPeriodMatch
+    )
+    lazy val twoKFMatch: Boolean = (
+      businessPostCodeMatch
+        && vatRegDateMatch
+        && enteredKfs.lastReturnMonthPeriod.isEmpty
+        && enteredKfs.lastNetDue.isEmpty
+    )
+
     if (isEnabled(AdditionalKnownFacts))
-      if (businessPostCodeMatch && vatRegDateMatch && lastNetDueMatch && lastReturnMonthPeriodMatch)
+      if (fourKFMatch)
         Right(FourKnownFactsMatch)
       else
         Left(KnownFactsDoNotMatch)
-    else if (businessPostCodeMatch && vatRegDateMatch)
-      Right(TwoKnownFactsMatch)
     else
-      Left(KnownFactsDoNotMatch)
+      if (twoKFMatch)
+        Right(TwoKnownFactsMatch)
+      else
+        Left(KnownFactsDoNotMatch)
   }
 
 }
