@@ -199,11 +199,10 @@ object BusinessEntity {
   }
 
   def limitedCompaniesBE(companyNumber: String): Option[String] = {
-    val NonUkWithUkEstablishmentPrefix = "BR"
-    companyNumber match {
-      case x if x.toUpperCase.startsWith(NonUkWithUkEstablishmentPrefix) => Some(NonUkWithUKEstablishmentKey)
-      case _ => None
+    val isNonUkWithUkEstablishment = Seq("FC", "SF", "NF") filter {
+      companyNumber.toUpperCase.startsWith(_)
     }
+    if(isNonUkWithUkEstablishment.nonEmpty) Some(NonUkWithUKEstablishmentKey) else None
   }
 }
 
