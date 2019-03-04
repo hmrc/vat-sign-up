@@ -43,13 +43,45 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
 
       }
 
-      "for principal user return NO_CONTENT for non uk with uk establishment companies" in {
+      "for principal user return NO_CONTENT for non uk with uk establishment companies with a FC prefix on CRN" in {
         stubAuth(OK, successfulAuthResponse())
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
-        stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumber)(OK, ctReferenceBody(testCtReference))
+        stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)(OK, ctReferenceBody(testCtReference))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
-          "companyNumber" -> testNonUKCompanyWithUKEstablishmentCompanyNumber,
+          "companyNumber" -> testNonUKCompanyWithUKEstablishmentCompanyNumberFC,
+          "ctReference" -> testCtReference
+        ))
+
+        res should have(
+          httpStatus(NO_CONTENT)
+        )
+
+      }
+
+      "for principal user return NO_CONTENT for non uk with uk establishment companies with a SF prefix on CRN" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)(OK, ctReferenceBody(testCtReference))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
+          "companyNumber" -> testNonUKCompanyWithUKEstablishmentCompanyNumberSF,
+          "ctReference" -> testCtReference
+        ))
+
+        res should have(
+          httpStatus(NO_CONTENT)
+        )
+
+      }
+
+      "for principal user return NO_CONTENT for non uk with uk establishment companies with a NF prefix on CRN" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)(OK, ctReferenceBody(testCtReference))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
+          "companyNumber" -> testNonUKCompanyWithUKEstablishmentCompanyNumberNF,
           "ctReference" -> testCtReference
         ))
 

@@ -140,6 +140,75 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           )
         }
 
+        "return NO_CONTENT for non UK-company sign up with FC prefix in CRN" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumberFC)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
+        "return NO_CONTENT for non UK-company sign up with SF prefix in CRN" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumberSF)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
+        "return NO_CONTENT for non UK-company sign up with NF prefix in CRN" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumberNF)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
         "EtmpEntityType is enabled" should {
           "return NO_CONTENT for general partnership sign up" in {
             enable(EtmpEntityType)
@@ -392,6 +461,81 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterCompany(testVatNumber, testCompanyNumber)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+      }
+      "the user is signing up a non UK with UK establishment with FC prefix and has provided a CT reference" should {
+        "return NO_CONTENT for company sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
+            ctReference = Some(testCtReference),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumberFC)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+      }
+      "the user is signing up a non UK with UK establishment with SF prefix and has provided a CT reference" should {
+        "return NO_CONTENT for company sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
+            ctReference = Some(testCtReference),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumberSF)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+      }
+      "the user is signing up a non UK with UK establishment with NF prefix and has provided a CT reference" should {
+        "return NO_CONTENT for company sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
+            ctReference = Some(testCtReference),
+            email = Some(testEmail),
+            isMigratable = testIsMigratable
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterCompany(testVatNumber, testNonUKCompanyWithUKEstablishmentCompanyNumberNF)(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 

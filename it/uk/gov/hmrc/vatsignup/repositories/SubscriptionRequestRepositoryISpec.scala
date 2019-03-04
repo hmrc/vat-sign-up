@@ -227,17 +227,43 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         businessEntity = Some(LimitedCompany(testCompanyNumber))
       ))
     }
-    "store a non UK company with UK establishment" in {
+    "store a non UK company with UK establishment with FC prefix in CRN" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
-        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumber))
+        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumber))
+        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))
+      ))
+    }
+    "store a non UK company with UK establishment with SF prefix in CRN" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) shouldBe Some(SubscriptionRequest(
+        vatNumber = testVatNumber,
+        isMigratable = true,
+        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))
+      ))
+    }
+    "store a non UK company with UK establishment with NF prefix in CRN" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) shouldBe Some(SubscriptionRequest(
+        vatNumber = testVatNumber,
+        isMigratable = true,
+        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))
       ))
     }
     "store a General Partnership" in {
