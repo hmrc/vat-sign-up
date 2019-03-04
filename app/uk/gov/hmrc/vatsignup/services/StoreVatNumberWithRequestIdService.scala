@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data._
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -104,18 +103,18 @@ class StoreVatNumberWithRequestIdService @Inject()(unconfirmedSubscriptionReques
                                optVatRegistrationDate: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
-      case Right(success@EligibilitySuccess(businessPostcode, vatRegistrationDate, _, _)) =>
+      case Right(success@EligibilitySuccess(vatKnownFacts, _, _)) =>
         (optBusinessPostcode, optVatRegistrationDate) match {
           case (Some(userBusinessPostcode), Some(userVatRegistrationDate)) =>
             val knownFactsMatched =
-              (userBusinessPostcode filterNot (_.isWhitespace)).equalsIgnoreCase(businessPostcode filterNot (_.isWhitespace)) &&
-                (userVatRegistrationDate == vatRegistrationDate)
+              (userBusinessPostcode filterNot (_.isWhitespace)).equalsIgnoreCase(vatKnownFacts.businessPostcode filterNot (_.isWhitespace)) &&
+                (userVatRegistrationDate == vatKnownFacts.vatRegistrationDate)
             auditService.audit(KnownFactsAuditModel(
               vatNumber = vatNumber,
               enteredPostCode = userBusinessPostcode,
               enteredVatRegistrationDate = userVatRegistrationDate,
-              desPostCode = businessPostcode,
-              desVatRegistrationDate = vatRegistrationDate,
+              desPostCode = vatKnownFacts.businessPostcode,
+              desVatRegistrationDate = vatKnownFacts.vatRegistrationDate,
               matched = knownFactsMatched
             ))
             if (knownFactsMatched) Right[StoreVatNumberFailure, EligibilitySuccess](success)

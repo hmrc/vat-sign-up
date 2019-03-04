@@ -24,7 +24,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.MigratableDates
+import uk.gov.hmrc.vatsignup.models.{MigratableDates, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
 
@@ -42,7 +42,13 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
     "the service returns EligibilitySuccess" should {
       "return OK with a Json body if the user is an overseas trader" in {
         mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = true))))
+        mockGetEligibilityStatus(testVatNumber)(
+          Future.successful(Right(EligibilitySuccess(
+            vatKnownFacts = VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+            isMigratable = true,
+            isOverseas = true
+          )))
+        )
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
         status(res) shouldBe OK
         jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> true)
@@ -50,7 +56,13 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
 
       "return OK with a Json body if the overseas flag is set to false" in {
         mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+        mockGetEligibilityStatus(testVatNumber)(
+          Future.successful(Right(EligibilitySuccess(
+            vatKnownFacts = VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+            isMigratable = true,
+            isOverseas = false
+          )))
+        )
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
         status(res) shouldBe OK
         jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> false)

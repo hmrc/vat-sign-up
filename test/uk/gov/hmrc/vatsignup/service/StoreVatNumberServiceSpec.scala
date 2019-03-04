@@ -34,9 +34,10 @@ import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.MigrationI
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
+import uk.gov.hmrc.vatsignup.service.mocks.{MockControlListEligibilityService, MockKnownFactsMatchingService}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
+import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService.{KnownFactsDoNotMatch, TwoKnownFactsMatch}
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services._
 
@@ -45,15 +46,15 @@ import scala.concurrent.Future
 
 class StoreVatNumberServiceSpec
   extends UnitSpec with MockAgentClientRelationshipsConnector with MockSubscriptionRequestRepository
-    with MockAuditService with MockConfig
-    with MockMandationStatusConnector
-    with MockControlListEligibilityService {
+    with MockAuditService with MockConfig with MockMandationStatusConnector
+    with MockControlListEligibilityService with MockKnownFactsMatchingService {
 
   object TestStoreVatNumberService extends StoreVatNumberService(
     mockSubscriptionRequestRepository,
     mockAgentClientRelationshipsConnector,
     mockMandationStatusConnector,
     mockControlListEligibilityService,
+    mockKnownFactsMatchingService,
     mockAuditService,
     mockConfig
   )
@@ -74,10 +75,11 @@ class StoreVatNumberServiceSpec
               "return a StoreVatNumberSuccess" in {
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-                mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+                mockGetEligibilityStatus(testVatNumber)(Future.successful(
+                  Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))))
                 mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
-                val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+                val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
                 res shouldBe Right(StoreVatNumberSuccess(false))
 
                 verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -87,10 +89,11 @@ class StoreVatNumberServiceSpec
               "return a VatNumberDatabaseFailure" in {
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-                mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+                mockGetEligibilityStatus(testVatNumber)(Future.successful(
+                  Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))))
                 mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
-                val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+                val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
                 res shouldBe Left(VatNumberDatabaseFailure)
 
                 verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -102,7 +105,7 @@ class StoreVatNumberServiceSpec
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
               res shouldBe Left(AlreadySubscribed)
 
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -113,7 +116,7 @@ class StoreVatNumberServiceSpec
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
               res shouldBe Left(AlreadySubscribed)
 
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -124,7 +127,7 @@ class StoreVatNumberServiceSpec
               mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
               mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
               res shouldBe Left(VatMigrationInProgress)
 
               verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -135,10 +138,11 @@ class StoreVatNumberServiceSpec
           "return StoreVatNumberSuccess" in {
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = false, isOverseas = false))))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(
+              Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = false, isOverseas = false))))
             mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
 
-            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
             res shouldBe Right(StoreVatNumberSuccess(false))
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -150,7 +154,7 @@ class StoreVatNumberServiceSpec
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates))))
 
-            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
             res shouldBe Left(StoreVatNumberService.Ineligible(testMigratableDates))
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
@@ -162,7 +166,7 @@ class StoreVatNumberServiceSpec
         "return a RelationshipNotFound" in {
           mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(NoRelationshipResponse)))
 
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
           res shouldBe Left(RelationshipNotFound)
 
           verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = false))
@@ -175,7 +179,7 @@ class StoreVatNumberServiceSpec
             Future.successful(Left(CheckAgentClientRelationshipResponseFailure(INTERNAL_SERVER_ERROR, Json.obj())))
           )
 
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
           res shouldBe Left(AgentServicesConnectionFailure)
         }
       }
@@ -187,20 +191,24 @@ class StoreVatNumberServiceSpec
           "the vat number is stored successfully" should {
             "return StoreVatNumberSuccess" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
+                VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false
+              ))))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
               res shouldBe Right(StoreVatNumberSuccess(false))
             }
           }
           "the vat number is not stored successfully" should {
             "return a VatNumberDatabaseFailure" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
+                VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false
+              ))))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
+              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
               res shouldBe Left(VatNumberDatabaseFailure)
             }
           }
@@ -208,15 +216,17 @@ class StoreVatNumberServiceSpec
         "the vat number is currently being migrated" should {
           "return a VatMigrationInProgress" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(
+              Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))
+            ))
 
-            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
+            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
             res shouldBe Left(VatMigrationInProgress)
           }
         }
         "the vat number does not match enrolment" should {
           "return DoesNotMatchEnrolment" in {
-            val res = await(TestStoreVatNumberService.storeVatNumber(UUID.randomUUID().toString, principalUser, None, None))
+            val res = await(TestStoreVatNumberService.storeVatNumber(UUID.randomUUID().toString, principalUser, None, None, None, None))
             res shouldBe Left(DoesNotMatchEnrolment)
           }
         }
@@ -224,7 +234,7 @@ class StoreVatNumberServiceSpec
 
       "the user does not have either enrolment" should {
         "return InsufficientEnrolments" in {
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, Enrolments(Set.empty), None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, Enrolments(Set.empty), None, None, None, None))
           res shouldBe Left(InsufficientEnrolments)
         }
       }
@@ -232,13 +242,19 @@ class StoreVatNumberServiceSpec
 
     "the user has a fresh cred" when {
 
-      def call = TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, Some(testPostCode), Some(testDateOfRegistration))
+      def call = TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, Some(testPostCode), Some(testDateOfRegistration), None, None)
 
       "the vat number is not already subscribed for MTD-VAT" when {
         "the vat number is stored successfully" should {
           "return StoreVatNumberSuccess" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false
+            ))))
+            mockKnownFactsMatching(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None)
+            )(Right(TwoKnownFactsMatch))
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
@@ -275,7 +291,13 @@ class StoreVatNumberServiceSpec
         "known facts returned from api differs from known facts by the user" should {
           "return a KnownFactsMismatch" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode.drop(1), testDateOfRegistration, isMigratable = false, isOverseas = false))))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false
+            ))))
+            mockKnownFactsMatching(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None)
+            )(Left(KnownFactsDoNotMatch))
 
             val res = await(call)
             res shouldBe Left(KnownFactsMismatch)
@@ -284,7 +306,13 @@ class StoreVatNumberServiceSpec
         "the vat number is not stored successfully" should {
           "return a VatNumberDatabaseFailure" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+            mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false
+            ))))
+            mockKnownFactsMatching(
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
+              VatKnownFacts(testPostCode, testDateOfRegistration, None, None)
+            )(Right(TwoKnownFactsMatch))
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
             val res = await(call)
@@ -295,15 +323,17 @@ class StoreVatNumberServiceSpec
       "the vat number migration is currently in progress" should {
         "return a VatMigrationInProgress" in {
           mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
-          mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(testPostCode, testDateOfRegistration, isMigratable = true, isOverseas = false))))
+          mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
+            VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false
+          ))))
 
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
           res shouldBe Left(VatMigrationInProgress)
         }
       }
       "the user does not have either enrolment and did not provide both known facts" should {
         "return InsufficientEnrolments" in {
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None, None))
+          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None, None, None, None))
           res shouldBe Left(InsufficientEnrolments)
         }
       }
@@ -311,7 +341,7 @@ class StoreVatNumberServiceSpec
 
     "the user does not have either enrolment" should {
       "return InsufficientEnrolments" in {
-        val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None, None))
+        val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None, None, None, None))
         res shouldBe Left(InsufficientEnrolments)
       }
     }

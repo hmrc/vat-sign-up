@@ -22,6 +22,7 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
+import uk.gov.hmrc.vatsignup.config.featureswitch.AdditionalKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
@@ -166,42 +167,132 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       }
     }
 
-    "does not have a HMCE-VAT enrolment but has provided known facts" should {
-      "return OK when the vat number has been stored successfully" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-        stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+    "does not have a HMCE-VAT enrolment but has provided known facts" when {
+      "The vat number has been stored successfully" should {
+        "return OK" in {
+          disable(AdditionalKnownFacts)
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubDirectDebitControlListInformation(testVatNumber)
 
-        val res = post("/subscription-request/vat-number")(Json.obj(
-          "vatNumber" -> testVatNumber,
-          "postCode" -> testPostCode,
-          "registrationDate" -> testDateOfRegistration
-        ))
-
-        res should have(
-          httpStatus(OK),
-          jsonBodyAs(Json.obj(
-            OverseasKey -> false
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> testPostCode,
+            "registrationDate" -> testDateOfRegistration
           ))
-        )
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(
+              OverseasKey -> false
+            ))
+          )
+        }
+      }
+      "The vat number has been stored successfully, 4 known facts are passed and fs is enabled" should {
+        "return Ok" in {
+          enable(AdditionalKnownFacts)
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> testPostCode,
+            "registrationDate" -> testDateOfRegistration,
+            "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+            "lastNetDue" -> testLastNetDue
+          ))
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(
+              OverseasKey -> false
+            ))
+          )
+        }
+      }
+      "The vat number has been stored successfully, 2 known facts are passed and fs is enabled" should {
+        "return OK" in {
+          enable(AdditionalKnownFacts)
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubSuccessNotFiled(testVatNumber)
+
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> testPostCode,
+            "registrationDate" -> testDateOfRegistration
+          ))
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(
+              OverseasKey -> false
+            ))
+          )
+        }
+      }
+      "The vat number has been stored successfully, 4 known facts are passed and fs is disabled" should {
+        "return FORBIDDEN" in {
+          disable(AdditionalKnownFacts)
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> testPostCode,
+            "registrationDate" -> testDateOfRegistration,
+            "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+            "lastNetDue" -> testLastNetDue
+          ))
+
+          res should have(
+            httpStatus(FORBIDDEN),
+            jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
+          )
+        }
+      }
+      "2 known facts are passed and fs is enabled" should {
+        "return FORBIDDEN" in {
+          enable(AdditionalKnownFacts)
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> testPostCode,
+            "registrationDate" -> testDateOfRegistration
+          ))
+
+          res should have(
+            httpStatus(FORBIDDEN),
+            jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
+          )
+        }
       }
 
-      "return FORBIDDEN when known facts mismatch" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-        stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+      "When known facts mismatch" should {
+        "return FORBIDDEN" in {
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
-        val res = post("/subscription-request/vat-number")(Json.obj(
-          "vatNumber" -> testVatNumber,
-          "postCode" -> testVatNumber,
-          "registrationDate" -> testVatNumber
-        ))
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> testVatNumber,
+            "registrationDate" -> testVatNumber
+          ))
 
-        res should have(
-          httpStatus(FORBIDDEN),
-          jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
-        )
+          res should have(
+            httpStatus(FORBIDDEN),
+            jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
+          )
+        }
       }
+
 
       "return BAD REQUEST when the user's VAT migration is in progress" in {
         stubAuth(OK, successfulAuthResponse())
