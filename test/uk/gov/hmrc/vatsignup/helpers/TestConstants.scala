@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.helpers
 
-import java.time.LocalDate
+import java.time.{LocalDate, Month}
 import java.util.UUID
 
 import uk.gov.hmrc.auth.core.Enrolment
@@ -85,7 +85,7 @@ object TestConstants {
   val testFourKnownFacts = VatKnownFacts(
     businessPostcode = testPostCode,
     vatRegistrationDate = testDateOfRegistration,
-    lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+    lastReturnMonthPeriod = Some(Month.MARCH),
     lastNetDue = Some(testLastNetDue)
   )
 
@@ -100,7 +100,7 @@ object TestConstants {
     VatKnownFacts(
       testPostCode,
       testDateOfRegistration,
-      Some(testLastReturnMonthPeriod),
+      Some(Month.MARCH),
       Some(testLastNetDue)
     ),
     testControlListInformation

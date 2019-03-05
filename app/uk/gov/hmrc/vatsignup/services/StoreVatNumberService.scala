@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import java.time.Month
+
 import cats.data._
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
@@ -50,7 +52,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                      enrolments: Enrolments,
                      businessPostcode: Option[String],
                      vatRegistrationDate: Option[String],
-                     lastReturnMonthPeriod: Option[String],
+                     lastReturnMonthPeriod: Option[Month],
                      lastNetDue: Option[String]
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]] = {
     for {
@@ -104,7 +106,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   private def checkEligibility(vatNumber: String,
                                optBusinessPostcode: Option[String],
                                optVatRegistrationDate: Option[String],
-                               lastReturnMonthPeriod: Option[String],
+                               lastReturnMonthPeriod: Option[Month],
                                lastNetDue: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {

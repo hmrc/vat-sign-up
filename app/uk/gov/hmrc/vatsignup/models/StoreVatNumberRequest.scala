@@ -16,14 +16,25 @@
 
 package uk.gov.hmrc.vatsignup.models
 
-import play.api.libs.json.{Json, OFormat}
+import java.time.Month
+import java.time.format.TextStyle
+import java.util.Locale
+
+import play.api.libs.json._
 
 case class StoreVatNumberRequest(vatNumber: String,
                                  postCode: Option[String],
                                  registrationDate: Option[String],
-                                 lastReturnMonthPeriod: Option[String],
+                                 lastReturnMonthPeriod: Option[Month],
                                  lastNetDue: Option[String])
 
 object StoreVatNumberRequest {
+  implicit val monthFormat = new Format[Month] {
+    override def reads(json: JsValue): JsResult[Month] =
+      json.validate[String] map VatKnownFacts.fromDisplayName
+
+    override def writes(o: Month): JsValue = JsString(o.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+  }
+
   implicit val format: OFormat[StoreVatNumberRequest] = Json.format[StoreVatNumberRequest]
 }

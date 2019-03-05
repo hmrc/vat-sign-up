@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
+import java.time.Month
+
 import org.scalatest.EitherValues
 import play.api.http.Status._
 import play.api.libs.json.Json
@@ -54,7 +56,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
               VatKnownFacts(
                 testPostCode,
                 testDateOfRegistration,
-                Some(testLastReturnMonthPeriod),
+                Some(Month.MARCH),
                 Some(testLastNetDue)
               ),
               testControlListInformation

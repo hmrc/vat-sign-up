@@ -16,16 +16,37 @@
 
 package uk.gov.hmrc.vatsignup.models
 
+import java.text.SimpleDateFormat
+
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation
+import java.time.Month
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-case class KnownFactsAndControlListInformation(
-  vatKnownFacts: VatKnownFacts,
-  controlListInformation: ControlListInformation
-)
+case class KnownFactsAndControlListInformation(vatKnownFacts: VatKnownFacts,
+                                               controlListInformation: ControlListInformation)
 
-case class VatKnownFacts(
-  businessPostcode: String,
-  vatRegistrationDate: String,
-  lastReturnMonthPeriod: Option[String],
-  lastNetDue: Option[String]
-)
+case class VatKnownFacts(businessPostcode: String,
+                         vatRegistrationDate: String,
+                         lastReturnMonthPeriod: Option[Month],
+                         lastNetDue: Option[String])
+
+object VatKnownFacts {
+  def fromMMM(monthString: String): Month = {
+    val temporalAccessor = DateTimeFormatter
+      .ofPattern("MMM")
+      .withLocale(Locale.ENGLISH)
+      .parse(monthString.toLowerCase.capitalize)
+
+    Month.from(temporalAccessor)
+  }
+
+  def fromDisplayName(monthString: String): Month = {
+    val temporalAccessor = DateTimeFormatter
+        .ofPattern("MMMM")
+      .withLocale(Locale.ENGLISH)
+      .parse(monthString)
+
+    Month.from(temporalAccessor)
+  }
+}
