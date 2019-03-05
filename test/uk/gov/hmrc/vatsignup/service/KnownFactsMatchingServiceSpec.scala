@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.service
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
-import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testFourKnownFacts, testTwoKnownFacts}
+import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
@@ -30,12 +30,19 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
 
   object TestKnownFactsMatchingService extends KnownFactsMatchingService()
 
+  val testEnteredFourKnownFacts = VatKnownFacts(
+    businessPostcode = (testPostCode filterNot (_.isWhitespace)).toLowerCase(),
+    vatRegistrationDate = testDateOfRegistration,
+    lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+    lastNetDue = Some(testLastNetDue)
+  )
+
   "the feature switch is enabled" when {
     "4 valid known facts are provided" should {
       "return FourKnownFactsMatch" in {
         enable(AdditionalKnownFacts)
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
-          enteredKfs = testFourKnownFacts,
+          enteredKfs = testEnteredFourKnownFacts,
           retrievedKfs = testFourKnownFacts
         ))
         res shouldBe Right(FourKnownFactsMatch)

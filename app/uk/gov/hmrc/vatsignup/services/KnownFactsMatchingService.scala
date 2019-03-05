@@ -27,7 +27,8 @@ class KnownFactsMatchingService @Inject() extends FeatureSwitching {
 
   def checkKnownFactsMatch(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts): KnownFactsMatchingResponse = {
 
-    val businessPostCodeMatch = enteredKfs.businessPostcode == retrievedKfs.businessPostcode
+    val businessPostCodeMatch = ((enteredKfs.businessPostcode filterNot (_.isWhitespace)).toLowerCase
+      == (retrievedKfs.businessPostcode filterNot (_.isWhitespace)).toLowerCase)
     val vatRegDateMatch = enteredKfs.vatRegistrationDate == retrievedKfs.vatRegistrationDate
     val lastNetDueMatch = enteredKfs.lastNetDue == retrievedKfs.lastNetDue
     val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
@@ -37,24 +38,23 @@ class KnownFactsMatchingService @Inject() extends FeatureSwitching {
         && vatRegDateMatch
         && lastNetDueMatch
         && lastReturnMonthPeriodMatch
-    )
+      )
     lazy val twoKFMatch: Boolean = (
       businessPostCodeMatch
         && vatRegDateMatch
         && enteredKfs.lastReturnMonthPeriod.isEmpty
         && enteredKfs.lastNetDue.isEmpty
-    )
+      )
 
     if (isEnabled(AdditionalKnownFacts))
       if (fourKFMatch)
         Right(FourKnownFactsMatch)
       else
         Left(KnownFactsDoNotMatch)
+    else if (twoKFMatch)
+      Right(TwoKnownFactsMatch)
     else
-      if (twoKFMatch)
-        Right(TwoKnownFactsMatch)
-      else
-        Left(KnownFactsDoNotMatch)
+      Left(KnownFactsDoNotMatch)
   }
 
 }
