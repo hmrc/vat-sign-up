@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.service.mocks
 
+import java.time.Month
+
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.Suite
@@ -37,7 +39,7 @@ trait MockStoreVatNumberService extends MockitoSugar {
                          enrolments: Enrolments,
                          businessPostcode: Option[String] = None,
                          vatRegistrationDate: Option[String] = None,
-                         lastReturnMonthPeriod: Option[String] = None,
+                         lastReturnMonthPeriod: Option[Month] = None,
                          lastNetDue: Option[String] = None
                         )(response: Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]]): Unit =
     when(mockStoreVatNumberService.storeVatNumber(

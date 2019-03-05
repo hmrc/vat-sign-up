@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
+import java.time.Month
+
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
@@ -43,19 +45,19 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
           (for {
             businessPostcode <- (response.json \ postcodeKey).validate[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
-            lastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
-            lastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
+            optLastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
+            optLastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
             case Right(validControlList) =>
-              val lrmp = lastReturnMonthPeriod filterNot (_ == lastReturnMonthDefault)
-              val lnd = lastNetDue.map { x => "%.2f".format(x) } filterNot (_ == lastNetDueDefault && lrmp.isEmpty)
+              val lastMonthReturnPeriod = optLastReturnMonthPeriod filterNot (_ == lastReturnMonthDefault) map VatKnownFacts.fromMMM
+              val lastNetDue = optLastNetDue.map { x => "%.2f".format(x) } filterNot (_ == lastNetDueDefault && lastMonthReturnPeriod.isEmpty)
               Right(KnownFactsAndControlListInformation(
                 VatKnownFacts(
                   businessPostcode = businessPostcode,
                   vatRegistrationDate = vatRegistrationDate,
-                  lastReturnMonthPeriod = lrmp,
-                  lastNetDue = lnd
+                  lastReturnMonthPeriod = lastMonthReturnPeriod,
+                  lastNetDue = lastNetDue
                 ),
                 controlListInformation = validControlList
               ))

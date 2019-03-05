@@ -200,7 +200,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
             "vatNumber" -> testVatNumber,
             "postCode" -> testPostCode,
             "registrationDate" -> testDateOfRegistration,
-            "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+            "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
             "lastNetDue" -> testLastNetDue
           ))
 
@@ -244,7 +244,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
             "vatNumber" -> testVatNumber,
             "postCode" -> testPostCode,
             "registrationDate" -> testDateOfRegistration,
-            "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+            "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
             "lastNetDue" -> testLastNetDue
           ))
 

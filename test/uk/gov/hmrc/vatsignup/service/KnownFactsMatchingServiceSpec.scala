@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import java.time.Month
+
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
@@ -33,7 +35,7 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
   val testEnteredFourKnownFacts = VatKnownFacts(
     businessPostcode = (testPostCode filterNot (_.isWhitespace)).toLowerCase(),
     vatRegistrationDate = testDateOfRegistration,
-    lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+    lastReturnMonthPeriod = Some(Month.MARCH),
     lastNetDue = Some(testLastNetDue)
   )
 
@@ -53,7 +55,7 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
         val testInvalidKnownFacts = VatKnownFacts(
           businessPostcode = "",
           vatRegistrationDate = "",
-          lastReturnMonthPeriod = Some(""),
+          lastReturnMonthPeriod = Some(Month.MARCH),
           lastNetDue = Some("")
         )
 

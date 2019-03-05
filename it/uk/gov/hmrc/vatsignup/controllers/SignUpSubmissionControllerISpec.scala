@@ -38,6 +38,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
   override def beforeEach: Unit = {
     super.beforeEach
+    await(submissionRequestRepo.drop)
+    await(emailRequestRepo.drop)
     enable(HybridSolution)
     disable(EtmpEntityType)
   }

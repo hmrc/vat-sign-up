@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
+import java.time.Month
+
 import org.scalatest.EitherValues
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
@@ -44,7 +46,7 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
           VatKnownFacts(
             businessPostcode = testPostCode,
             vatRegistrationDate = testDateOfRegistration,
-            lastReturnMonthPeriod = Some(testLastReturnMonthPeriod),
+            lastReturnMonthPeriod = Some(Month.MARCH),
             lastNetDue = Some(testLastNetDue)
           ),
           controlListInformation = eligibleModel
