@@ -212,6 +212,29 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
       }
+      "The vat number has been stored successfully, is overseas and fs is enabled" should {
+        "return Ok" in {
+          enable(AdditionalKnownFacts)
+          stubAuth(OK, successfulAuthResponse())
+          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+          stubOverseasFourKFControlListInformation(testVatNumber)
+
+          val res = post("/subscription-request/vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "postCode" -> "",
+            "registrationDate" -> testDateOfRegistration,
+            "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
+            "lastNetDue" -> testLastNetDue
+          ))
+
+          res should have(
+            httpStatus(OK),
+            jsonBodyAs(Json.obj(
+              OverseasKey -> true
+            ))
+          )
+        }
+      }
       "The vat number has been stored successfully, 2 known facts are passed and fs is enabled" should {
         "return OK" in {
           enable(AdditionalKnownFacts)

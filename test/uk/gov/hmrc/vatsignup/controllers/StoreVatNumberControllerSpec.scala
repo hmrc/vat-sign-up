@@ -60,6 +60,16 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         status(res) shouldBe OK
       }
     }
+    "the VAT number has been stored correctly and is overseas" should {
+      "return CREATED" in {
+        mockAuthRetrieveAgentEnrolment()
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = true))))
+
+        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+
+        status(res) shouldBe OK
+      }
+    }
 
     "the VAT number storage has failed" should {
       "return INTERNAL_SERVER_ERROR" in {
