@@ -60,67 +60,52 @@ class ControlListEligibilityServiceSpec extends UnitSpec
             businessEntity = Company
           )
 
-          mockGetKnownFactsAndControlListInformation(testVatNumber)(
-            Future.successful(Right(KnownFactsAndControlListInformation(
-              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
-              overseasControlListInformation
-            )))
-          )
+          mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(
+            KnownFactsAndControlListInformation(testTwoKnownFacts, overseasControlListInformation)
+          )))
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
-          res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = true))
+          res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = true))
           verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
         }
       }
       "the user is not an overseas trader" should {
         "return EligibilitySuccess with the known facts, a migration status of true and an overseas status of true" in {
           mockGetKnownFactsAndControlListInformation(testVatNumber)(
-            Future.successful(Right(KnownFactsAndControlListInformation(
-              VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
-              testControlListInformation
-            ))))
+            Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)))
+          )
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-          res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))
+          res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
           verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
         }
       }
     }
-
     "the Control List indicates the user is eligible but non migratable" should {
       "return EligibilitySuccess with the known facts and a migration status of true" in {
         mockNonMigratableParameters(Set(Stagger1))
-        mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(
-            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
-            testControlListInformation
-          ))))
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(
+          KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)
+        )))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
-        res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = false, isOverseas = false))
+        res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = Seq(Stagger1.errorMessage)))
       }
     }
-
     "the control list indicates the user is ineligible with no migratable dates" should {
       "return IneligibleVatNumber" in {
         mockIneligibleParameters(Set(Stagger1))
-        mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(
-            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
-            testControlListInformation
-          ))))
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(
+          KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)
+        )))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
         res shouldBe Left(IneligibleVatNumber(MigratableDates.empty))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(Stagger1.errorMessage)))
       }
     }
-
     "the control list indicates the user ineligible due to direct debit migration restrictions" should {
       "return IneligibleVatNumber" in {
         val testDateRange = DateRange(testMigratableDate, testMigratableDate)
@@ -131,18 +116,13 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(
-            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
-            testControlListInformation
-          ))))
-
+          Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)))
+        )
         mockCheckMigrationDate(Stagger1)(Left(testMigratableDates))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
         res shouldBe Left(IneligibleVatNumber(testMigratableDates))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ControlListAuditing.directDebitMigrationRestrictionMessage)))
-
       }
     }
 
@@ -155,54 +135,47 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
         val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
 
-        mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Right(KnownFactsAndControlListInformation(
-            VatKnownFacts(testPostCode, testDateOfRegistration, None, None),
-            testControlListInformation
-          ))))
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(
+          KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)
+        )))
 
         mockCheckMigrationDate(Stagger1)(Right(DirectDebitMigrationCheckService.Eligible))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
-        res shouldBe Right(EligibilitySuccess(VatKnownFacts(testPostCode, testDateOfRegistration, None, None), isMigratable = true, isOverseas = false))
+        res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
       }
     }
-
     "the control list returns invalid VAT number" should {
       "return InvalidVatNumber" in {
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Left(KnownFactsInvalidVatNumber)))
+          Future.successful(Left(KnownFactsInvalidVatNumber))
+        )
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
         res shouldBe Left(InvalidVatNumber)
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ControlListAuditing.invalidVatNumber)))
       }
     }
-
     "the control list returns VAT number not found" should {
       "return InvalidVatNumber" in {
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Left(ControlListInformationVatNumberNotFound)))
+          Future.successful(Left(ControlListInformationVatNumberNotFound))
+        )
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-
         res shouldBe Left(VatNumberNotFound)
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ControlListAuditing.vatNumberNotFound)))
       }
     }
-
     "the control list returns any other error" should {
       "return KnownFactsAndControlListFailure" in {
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
-          Future.successful(Left(UnexpectedKnownFactsAndControlListInformationFailure(BAD_REQUEST, ""))))
-
-        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+          Future.successful(Left(UnexpectedKnownFactsAndControlListInformationFailure(BAD_REQUEST, "")))
+        )
 
         val expectedErr = ControlListAuditing.unexpectedError + s""" {"status":"$BAD_REQUEST","body":""}"""
-
+        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
         res shouldBe Left(KnownFactsAndControlListFailure)
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(expectedErr)))
       }

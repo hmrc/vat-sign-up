@@ -16,17 +16,16 @@
 
 package uk.gov.hmrc.vatsignup.models
 
-import java.text.SimpleDateFormat
-
-import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation
 import java.time.Month
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation
+
 case class KnownFactsAndControlListInformation(vatKnownFacts: VatKnownFacts,
                                                controlListInformation: ControlListInformation)
 
-case class VatKnownFacts(businessPostcode: String,
+case class VatKnownFacts(businessPostcode: Option[String],
                          vatRegistrationDate: String,
                          lastReturnMonthPeriod: Option[Month],
                          lastNetDue: Option[String])

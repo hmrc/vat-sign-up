@@ -25,26 +25,37 @@ import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 @Singleton
 class KnownFactsMatchingService @Inject() extends FeatureSwitching {
 
-  def checkKnownFactsMatch(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts): KnownFactsMatchingResponse = {
+  def checkKnownFactsMatch(
+    enteredKfs: VatKnownFacts,
+    retrievedKfs: VatKnownFacts,
+    isOverseas: Boolean
+  ): KnownFactsMatchingResponse = {
 
-    val businessPostCodeMatch = ((enteredKfs.businessPostcode filterNot (_.isWhitespace)).toLowerCase
-      == (retrievedKfs.businessPostcode filterNot (_.isWhitespace)).toLowerCase)
+    val businessPostcodeMatch: Boolean = {
+      val enteredPostcode: String = (enteredKfs.businessPostcode.getOrElse("") filterNot (_.isWhitespace)).toLowerCase
+      val retrievedPostcode: String = (retrievedKfs.businessPostcode.getOrElse("") filterNot (_.isWhitespace)).toLowerCase
+      enteredKfs.businessPostcode match {
+        case pc if isEnabled(AdditionalKnownFacts) && isOverseas => true
+        case _ => enteredPostcode == retrievedPostcode
+      }
+    }
+
     val vatRegDateMatch = enteredKfs.vatRegistrationDate == retrievedKfs.vatRegistrationDate
     val lastNetDueMatch = enteredKfs.lastNetDue == retrievedKfs.lastNetDue
     val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
 
     lazy val fourKFMatch: Boolean = (
-      businessPostCodeMatch
+      businessPostcodeMatch
         && vatRegDateMatch
         && lastNetDueMatch
         && lastReturnMonthPeriodMatch
       )
     lazy val twoKFMatch: Boolean = (
-      businessPostCodeMatch
+      businessPostcodeMatch
         && vatRegDateMatch
         && enteredKfs.lastReturnMonthPeriod.isEmpty
         && enteredKfs.lastNetDue.isEmpty
-      )
+    )
 
     if (isEnabled(AdditionalKnownFacts))
       if (fourKFMatch)

@@ -34,10 +34,15 @@ trait MockKnownFactsMatchingService extends BeforeAndAfterEach with MockitoSugar
 
   val mockKnownFactsMatchingService: KnownFactsMatchingService = mock[KnownFactsMatchingService]
 
-  def mockKnownFactsMatching(enteredKfs: VatKnownFacts, retrievedKfs: VatKnownFacts)(response: KnownFactsMatchingResponse): Unit = {
+  def mockKnownFactsMatching(
+    enteredKfs: VatKnownFacts,
+    retrievedKfs: VatKnownFacts,
+    isOverseas: Boolean = false
+  )(response: KnownFactsMatchingResponse): Unit = {
     when(mockKnownFactsMatchingService.checkKnownFactsMatch(
       ArgumentMatchers.eq(enteredKfs),
-      ArgumentMatchers.eq(retrievedKfs)
+      ArgumentMatchers.eq(retrievedKfs),
+      ArgumentMatchers.eq(isOverseas)
     )) thenReturn response
   }
 }

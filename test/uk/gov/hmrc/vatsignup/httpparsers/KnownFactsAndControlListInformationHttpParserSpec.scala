@@ -52,15 +52,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
               )
             )
 
-            read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
-              VatKnownFacts(
-                testPostCode,
-                testDateOfRegistration,
-                Some(Month.MARCH),
-                Some(testLastNetDue)
-              ),
-              testControlListInformation
-            ))
+            read(testMethod, testUrl, testResponse) shouldBe Right(testKnownFactsAndControlListInformation)
           }
         }
         s"the json is valid and the month is not available" should {
@@ -81,7 +73,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
 
             read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
               VatKnownFacts(
-                testPostCode,
+                Some(testPostCode),
                 testDateOfRegistration,
                 None,
                 Some(testLastNetDue)
@@ -109,7 +101,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
 
             read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
               VatKnownFacts(
-                testPostCode,
+                Some(testPostCode),
                 testDateOfRegistration,
                 None,
                 None
@@ -162,7 +154,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
 
             read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
               VatKnownFacts(
-                testPostCode,
+                Some(testPostCode),
                 testDateOfRegistration,
                 None,
                 None
