@@ -33,7 +33,7 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
   object TestKnownFactsMatchingService extends KnownFactsMatchingService()
 
   val testEnteredFourKnownFacts = VatKnownFacts(
-    businessPostcode = (testPostCode filterNot (_.isWhitespace)).toLowerCase(),
+    businessPostcode = Some((testPostCode filterNot (_.isWhitespace)).toLowerCase()),
     vatRegistrationDate = testDateOfRegistration,
     lastReturnMonthPeriod = Some(Month.MARCH),
     lastNetDue = Some(testLastNetDue)
@@ -45,7 +45,8 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
         enable(AdditionalKnownFacts)
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
           enteredKfs = testEnteredFourKnownFacts,
-          retrievedKfs = testFourKnownFacts
+          retrievedKfs = testFourKnownFacts,
+          isOverseas = false
         ))
         res shouldBe Right(FourKnownFactsMatch)
       }
@@ -53,7 +54,7 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
     "4 invalid known facts are provided" should {
       "return KnownFactsDoNotMatch" in {
         val testInvalidKnownFacts = VatKnownFacts(
-          businessPostcode = "",
+          businessPostcode = Some(""),
           vatRegistrationDate = "",
           lastReturnMonthPeriod = Some(Month.MARCH),
           lastNetDue = Some("")
@@ -61,7 +62,8 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
 
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
           enteredKfs = testInvalidKnownFacts,
-          retrievedKfs = testFourKnownFacts
+          retrievedKfs = testFourKnownFacts,
+          isOverseas = false
         ))
         res shouldBe Left(KnownFactsDoNotMatch)
       }
@@ -70,20 +72,34 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
       "return KnownFactsDoNotMatch" in {
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
           enteredKfs = testTwoKnownFacts,
-          retrievedKfs = testFourKnownFacts
+          retrievedKfs = testFourKnownFacts,
+          isOverseas = false
         ))
         res shouldBe Left(KnownFactsDoNotMatch)
       }
     }
-  }
+    "is overseas and postcode isn't provided" should {
+      "return FourKnownFactsMatch" in {
+        enable(AdditionalKnownFacts)
 
+        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          enteredKfs = testEnteredFourKnownFacts.copy(businessPostcode = None),
+          retrievedKfs = testFourKnownFacts,
+          isOverseas = true
+        ))
+        res shouldBe Right(FourKnownFactsMatch)
+      }
+    }
+  }
   "the feature switch is disabled" when {
     "2 valid known facts are provided" should {
       "return TwoKnownFactsMatch" in {
         disable(AdditionalKnownFacts)
+
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
           enteredKfs = testTwoKnownFacts,
-          retrievedKfs = testTwoKnownFacts
+          retrievedKfs = testTwoKnownFacts,
+          isOverseas = false
         ))
         res shouldBe Right(TwoKnownFactsMatch)
       }
@@ -92,16 +108,15 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
       "return a KnownFactsDoNotMatch" in {
         disable(AdditionalKnownFacts)
 
-        val testInvalidKnownFacts = VatKnownFacts(
-          businessPostcode = "",
-          vatRegistrationDate = "",
-          lastReturnMonthPeriod = None,
-          lastNetDue = None
-        )
-
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
-          enteredKfs = testInvalidKnownFacts,
-          retrievedKfs = testTwoKnownFacts
+          enteredKfs = VatKnownFacts(
+            businessPostcode = Some(""),
+            vatRegistrationDate = "",
+            lastReturnMonthPeriod = None,
+            lastNetDue = None
+          ),
+          retrievedKfs = testTwoKnownFacts,
+          isOverseas = false
         ))
         res shouldBe Left(KnownFactsDoNotMatch)
       }

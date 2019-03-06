@@ -78,7 +78,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       case (Some(vatNumberFromEnrolment), _) =>
         if (vatNumber == vatNumberFromEnrolment) Future.successful(Right(UserHasMatchingEnrolment))
         else Future.successful(Left(DoesNotMatchEnrolment))
-      case (_, None) if businessPostcode.isDefined && vatRegistrationDate.isDefined =>
+      case (_, None) if businessPostcode.isDefined || vatRegistrationDate.isDefined =>
         Future.successful(Right(UserHasKnownFacts))
       case (_, Some(agentReferenceNumber)) =>
         checkAgentClientRelationship(vatNumber, agentReferenceNumber)
@@ -89,8 +89,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
   private def checkAgentClientRelationship(vatNumber: String,
                                            agentReferenceNumber: String
-                                          )(implicit hc: HeaderCarrier,
-                                            request: Request[_]) = {
+                                          )(implicit hc: HeaderCarrier, request: Request[_]) = {
     agentClientRelationshipsConnector.checkAgentClientRelationship(agentReferenceNumber, vatNumber) map {
       case Right(HaveRelationshipResponse) =>
         auditService.audit(AgentClientRelationshipAuditModel(vatNumber, agentReferenceNumber, haveRelationship = true))
@@ -110,24 +109,25 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                lastNetDue: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
-      case Right(success@EligibilitySuccess(vatKnownFacts, _, _)) =>
-        (optBusinessPostcode, optVatRegistrationDate) match {
-          case (Some(userBusinessPostcode), Some(userVatRegistrationDate)) =>
+      case Right(success@EligibilitySuccess(vatKnownFacts, _, isOverseas)) =>
+        optVatRegistrationDate match {
+          case Some(userVatRegistrationDate) =>
             knownFactsMatchingService.checkKnownFactsMatch(
               enteredKfs = VatKnownFacts(
-                businessPostcode = userBusinessPostcode,
+                businessPostcode = optBusinessPostcode,
                 vatRegistrationDate = userVatRegistrationDate,
                 lastReturnMonthPeriod = lastReturnMonthPeriod,
                 lastNetDue = lastNetDue
               ),
-              retrievedKfs = vatKnownFacts
+              retrievedKfs = vatKnownFacts,
+              isOverseas = isOverseas
             ) match {
               case Right(_) =>
                 auditService.audit(KnownFactsAuditModel(
                   vatNumber = vatNumber,
-                  enteredPostCode = userBusinessPostcode,
+                  enteredPostCode = optBusinessPostcode.getOrElse(""),
                   enteredVatRegistrationDate = userVatRegistrationDate,
-                  desPostCode = vatKnownFacts.businessPostcode,
+                  desPostCode = vatKnownFacts.businessPostcode.getOrElse(""),
                   desVatRegistrationDate = vatKnownFacts.vatRegistrationDate,
                   matched = true
                 ))
@@ -214,5 +214,3 @@ object StoreVatNumberService {
   case object VatMigrationInProgress extends StoreVatNumberFailure
 
 }
-
-

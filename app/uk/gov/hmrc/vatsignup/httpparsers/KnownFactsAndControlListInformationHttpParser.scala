@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import java.time.Month
-
 import play.api.http.Status._
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
@@ -43,7 +41,7 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
       response.status match {
         case OK  if isEnabled(AdditionalKnownFacts) =>
           (for {
-            businessPostcode <- (response.json \ postcodeKey).validate[String]
+            businessPostcode <- (response.json \ postcodeKey).validateOpt[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
             optLastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
             optLastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
@@ -69,7 +67,7 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
 
         case OK =>
           (for {
-            businessPostcode <- (response.json \ postcodeKey).validate[String]
+            businessPostcode <- (response.json \ postcodeKey).validateOpt[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
             controlList <- (response.json \ controlListInformationKey).validate[String]
           } yield ControlListInformationParser.tryParse(controlList) match {
@@ -98,7 +96,6 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
       }
     }
   }
-
 
   sealed trait KnownFactsAndControlListInformationFailure
 

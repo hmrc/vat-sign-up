@@ -24,10 +24,11 @@ import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, Feature
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.{ControlListInformationVatNumberNotFound, KnownFactsInvalidVatNumber}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
 
-class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBase with EitherValues with FeatureSwitching {
+class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBase with EitherValues
+  with FeatureSwitching {
 
   private lazy val KnownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector =
     app.injector.instanceOf[KnownFactsAndControlListInformationConnector]
@@ -40,11 +41,12 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
         enable(AdditionalKnownFacts)
         KnownFactsAndControlListInformationStub.stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
-        val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
-
+        val res = await(
+          KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber)
+        )
         res.right.value shouldBe KnownFactsAndControlListInformation(
           VatKnownFacts(
-            businessPostcode = testPostCode,
+            businessPostcode = Some(testPostCode),
             vatRegistrationDate = testDateOfRegistration,
             lastReturnMonthPeriod = Some(Month.MARCH),
             lastNetDue = Some(testLastNetDue)
@@ -58,11 +60,12 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
         disable(AdditionalKnownFacts)
         KnownFactsAndControlListInformationStub.stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
-        val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
-
+        val res = await(
+          KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber)
+        )
         res.right.value shouldBe KnownFactsAndControlListInformation(
           VatKnownFacts(
-            businessPostcode = testPostCode,
+            businessPostcode = Some(testPostCode),
             vatRegistrationDate = testDateOfRegistration,
             lastReturnMonthPeriod = None,
             lastNetDue = None
@@ -73,28 +76,29 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
     }
 
   }
-
   "getKnownFactsAndControlListInformation" when {
     "DES returns a BAD_REQUEST" should {
       "return a KnownFactsInvalidVatNumber" in {
         KnownFactsAndControlListInformationStub.stubFailureKnownFactsInvalidVatNumber(testVatNumber)
 
-        val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
-
+        val res = await(
+          KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber)
+        )
         res.left.value shouldBe KnownFactsInvalidVatNumber
       }
     }
   }
-
   "getKnownFactsAndControlListInformation" when {
     "DES returns a NOT_FOUND" should {
       "return a ControlListInformationVatNumberNotFound" in {
         KnownFactsAndControlListInformationStub.stubFailureControlListVatNumberNotFound(testVatNumber)
 
-        val res = await(KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber))
-
+        val res = await(
+          KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber)
+        )
         res.left.value shouldBe ControlListInformationVatNumberNotFound
       }
     }
   }
+
 }
