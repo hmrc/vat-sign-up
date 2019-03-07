@@ -51,7 +51,8 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
       EligibilitySuccess(
         vatKnownFacts = knownFactsAndControlListInformation.vatKnownFacts,
         isMigratable = migratableStatus == Migratable,
-        isOverseas = controlListInformation.controlList contains OverseasTrader
+        isOverseas = controlListInformation.controlList contains OverseasTrader,
+        isDirectDebit = controlListInformation.controlList contains DirectDebit
       )
     }
   }.value
@@ -106,7 +107,10 @@ object ControlListEligibilityService {
 
   type Eligibility = Either[EligibilityFailure, EligibilitySuccess]
 
-  case class EligibilitySuccess(vatKnownFacts: VatKnownFacts, isMigratable: Boolean, isOverseas: Boolean)
+  case class EligibilitySuccess(vatKnownFacts: VatKnownFacts,
+                                isMigratable: Boolean,
+                                isOverseas: Boolean,
+                                isDirectDebit: Boolean)
 
   sealed trait EligibilityFailure
 

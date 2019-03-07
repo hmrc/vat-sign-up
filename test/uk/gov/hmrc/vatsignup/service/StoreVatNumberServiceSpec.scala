@@ -76,7 +76,7 @@ class StoreVatNumberServiceSpec
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
-                  Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+                  Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
                 ))
                 mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
@@ -91,7 +91,7 @@ class StoreVatNumberServiceSpec
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
-                  Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+                  Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
                 ))
                 mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
@@ -149,7 +149,7 @@ class StoreVatNumberServiceSpec
             )
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
-              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false))
+              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false, isDirectDebit = false))
             ))
             mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
 
@@ -209,7 +209,7 @@ class StoreVatNumberServiceSpec
             "return StoreVatNumberSuccess" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(
-                Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+                Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
               ))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
@@ -221,7 +221,7 @@ class StoreVatNumberServiceSpec
             "return a VatNumberDatabaseFailure" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(
-                Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+                Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
               ))
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
 
@@ -234,7 +234,7 @@ class StoreVatNumberServiceSpec
           "return a VatMigrationInProgress" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
-              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
@@ -266,7 +266,7 @@ class StoreVatNumberServiceSpec
           "return StoreVatNumberSuccess" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
-              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
             mockKnownFactsMatching(testTwoKnownFacts, testTwoKnownFacts)(Right(TwoKnownFactsMatch))
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
@@ -312,7 +312,7 @@ class StoreVatNumberServiceSpec
           "return a KnownFactsMismatch" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
-              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
             mockKnownFactsMatching(testTwoKnownFacts, testTwoKnownFacts)(Left(KnownFactsDoNotMatch))
 
@@ -324,7 +324,7 @@ class StoreVatNumberServiceSpec
           "return a VatNumberDatabaseFailure" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
-              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
             mockKnownFactsMatching(testTwoKnownFacts, testTwoKnownFacts)(Right(TwoKnownFactsMatch))
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
@@ -338,7 +338,7 @@ class StoreVatNumberServiceSpec
         "return a VatMigrationInProgress" in {
           mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
           mockGetEligibilityStatus(testVatNumber)(Future.successful(
-            Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+            Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
           ))
 
           val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
