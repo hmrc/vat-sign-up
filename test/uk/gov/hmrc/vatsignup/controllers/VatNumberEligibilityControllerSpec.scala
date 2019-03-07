@@ -45,7 +45,8 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
           vatKnownFacts = testTwoKnownFacts.copy(businessPostcode = None),
           isMigratable = true,
-          isOverseas = true
+          isOverseas = true,
+          isDirectDebit = false
         ))))
 
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))
@@ -57,7 +58,8 @@ class VatNumberEligibilityControllerSpec extends UnitSpec with MockAuthConnector
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Right(EligibilitySuccess(
           vatKnownFacts = testTwoKnownFacts,
           isMigratable = true,
-          isOverseas = false
+          isOverseas = false,
+          isDirectDebit = false
         ))))
 
         val res = await(TestVatNumberEligibilityController.checkVatNumberEligibility(testVatNumber)(FakeRequest()))

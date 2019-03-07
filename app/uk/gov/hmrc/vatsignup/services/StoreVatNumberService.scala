@@ -109,7 +109,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
                                lastNetDue: Option[String]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
-      case Right(success@EligibilitySuccess(vatKnownFacts, _, isOverseas)) =>
+      case Right(success@EligibilitySuccess(vatKnownFacts, _, isOverseas, _)) =>
         optVatRegistrationDate match {
           case Some(userVatRegistrationDate) =>
             knownFactsMatchingService.checkKnownFactsMatch(

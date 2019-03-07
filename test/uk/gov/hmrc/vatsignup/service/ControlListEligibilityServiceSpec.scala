@@ -65,7 +65,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
           )))
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-          res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = true))
+          res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = true, isDirectDebit = false))
           verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
         }
       }
@@ -77,7 +77,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
 
           val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
 
-          res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+          res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
           verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
         }
       }
@@ -90,7 +90,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         )))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-        res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false))
+        res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false, isDirectDebit = false))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true, nonMigratableReasons = Seq(Stagger1.errorMessage)))
       }
     }
@@ -142,7 +142,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         mockCheckMigrationDate(Stagger1)(Right(DirectDebitMigrationCheckService.Eligible))
 
         val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
-        res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false))
+        res shouldBe Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = true))
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = true))
       }
     }
