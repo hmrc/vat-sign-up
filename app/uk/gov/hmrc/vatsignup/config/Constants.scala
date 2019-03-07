@@ -56,6 +56,7 @@ object Constants {
 
   object ControlList {
     val OverseasKey = "isOverseas"
+    val DirectDebitKey = "isDirectDebit"
   }
 
   val CONTROL_INFORMATION32_STRING_LENGTH: Int = 32

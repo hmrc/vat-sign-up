@@ -81,7 +81,7 @@ class StoreVatNumberServiceSpec
                 mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
-                res shouldBe Right(StoreVatNumberSuccess(false))
+                res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
 
                 verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
               }
@@ -154,7 +154,7 @@ class StoreVatNumberServiceSpec
             mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
-            res shouldBe Right(StoreVatNumberSuccess(false))
+            res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
 
             verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
@@ -214,7 +214,7 @@ class StoreVatNumberServiceSpec
               mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
-              res shouldBe Right(StoreVatNumberSuccess(false))
+              res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
             }
           }
           "the vat number is not stored successfully" should {
@@ -272,7 +272,7 @@ class StoreVatNumberServiceSpec
             mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
-            res shouldBe Right(StoreVatNumberSuccess(false))
+            res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
           }
         }
         "Known facts and control list returned ineligible" should {
