@@ -32,7 +32,7 @@ class StoreRegisteredSocietyControllerISpec extends ComponentSpecBase with Custo
     "a ct reference is provided" should {
       "return NO_CONTENT if the provided CT reference matches the one returned by DES" in {
         stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
         stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(
@@ -69,7 +69,7 @@ class StoreRegisteredSocietyControllerISpec extends ComponentSpecBase with Custo
     "a ct reference is not provided" should {
       "return NO_CONTENT when the registered society has been stored successfully" in {
         stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
         val res = post(s"/subscription-request/vat-number/$testVatNumber/registered-society")(
           Json.obj("companyNumber" -> testCompanyNumber)

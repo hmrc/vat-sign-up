@@ -53,7 +53,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -77,7 +78,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(IRSA),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -101,7 +103,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(AuthProfile),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -124,7 +127,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -147,7 +151,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -170,7 +175,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -193,7 +199,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -218,7 +225,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               vatNumber = testVatNumber,
               businessEntity = Some(GeneralPartnership(testUtr)),
               email = Some(testEmail),
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -241,7 +249,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               vatNumber = testVatNumber,
               businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
               email = Some(testEmail),
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -264,7 +273,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               vatNumber = testVatNumber,
               businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
               email = Some(testEmail),
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -287,7 +297,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               vatNumber = testVatNumber,
               businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
               email = Some(testEmail),
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -310,7 +321,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               vatNumber = testVatNumber,
               businessEntity = Some(VatGroup),
               email = Some(testEmail),
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -333,7 +345,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               vatNumber = testVatNumber,
               businessEntity = Some(Trust),
               email = Some(testEmail),
-              isMigratable = testIsMigratable
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
             )
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -356,7 +369,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(Overseas),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -379,7 +393,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             transactionEmail = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -408,7 +423,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             identityVerified = true,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -432,7 +448,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -457,7 +474,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -482,7 +500,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -507,7 +526,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -532,7 +552,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -557,7 +578,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(GeneralPartnership(testUtr)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -580,7 +602,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -603,7 +626,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -626,7 +650,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -651,7 +676,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(VatGroup),
             email = Some(testEmail),
             identityVerified = true,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -676,7 +702,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             businessEntity = Some(Trust),
             email = Some(testEmail),
             identityVerified = true,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -700,7 +727,8 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(UnincorporatedAssociation),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))

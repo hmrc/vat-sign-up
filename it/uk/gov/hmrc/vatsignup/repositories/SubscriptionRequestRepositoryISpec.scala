@@ -31,7 +31,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
   private val testSubscriptionRequest = SubscriptionRequest(
     vatNumber = testVatNumber,
-    businessEntity = Some(LimitedCompany(testCompanyNumber))
+    businessEntity = Some(LimitedCompany(testCompanyNumber)),
+    isDirectDebit = false
   )
 
   override def beforeEach: Unit = {
@@ -52,13 +53,18 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
   "insertVatNumber" should {
     val testSubscriptionRequest = SubscriptionRequest(
-      vatNumber = testVatNumber
+      vatNumber = testVatNumber,
+      isDirectDebit = false
     )
 
     "insert the subscription request where there is not already one" when {
       "isMigratable is true" in {
         val res = for {
-          _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+          _ <- repo.upsertVatNumber(
+            testVatNumber,
+            isMigratable = true,
+            isDirectDebit = false
+          )
           model <- repo.findById(testVatNumber)
         } yield model
 
@@ -66,7 +72,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       }
       "isMigratable is false" in {
         val res = for {
-          _ <- repo.upsertVatNumber(testVatNumber, isMigratable = false)
+          _ <- repo.upsertVatNumber(
+            testVatNumber,
+            isMigratable = false,
+            isDirectDebit = false
+          )
           model <- repo.findById(testVatNumber)
         } yield model
 
@@ -83,10 +93,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
             businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            identityVerified = true
+            identityVerified = true,
+            isDirectDebit = false
           )
         )
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         model <- repo.findById(testVatNumber)
       } yield model
 
@@ -98,7 +109,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   "upsertEmail" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
-      email = Some(testEmail)
+      email = Some(testEmail),
+      isDirectDebit = false
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
@@ -114,7 +126,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request where there isn't already an email stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertEmail(testVatNumber, testEmail)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -130,14 +142,15 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         model <- repo.findById(testVatNumber)
       } yield model
 
-      await(res) should contain(SubscriptionRequest(testVatNumber, email = Some(newEmail)))
+      await(res) should contain(SubscriptionRequest(testVatNumber, email = Some(newEmail), isDirectDebit = false))
     }
   }
 
   "upsertTransactionEmail" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
-      transactionEmail = Some(testEmail)
+      transactionEmail = Some(testEmail),
+      isDirectDebit = false
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
@@ -153,7 +166,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request where there isn't already a transaction email stored" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertTransactionEmail(testVatNumber, testEmail)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -169,7 +182,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         model <- repo.findById(testVatNumber)
       } yield model
 
-      await(res) should contain(SubscriptionRequest(testVatNumber, transactionEmail = Some(newEmail)))
+      await(res) should contain(SubscriptionRequest(
+        testVatNumber,
+        transactionEmail = Some(newEmail),
+        isDirectDebit = false
+      ))
     }
   }
 
@@ -187,14 +204,15 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request with IdentityVerified" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertIdentityVerified(testVatNumber)
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
-        identityVerified = true
+        identityVerified = true,
+        isDirectDebit = false
       ))
     }
   }
@@ -202,7 +220,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   "upsertBusinessEntity" should {
     "store a Sole Trader" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, SoleTrader(testNino))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -211,12 +229,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         ninoSource = Some(UserEntered),
-        businessEntity = Some(SoleTrader(testNino))
+        businessEntity = Some(SoleTrader(testNino)),
+        isDirectDebit = false
       ))
     }
     "store a Limited Company" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -224,12 +243,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedCompany(testCompanyNumber))
+        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+        isDirectDebit = false
       ))
     }
     "store a non UK company with UK establishment with FC prefix in CRN" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -237,12 +257,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))
+        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
+        isDirectDebit = false
       ))
     }
     "store a non UK company with UK establishment with SF prefix in CRN" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -250,12 +271,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))
+        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
+        isDirectDebit = false
       ))
     }
     "store a non UK company with UK establishment with NF prefix in CRN" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -263,12 +285,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))
+        businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
+        isDirectDebit = false
       ))
     }
     "store a General Partnership" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -276,12 +299,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(GeneralPartnership(testUtr))
+        businessEntity = Some(GeneralPartnership(testUtr)),
+        isDirectDebit = false
       ))
     }
     "store a Limited Partnership" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -289,12 +313,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber))
+        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+        isDirectDebit = false
       ))
     }
     "store a Limited Liabiility Partnership" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -302,12 +327,13 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber))
+        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+        isDirectDebit = false
       ))
     }
     "store a Scottish Limited Partnership" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -315,13 +341,14 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber))
+        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+        isDirectDebit = false
       ))
     }
 
     "store a VAT Group" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, VatGroup)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -329,13 +356,14 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(VatGroup)
+        businessEntity = Some(VatGroup),
+        isDirectDebit = false
       ))
     }
 
     "store a Registered Society" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, RegisteredSociety(testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
@@ -343,13 +371,14 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(RegisteredSociety(testCompanyNumber))
+        businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+        isDirectDebit = false
       ))
     }
 
     "store a Charity" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, Charity)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -357,13 +386,14 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(Charity)
+        businessEntity = Some(Charity),
+        isDirectDebit = false
       ))
     }
 
     "store an Overseas company" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, Overseas)
         model <- repo.findById(testVatNumber)
       } yield model
@@ -371,7 +401,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(Overseas)
+        businessEntity = Some(Overseas),
+        isDirectDebit = false
       ))
     }
   }
@@ -390,14 +421,15 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
 
     "update the subscription request with CtReference" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertCtReference(testVatNumber, testCtReference)
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
-        ctReference = Some(testCtReference)
+        ctReference = Some(testCtReference),
+        isDirectDebit = false
       ))
     }
   }
@@ -405,14 +437,14 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   "deleteRecord" should {
     "delete the entry stored against the vrn" in {
       val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true)
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         inserted <- repo.findById(testVatNumber)
         _ <- repo.deleteRecord(testVatNumber)
         postDelete <- repo.findById(testVatNumber)
       } yield (inserted, postDelete)
 
       val (inserted, postDelete) = await(res)
-      inserted should contain(SubscriptionRequest(testVatNumber))
+      inserted should contain(SubscriptionRequest(testVatNumber, isDirectDebit = false))
       postDelete shouldBe None
     }
   }

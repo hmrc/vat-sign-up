@@ -46,7 +46,7 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
       "if vat number exists return no content when the nino has been stored successfully" in {
         stubAuth(OK, successfulAuthResponse())
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
 
@@ -75,7 +75,7 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
 
       "the nino source is auth profile return no content when the nino has been stored successfully" in {
         lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> AuthProfileKey))
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
         stubAuth(OK, successfulAuthResponse())
 

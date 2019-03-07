@@ -36,9 +36,12 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
 
   val mockSubscriptionRequestRepository: SubscriptionRequestRepository = mock[SubscriptionRequestRepository]
 
-  def mockUpsertVatNumber(vatNumber: String, isMigratable: Boolean)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertVatNumber(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(isMigratable)))
-      .thenReturn(response)
+  def mockUpsertVatNumber(vatNumber: String, isMigratable: Boolean, isDirectDebit: Boolean)(response: Future[UpdateWriteResult]): Unit =
+    when(mockSubscriptionRequestRepository.upsertVatNumber(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(isMigratable),
+      ArgumentMatchers.eq(isDirectDebit)
+    )) thenReturn response
 
   def mockUpsertCtReference(vatNumber: String, ctReference: String)(response: Future[UpdateWriteResult]): Unit =
     when(mockSubscriptionRequestRepository.upsertCtReference(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(ctReference)))

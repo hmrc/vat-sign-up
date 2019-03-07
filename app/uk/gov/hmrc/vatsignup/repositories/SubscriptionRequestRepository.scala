@@ -54,10 +54,10 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
     ).filter(_.n == 1)
   }
 
-  def upsertVatNumber(vatNumber: String, isMigratable: Boolean): Future[UpdateWriteResult] = {
+  def upsertVatNumber(vatNumber: String, isMigratable: Boolean, isDirectDebit: Boolean): Future[UpdateWriteResult] = {
     collection.update(
       selector = Json.obj(idKey -> vatNumber),
-      update = SubscriptionRequest(vatNumber, isMigratable = isMigratable),
+      update = SubscriptionRequest(vatNumber, isMigratable = isMigratable, isDirectDebit = isDirectDebit),
       upsert = true
     )(implicitly[Writer[JsObject]], mongoFormat, implicitly[ExecutionContext])
   }

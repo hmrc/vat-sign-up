@@ -31,7 +31,7 @@ class StoreTrustControllerISpec extends ComponentSpecBase with CustomMatchers wi
     "return NO_CONTENT" in {
       stubAuth(OK, successfulAuthResponse())
 
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
       val res = post(s"/subscription-request/vat-number/$testVatNumber/trust")(Json.obj())
 
