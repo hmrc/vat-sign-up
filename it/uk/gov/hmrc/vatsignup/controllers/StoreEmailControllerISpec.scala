@@ -38,7 +38,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers wi
             "return OK with the verification state" in {
               stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
-              await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+              await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
               stubVerifyEmail(testEmail, delegatedContinueUrl)(CREATED)
 
               val res = put(s"/subscription-request/vat-number/$testVatNumber/email")(Json.obj("email" -> testEmail))
@@ -53,7 +53,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers wi
             "return OK with the verification state" in {
               stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
 
-              await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+              await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
               stubVerifyEmail(testEmail, principalContinueUrl)(CREATED)
 
               val res = put(s"/subscription-request/vat-number/$testVatNumber/email")(Json.obj("email" -> testEmail))
@@ -69,7 +69,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers wi
           "return OK with the verification state as true" in {
             stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
 
-            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
             stubVerifyEmail(testEmail, principalContinueUrl)(CONFLICT)
 
             val res = put(s"/subscription-request/vat-number/$testVatNumber/email")(Json.obj("email" -> testEmail))

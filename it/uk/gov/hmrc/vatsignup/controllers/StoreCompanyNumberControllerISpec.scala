@@ -29,7 +29,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
     "the user is principal" should {
       "for principal user return NO_CONTENT the provided CT reference matches the one returned by DES" in {
         stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
         stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
@@ -45,7 +45,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
 
       "for principal user return NO_CONTENT for non uk with uk establishment companies with a FC prefix on CRN" in {
         stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
         stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)(OK, ctReferenceBody(testCtReference))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
@@ -61,7 +61,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
 
       "for principal user return NO_CONTENT for non uk with uk establishment companies with a SF prefix on CRN" in {
         stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
         stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)(OK, ctReferenceBody(testCtReference))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
@@ -77,7 +77,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
 
       "for principal user return NO_CONTENT for non uk with uk establishment companies with a NF prefix on CRN" in {
         stubAuth(OK, successfulAuthResponse())
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
         stubGetCtReference(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)(OK, ctReferenceBody(testCtReference))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
@@ -109,7 +109,7 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
       "for agent user return NO_CONTENT when the company number has been stored successfully" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
 

@@ -40,7 +40,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
-          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
           val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
 
@@ -58,7 +58,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
-          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
           val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
             Json.obj(
@@ -81,7 +81,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
         "return FORBIDDEN" in {
           stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
-          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
           val requestBody = Json.obj(
             "partnershipType" -> BusinessEntity.GeneralPartnershipKey,
@@ -129,7 +129,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
             stubAuth(OK, successfulAuthResponse())
             stubGetPartnershipKnownFacts(testUtr)(OK, Some(fullPartnershipKnownFactsBody))
 
-            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
 
@@ -148,7 +148,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
             stubAuth(OK, successfulAuthResponse())
             stubGetPartnershipKnownFacts(testUtr)(OK, Some(fullPartnershipKnownFactsBody))
 
-            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
               Json.obj(
@@ -182,7 +182,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
               "traderPostCode" -> ""
             )))
 
-            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
             val requestBody = Json.obj(
               "partnershipType" -> BusinessEntity.GeneralPartnershipKey,
@@ -209,7 +209,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
             stubAuth(OK, successfulAuthResponse())
             stubGetPartnershipKnownFacts(invalidUtr)(NOT_FOUND)
 
-            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
             val requestBody = Json.obj(
               "partnershipType" -> BusinessEntity.GeneralPartnershipKey,

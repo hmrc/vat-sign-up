@@ -35,7 +35,7 @@ class StoreTransactionEmailControllerISpec extends ComponentSpecBase with Custom
         "return OK with the verification state as false" in {
           stubAuth(OK, successfulAuthResponse())
 
-          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
           stubVerifyEmail(testEmail, agentContinueUrl)(CREATED)
 
           val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
@@ -50,7 +50,7 @@ class StoreTransactionEmailControllerISpec extends ComponentSpecBase with Custom
         "return OK with the verification state as true" in {
           stubAuth(OK, successfulAuthResponse())
 
-          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
           stubVerifyEmail(testEmail, agentContinueUrl)(CONFLICT)
 
           val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))

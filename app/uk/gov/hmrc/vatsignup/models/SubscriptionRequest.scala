@@ -29,7 +29,8 @@ case class SubscriptionRequest(vatNumber: String,
                                email: Option[String] = None,
                                transactionEmail: Option[String] = None,
                                identityVerified: Boolean = false,
-                               isMigratable: Boolean = true
+                               isMigratable: Boolean = true,
+                               isDirectDebit: Boolean
                               )
 
 object SubscriptionRequest {
@@ -49,6 +50,7 @@ object SubscriptionRequest {
   val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
   val isMigratableKey = "isMigratable"
+  val isDirectDebitKey = "isDirectDebit"
   val businessEntityKey = "businessEntity"
 
   val mongoFormat: OFormat[SubscriptionRequest] = OFormat(
@@ -69,6 +71,7 @@ object SubscriptionRequest {
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
         isMigratable <- (json \ isMigratableKey).validate[Boolean]
+        isDirectDebit <- (json \ isDirectDebitKey).validate[Boolean]
       } yield SubscriptionRequest(
         vatNumber = vatNumber,
         ctReference = ctReference,
@@ -77,7 +80,8 @@ object SubscriptionRequest {
         email = email,
         transactionEmail = transactionEmail,
         identityVerified = identityVerified,
-        isMigratable = isMigratable
+        isMigratable = isMigratable,
+        isDirectDebit = isDirectDebit
       ),
     subscriptionRequest =>
       Json.obj(
@@ -87,7 +91,8 @@ object SubscriptionRequest {
         transactionEmailKey -> subscriptionRequest.transactionEmail,
         identityVerifiedKey -> subscriptionRequest.identityVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli),
-        isMigratableKey -> subscriptionRequest.isMigratable
+        isMigratableKey -> subscriptionRequest.isMigratable,
+        isDirectDebitKey -> subscriptionRequest.isDirectDebit
       ).++(
         subscriptionRequest.ctReference match {
           case Some(ref) => Json.obj(ctReferenceKey -> ref)

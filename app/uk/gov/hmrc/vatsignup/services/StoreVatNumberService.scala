@@ -65,7 +65,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
         lastReturnMonthPeriod = lastReturnMonthPeriod,
         lastNetDue = lastNetDue
       )
-      _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
+      _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable, eligibilitySuccess.isDirectDebit)
     } yield StoreVatNumberSuccess(eligibilitySuccess.isOverseas, eligibilitySuccess.isDirectDebit)
   }.value
 
@@ -166,9 +166,10 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
     })
 
   private def insertVatNumber(vatNumber: String,
-                              isMigratable: Boolean
+                              isMigratable: Boolean,
+                              isDirectDebit: Boolean
                              )(implicit hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, (StoreVatNumberSuccess.type)] =
-    EitherT(subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable) map {
+    EitherT(subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable, isDirectDebit) map {
       _ => Right(StoreVatNumberSuccess)
     } recover {
       case _ => Left(VatNumberDatabaseFailure)

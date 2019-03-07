@@ -78,7 +78,7 @@ class StoreVatNumberServiceSpec
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
                   Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
                 ))
-                mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
+                mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(mock[UpdateWriteResult]))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
                 res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
@@ -93,7 +93,7 @@ class StoreVatNumberServiceSpec
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
                   Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
                 ))
-                mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
+                mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.failed(new Exception))
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
                 res shouldBe Left(VatNumberDatabaseFailure)
@@ -151,7 +151,7 @@ class StoreVatNumberServiceSpec
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false, isDirectDebit = false))
             ))
-            mockUpsertVatNumber(testVatNumber, isMigratable = false)(Future.successful(mock[UpdateWriteResult]))
+            mockUpsertVatNumber(testVatNumber, isMigratable = false, isDirectDebit = false)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None, None, None, None))
             res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
@@ -211,7 +211,7 @@ class StoreVatNumberServiceSpec
               mockGetEligibilityStatus(testVatNumber)(Future.successful(
                 Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
               ))
-              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(mock[UpdateWriteResult]))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
               res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
@@ -223,7 +223,7 @@ class StoreVatNumberServiceSpec
               mockGetEligibilityStatus(testVatNumber)(Future.successful(
                 Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
               ))
-              mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
+              mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.failed(new Exception))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None, None, None, None))
               res shouldBe Left(VatNumberDatabaseFailure)
@@ -269,7 +269,7 @@ class StoreVatNumberServiceSpec
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
             mockKnownFactsMatching(testTwoKnownFacts, testTwoKnownFacts)(Right(TwoKnownFactsMatch))
-            mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.successful(mock[UpdateWriteResult]))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(mock[UpdateWriteResult]))
 
             val res = await(call)
             res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
@@ -327,7 +327,7 @@ class StoreVatNumberServiceSpec
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
             mockKnownFactsMatching(testTwoKnownFacts, testTwoKnownFacts)(Right(TwoKnownFactsMatch))
-            mockUpsertVatNumber(testVatNumber, isMigratable = true)(Future.failed(new Exception))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.failed(new Exception))
 
             val res = await(call)
             res shouldBe Left(VatNumberDatabaseFailure)

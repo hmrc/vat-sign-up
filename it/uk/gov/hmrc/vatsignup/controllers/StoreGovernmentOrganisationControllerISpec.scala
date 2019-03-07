@@ -31,7 +31,7 @@ class StoreGovernmentOrganisationControllerISpec extends ComponentSpecBase with 
     "return NO_CONTENT" in {
       stubAuth(OK, successfulAuthResponse())
 
-      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true))
+      await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
       val res = post(s"/subscription-request/vat-number/$testVatNumber/government-organisation")(Json.obj())
 

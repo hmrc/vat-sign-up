@@ -50,7 +50,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -73,7 +74,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -96,7 +98,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             transactionEmail = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
@@ -125,7 +128,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             identityVerified = true,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -149,7 +153,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -173,7 +178,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             businessEntity = Some(GeneralPartnership(testUtr)),
             email = Some(testEmail),
             identityVerified = true,
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
@@ -198,7 +204,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = testIsMigratable
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
           )
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -222,7 +229,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
           businessEntity = Some(VatGroup),
           email = Some(testEmail),
           identityVerified = true,
-          isMigratable = testIsMigratable
+          isMigratable = testIsMigratable,
+          isDirectDebit = false
         )
 
         stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -245,7 +253,8 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
           businessEntity = Some(AdministrativeDivision),
           email = Some(testEmail),
           identityVerified = true,
-          isMigratable = testIsMigratable
+          isMigratable = testIsMigratable,
+          isDirectDebit = false
         )
 
         stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
@@ -262,29 +271,30 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
           emptyBody
         )
       }
-        "return NO_CONTENT for Trust sign up" in {
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(Trust),
-            email = Some(testEmail),
-            identityVerified = true,
-            isMigratable = testIsMigratable
-          )
+      "return NO_CONTENT for Trust sign up" in {
+        val testSubscriptionRequest = SubscriptionRequest(
+          vatNumber = testVatNumber,
+          businessEntity = Some(Trust),
+          email = Some(testEmail),
+          identityVerified = true,
+          isMigratable = testIsMigratable,
+          isDirectDebit = false
+        )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+        stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+        stubGetEmailVerified(testEmail)
+        stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
+        stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+        stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+        await(submissionRequestRepo.insert(testSubscriptionRequest))
+        val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
 
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
       }
     }
+  }
 }
