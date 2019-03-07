@@ -21,7 +21,7 @@ import java.util.UUID
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants
-import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
+import uk.gov.hmrc.vatsignup.config.Constants.ControlList._
 import uk.gov.hmrc.vatsignup.config.featureswitch.AdditionalKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
@@ -48,7 +48,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(
-            OverseasKey -> false
+            OverseasKey -> false,
+            DirectDebitKey -> false
           ))
         )
       }
@@ -114,7 +115,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(OK),
             jsonBodyAs(Json.obj(
-              OverseasKey -> false
+              OverseasKey -> false,
+              DirectDebitKey -> false
             ))
           )
         }
@@ -184,7 +186,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(OK),
             jsonBodyAs(Json.obj(
-              OverseasKey -> false
+              OverseasKey -> false,
+              DirectDebitKey -> true
             ))
           )
         }
@@ -207,7 +210,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(OK),
             jsonBodyAs(Json.obj(
-              OverseasKey -> false
+              OverseasKey -> false,
+              DirectDebitKey -> false
             ))
           )
         }
@@ -230,7 +234,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(OK),
             jsonBodyAs(Json.obj(
-              OverseasKey -> true
+              OverseasKey -> true,
+              DirectDebitKey -> false
             ))
           )
         }
@@ -251,7 +256,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(OK),
             jsonBodyAs(Json.obj(
-              OverseasKey -> false
+              OverseasKey -> false,
+              DirectDebitKey -> false
             ))
           )
         }
@@ -406,7 +412,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       res should have(
         httpStatus(OK),
         jsonBodyAs(Json.obj(
-          OverseasKey -> true
+          OverseasKey -> true,
+          DirectDebitKey -> false
         ))
       )
     }

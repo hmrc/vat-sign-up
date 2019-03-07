@@ -53,21 +53,23 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
     "the VAT number has been stored correctly" should {
       "return CREATED" in {
         mockAuthRetrieveAgentEnrolment()
-        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = false))))
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))))
 
         val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
 
         status(res) shouldBe OK
+        jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> false, "isDirectDebit" -> false)
       }
     }
-    "the VAT number has been stored correctly and is overseas" should {
+    "the VAT number has been stored correctly and is overseas and is direct debit" should {
       "return CREATED" in {
         mockAuthRetrieveAgentEnrolment()
-        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = true))))
+        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = true, isDirectDebit = true))))
 
         val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
 
         status(res) shouldBe OK
+        jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> true, "isDirectDebit" -> true)
       }
     }
 

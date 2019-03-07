@@ -66,7 +66,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
         lastNetDue = lastNetDue
       )
       _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable)
-    } yield StoreVatNumberSuccess(eligibilitySuccess.isOverseas)
+    } yield StoreVatNumberSuccess(eligibilitySuccess.isOverseas, eligibilitySuccess.isDirectDebit)
   }.value
 
   private def checkUserAuthority(vatNumber: String,
@@ -177,7 +177,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
 object StoreVatNumberService {
 
-  case class StoreVatNumberSuccess (isOverseas: Boolean)
+  case class StoreVatNumberSuccess (isOverseas: Boolean, isDirectDebit: Boolean)
 
   case object NotSubscribed
 
