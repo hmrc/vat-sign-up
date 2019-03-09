@@ -18,9 +18,9 @@ package uk.gov.hmrc.vatsignup.models
 
 import java.time.Instant
 
-import play.api.libs.json.{Json, OFormat, OWrites}
-import NinoSource._
-import BusinessEntity.BusinessEntityFormat
+import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.vatsignup.models.BusinessEntity.BusinessEntityFormat
+import uk.gov.hmrc.vatsignup.models.NinoSource._
 
 case class SubscriptionRequest(vatNumber: String,
                                ctReference: Option[String] = None,
@@ -30,7 +30,8 @@ case class SubscriptionRequest(vatNumber: String,
                                transactionEmail: Option[String] = None,
                                identityVerified: Boolean = false,
                                isMigratable: Boolean = true,
-                               isDirectDebit: Boolean
+                               isDirectDebit: Boolean,
+                               contactPreference: Option[ContactPreference] = None
                               )
 
 object SubscriptionRequest {
@@ -52,6 +53,7 @@ object SubscriptionRequest {
   val isMigratableKey = "isMigratable"
   val isDirectDebitKey = "isDirectDebit"
   val businessEntityKey = "businessEntity"
+  val contactPreferenceKey = "contactPreference"
 
   val mongoFormat: OFormat[SubscriptionRequest] = OFormat(
     json =>
@@ -72,6 +74,7 @@ object SubscriptionRequest {
         identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
         isMigratable <- (json \ isMigratableKey).validate[Boolean]
         isDirectDebit <- (json \ isDirectDebitKey).validate[Boolean]
+        contactPreference <- (json \ contactPreferenceKey).validateOpt[ContactPreference]
       } yield SubscriptionRequest(
         vatNumber = vatNumber,
         ctReference = ctReference,
@@ -81,7 +84,8 @@ object SubscriptionRequest {
         transactionEmail = transactionEmail,
         identityVerified = identityVerified,
         isMigratable = isMigratable,
-        isDirectDebit = isDirectDebit
+        isDirectDebit = isDirectDebit,
+        contactPreference = contactPreference
       ),
     subscriptionRequest =>
       Json.obj(
@@ -92,7 +96,8 @@ object SubscriptionRequest {
         identityVerifiedKey -> subscriptionRequest.identityVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli),
         isMigratableKey -> subscriptionRequest.isMigratable,
-        isDirectDebitKey -> subscriptionRequest.isDirectDebit
+        isDirectDebitKey -> subscriptionRequest.isDirectDebit,
+        contactPreferenceKey -> subscriptionRequest.contactPreference
       ).++(
         subscriptionRequest.ctReference match {
           case Some(ref) => Json.obj(ctReferenceKey -> ref)
