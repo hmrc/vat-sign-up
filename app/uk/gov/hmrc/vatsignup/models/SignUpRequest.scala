@@ -24,7 +24,7 @@ case class SignUpRequest(vatNumber: String,
                          transactionEmail: EmailAddress,
                          isDelegated: Boolean,
                          isMigratable: Boolean,
-                         contactPreference: Option[String]
+                         contactPreference: Option[ContactPreference]
                         )
 
 object SignUpRequest {

@@ -26,7 +26,6 @@ case object Digital extends ContactPreference
 
 case object ContactPreference {
   val PaperKey = "Paper"
-
   val DigitalKey = "Digital"
 
   implicit val contactPreferenceFormat: Format[ContactPreference] = new Format[ContactPreference] {

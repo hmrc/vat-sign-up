@@ -58,7 +58,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable = subscriptionRequest.isMigratable
-          contactPreference = if (isEnabled(CaptureContactPreference)) Some(contactPreferenceDigital) else None
+          contactPreference =
+          if (isEnabled(CaptureContactPreference)) subscriptionRequest.contactPreference orElse Some(Digital) else None
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,

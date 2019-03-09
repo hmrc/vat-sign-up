@@ -23,6 +23,7 @@ import uk.gov.hmrc.vatsignup.connectors.CustomerSignUpConnector
 import org.mockito.Mockito._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.httpparsers.CustomerSignUpHttpParser.CustomerSignUpResponse
+import uk.gov.hmrc.vatsignup.models.ContactPreference
 
 import scala.concurrent.Future
 
@@ -40,7 +41,7 @@ trait MockCustomerSignUpConnector extends MockitoSugar with BeforeAndAfterEach {
                  email: Option[String],
                  emailVerified: Option[Boolean],
                  optIsPartialMigration: Option[Boolean],
-                 optContactPreference: Option[String]
+                 optContactPreference: Option[ContactPreference]
                 )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),

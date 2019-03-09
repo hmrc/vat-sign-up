@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import play.api.http.Status._
 import play.api.libs.json.Json
-import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolution}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, EtmpEntityType, HybridSolution}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
@@ -48,19 +48,29 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
     "the user is a delegate and" when {
       "all downstream services behave as expected" should {
         "return NO_CONTENT for individual sign up" in {
+          enable(CaptureContactPreference)
+
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
-            isDirectDebit = false
+            isDirectDebit = false,
+            contactPreference = Some(Paper)
           )
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
           stubRegisterIndividual(testVatNumber, testNino)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubSignUp(
+            testSafeId,
+            testVatNumber,
+            Some(testEmail),
+            emailVerified = Some(true),
+            optIsPartialMigration = Some(!testIsMigratable),
+            optContactPreference = Some(Paper)
+          )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))

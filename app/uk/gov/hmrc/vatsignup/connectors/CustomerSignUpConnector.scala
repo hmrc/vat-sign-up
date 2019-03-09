@@ -24,6 +24,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.CustomerSignUpHttpParser._
+import uk.gov.hmrc.vatsignup.models.ContactPreference
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,7 +41,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
              email: Option[String],
              emailVerified: Option[Boolean],
              optIsPartialMigration: Option[Boolean],
-             optContactPreference: Option[String]
+             optContactPreference: Option[ContactPreference]
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
     val headerCarrier = hc
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
@@ -68,7 +69,7 @@ object CustomerSignUpConnector {
                                        email: Option[String],
                                        emailVerified: Option[Boolean],
                                        optIsPartialMigration: Option[Boolean],
-                                       optContactPreference: Option[String]
+                                       optContactPreference: Option[ContactPreference]
                                       ): JsObject = {
     Json.obj(
       "signUpRequest" -> Json.obj(

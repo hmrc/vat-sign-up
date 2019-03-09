@@ -190,7 +190,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                      emailAddressVerified: Option[Boolean],
                      agentReferenceNumber: Option[String],
                      isPartialMigration: Boolean,
-                     contactPreference: Option[String]
+                     contactPreference: Option[ContactPreference]
                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, CustomerSignUpResponseSuccess.type] =
     EitherT(customerSignUpConnector.signUp(
       safeId,

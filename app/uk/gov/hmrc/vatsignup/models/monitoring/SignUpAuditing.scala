@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
+import play.api.libs.json.Json
+import uk.gov.hmrc.vatsignup.models.ContactPreference
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object SignUpAuditing {
@@ -28,7 +30,7 @@ object SignUpAuditing {
                               emailAddressVerified: Option[Boolean],
                               agentReferenceNumber: Option[String],
                               isSuccess: Boolean,
-                              contactPreference: Option[String]
+                              contactPreference: Option[ContactPreference]
                              ) extends AuditModel {
 
     override val transactionName: String = signUpTransactionName
@@ -39,7 +41,7 @@ object SignUpAuditing {
       "emailAddressVerified" -> emailAddressVerified.map(_.toString),
       "agentReferenceNumber" -> agentReferenceNumber,
       "isSuccess" -> Some(s"$isSuccess"),
-      "contactPreference" -> contactPreference
+      "contactPreference" -> contactPreference.map(_.toString)
     ).collect { case (key, Some(value)) => key -> value }
 
     override val auditType: String = signUpAuditType
