@@ -18,11 +18,12 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import play.api.http.Status._
 import play.api.libs.json.Json
-import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolution}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, EtmpEntityType, HybridSolution}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EntityTypeRegistrationStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.RegistrationStub.stubRegisterIndividual
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.SignUpStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository, TestSubmissionRequestRepository}
@@ -44,6 +45,42 @@ class SignUpSubmissionControllerWithEntityTypeFSEnabledISpec extends ComponentSp
   "/subscription-request/vat-number/:vatNumber/submit" when {
     "the user is a delegate and" when {
       "all downstream services behave as expected" should {
+        "return NO_CONTENT for individual sign up where the user is not direct debit and has paper preference" in {
+          enable(CaptureContactPreference)
+
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(SoleTrader(testNino)),
+            ninoSource = Some(UserEntered),
+            transactionEmail = Some(testEmail),
+            email = None,
+            isMigratable = true,
+            isDirectDebit = false,
+            contactPreference = Some(Paper)
+          )
+
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
+          stubSignUp(
+              safeId = testSafeId,
+              vatNumber = testVatNumber,
+              email = None,
+              emailVerified = None,
+              optIsPartialMigration = Some(false),
+              optContactPreference = Some(Paper)
+          )(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
         "return NO_CONTENT for individual sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,

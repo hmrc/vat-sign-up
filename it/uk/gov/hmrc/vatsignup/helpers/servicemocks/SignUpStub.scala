@@ -25,12 +25,12 @@ import uk.gov.hmrc.vatsignup.models.ContactPreference
 object SignUpStub extends WireMockMethods {
 
   def stubSignUp[T](safeId: String,
-                                         vatNumber: String,
-                                         email: Option[String],
-                                         emailVerified: Option[Boolean],
-                                         optIsPartialMigration: Option[Boolean],
-                                         optContactPreference: Option[ContactPreference] = None
-                                        )(status: Int): StubMapping =
+                    vatNumber: String,
+                    email: Option[String],
+                    emailVerified: Option[Boolean],
+                    optIsPartialMigration: Option[Boolean],
+                    optContactPreference: Option[ContactPreference] = None
+                   )(status: Int): StubMapping =
     when(method = POST, uri = "/cross-regime/signup/VATC",
       body = Json.obj(
         "signUpRequest" -> Json.obj(

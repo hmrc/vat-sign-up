@@ -95,6 +95,42 @@ class SignUpRequestServiceSpec extends UnitSpec
                       )
                     }
                   }
+                  "there is a Paper contact preference stored in the database and no sign up e-mail" should {
+                    "return a successful SignUpRequest" in {
+                      enable(CaptureContactPreference)
+
+                      val testSubscriptionRequest =
+                        SubscriptionRequest(
+                          vatNumber = testVatNumber,
+                          businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                          ctReference = Some(testCtReference),
+                          transactionEmail = Some(testEmail),
+                          email = None,
+                          isMigratable = testIsMigratable,
+                          isDirectDebit = false,
+                          contactPreference = Some(Paper)
+                        )
+
+                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                      await(res) shouldBe Right(
+                        SignUpRequest(
+                          vatNumber = testVatNumber,
+                          businessEntity = LimitedCompany(testCompanyNumber),
+                          signUpEmail = None,
+                          transactionEmail = verifiedEmail,
+                          isDelegated = false,
+                          isMigratable = testIsMigratable,
+                          contactPreference = Some(Paper)
+                        )
+                      )
+                    }
+                  }
                   "there is no contact preference stored in the database" should {
                     "return a successful SignUpRequest" in {
                       enable(CaptureContactPreference)

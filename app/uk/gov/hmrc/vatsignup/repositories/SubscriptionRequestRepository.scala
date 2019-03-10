@@ -27,10 +27,10 @@ import reactivemongo.play.json.JSONSerializationPack.Writer
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.models.ContactPreference.contactPreferenceFormat
 import uk.gov.hmrc.vatsignup.models.NinoSource._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
 import uk.gov.hmrc.vatsignup.models.{BusinessEntity, ContactPreference, NinoSource, SubscriptionRequest}
-import ContactPreference.contactPreferenceFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 

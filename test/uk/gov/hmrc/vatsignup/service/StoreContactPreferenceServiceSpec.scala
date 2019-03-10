@@ -17,9 +17,7 @@
 package uk.gov.hmrc.vatsignup.service
 
 import org.scalatest.EitherValues
-import play.api.http.Status._
 import reactivemongo.api.commands.UpdateWriteResult
-import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
@@ -41,13 +39,9 @@ class StoreContactPreferenceServiceSpec extends UnitSpec with MockSubscriptionRe
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
-  private val agentEnrolments = Enrolments(Set(testAgentEnrolment))
-  private val individualEnrolments = Enrolments(Set.empty)
-
-
   "storeContactPreference" when {
     "the contactPreference stores successfully" should {
-      "return a StoreContactPreferenceSuccess with an contactPreferenceVerified of false" in {
+      "return a StoreContactPreferenceSuccess" in {
         mockUpsertContactPreference(testVatNumber, Digital)(Future.successful(mock[UpdateWriteResult]))
 
         val res = await(TestStoreContactPreferenceService.storeContactPreference(testVatNumber, Digital))

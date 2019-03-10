@@ -464,7 +464,6 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     }
 
     "replace an existing stored contactPreference" in {
-      val newContactPreference = UUID.randomUUID().toString
       val res = for {
         _ <- repo.insert(testSubscriptionRequest)
         _ <- repo.upsertContactPreference(testVatNumber, Paper)
