@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants.Des._
+import uk.gov.hmrc.vatsignup.models.ContactPreference
 
 
 object SignUpStub extends WireMockMethods {
@@ -27,7 +28,8 @@ object SignUpStub extends WireMockMethods {
                     vatNumber: String,
                     email: Option[String],
                     emailVerified: Option[Boolean],
-                    optIsPartialMigration: Option[Boolean]
+                    optIsPartialMigration: Option[Boolean],
+                    optContactPreference: Option[ContactPreference] = None
                    )(status: Int): StubMapping =
     when(method = POST, uri = "/cross-regime/signup/VATC",
       body = Json.obj(
@@ -55,7 +57,13 @@ object SignUpStub extends WireMockMethods {
             case Some(isPartialMigration) => Json.obj("isPartialMigration" -> isPartialMigration)
             case _ => Json.obj()
           }
+        ).++(
+          optContactPreference match {
+            case Some(contactPreference) => Json.obj("channel" -> contactPreference)
+            case _ => Json.obj()
+          }
         )
+
       ),
       headers = Map(
         "Authorization" -> "Bearer dev",

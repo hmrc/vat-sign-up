@@ -434,6 +434,46 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     }
   }
 
+
+  "upsertContactPreference" should {
+    val testSubscriptionRequest = SubscriptionRequest(
+      vatNumber = testVatNumber,
+      contactPreference = Some(Digital),
+      isDirectDebit = false
+    )
+
+    "throw NoSuchElementException where the vat number doesn't exist" in {
+      val res = for {
+        _ <- repo.upsertContactPreference(testVatNumber, Digital)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      intercept[NoSuchElementException] {
+        await(res)
+      }
+    }
+
+    "update the subscription request where there isn't already an contactPreference stored" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
+        _ <- repo.upsertContactPreference(testVatNumber, Digital)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(testSubscriptionRequest)
+    }
+
+    "replace an existing stored contactPreference" in {
+      val res = for {
+        _ <- repo.insert(testSubscriptionRequest)
+        _ <- repo.upsertContactPreference(testVatNumber, Paper)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(SubscriptionRequest(testVatNumber, contactPreference = Some(Paper), isDirectDebit = false))
+    }
+  }
+
   "deleteRecord" should {
     "delete the entry stored against the vrn" in {
       val res = for {

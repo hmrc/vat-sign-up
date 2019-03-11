@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.repositories
 
 import javax.inject.{Inject, Singleton}
-import play.api.libs.json.{Format, JsBoolean, JsObject, Json}
+import play.api.libs.json.{Format, JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import reactivemongo.api.indexes.IndexType.Ascending
@@ -27,10 +27,10 @@ import reactivemongo.play.json.JSONSerializationPack.Writer
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.models.BusinessEntity.BusinessEntityFormat.writes
+import uk.gov.hmrc.vatsignup.models.ContactPreference.contactPreferenceFormat
 import uk.gov.hmrc.vatsignup.models.NinoSource._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, NinoSource, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, ContactPreference, NinoSource, SubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -94,6 +94,15 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
       selector = Json.obj(idKey -> vatNumber),
       update = Json.obj("$set" -> Json.obj(
         identityVerifiedKey -> true
+      )),
+      upsert = false
+    ).filter(_.n == 1)
+
+  def upsertContactPreference(vatNumber: String, contactPreference: ContactPreference): Future[WriteResult] =
+    collection.update(
+      selector = Json.obj(idKey -> vatNumber),
+      update = Json.obj("$set" -> Json.obj(
+        contactPreferenceKey -> contactPreference
       )),
       upsert = false
     ).filter(_.n == 1)

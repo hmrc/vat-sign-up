@@ -21,9 +21,8 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
-import uk.gov.hmrc.vatsignup.config.Constants.Des._
 import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models._
@@ -58,7 +57,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable = subscriptionRequest.isMigratable
-          contactPreference = if (isEnabled(CaptureContactPreference)) Some(contactPreferenceDigital) else None
+          contactPreference =
+          if (isEnabled(CaptureContactPreference)) subscriptionRequest.contactPreference orElse Some(Digital) else None
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,
@@ -112,6 +112,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           case Left(_) =>
             Left(EmailVerificationFailure)
         }
+      case None if !subscriptionRequest.isDirectDebit && (subscriptionRequest.contactPreference contains Paper) =>
+        Future.successful(Right(None))
       case None if isDelegated =>
         Future.successful(Right(None))
       case None =>
