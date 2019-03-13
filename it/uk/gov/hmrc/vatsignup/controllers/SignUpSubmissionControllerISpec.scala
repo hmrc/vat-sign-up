@@ -373,31 +373,56 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               emptyBody
             )
           }
-        "return NO_CONTENT for Overseas sign up" in {
-          enable(EtmpEntityType)
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(Overseas),
-            email = Some(testEmail),
-            isMigratable = testIsMigratable,
-            isDirectDebit = false
-          )
+          "return NO_CONTENT for Overseas sign up" in {
+            enable(EtmpEntityType)
+            val testSubscriptionRequest = SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(Overseas),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
+            )
 
-          stubAuth(OK, successfulAuthResponse(agentEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, Overseas)(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+            stubAuth(OK, successfulAuthResponse(agentEnrolment))
+            stubGetEmailVerified(testEmail)
+            stubRegisterBusinessEntity(testVatNumber, Overseas)(testSafeId)
+            stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+            stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+            await(submissionRequestRepo.insert(testSubscriptionRequest))
+            val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
 
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
+            res should have(
+              httpStatus(NO_CONTENT),
+              emptyBody
+            )
+          }
+          "return NO_CONTENT for Joint Venture sign up" in {
+            enable(EtmpEntityType)
+            val testSubscriptionRequest = SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(JointVenture),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false
+            )
+
+            stubAuth(OK, successfulAuthResponse(agentEnrolment))
+            stubGetEmailVerified(testEmail)
+            stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
+            stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+            stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+            await(submissionRequestRepo.insert(testSubscriptionRequest))
+            val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+            res should have(
+              httpStatus(NO_CONTENT),
+              emptyBody
+            )
+          }
+
         }
-      }
         "transaction email should not be sent to sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
@@ -755,6 +780,33 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             emptyBody
           )
         }
+        "return NO_CONTENT for Joint Venture sign up" in {
+          enable(EtmpEntityType)
+
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(JointVenture),
+            email = Some(testEmail),
+            identityVerified = true,
+            isMigratable = testIsMigratable,
+            isDirectDebit = false
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+
       }
     }
   }
