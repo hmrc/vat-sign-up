@@ -17,6 +17,7 @@ POST        /subscription-request/vat-number/:vatNumber/charity                 
 POST        /subscription-request/vat-number/:vatNumber/government-organisation      @uk.gov.hmrc.vatsignup.controllers.StoreGovernmentOrganisationController.storeGovernmentOrganisation(vatNumber: String)
 POST        /subscription-request/vat-number/:vatNumber/overseas                     @uk.gov.hmrc.vatsignup.controllers.StoreOverseasController.storeOverseas(vatNumber: String)
 POST        /subscription-request/vat-number/:vatNumber/contact-preference           @uk.gov.hmrc.vatsignup.controllers.StoreContactPreferenceController.storeContactPreference(vatNumber: String)
+POST        /subscription-request/vat-number/:vatNumber/joint-venture                @uk.gov.hmrc.vatsignup.controllers.StoreJointVentureController.storeJointVenture(vatNumber: String)
 
 GET         /subscription-request/vat-number/:vatNumber/mtdfb-eligibility            @uk.gov.hmrc.vatsignup.controllers.VatNumberEligibilityController.checkVatNumberEligibility(vatNumber: String)
 
