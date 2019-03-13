@@ -52,6 +52,8 @@ case object GovernmentOrganisation extends BusinessEntity
 
 case object Overseas extends BusinessEntity
 
+case object JointVenture extends BusinessEntity
+
 object BusinessEntity {
   val EntityTypeKey = "entityType"
   val LimitedCompanyKey = "limitedCompany"
