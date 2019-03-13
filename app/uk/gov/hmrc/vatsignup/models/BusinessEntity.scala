@@ -59,6 +59,7 @@ object BusinessEntity {
   val LimitedCompanyKey = "limitedCompany"
   val SoleTraderKey = "soleTrader"
   val GeneralPartnershipKey = "generalPartnership"
+  val JointVentureKey = "jointVenture"
   val LimitedPartnershipKey = "limitedPartnership"
   val LimitedLiabilityPartnershipKey = "limitedLiabilityPartnershipKey"
   val ScottishLimitedPartnershipKey = "scottishLimitedPartnershipKey"
@@ -93,6 +94,10 @@ object BusinessEntity {
         Json.obj(
           EntityTypeKey -> GeneralPartnershipKey,
           SautrKey -> sautr
+        )
+      case JointVenture =>
+        Json.obj(
+          EntityTypeKey -> JointVentureKey
         )
       case LimitedPartnership(sautr, companyNumber) =>
         Json.obj(
@@ -163,6 +168,8 @@ object BusinessEntity {
             for {
               sautr <- (json \ SautrKey).validate[String]
             } yield GeneralPartnership(sautr)
+          case JointVentureKey =>
+            JsSuccess(JointVenture)
           case LimitedPartnershipKey =>
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]
