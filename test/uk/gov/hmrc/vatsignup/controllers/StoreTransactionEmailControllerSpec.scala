@@ -22,6 +22,7 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
@@ -41,10 +42,9 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
   "storeTransactionEmail" should {
       "return OK with 'true' email verification state" in {
+        mockAuthRetrieveAgentEnrolment()
 
-        mockAuthorise()(Future.successful())
-
-        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Right(StoreEmailSuccess(true))))
+        mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Right(StoreEmailSuccess(true))))
 
         val request = FakeRequest() withBody testEmail
 
@@ -56,9 +56,9 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
     "if vat number doesn't exist" should {
       "return NOT_FOUND" in {
-        mockAuthorise()(Future.successful())
+        mockAuthRetrieveAgentEnrolment()
 
-        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailDatabaseFailureNoVATNumber)))
+        mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Left(EmailDatabaseFailureNoVATNumber)))
 
         val request = FakeRequest() withBody testEmail
 
@@ -70,9 +70,9 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
     "the e-mail storage has failed" should {
       "return INTERNAL_SERVER_ERROR" in {
-        mockAuthorise()(Future.successful())
+        mockAuthRetrieveAgentEnrolment()
 
-        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailDatabaseFailure)))
+        mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Left(EmailDatabaseFailure)))
 
         val request = FakeRequest() withBody testEmail
 
@@ -84,9 +84,9 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
     "the call to email verification has failed" should {
       "return BAD_GATEWAY" in {
-        mockAuthorise()(Future.successful())
+        mockAuthRetrieveAgentEnrolment()
 
-        mockStoreTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailVerificationFailure)))
+        mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Left(EmailVerificationFailure)))
 
         val request = FakeRequest() withBody testEmail
 

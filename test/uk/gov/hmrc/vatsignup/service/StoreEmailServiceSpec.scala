@@ -126,36 +126,72 @@ class StoreEmailServiceSpec extends UnitSpec with MockSubscriptionRequestReposit
 
   "storeTransactionEmail" when {
     "the email stores successfully" when {
-      "the email verification is sent successfully" should {
-        "return a StoreEmailSuccess with an emailVerified of false" in {
-          upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
-          mockCreateEmailVerificationRequest(testEmail, agentContinueUrl)(Future.successful(Right(EmailVerificationRequestSent)))
+      "the call is delegated" when {
+        "the email verification is sent successfully" should {
+          "return a StoreEmailSuccess with an emailVerified of false" in {
+            upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+            mockCreateEmailVerificationRequest(testEmail, agentContinueUrl)(Future.successful(Right(EmailVerificationRequestSent)))
 
-          val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail))
+            val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment))))
 
-          res.right.value shouldBe StoreEmailSuccess(emailVerified = false)
+            res.right.value shouldBe StoreEmailSuccess(emailVerified = false)
+          }
+        }
+
+        "the email address has already been verified" should {
+          "return a StoreEmailSuccess with an emailVerified of true" in {
+            upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+            mockCreateEmailVerificationRequest(testEmail, agentContinueUrl)(Future.successful(Right(EmailAlreadyVerified)))
+
+            val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment))))
+
+            res.right.value shouldBe StoreEmailSuccess(emailVerified = true)
+          }
+        }
+
+        "the email address verification request failed" should {
+          "return an EmailVerificationFailure" in {
+            upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+            mockCreateEmailVerificationRequest(testEmail, agentContinueUrl)(Future.successful(Left(EmailVerificationRequestFailure(BAD_REQUEST, ""))))
+
+            val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment))))
+
+            res.left.value shouldBe EmailVerificationFailure
+          }
         }
       }
+      "the call is principal" when {
+        "the email verification is sent successfully" should {
+          "return a StoreEmailSuccess with an emailVerified of false" in {
+            upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+            mockCreateEmailVerificationRequest(testEmail, principalContinueUrl)(Future.successful(Right(EmailVerificationRequestSent)))
 
-      "the email address has already been verified" should {
-        "return a StoreEmailSuccess with an emailVerified of true" in {
-          upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
-          mockCreateEmailVerificationRequest(testEmail, agentContinueUrl)(Future.successful(Right(EmailAlreadyVerified)))
+            val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set.empty)))
 
-          val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail))
-
-          res.right.value shouldBe StoreEmailSuccess(emailVerified = true)
+            res.right.value shouldBe StoreEmailSuccess(emailVerified = false)
+          }
         }
-      }
 
-      "the email address verification request failed" should {
-        "return an EmailVerificationFailure" in {
-          upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
-          mockCreateEmailVerificationRequest(testEmail, agentContinueUrl)(Future.successful(Left(EmailVerificationRequestFailure(BAD_REQUEST, ""))))
+        "the email address has already been verified" should {
+          "return a StoreEmailSuccess with an emailVerified of true" in {
+            upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+            mockCreateEmailVerificationRequest(testEmail, principalContinueUrl)(Future.successful(Right(EmailAlreadyVerified)))
 
-          val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail))
+            val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set.empty)))
 
-          res.left.value shouldBe EmailVerificationFailure
+            res.right.value shouldBe StoreEmailSuccess(emailVerified = true)
+          }
+        }
+
+        "the email address verification request failed" should {
+          "return an EmailVerificationFailure" in {
+            upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+            mockCreateEmailVerificationRequest(testEmail, principalContinueUrl)(Future.successful(Left(EmailVerificationRequestFailure(BAD_REQUEST, ""))))
+
+            val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set.empty)))
+
+            res.left.value shouldBe EmailVerificationFailure
+          }
         }
       }
     }
@@ -164,7 +200,7 @@ class StoreEmailServiceSpec extends UnitSpec with MockSubscriptionRequestReposit
       "return an EmailDatabaseFailureNoVATNumber" in {
         upsertTransactionEmail(testVatNumber, testEmail)(Future.failed(new NoSuchElementException))
 
-        val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail))
+        val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment))))
 
         res.left.value shouldBe EmailDatabaseFailureNoVATNumber
       }
@@ -174,7 +210,7 @@ class StoreEmailServiceSpec extends UnitSpec with MockSubscriptionRequestReposit
       "return an EmailDatabaseFailure" in {
         upsertTransactionEmail(testVatNumber, testEmail)(Future.failed(new Exception))
 
-        val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail))
+        val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment))))
 
         res.left.value shouldBe EmailDatabaseFailure
       }

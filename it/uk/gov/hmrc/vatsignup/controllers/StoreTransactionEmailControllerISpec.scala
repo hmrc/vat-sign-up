@@ -28,27 +28,45 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub.stubVeri
 class StoreTransactionEmailControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
   val agentContinueUrl: String = app.injector.instanceOf[AppConfig].agentVerifyEmailContinueUrl
+  val principalContinueUrl: String = app.injector.instanceOf[AppConfig].principalVerifyEmailContinueUrl
 
   "PUT /subscription-request/vat-number/:vatNumber/transaction-email" when {
     "the vat number exists" when {
       "the email verification request has been sent successfully" when {
-        "return OK with the verification state as false" in {
-          stubAuth(OK, successfulAuthResponse())
+        "the call is delegated" should {
+          "return OK with the verification state as false" in {
+            stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
-          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
-          stubVerifyEmail(testEmail, agentContinueUrl)(CREATED)
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+            stubVerifyEmail(testEmail, agentContinueUrl)(CREATED)
 
-          val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
+            val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
 
-          res should have(
-            httpStatus(OK),
-            jsonBodyAs(Json.obj(EmailVerifiedKey -> false))
-          )
+            res should have(
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(EmailVerifiedKey -> false))
+            )
+          }
+        }
+        "the call is principal" should {
+          "return OK with the verification state as false" in {
+            stubAuth(OK, successfulAuthResponse())
+
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+            stubVerifyEmail(testEmail, principalContinueUrl)(CREATED)
+
+            val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
+
+            res should have(
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(EmailVerifiedKey -> false))
+            )
+          }
         }
       }
       "the email has already been verified" should {
         "return OK with the verification state as true" in {
-          stubAuth(OK, successfulAuthResponse())
+          stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
           await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
           stubVerifyEmail(testEmail, agentContinueUrl)(CONFLICT)
@@ -64,7 +82,7 @@ class StoreTransactionEmailControllerISpec extends ComponentSpecBase with Custom
     }
     "the vat number does not exist" should {
       "return NOT_FOUND" in {
-        stubAuth(OK, successfulAuthResponse())
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj("transactionEmail" -> testEmail))
 
@@ -75,7 +93,7 @@ class StoreTransactionEmailControllerISpec extends ComponentSpecBase with Custom
     }
     "the json is invalid" should {
       "return BAD_REQUEST" in {
-        stubAuth(OK, successfulAuthResponse())
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
 
         val res = put(s"/subscription-request/vat-number/$testVatNumber/transaction-email")(Json.obj())
 

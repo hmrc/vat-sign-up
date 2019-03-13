@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{JsPath, Json}
 import play.api.mvc.Action
+import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
@@ -38,9 +38,10 @@ class StoreTransactionEmailController @Inject()(val authConnector: AuthConnector
   def storeTransactionEmail(vatNumber: String): Action[String] =
     Action.async(parse.json((JsPath \ transactionEmailKey).read[String])) {
       implicit req =>
-        authorised() {
+        authorised().retrieve(Retrievals.allEnrolments) {
+          enrolments =>
           val transactionEmail = req.body
-          storeEmailService.storeTransactionEmail(vatNumber, transactionEmail) map {
+          storeEmailService.storeTransactionEmail(vatNumber, transactionEmail, enrolments) map {
             case Right(StoreEmailSuccess(emailVerified)) =>
               Ok(Json.obj(
                 EmailVerifiedKey -> emailVerified
