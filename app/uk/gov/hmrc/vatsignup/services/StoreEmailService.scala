@@ -65,11 +65,14 @@ class StoreEmailService @Inject()(subscriptionRequestRepository: SubscriptionReq
 
 
   def storeTransactionEmail(vatNumber: String,
-                            emailAddress: String)
+                            emailAddress: String,
+                            enrolments: Enrolments)
                            (implicit hc: HeaderCarrier): Future[Either[StoreEmailFailure, StoreEmailSuccess]] = {
-
-    val continueUrl = appConfig.agentVerifyEmailContinueUrl
-
+    val continueUrl = if (enrolments.getEnrolment(AgentEnrolmentKey).isDefined) {
+      appConfig.agentVerifyEmailContinueUrl
+    } else {
+      appConfig.principalVerifyEmailContinueUrl
+    }
     subscriptionRequestRepository.upsertTransactionEmail(vatNumber, emailAddress) flatMap {
       _ =>
         emailVerificationConnector.createEmailVerificationRequest(emailAddress, continueUrl) map {

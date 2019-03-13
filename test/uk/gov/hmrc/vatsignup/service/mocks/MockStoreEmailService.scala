@@ -51,11 +51,13 @@ trait MockStoreEmailService extends MockitoSugar with BeforeAndAfterEach {
   }
 
   def mockStoreTransactionEmail(vatNumber: String,
-                     email: String
-                    )(response: Future[Either[StoreEmailFailure, StoreEmailSuccess]]): Unit = {
+                                email: String,
+                                enrolments: Enrolments
+                               )(response: Future[Either[StoreEmailFailure, StoreEmailSuccess]]): Unit = {
     when(mockStoreEmailService.storeTransactionEmail(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(email)
+      ArgumentMatchers.eq(email),
+      ArgumentMatchers.eq(enrolments)
     )(
       ArgumentMatchers.any[HeaderCarrier]
     )) thenReturn response
