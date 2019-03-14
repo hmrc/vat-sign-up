@@ -25,6 +25,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, FeatureSwitching, HybridSolution}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks._
+import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
@@ -109,6 +110,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   nino = Some(testNino),
+                  businessEntity = SoleTraderKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true
                 ))
@@ -147,6 +149,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   companyNumber = Some(testCompanyNumber),
+                  businessEntity = LimitedCompanyKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true
                 ))
@@ -188,6 +191,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   nino = Some(testNino),
+                  businessEntity = SoleTraderKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true
                 ))
@@ -224,6 +228,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   companyNumber = Some(testCompanyNumber),
+                  businessEntity = LimitedCompanyKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true
                 ))
@@ -266,6 +271,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
                 agentReferenceNumber = Some(testAgentReferenceNumber),
                 isSuccess = true
               ))
@@ -307,6 +313,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             verifyAudit(RegisterWithMultipleIDsAuditModel(
               vatNumber = testVatNumber,
               companyNumber = Some(testCompanyNumber),
+              businessEntity = LimitedCompanyKey,
               agentReferenceNumber = Some(testAgentReferenceNumber),
               isSuccess = true
             ))
@@ -339,6 +346,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
+            businessEntity = LimitedCompanyKey,
             agentReferenceNumber = Some(testAgentReferenceNumber),
             isSuccess = false
           ))
@@ -385,6 +393,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 nino = Some(testNino),
+                businessEntity = SoleTraderKey,
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
@@ -424,6 +433,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
@@ -468,6 +478,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
 
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
+                  businessEntity = GovernmentOrganisationKey,
                   agentReferenceNumber = None,
                   isSuccess = true
                 ))
@@ -512,6 +523,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
@@ -554,6 +566,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             verifyAudit(RegisterWithMultipleIDsAuditModel(
               vatNumber = testVatNumber,
               companyNumber = Some(testCompanyNumber),
+              businessEntity = LimitedCompanyKey,
               agentReferenceNumber = None,
               isSuccess = true
             ))
@@ -586,6 +599,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
+            businessEntity = LimitedCompanyKey,
             agentReferenceNumber = None,
             isSuccess = false
           ))
@@ -812,6 +826,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
       verifyAudit(RegisterWithMultipleIDsAuditModel(
         vatNumber = testVatNumber,
         sautr = Some(testUtr),
+        businessEntity = GeneralPartnershipKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -855,6 +870,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = Some(testUtr),
         companyNumber = Some(testCompanyNumber),
+        businessEntity = LimitedPartnershipKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -898,6 +914,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = Some(testUtr),
         companyNumber = Some(testCompanyNumber),
+        businessEntity = LimitedLiabilityPartnershipKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -941,6 +958,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = Some(testUtr),
         companyNumber = Some(testCompanyNumber),
+        businessEntity = ScottishLimitedPartnershipKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -985,6 +1003,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = None,
+        businessEntity = VatGroupKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -1028,6 +1047,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = None,
+        businessEntity = AdministrativeDivisionKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -1071,6 +1091,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = None,
+        businessEntity = UnincorporatedAssociationKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -1114,6 +1135,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = Some(testCompanyNumber),
+        businessEntity = RegisteredSocietyKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -1158,6 +1180,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = None,
+        businessEntity = CharityKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -1202,6 +1225,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = None,
+        businessEntity = GovernmentOrganisationKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))
@@ -1245,6 +1269,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         vatNumber = testVatNumber,
         sautr = None,
         companyNumber = None,
+        businessEntity = OverseasKey,
         agentReferenceNumber = Some(testAgentReferenceNumber),
         isSuccess = true
       ))

@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolution}
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EntityTypeRegistrationConnector, RegistrationConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys.{SoleTraderKey, LimitedCompanyKey}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
 import uk.gov.hmrc.vatsignup.models._
@@ -142,6 +143,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
         auditService.audit(RegisterWithMultipleIDsAuditModel(
           vatNumber = vatNumber,
           companyNumber = Some(companyNumber),
+          businessEntity = LimitedCompanyKey,
           agentReferenceNumber = agentReferenceNumber, isSuccess = false
         ))
         RegistrationFailure
@@ -151,6 +153,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
         auditService.audit(RegisterWithMultipleIDsAuditModel(
           vatNumber = vatNumber,
           companyNumber = Some(companyNumber),
+          businessEntity = LimitedCompanyKey,
           agentReferenceNumber = agentReferenceNumber,
           isSuccess = true
         ))
@@ -167,6 +170,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
         auditService.audit(RegisterWithMultipleIDsAuditModel(
           vatNumber = vatNumber,
           nino = Some(nino),
+          businessEntity = SoleTraderKey,
           agentReferenceNumber = agentReferenceNumber,
           isSuccess = false
         ))
@@ -177,6 +181,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
         auditService.audit(RegisterWithMultipleIDsAuditModel(
           vatNumber = vatNumber,
           nino = Some(nino),
+          businessEntity = SoleTraderKey,
           agentReferenceNumber = agentReferenceNumber,
           isSuccess = true
         ))

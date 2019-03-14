@@ -25,7 +25,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, FeatureSwitching, HybridSolution}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockCustomerSignUpConnector, MockEntityTypeRegistrationConnector, MockRegistrationConnector, MockTaxEnrolmentsConnector}
-import uk.gov.hmrc.vatsignup.helpers.TestConstants
+import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
@@ -107,6 +107,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   nino = Some(testNino),
+                  businessEntity = SoleTraderKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
@@ -142,6 +143,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   companyNumber = Some(testCompanyNumber),
+                  businessEntity = LimitedCompanyKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
@@ -180,6 +182,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   sautr = Some(testUtr),
+                  businessEntity = GeneralPartnershipKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
@@ -219,6 +222,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   nino = Some(testNino),
+                  businessEntity = SoleTraderKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
@@ -252,6 +256,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 verifyAudit(RegisterWithMultipleIDsAuditModel(
                   vatNumber = testVatNumber,
                   companyNumber = Some(testCompanyNumber),
+                  businessEntity = LimitedCompanyKey,
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
@@ -290,6 +295,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
                 agentReferenceNumber = Some(testAgentReferenceNumber),
                 isSuccess = true)
               )
@@ -327,6 +333,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
             verifyAudit(RegisterWithMultipleIDsAuditModel(
               vatNumber = testVatNumber,
               companyNumber = Some(testCompanyNumber),
+              businessEntity = LimitedCompanyKey,
               agentReferenceNumber = Some(testAgentReferenceNumber),
               isSuccess = true)
             )
@@ -359,6 +366,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
+            businessEntity = LimitedCompanyKey,
             agentReferenceNumber = Some(testAgentReferenceNumber),
             isSuccess = false)
           )
@@ -401,6 +409,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 nino = Some(testNino),
+                businessEntity = SoleTraderKey,
                 agentReferenceNumber = None,
                 isSuccess = true)
               )
@@ -437,6 +446,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
@@ -475,6 +485,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               verifyAudit(RegisterWithMultipleIDsAuditModel(
                 vatNumber = testVatNumber,
                 companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
@@ -513,6 +524,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
             verifyAudit(RegisterWithMultipleIDsAuditModel(
               vatNumber = testVatNumber,
               companyNumber = Some(testCompanyNumber),
+              businessEntity = LimitedCompanyKey,
               agentReferenceNumber = None,
               isSuccess = true
             ))
@@ -545,6 +557,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             companyNumber = Some(testCompanyNumber),
+            businessEntity = LimitedCompanyKey,
             agentReferenceNumber = None,
             isSuccess = false
           ))
