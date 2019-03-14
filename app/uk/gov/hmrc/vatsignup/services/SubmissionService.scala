@@ -110,6 +110,14 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             EitherT.apply[Future, Nothing, Nothing](
               Future.failed(new InternalServerException("Overseas are not supported on the legacy Register API"))
             )
+          case JointVenture =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("Joint ventures are not supported on the legacy Register API"))
+            )
+          case OverseasWithUkEstablishment(companyNumber) =>
+            EitherT.apply[Future, Nothing, Nothing](
+              Future.failed(new InternalServerException("Overseas are not supported on the legacy Register API"))
+            )
         }
       }
       _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration, contactPreference)

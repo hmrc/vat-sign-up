@@ -23,7 +23,7 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.models.LimitedCompany
+import uk.gov.hmrc.vatsignup.models.{LimitedCompany, OverseasWithUkEstablishment}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService.GetCtReferenceFailure
 
@@ -36,8 +36,14 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
 
   import StoreCompanyNumberService._
 
-  def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
-    upsertCompanyNumber(vatNumber, companyNumber)
+  val overseasPrefixes = Seq("FC", "SF", "NF")
+
+  def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] = {
+    if (overseasPrefixes exists (companyNumber.toUpperCase.startsWith(_)))
+      upsertOverseasWithUkEstablishment(vatNumber, companyNumber)
+    else
+      upsertLimitedCompany(vatNumber, companyNumber)
+  }
 
   def storeCompanyNumber(vatNumber: String,
                          companyNumber: String,
@@ -48,13 +54,25 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
         case CompanyMatchService.CtReferenceMismatch => StoreCompanyNumberService.CtReferenceMismatch
         case GetCtReferenceFailure => MatchCtReferenceFailure
       }
-      _ <- EitherT(upsertCompanyNumber(vatNumber, companyNumber))
+      _ <- if (overseasPrefixes exists (companyNumber.toUpperCase.startsWith(_)))
+        EitherT(upsertOverseasWithUkEstablishment(vatNumber, companyNumber))
+      else
+        EitherT(upsertLimitedCompany(vatNumber, companyNumber))
+
       _ <- EitherT(upsertCtReference(vatNumber, ctReference))
     } yield StoreCompanyNumberSuccess
   }.value
 
-  private def upsertCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
+  private def upsertLimitedCompany(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, LimitedCompany(companyNumber)) map {
+      _ => Right(StoreCompanyNumberSuccess)
+    } recover {
+      case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)
+      case _ => Left(CompanyNumberDatabaseFailure)
+    }
+
+  private def upsertOverseasWithUkEstablishment(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
+    subscriptionRequestRepository.upsertBusinessEntity(vatNumber, OverseasWithUkEstablishment(companyNumber)) map {
       _ => Right(StoreCompanyNumberSuccess)
     } recover {
       case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)
@@ -89,4 +107,5 @@ object StoreCompanyNumberService {
   case object CtReferenceMismatch extends StoreCompanyNumberFailure
 
   case object MatchCtReferenceFailure extends StoreCompanyNumberFailure
+
 }

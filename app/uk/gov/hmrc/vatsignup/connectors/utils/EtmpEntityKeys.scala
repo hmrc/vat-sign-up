@@ -32,5 +32,6 @@ object EtmpEntityKeys {
   val CharityKey = "charitableIncorporatedOrganisation"
   val GovernmentOrganisationKey = "publicBody"
   val OverseasKey = "nonUKCompanyNoUKEstablishment"
+  val OverseasWithUkEstablishmentKey = "nonUKCompanyWithUKEstablishment"
 
 }

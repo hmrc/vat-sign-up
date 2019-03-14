@@ -182,6 +182,14 @@ object RegisterWithMultipleIDsAuditing {
             agentReferenceNumber = agentReferenceNumber,
             isSuccess = isSuccess
           )
+        case OverseasWithUkEstablishment(companyNumber) =>
+          RegisterWithMultipleIDsAuditModel(
+            vatNumber = vatNumber,
+            companyNumber = Some(companyNumber),
+            businessEntity = OverseasWithUkEstablishmentKey,
+            agentReferenceNumber = agentReferenceNumber,
+            isSuccess = isSuccess
+          )
       }
     }
   }

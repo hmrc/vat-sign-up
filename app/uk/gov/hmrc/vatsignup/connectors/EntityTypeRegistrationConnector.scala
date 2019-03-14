@@ -69,7 +69,7 @@ object EntityTypeRegistrationConnector {
       )
     case LimitedCompany(companyNumber) =>
       Json.obj(
-        BusinessEntity.limitedCompaniesBE(companyNumber).getOrElse(LimitedCompanyKey) -> Json.obj(
+       LimitedCompanyKey -> Json.obj(
           VrnKey -> vatNumber,
           CrnKey -> companyNumber
         )
@@ -158,6 +158,13 @@ object EntityTypeRegistrationConnector {
       Json.obj(
         OverseasKey -> Json.obj(
           VrnKey -> vatNumber
+        )
+      )
+    case OverseasWithUkEstablishment(companyNumber) =>
+      Json.obj(
+        OverseasWithUkEstablishmentKey -> Json.obj(
+          VrnKey -> vatNumber,
+          CrnKey -> companyNumber
         )
       )
   }

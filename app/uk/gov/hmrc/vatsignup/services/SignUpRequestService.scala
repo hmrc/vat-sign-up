@@ -90,6 +90,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         Right(RequestAuthorised)
       case VatGroup | AdministrativeDivision | UnincorporatedAssociation | Trust | Charity | GovernmentOrganisation | Overseas | JointVenture =>
         Right(RequestAuthorised)
+      case _: OverseasWithUkEstablishment if subscriptionRequest.ctReference.isDefined =>
+        Right(RequestAuthorised)
       case _: RegisteredSociety =>
         Right(RequestAuthorised)
       case _ if isDelegated =>
