@@ -24,6 +24,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.connectors.EntityTypeRegistrationConnector._
+import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 import uk.gov.hmrc.vatsignup.models._
 
@@ -53,21 +54,6 @@ class EntityTypeRegistrationConnector @Inject()(val http: HttpClient,
 }
 
 object EntityTypeRegistrationConnector {
-  val SoleTraderKey = "soleTrader"
-  val LimitedCompanyKey = "company"
-  val GeneralPartnershipKey = "ordinaryPartnership"
-  val LimitedPartnershipKey = "limitedPartnership"
-  val LimitedLiabilityPartnershipKey = "limitedLiabilityPartnership"
-  val ScottishLimitedPartnershipKey = "scottishLimitedPartnership"
-  val VatGroupKey = "vatGroup"
-  val AdministrativeDivisionKey = "division"
-  val UnincorporatedAssociationKey = "unincorporatedAssociation"
-  val TrustKey = "trust"
-  val RegisteredSocietyKey = "registeredSociety"
-  val CharityKey = "charitableIncorporatedOrganisation"
-  val GovernmentOrganisationKey = "publicBody"
-  val OverseasKey = "nonUKCompanyNoUKEstablishment"
-
   val VrnKey = "vrn"
   val NinoKey = "nino"
   val CrnKey = "crn"
