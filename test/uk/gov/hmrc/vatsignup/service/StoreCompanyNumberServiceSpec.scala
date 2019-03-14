@@ -22,7 +22,7 @@ import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.LimitedCompany
+import uk.gov.hmrc.vatsignup.models.{LimitedCompany, OverseasWithUkEstablishment}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.MockCompanyMatchService
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService.CompanyVerified
@@ -57,7 +57,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
 
       "the database stores a non UK Company without UK Establishment" should {
         "return StoreCompanyNumberSuccess" in {
-          mockUpsertBusinessEntity(testVatNumber, LimitedCompany(testNonUkNoEstablishmentCompanyNumber))(
+          mockUpsertBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUkNoEstablishmentCompanyNumber))(
             Future.successful(mock[UpdateWriteResult])
           )
           val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testNonUkNoEstablishmentCompanyNumber)
