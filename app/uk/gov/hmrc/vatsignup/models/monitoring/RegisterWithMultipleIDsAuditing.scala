@@ -39,6 +39,7 @@ object RegisterWithMultipleIDsAuditing {
       "nino" -> nino,
       "agentReferenceNumber" -> agentReferenceNumber,
       "sautr" -> sautr,
+      "businessEntity" -> Some(businessEntity),
       "isSuccess" -> Some(s"$isSuccess")
     ).collect { case (key, Some(value)) => key -> value }
 
