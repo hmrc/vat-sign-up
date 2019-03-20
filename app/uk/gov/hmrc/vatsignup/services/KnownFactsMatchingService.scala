@@ -17,71 +17,66 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject._
+import play.api.mvc.Request
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
+import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
+import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
+import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.ExecutionContext
 
 
 @Singleton
-class KnownFactsMatchingService @Inject() extends FeatureSwitching {
+class KnownFactsMatchingService @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends FeatureSwitching {
 
-  def checkKnownFactsMatch(
-    enteredKfs: VatKnownFacts,
-    retrievedKfs: VatKnownFacts,
-    isOverseas: Boolean
-  ): KnownFactsMatchingResponse = {
-
-    val businessPostcodeMatch: Boolean = {
-      val enteredPostcode: String = (enteredKfs.businessPostcode.getOrElse("") filterNot (_.isWhitespace)).toLowerCase
-      val retrievedPostcode: String = (retrievedKfs.businessPostcode.getOrElse("") filterNot (_.isWhitespace)).toLowerCase
-      enteredKfs.businessPostcode match {
-        case pc if isEnabled(AdditionalKnownFacts) && isOverseas => true
-        case _ => enteredPostcode == retrievedPostcode
-      }
+  def checkKnownFactsMatch(vatNumber: String,
+                           enteredKfs: VatKnownFacts,
+                           retrievedKfs: VatKnownFacts,
+                           isOverseas: Boolean)(implicit hc: HeaderCarrier, req: Request[_]): KnownFactsMatchingResponse = {
+    val businessPostcodeMatch = (enteredKfs.businessPostcode, retrievedKfs.businessPostcode) match {
+      case (Some(enteredPostcode), Some(retrievedPostcode))
+        if (enteredPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (retrievedPostcode filterNot (_.isWhitespace)) =>
+        true
+      case (None, _) if isEnabled(AdditionalKnownFacts) && isOverseas =>
+        true
+      case _ =>
+        false
     }
 
     val vatRegDateMatch = enteredKfs.vatRegistrationDate == retrievedKfs.vatRegistrationDate
+
     val lastNetDueMatch = enteredKfs.lastNetDue == retrievedKfs.lastNetDue
+
     val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
 
-    lazy val fourKFMatch: Boolean = (
-      businessPostcodeMatch
-        && vatRegDateMatch
-        && lastNetDueMatch
-        && lastReturnMonthPeriodMatch
-      )
-    lazy val twoKFMatch: Boolean = (
-      businessPostcodeMatch
-        && vatRegDateMatch
-        && enteredKfs.lastReturnMonthPeriod.isEmpty
-        && enteredKfs.lastNetDue.isEmpty
-    )
-
-    if (isEnabled(AdditionalKnownFacts))
-      if (fourKFMatch)
-        Right(FourKnownFactsMatch)
-      else
-        Left(KnownFactsDoNotMatch)
-    else if (twoKFMatch)
-      Right(TwoKnownFactsMatch)
-    else
-      Left(KnownFactsDoNotMatch)
+    if (isEnabled(AdditionalKnownFacts)) {
+      if (businessPostcodeMatch && vatRegDateMatch && lastNetDueMatch && lastReturnMonthPeriodMatch) {
+        auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = true))
+        Right(KnownFactsMatch)
+      }
+      else {
+        auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = false))
+        Left(KnownFactsMismatch)
+      }
+    } else if (businessPostcodeMatch && vatRegDateMatch) {
+      auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = true))
+      Right(KnownFactsMatch)
+    } else {
+      auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = false))
+      Left(KnownFactsMismatch)
+    }
   }
 
 }
 
 object KnownFactsMatchingService {
 
-  type KnownFactsMatchingResponse = Either[KnownFactsMatchingFailure, KnownFactsMatchingSuccess]
+  type KnownFactsMatchingResponse = Either[KnownFactsMismatch.type, KnownFactsMatch.type]
 
-  sealed trait KnownFactsMatchingSuccess
+  case object KnownFactsMatch
 
-  case object FourKnownFactsMatch extends KnownFactsMatchingSuccess
-
-  case object TwoKnownFactsMatch extends KnownFactsMatchingSuccess
-
-  sealed trait KnownFactsMatchingFailure
-
-  case object KnownFactsDoNotMatch extends KnownFactsMatchingFailure
+  case object KnownFactsMismatch
 
 }

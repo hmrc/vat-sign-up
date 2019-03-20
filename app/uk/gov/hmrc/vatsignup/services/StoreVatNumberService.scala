@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import java.time.Month
-
 import cats.data._
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
@@ -29,7 +27,6 @@ import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, Mand
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{MigrationInProgress, VatNumberNotFound}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
-import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService.{KnownFactsMismatch, _}
@@ -50,35 +47,42 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
   def storeVatNumber(vatNumber: String,
                      enrolments: Enrolments,
-                     businessPostcode: Option[String],
-                     vatRegistrationDate: Option[String],
-                     lastReturnMonthPeriod: Option[Month],
-                     lastNetDue: Option[String]
+                     vatKnownFacts: Option[VatKnownFacts]
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreVatNumberFailure, StoreVatNumberSuccess]] = {
     for {
-      _ <- checkUserAuthority(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      _ <- checkExistingVatSubscription(vatNumber, enrolments, businessPostcode, vatRegistrationDate)
-      eligibilitySuccess <- checkEligibility(
-        vatNumber = vatNumber,
-        optBusinessPostcode = businessPostcode,
-        optVatRegistrationDate = vatRegistrationDate,
-        lastReturnMonthPeriod = lastReturnMonthPeriod,
-        lastNetDue = lastNetDue
+      _ <- checkUserAuthority(
+        vatNumber,
+        enrolments,
+        vatKnownFacts
       )
-      _ <- insertVatNumber(vatNumber, eligibilitySuccess.isMigratable, eligibilitySuccess.isDirectDebit)
-    } yield StoreVatNumberSuccess(eligibilitySuccess.isOverseas, eligibilitySuccess.isDirectDebit)
+      _ <- checkExistingVatSubscription(
+        vatNumber,
+        enrolments
+      )
+      eligibilitySuccess <- checkEligibility(
+        vatNumber,
+        vatKnownFacts
+      )
+      _ <- insertVatNumber(
+        vatNumber,
+        eligibilitySuccess.isMigratable,
+        eligibilitySuccess.isDirectDebit
+      )
+    } yield StoreVatNumberSuccess(
+      eligibilitySuccess.isOverseas,
+      eligibilitySuccess.isDirectDebit
+    )
   }.value
 
   private def checkUserAuthority(vatNumber: String,
                                  enrolments: Enrolments,
-                                 businessPostcode: Option[String],
-                                 vatRegistrationDate: Option[String]
+                                 vatKnownFacts: Option[VatKnownFacts]
                                 )(implicit request: Request[_], hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, Any] = {
     EitherT((enrolments.vatNumber, enrolments.agentReferenceNumber) match {
       case (Some(vatNumberFromEnrolment), _) =>
         if (vatNumber == vatNumberFromEnrolment) Future.successful(Right(UserHasMatchingEnrolment))
         else Future.successful(Left(DoesNotMatchEnrolment))
-      case (_, None) if businessPostcode.isDefined || vatRegistrationDate.isDefined =>
+      case (_, None) if vatKnownFacts.isDefined =>
         Future.successful(Right(UserHasKnownFacts))
       case (_, Some(agentReferenceNumber)) =>
         checkAgentClientRelationship(vatNumber, agentReferenceNumber)
@@ -103,37 +107,22 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   }
 
   private def checkEligibility(vatNumber: String,
-                               optBusinessPostcode: Option[String],
-                               optVatRegistrationDate: Option[String],
-                               lastReturnMonthPeriod: Option[Month],
-                               lastNetDue: Option[String]
+                               optVatKnownFacts: Option[VatKnownFacts]
                               )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, EligibilitySuccess] = {
     EitherT(controlListEligibilityService.getEligibilityStatus(vatNumber)) transform {
-      case Right(success@EligibilitySuccess(vatKnownFacts, _, isOverseas, _)) =>
-        optVatRegistrationDate match {
-          case Some(userVatRegistrationDate) =>
+      case Right(success@EligibilitySuccess(retrievedVatKnownFacts, _, isOverseas, _)) =>
+        optVatKnownFacts match {
+          case Some(enteredVatKnownFacts) =>
             knownFactsMatchingService.checkKnownFactsMatch(
-              enteredKfs = VatKnownFacts(
-                businessPostcode = optBusinessPostcode,
-                vatRegistrationDate = userVatRegistrationDate,
-                lastReturnMonthPeriod = lastReturnMonthPeriod,
-                lastNetDue = lastNetDue
-              ),
-              retrievedKfs = vatKnownFacts,
+              vatNumber = vatNumber,
+              enteredKfs = enteredVatKnownFacts,
+              retrievedKfs = retrievedVatKnownFacts,
               isOverseas = isOverseas
             ) match {
               case Right(_) =>
-                auditService.audit(KnownFactsAuditModel(
-                  vatNumber = vatNumber,
-                  enteredPostCode = optBusinessPostcode.getOrElse(""),
-                  enteredVatRegistrationDate = userVatRegistrationDate,
-                  desPostCode = vatKnownFacts.businessPostcode.getOrElse(""),
-                  desVatRegistrationDate = vatKnownFacts.vatRegistrationDate,
-                  matched = true
-                ))
-                Right[StoreVatNumberFailure , EligibilitySuccess](success)
+                Right(success)
               case Left(_) =>
-                Left[StoreVatNumberFailure, EligibilitySuccess](KnownFactsMismatch)
+                Left(KnownFactsMismatch)
             }
           case _ =>
             Right(success)
@@ -150,9 +139,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
   }
 
   private def checkExistingVatSubscription(vatNumber: String,
-                                           enrolments: Enrolments,
-                                           businessPostcode: Option[String],
-                                           vatRegistrationDate: Option[String]
+                                           enrolments: Enrolments
                                           )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
     EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>

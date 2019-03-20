@@ -23,10 +23,7 @@ import java.util.Locale
 import play.api.libs.json._
 
 case class StoreVatNumberRequest(vatNumber: String,
-                                 postCode: Option[String],
-                                 registrationDate: Option[String],
-                                 lastReturnMonthPeriod: Option[Month],
-                                 lastNetDue: Option[String])
+                                 vatKnownFacts: Option[VatKnownFacts])
 
 object StoreVatNumberRequest {
   implicit val monthFormat = new Format[Month] {
@@ -36,5 +33,63 @@ object StoreVatNumberRequest {
     override def writes(o: Month): JsValue = JsString(o.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
   }
 
-  implicit val format: OFormat[StoreVatNumberRequest] = Json.format[StoreVatNumberRequest]
+  val VatNumberKey = "vatNumber"
+  val PostcodeKey = "postCode"
+  val RegistrationDateKey = "registrationDate"
+  val LastReturnMonthPeriodKey = "lastReturnMonthPeriod"
+  val LastNetDueKey = "lastNetDue"
+
+  implicit val format: OFormat[StoreVatNumberRequest] = new OFormat[StoreVatNumberRequest] {
+    override def reads(json: JsValue): JsResult[StoreVatNumberRequest] = for {
+      vatNumber <- (json \ VatNumberKey).validate[String]
+      optPostCode <- (json \ PostcodeKey).validateOpt[String]
+      optRegistrationDate <- (json \ RegistrationDateKey).validateOpt[String]
+      optLastReturnMonthPeriod <- (json \ LastReturnMonthPeriodKey).validateOpt[Month]
+      optLastNetDue <- (json \ LastNetDueKey).validateOpt[String]
+    } yield {
+      StoreVatNumberRequest(
+        vatNumber,
+        optRegistrationDate match {
+          case Some(registrationDate) =>
+            Some(VatKnownFacts(
+              businessPostcode = optPostCode,
+              vatRegistrationDate = registrationDate,
+              lastReturnMonthPeriod = optLastReturnMonthPeriod,
+              lastNetDue = optLastNetDue
+            ))
+          case None =>
+            None
+        }
+      )
+    }
+
+    override def writes(storeVatNumberRequest: StoreVatNumberRequest): JsObject = {
+      storeVatNumberRequest.vatKnownFacts match {
+        case Some(vatKnownFacts) =>
+          val postCodeJson = vatKnownFacts.businessPostcode match {
+            case Some(postCode) => Json.obj(PostcodeKey -> postCode)
+            case None => Json.obj()
+          }
+
+          val lastReturnMonthPeriodJson = vatKnownFacts.lastReturnMonthPeriod match {
+            case Some(lastReturnMonthPeriod) => Json.obj(LastReturnMonthPeriodKey -> lastReturnMonthPeriod)
+            case None => Json.obj()
+          }
+
+          val lastNetDueJson = vatKnownFacts.lastNetDue match {
+            case Some(lastNetDue) => Json.obj(LastNetDueKey -> lastNetDue)
+            case None => Json.obj()
+          }
+
+          Json.obj(
+            VatNumberKey -> storeVatNumberRequest.vatNumber,
+            RegistrationDateKey -> vatKnownFacts.vatRegistrationDate
+          ) ++ postCodeJson ++ lastReturnMonthPeriodJson ++ lastNetDueJson
+        case None =>
+          Json.obj(
+            VatNumberKey -> storeVatNumberRequest.vatNumber
+          )
+      }
+    }
+  }
 }

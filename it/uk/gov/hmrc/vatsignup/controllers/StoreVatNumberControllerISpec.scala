@@ -262,28 +262,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
       }
-      "The vat number has been stored successfully, 4 known facts are passed and fs is disabled" should {
-        "return FORBIDDEN" in {
-          disable(AdditionalKnownFacts)
-          stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-          stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
-
-          val res = post("/subscription-request/vat-number")(Json.obj(
-            "vatNumber" -> testVatNumber,
-            "postCode" -> testPostCode,
-            "registrationDate" -> testDateOfRegistration,
-            "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
-            "lastNetDue" -> testLastNetDue
-          ))
-
-          res should have(
-            httpStatus(FORBIDDEN),
-            jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
-          )
-        }
-      }
-      "2 known facts are passed and fs is enabled" should {
+      "2 known facts are passed and fs is enabled when the user is not overseas" should {
         "return FORBIDDEN" in {
           enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())

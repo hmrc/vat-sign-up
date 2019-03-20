@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models.monitoring
 
+import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object KnownFactsAuditing {
@@ -23,21 +24,23 @@ object KnownFactsAuditing {
   val knownFactsAuditType = "vatKnownFactsMatching"
 
   case class KnownFactsAuditModel(vatNumber: String,
-                                  enteredPostCode: String,
-                                  enteredVatRegistrationDate: String,
-                                  desPostCode: String,
-                                  desVatRegistrationDate: String,
+                                  enteredKnownFacts: VatKnownFacts,
+                                  storedKnownFacts: VatKnownFacts,
                                   matched: Boolean
                                  ) extends AuditModel {
     override val transactionName: String = knownFactsTransactionName
     override val detail: Map[String, String] = Map(
-      "vatNumber" -> vatNumber,
-      "enteredPostCode" -> enteredPostCode,
-      "enteredVatRegistrationDate" -> enteredVatRegistrationDate,
-      "desPostCode" -> desPostCode,
-      "desVatRegistrationDate" -> desVatRegistrationDate,
-      "matched" -> s"$matched"
-    )
+      "vatNumber" -> Some(vatNumber),
+      "enteredPostCode" -> enteredKnownFacts.businessPostcode,
+      "enteredVatRegistrationDate" -> Some(enteredKnownFacts.vatRegistrationDate),
+      "enteredLastReturnMonthPeriod" -> (enteredKnownFacts.lastReturnMonthPeriod map (_.toString)),
+      "enteredLastNetDue" -> enteredKnownFacts.lastNetDue,
+      "storedPostCode" -> storedKnownFacts.businessPostcode,
+      "storedVatRegistrationDate" -> Some(storedKnownFacts.vatRegistrationDate),
+      "storedLastReturnMonthPeriod" -> (storedKnownFacts.lastReturnMonthPeriod map (_.toString)),
+      "storedLastNetDue" -> storedKnownFacts.lastNetDue,
+      "matched" -> Some(s"$matched")
+    ) collect { case (key, Some(value)) => key -> value }
 
     override val auditType: String = knownFactsAuditType
   }

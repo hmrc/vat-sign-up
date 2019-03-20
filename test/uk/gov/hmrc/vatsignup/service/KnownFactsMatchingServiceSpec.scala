@@ -18,19 +18,26 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.time.Month
 
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
+import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
+import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 
-class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
+import scala.concurrent.ExecutionContext.Implicits.global
+
+class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
+ with MockAuditService {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val request = FakeRequest()
 
-  object TestKnownFactsMatchingService extends KnownFactsMatchingService()
+  object TestKnownFactsMatchingService extends KnownFactsMatchingService(mockAuditService)
 
   val testEnteredFourKnownFacts = VatKnownFacts(
     businessPostcode = Some((testPostCode filterNot (_.isWhitespace)).toLowerCase()),
@@ -41,18 +48,27 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
 
   "the feature switch is enabled" when {
     "4 valid known facts are provided" should {
-      "return FourKnownFactsMatch" in {
+      "return KnownFactsMatch" in {
         enable(AdditionalKnownFacts)
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
           enteredKfs = testEnteredFourKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
         ))
-        res shouldBe Right(FourKnownFactsMatch)
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testEnteredFourKnownFacts,
+          testFourKnownFacts,
+          matched = true
+        ))
+
+        res shouldBe Right(KnownFactsMatch)
       }
     }
     "4 invalid known facts are provided" should {
-      "return KnownFactsDoNotMatch" in {
+      "return KnownFactsMismatch" in {
         val testInvalidKnownFacts = VatKnownFacts(
           businessPostcode = Some(""),
           vatRegistrationDate = "",
@@ -61,64 +77,111 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching {
         )
 
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
           enteredKfs = testInvalidKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
         ))
-        res shouldBe Left(KnownFactsDoNotMatch)
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testInvalidKnownFacts,
+          testFourKnownFacts,
+          matched = false
+        ))
+
+        res shouldBe Left(KnownFactsMismatch)
       }
     }
     "2 valid known facts are provided" should {
-      "return KnownFactsDoNotMatch" in {
+      "return KnownFactsMismatch" in {
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
           enteredKfs = testTwoKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
         ))
-        res shouldBe Left(KnownFactsDoNotMatch)
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testTwoKnownFacts,
+          testFourKnownFacts,
+          matched = false
+        ))
+
+        res shouldBe Left(KnownFactsMismatch)
       }
     }
     "is overseas and postcode isn't provided" should {
-      "return FourKnownFactsMatch" in {
+      "return KnownFactsMatch" in {
         enable(AdditionalKnownFacts)
 
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
           enteredKfs = testEnteredFourKnownFacts.copy(businessPostcode = None),
           retrievedKfs = testFourKnownFacts,
           isOverseas = true
         ))
-        res shouldBe Right(FourKnownFactsMatch)
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testEnteredFourKnownFacts.copy(businessPostcode = None),
+          testFourKnownFacts,
+          matched = true
+        ))
+
+        res shouldBe Right(KnownFactsMatch)
       }
     }
   }
   "the feature switch is disabled" when {
     "2 valid known facts are provided" should {
-      "return TwoKnownFactsMatch" in {
+      "return KnownFactsMatch" in {
         disable(AdditionalKnownFacts)
 
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
           enteredKfs = testTwoKnownFacts,
           retrievedKfs = testTwoKnownFacts,
           isOverseas = false
         ))
-        res shouldBe Right(TwoKnownFactsMatch)
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testTwoKnownFacts,
+          testTwoKnownFacts,
+          matched = true
+        ))
+
+        res shouldBe Right(KnownFactsMatch)
       }
     }
     "2 invalid known facts are provided" should {
-      "return a KnownFactsDoNotMatch" in {
+      "return a KnownFactsMismatch" in {
         disable(AdditionalKnownFacts)
 
+        val testEnteredKnownFacts = VatKnownFacts(
+          businessPostcode = Some(""),
+          vatRegistrationDate = "",
+          lastReturnMonthPeriod = None,
+          lastNetDue = None
+        )
+
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
-          enteredKfs = VatKnownFacts(
-            businessPostcode = Some(""),
-            vatRegistrationDate = "",
-            lastReturnMonthPeriod = None,
-            lastNetDue = None
-          ),
+          vatNumber = testVatNumber,
+          enteredKfs = testEnteredKnownFacts,
           retrievedKfs = testTwoKnownFacts,
           isOverseas = false
         ))
-        res shouldBe Left(KnownFactsDoNotMatch)
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testEnteredKnownFacts,
+          testTwoKnownFacts,
+          matched = false
+        ))
+
+        res shouldBe Left(KnownFactsMismatch)
       }
     }
   }
