@@ -58,6 +58,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     val email = signUpRequest.signUpEmail map {
       _.emailAddress
     }
+    val transactionEmail = signUpRequest.transactionEmail.emailAddress
     val isSignUpVerified = signUpRequest.signUpEmail map {
       _.isVerified
     }
@@ -120,7 +121,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
             )
         }
       }
-      _ <- signUp(safeId, signUpRequest.vatNumber, email, isSignUpVerified, optAgentReferenceNumber, isPartialMigration, contactPreference)
+      _ <- signUp(safeId, signUpRequest.vatNumber, email, transactionEmail, isSignUpVerified, optAgentReferenceNumber, isPartialMigration, contactPreference)
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
     } yield SignUpRequestSubmitted
 
@@ -200,6 +201,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
   private def signUp(safeId: String,
                      vatNumber: String,
                      emailAddress: Option[String],
+                     transactionEmail: String,
                      emailAddressVerified: Option[Boolean],
                      agentReferenceNumber: Option[String],
                      isPartialMigration: Boolean,
@@ -215,11 +217,12 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     )) bimap( {
       _ => {
         auditService.audit(SignUpAuditModel(
-          safeId,
-          vatNumber,
-          emailAddress,
-          emailAddressVerified,
-          agentReferenceNumber,
+          safeId = safeId,
+          vatNumber = vatNumber,
+          emailAddress = emailAddress,
+          transactionEmail = transactionEmail,
+          emailAddressVerified = emailAddressVerified,
+          agentReferenceNumber = agentReferenceNumber,
           isSuccess = false,
           contactPreference = contactPreference
         ))
@@ -228,11 +231,12 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     }, {
       customerSignUpSuccess => {
         auditService.audit(SignUpAuditModel(
-          safeId,
-          vatNumber,
-          emailAddress,
-          emailAddressVerified,
-          agentReferenceNumber,
+          safeId = safeId,
+          vatNumber = vatNumber,
+          emailAddress = emailAddress,
+          transactionEmail = transactionEmail,
+          emailAddressVerified = emailAddressVerified,
+          agentReferenceNumber = agentReferenceNumber,
           isSuccess = true,
           contactPreference = contactPreference
         ))

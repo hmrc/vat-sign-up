@@ -27,6 +27,7 @@ object SignUpAuditing {
   case class SignUpAuditModel(safeId: String,
                               vatNumber: String,
                               emailAddress: Option[String],
+                              transactionEmail: String,
                               emailAddressVerified: Option[Boolean],
                               agentReferenceNumber: Option[String],
                               isSuccess: Boolean,
@@ -39,6 +40,7 @@ object SignUpAuditing {
       "vatNumber" -> Some(vatNumber),
       "emailAddress" -> emailAddress,
       "emailAddressVerified" -> emailAddressVerified.map(_.toString),
+      "transactionEmail" -> Some(transactionEmail),
       "agentReferenceNumber" -> agentReferenceNumber,
       "isSuccess" -> Some(s"$isSuccess"),
       "contactPreference" -> contactPreference.map(_.toString)
