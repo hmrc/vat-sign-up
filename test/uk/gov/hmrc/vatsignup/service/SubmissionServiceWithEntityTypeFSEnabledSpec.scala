@@ -147,7 +147,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
-                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
                   Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
                 ))
               }
@@ -186,7 +186,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
-                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
                   Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
                 ))
               }
@@ -260,7 +260,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                   agentReferenceNumber = Some(testAgentReferenceNumber),
                   isSuccess = true)
                 )
-                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
                   Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
                 ))
               }
@@ -299,7 +299,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = Some(testAgentReferenceNumber),
                 isSuccess = true)
               )
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
                 Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
               ))
             }
@@ -337,7 +337,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               agentReferenceNumber = Some(testAgentReferenceNumber),
               isSuccess = true)
             )
-            verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), Some(true),
+            verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
               Some(testAgentReferenceNumber), isSuccess = false, contactPreference = Some(testContactPreference)
             ))
           }
@@ -413,7 +413,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = None,
                 isSuccess = true)
               )
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
                 Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
               ))
             }
@@ -450,7 +450,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
                 Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
               ))
             }
@@ -489,7 +489,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
                 agentReferenceNumber = None,
                 isSuccess = true
               ))
-              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
                 Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
               ))
             }
@@ -528,7 +528,7 @@ class SubmissionServiceWithEntityTypeFSEnabledSpec extends UnitSpec with EitherV
               agentReferenceNumber = None,
               isSuccess = true
             ))
-            verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail),
+            verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
               Some(true), None, isSuccess = false, contactPreference = Some(testContactPreference)
             ))
           }
