@@ -41,17 +41,14 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
   def storeVatNumber: Action[StoreVatNumberRequest] =
     Action.async(parse.json[StoreVatNumberRequest]) {
       implicit req =>
-        val requestObj = req.body
+        val storeVatNumberRequest = req.body
 
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
             storeVatNumberService.storeVatNumber(
-              vatNumber = requestObj.vatNumber,
+              vatNumber = storeVatNumberRequest.vatNumber,
               enrolments = enrolments,
-              businessPostcode = requestObj.postCode,
-              vatRegistrationDate = requestObj.registrationDate,
-              lastReturnMonthPeriod = requestObj.lastReturnMonthPeriod,
-              lastNetDue = requestObj.lastNetDue
+              vatKnownFacts = storeVatNumberRequest.vatKnownFacts
             ) map {
               case Right(success) =>
                 Ok(Json.obj(

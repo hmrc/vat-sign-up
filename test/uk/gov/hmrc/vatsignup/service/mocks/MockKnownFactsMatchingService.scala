@@ -20,6 +20,8 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.mvc.Request
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService.KnownFactsMatchingResponse
@@ -34,15 +36,19 @@ trait MockKnownFactsMatchingService extends BeforeAndAfterEach with MockitoSugar
 
   val mockKnownFactsMatchingService: KnownFactsMatchingService = mock[KnownFactsMatchingService]
 
-  def mockKnownFactsMatching(
-    enteredKfs: VatKnownFacts,
-    retrievedKfs: VatKnownFacts,
-    isOverseas: Boolean = false
-  )(response: KnownFactsMatchingResponse): Unit = {
+  def mockKnownFactsMatching(vatNumber: String,
+                             enteredKfs: VatKnownFacts,
+                             retrievedKfs: VatKnownFacts,
+                             isOverseas: Boolean = false
+                            )(response: KnownFactsMatchingResponse): Unit = {
     when(mockKnownFactsMatchingService.checkKnownFactsMatch(
+      ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(enteredKfs),
       ArgumentMatchers.eq(retrievedKfs),
       ArgumentMatchers.eq(isOverseas)
-    )) thenReturn response
+    )(
+      ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]])
+    ) thenReturn response
   }
 }
