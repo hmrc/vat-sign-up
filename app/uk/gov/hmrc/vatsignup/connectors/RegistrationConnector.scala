@@ -17,50 +17,32 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.Constants.Des._
+import uk.gov.hmrc.vatsignup.connectors.RegistrationConnector._
+import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
+import uk.gov.hmrc.vatsignup.models._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RegistrationConnector @Inject()(val http: HttpClient,
                                       val applicationConfig: AppConfig) {
-  def registerCompany(vatNumber: String,
-                      companyNumber: String
-                     )(implicit hc: HeaderCarrier): Future[RegisterWithMultipleIdentifiersResponse] =
-    registerWithMultipleIdentifiers(
-      vatNumber = vatNumber,
-      companyNumber = Some(companyNumber),
-      nino = None
-    )
-
-  def registerIndividual(vatNumber: String,
-                         nino: String
-                        )(implicit hc: HeaderCarrier): Future[RegisterWithMultipleIdentifiersResponse] =
-    registerWithMultipleIdentifiers(
-      vatNumber = vatNumber,
-      companyNumber = None,
-      nino = Some(nino)
-    )
-
-  private def registerWithMultipleIdentifiers(vatNumber: String,
-                                              companyNumber: Option[String],
-                                              nino: Option[String]
-                                             )(implicit hc: HeaderCarrier) = {
+  def registerBusinessEntity(vatNumber: String,
+                             businessEntity: BusinessEntity
+                            )(implicit hc: HeaderCarrier): Future[RegisterWithMultipleIdentifiersResponse] = {
     val headerCarrier = hc
-        .withExtraHeaders(applicationConfig.desEnvironmentHeader)
+      .withExtraHeaders(applicationConfig.desEnvironmentHeader)
       .copy(authorization = Some(Authorization(applicationConfig.desAuthorisationToken)))
 
     http.POST[JsObject, RegisterWithMultipleIdentifiersResponse](
       url = applicationConfig.registerWithMultipleIdentifiersUrl,
-      body = buildRequest(vatNumber, companyNumber, nino)
+      body = toRegisterApiJson(businessEntity, vatNumber)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[RegisterWithMultipleIdentifiersResponse]],
@@ -69,34 +51,122 @@ class RegistrationConnector @Inject()(val http: HttpClient,
     )
   }
 
-  private[connectors] def buildRequest(vatNumber: String, companyNumber: Option[String], nino: Option[String]) = {
-    val companyNumberObject = companyNumber map {
-      companyNumber =>
-        Json.obj(
-          IdTypeKey -> CrnKey,
-          IdValueKey -> companyNumber
+}
+
+object RegistrationConnector {
+  val VrnKey = "vrn"
+  val NinoKey = "nino"
+  val CrnKey = "crn"
+  val SautrKey = "sautr"
+
+  def toRegisterApiJson(businessEntity: BusinessEntity, vatNumber: String): JsObject = businessEntity match {
+    case SoleTrader(nino) =>
+      Json.obj(
+        SoleTraderKey -> Json.obj(
+          VrnKey -> vatNumber,
+          NinoKey -> nino
         )
-    }
-
-    val ninoObject = nino map {
-      nino =>
-        Json.obj(
-          IdTypeKey -> NinoKey,
-          IdValueKey -> nino
-        )
-    }
-
-    val vatNumberObject = Json.obj(
-      IdTypeKey -> VrnKey,
-      IdValueKey -> vatNumber
-    )
-
-    val identifiers = List(vatNumberObject) ++ companyNumberObject ++ ninoObject
-
-    Json.obj(
-      RegistrationRequestKey -> Json.obj(
-        IdentificationKey -> identifiers
       )
-    )
+    case LimitedCompany(companyNumber) =>
+      Json.obj(
+       LimitedCompanyKey -> Json.obj(
+          VrnKey -> vatNumber,
+          CrnKey -> companyNumber
+        )
+      )
+    case GeneralPartnership(sautr) =>
+      Json.obj(
+        GeneralPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr
+        )
+      )
+    case JointVenture =>
+      Json.obj(
+        GeneralPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case LimitedPartnership(sautr, companyNumber) =>
+      Json.obj(
+        LimitedPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr,
+          CrnKey -> companyNumber
+        )
+      )
+    case LimitedLiabilityPartnership(sautr, companyNumber) =>
+      Json.obj(
+        LimitedLiabilityPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr,
+          CrnKey -> companyNumber
+        )
+      )
+    case ScottishLimitedPartnership(sautr, companyNumber) =>
+      Json.obj(
+        ScottishLimitedPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber,
+          SautrKey -> sautr,
+          CrnKey -> companyNumber
+        )
+      )
+    case VatGroup =>
+      Json.obj(
+        VatGroupKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case AdministrativeDivision =>
+      Json.obj(
+        AdministrativeDivisionKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case UnincorporatedAssociation =>
+      Json.obj(
+        UnincorporatedAssociationKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case Trust =>
+      Json.obj(
+        TrustKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case RegisteredSociety(companyNumber) =>
+      Json.obj(
+        RegisteredSocietyKey -> Json.obj(
+          VrnKey -> vatNumber,
+          CrnKey -> companyNumber
+        )
+      )
+    case Charity =>
+      Json.obj(
+        CharityKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case GovernmentOrganisation =>
+      Json.obj(
+        GovernmentOrganisationKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case Overseas =>
+      Json.obj(
+        OverseasKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
+    case OverseasWithUkEstablishment(companyNumber) =>
+      Json.obj(
+        OverseasWithUkEstablishmentKey -> Json.obj(
+          VrnKey -> vatNumber,
+          CrnKey -> companyNumber
+        )
+      )
   }
+
 }

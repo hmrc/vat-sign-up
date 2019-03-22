@@ -30,7 +30,6 @@ object FeatureSwitch {
     StubDESFeature,
     StubAgentServicesFeature,
     HybridSolution,
-    EtmpEntityType,
     CaptureContactPreference,
     AdditionalKnownFacts
   )
@@ -61,11 +60,6 @@ object StubAgentServicesFeature extends FeatureSwitch {
 object HybridSolution extends FeatureSwitch {
   val displayName = s"Enable the hybrid solution"
   val name = s"$prefix.hybrid-solution"
-}
-
-object EtmpEntityType extends FeatureSwitch {
-  val displayName = s"Send the Entity Type to ETMP on the Registration API (1369)"
-  val name = s"$prefix.etmp-entity-type"
 }
 
 object CaptureContactPreference extends FeatureSwitch {

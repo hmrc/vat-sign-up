@@ -16,17 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data._
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, HybridSolution}
-import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, EntityTypeRegistrationConnector, RegistrationConnector, TaxEnrolmentsConnector}
-import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys.{SoleTraderKey, LimitedCompanyKey}
+import uk.gov.hmrc.vatsignup.config.featureswitch.HybridSolution
+import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
 import uk.gov.hmrc.vatsignup.models._
@@ -43,7 +41,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                   customerSignUpConnector: CustomerSignUpConnector,
                                   registrationConnector: RegistrationConnector,
-                                  entityTypeRegistrationConnector: EntityTypeRegistrationConnector,
                                   taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                   auditService: AuditService,
                                   appConfig: AppConfig
@@ -67,60 +64,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
     val contactPreference = signUpRequest.contactPreference
 
     val result = for {
-      safeId <- if (appConfig.isEnabled(EtmpEntityType)) {
-        registerBusinessEntity(signUpRequest.vatNumber, signUpRequest.businessEntity, optAgentReferenceNumber)
-      } else {
-        signUpRequest.businessEntity match {
-          case LimitedCompany(companyNumber) =>
-            registerCompany(signUpRequest.vatNumber, companyNumber, optAgentReferenceNumber)
-          case SoleTrader(nino) =>
-            registerIndividual(signUpRequest.vatNumber, nino, optAgentReferenceNumber)
-          case _: PartnershipBusinessEntity =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Partnerships are not supported on the legacy Register API"))
-            )
-          case VatGroup =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("VAT Groups are not supported on the legacy Register API"))
-            )
-          case AdministrativeDivision =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Administrative Divisions are not supported on the legacy Register API"))
-            )
-          case UnincorporatedAssociation =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Unincorporated Associations are not supported on the legacy Register API"))
-            )
-          case Trust =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Trusts are not supported on the legacy Register API"))
-            )
-          case RegisteredSociety(companyNumber) =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Registered Societies are not supported on the legacy Register API"))
-            )
-          case Charity =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Charities are not supported on the legacy Register API"))
-            )
-          case GovernmentOrganisation =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Government Organisations are not supported on the legacy Register API"))
-            )
-          case Overseas =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Overseas are not supported on the legacy Register API"))
-            )
-          case JointVenture =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Joint ventures are not supported on the legacy Register API"))
-            )
-          case OverseasWithUkEstablishment(companyNumber) =>
-            EitherT.apply[Future, Nothing, Nothing](
-              Future.failed(new InternalServerException("Overseas are not supported on the legacy Register API"))
-            )
-        }
-      }
+      safeId <- registerBusinessEntity(signUpRequest.vatNumber, signUpRequest.businessEntity, optAgentReferenceNumber)
       _ <- signUp(safeId, signUpRequest.vatNumber, email, transactionEmail, isSignUpVerified, optAgentReferenceNumber, isPartialMigration, contactPreference)
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
     } yield SignUpRequestSubmitted
@@ -132,70 +76,13 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                                      businessEntity: BusinessEntity,
                                      agentReferenceNumber: Option[String]
                                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
-    EitherT(entityTypeRegistrationConnector.registerBusinessEntity(vatNumber, businessEntity)) bimap( { _ =>
+    EitherT(registrationConnector.registerBusinessEntity(vatNumber, businessEntity)) bimap( { _ =>
       auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, businessEntity, agentReferenceNumber, isSuccess = false))
       RegistrationFailure
     }, {
       case RegisterWithMultipleIdsSuccess(safeId) =>
         auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, businessEntity, agentReferenceNumber, isSuccess = true))
         safeId
-    }
-    )
-
-
-  private def registerCompany(vatNumber: String,
-                              companyNumber: String,
-                              agentReferenceNumber: Option[String]
-                             )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
-    EitherT(registrationConnector.registerCompany(vatNumber, companyNumber)) bimap( {
-      _ => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(
-          vatNumber = vatNumber,
-          companyNumber = Some(companyNumber),
-          businessEntity = LimitedCompanyKey,
-          agentReferenceNumber = agentReferenceNumber, isSuccess = false
-        ))
-        RegistrationFailure
-      }
-    }, {
-      case RegisterWithMultipleIdsSuccess(safeId) => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(
-          vatNumber = vatNumber,
-          companyNumber = Some(companyNumber),
-          businessEntity = LimitedCompanyKey,
-          agentReferenceNumber = agentReferenceNumber,
-          isSuccess = true
-        ))
-        safeId
-      }
-    })
-
-  private def registerIndividual(vatNumber: String,
-                                 nino: String,
-                                 agentReferenceNumber: Option[String]
-                                )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
-    EitherT(registrationConnector.registerIndividual(vatNumber, nino)) bimap( {
-      _ => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(
-          vatNumber = vatNumber,
-          nino = Some(nino),
-          businessEntity = SoleTraderKey,
-          agentReferenceNumber = agentReferenceNumber,
-          isSuccess = false
-        ))
-        RegistrationFailure
-      }
-    }, {
-      case RegisterWithMultipleIdsSuccess(safeId) => {
-        auditService.audit(RegisterWithMultipleIDsAuditModel(
-          vatNumber = vatNumber,
-          nino = Some(nino),
-          businessEntity = SoleTraderKey,
-          agentReferenceNumber = agentReferenceNumber,
-          isSuccess = true
-        ))
-        safeId
-      }
     })
 
   private def signUp(safeId: String,

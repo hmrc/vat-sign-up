@@ -20,7 +20,7 @@ import play.api.http.Status
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, EtmpEntityType, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser
@@ -39,7 +39,6 @@ class SignUpRequestServiceSpec extends UnitSpec
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    disable(EtmpEntityType)
   }
 
 
@@ -615,7 +614,6 @@ class SignUpRequestServiceSpec extends UnitSpec
               "there is not a transaction e-mail address" when {
                 "the CaptureContactPreference feature switch is enabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     enable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -651,7 +649,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                   "return a successful SignUpRequest" in {
                     disable(CaptureContactPreference)
 
-                    enable(EtmpEntityType)
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
@@ -691,7 +688,6 @@ class SignUpRequestServiceSpec extends UnitSpec
               "there is not a transaction e-mail address" when {
                 "the CaptureContactPreference feature switch is enabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     enable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -725,7 +721,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                 }
                 "the CaptureContactPreference feature switch is disabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     disable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -767,7 +762,6 @@ class SignUpRequestServiceSpec extends UnitSpec
               "there is not a transaction e-mail address" when {
                 "the CaptureContactPreference feature switch is enabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     enable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -801,7 +795,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                 }
                 "the CaptureContactPreference feature switch is disabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     disable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -843,7 +836,6 @@ class SignUpRequestServiceSpec extends UnitSpec
               "there is not a transaction e-mail address" when {
                 "the CaptureContactPreference feature switch is enabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     enable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -876,7 +868,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                 }
                 "the CaptureContactPreference feature switch is disabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     disable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -917,7 +908,6 @@ class SignUpRequestServiceSpec extends UnitSpec
               "there is not a transaction e-mail address" when {
                 "the CaptureContactPreference feature switch is enabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     enable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -950,7 +940,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                 }
                 "the CaptureContactPreference feature switch is disabled" should {
                   "return a successful SignUpRequest" in {
-                    enable(EtmpEntityType)
                     disable(CaptureContactPreference)
 
                     val testSubscriptionRequest =
@@ -1008,7 +997,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         "sign up email is verified" when {
           "the CaptureContactPreference feature switch is enabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               enable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1042,7 +1030,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "the CaptureContactPreference feature switch is disabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               disable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1076,7 +1063,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
-              enable(EtmpEntityType)
 
               val testSubscriptionRequest =
                 SubscriptionRequest(
@@ -1102,7 +1088,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         "sign up email is verified" when {
           "the CaptureContactPreference feature switch is enabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               enable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1136,7 +1121,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "the CaptureContactPreference feature switch is disabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               disable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1170,7 +1154,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
-              enable(EtmpEntityType)
 
               val testSubscriptionRequest =
                 SubscriptionRequest(
@@ -1195,7 +1178,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         "sign up email is verified" when {
           "the CaptureContactPreference feature switch is enabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               enable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1229,7 +1211,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "the CaptureContactPreference feature switch is disabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               disable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1263,7 +1244,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
-              enable(EtmpEntityType)
 
               val testSubscriptionRequest =
                 SubscriptionRequest(
@@ -1289,7 +1269,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         "sign up email is verified" when {
           "the CaptureContactPreference feature switch is enabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               enable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1323,7 +1302,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "the CaptureContactPreference feature switch is disabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               disable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1357,7 +1335,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
-              enable(EtmpEntityType)
 
               val testSubscriptionRequest =
                 SubscriptionRequest(
@@ -1383,7 +1360,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         "sign up email is verified" when {
           "the CaptureContactPreference feature switch is enabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               enable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1417,7 +1393,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "the CaptureContactPreference feature switch is disabled" should {
             "return a successful SignUpRequest" in {
-              enable(EtmpEntityType)
               disable(CaptureContactPreference)
 
               val testSubscriptionRequest =
@@ -1451,7 +1426,6 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
           "sign up email is not verified" should {
             "return a EmailVerificationRequired" in {
-              enable(EtmpEntityType)
 
               val testSubscriptionRequest =
                 SubscriptionRequest(
@@ -1726,7 +1700,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a VAT group" when {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1760,7 +1733,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1797,7 +1769,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a Division" when {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1831,7 +1802,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1868,7 +1838,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a Unincorporated Association" should {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1902,7 +1871,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1939,7 +1907,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a Registered Society" should {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -1973,7 +1940,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -2010,7 +1976,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a Charity" should {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -2044,7 +2009,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -2081,7 +2045,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a Government Organisation" should {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -2115,7 +2078,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -2152,7 +2114,6 @@ class SignUpRequestServiceSpec extends UnitSpec
       "the user is a Joint Venture" when {
         "the CaptureContactPreference feature switch is enabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             enable(CaptureContactPreference)
 
             val testSubscriptionRequest =
@@ -2186,7 +2147,6 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
         "the CaptureContactPreference feature switch is disabled" should {
           "return a successful SignUpRequest" in {
-            enable(EtmpEntityType)
             disable(CaptureContactPreference)
 
             val testSubscriptionRequest =
