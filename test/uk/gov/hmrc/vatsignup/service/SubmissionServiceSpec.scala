@@ -20,9 +20,9 @@ import org.scalatest.EitherValues
 import play.api.http.Status._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{EtmpEntityType, FeatureSwitching, HybridSolution}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, HybridSolution}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
@@ -42,7 +42,7 @@ import scala.concurrent.Future
 
 class SubmissionServiceSpec extends UnitSpec with EitherValues
   with MockSubscriptionRequestRepository
-  with MockCustomerSignUpConnector with MockRegistrationConnector with MockEntityTypeRegistrationConnector
+  with MockCustomerSignUpConnector with MockRegistrationConnector
   with MockTaxEnrolmentsConnector with MockAuditService with MockEmailRequestRepository
   with MockConfig
   with FeatureSwitching {
@@ -50,7 +50,6 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
   object TestSubmissionService extends SubmissionService(
     mockSubscriptionRequestRepository,
     mockCustomerSignUpConnector,
-    mockRegistrationConnector,
     mockEntityTypeRegistrationConnector,
     mockTaxEnrolmentsConnector,
     mockAuditService,
@@ -64,7 +63,6 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
   override def beforeEach(): Unit = {
     super.beforeEach()
     enable(HybridSolution)
-    disable(EtmpEntityType)
   }
 
   val testIsMigratable = true
@@ -90,7 +88,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                   contactPreference = Some(testContactPreference)
                 )
 
-                mockRegisterIndividual(testVatNumber, testNino)(
+                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
                   Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
                 )
                 mockSignUp(testSafeId,
@@ -128,7 +126,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                   contactPreference = Some(testContactPreference)
                 )
 
-                mockRegisterCompany(testVatNumber, testCompanyNumber)(
+                mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
                   Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
                 )
                 mockSignUp(testSafeId,
@@ -171,7 +169,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                   contactPreference = Some(testContactPreference)
                 )
 
-                mockRegisterIndividual(testVatNumber, testNino)(
+                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
                   Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
                 )
                 mockSignUp(testSafeId,
@@ -207,7 +205,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                   contactPreference = Some(testContactPreference)
                 )
 
-                mockRegisterCompany(testVatNumber, testCompanyNumber)(
+                mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
                   Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
                 )
                 mockSignUp(testSafeId,
@@ -250,7 +248,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 contactPreference = Some(testContactPreference)
               )
 
-              mockRegisterCompany(testVatNumber, testCompanyNumber)(
+              mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
                 Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
               )
               mockSignUp(testSafeId,
@@ -293,7 +291,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               contactPreference = Some(testContactPreference)
             )
 
-            mockRegisterCompany(testVatNumber, testCompanyNumber)(
+            mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
               Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
             )
             mockSignUp(testSafeId,
@@ -335,7 +333,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             contactPreference = Some(testContactPreference)
           )
 
-          mockRegisterCompany(testVatNumber, testCompanyNumber)(
+          mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
@@ -372,7 +370,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               )
 
 
-              mockRegisterIndividual(testVatNumber, testNino)(
+              mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
                 Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
               )
               mockSignUp(testSafeId,
@@ -412,7 +410,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 contactPreference = Some(testContactPreference)
               )
 
-              mockRegisterCompany(testVatNumber, testCompanyNumber)(
+              mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
                 Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
               )
               mockSignUp(testSafeId,
@@ -446,8 +444,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
 
             "return a SignUpRequestSubmitted for a Government Organisation sign up" when {
               "the ETMP entity type feature switch is enabled" in {
-                enable(EtmpEntityType)
-
+                
                 val signUpRequest = SignUpRequest(
                   vatNumber = testVatNumber,
                   businessEntity = GovernmentOrganisation,
@@ -502,7 +499,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               )
 
 
-              mockRegisterCompany(testVatNumber, testCompanyNumber)(
+              mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
                 Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
               )
               mockSignUp(testSafeId,
@@ -546,7 +543,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             )
 
 
-            mockRegisterCompany(testVatNumber, testCompanyNumber)(
+            mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
               Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
             )
             mockSignUp(testSafeId,
@@ -588,7 +585,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             contactPreference = Some(testContactPreference)
           )
 
-          mockRegisterCompany(testVatNumber, testCompanyNumber)(
+          mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
@@ -608,193 +605,11 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
   }
 
-  "when ETMP entity type feature switch is disabled" should {
-    val enrolments = Enrolments(Set(testAgentEnrolment))
-
-    "fail for a general partnership sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testGeneralPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Partnerships are not supported on the legacy Register API"
-    }
-    "fail for a limited partnership sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testLimitedPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Partnerships are not supported on the legacy Register API"
-    }
-    "fail for a limited liability partnership sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testLimitedLiabilityPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Partnerships are not supported on the legacy Register API"
-    }
-    "fail for a scottish limited partnership sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testScottishLimitedPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Partnerships are not supported on the legacy Register API"
-    }
-    "fail for a Vat Group sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = VatGroup,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "VAT Groups are not supported on the legacy Register API"
-    }
-    "fail for a Division sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = AdministrativeDivision,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Administrative Divisions are not supported on the legacy Register API"
-    }
-    "fail for a Unincorporated Association sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = UnincorporatedAssociation,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Unincorporated Associations are not supported on the legacy Register API"
-    }
-    "fail for a Registered Society sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testRegisteredSociety,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Registered Societies are not supported on the legacy Register API"
-    }
-    "fail for a Charity sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = Charity,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Charities are not supported on the legacy Register API"
-    }
-    "fail for a Government Organisation sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = GovernmentOrganisation,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Government Organisations are not supported on the legacy Register API"
-    }
-    "fail for a Overseas sign up" in {
-      disable(EtmpEntityType)
-
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = Overseas,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      val e = intercept[InternalServerException](await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments)))
-      e.message shouldBe "Overseas are not supported on the legacy Register API"
-    }
-  }
-
   "when ETMP entity type feature switch is enabled" should {
     val enrolments = Enrolments(Set(testAgentEnrolment))
     "return a SignUpRequestSubmitted for a general partnership sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = testGeneralPartnership,
@@ -836,8 +651,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for a limited partnership sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = testLimitedPartnership,
@@ -880,8 +694,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = testLimitedLiabilityPartnership,
@@ -924,8 +737,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = testScottishLimitedPartnership,
@@ -969,8 +781,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
 
     "return a SignUpRequestSubmitted for a VAT group sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = VatGroup,
@@ -1013,8 +824,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for a Division sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = AdministrativeDivision,
@@ -1057,8 +867,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for an Unincorporated Associations sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = UnincorporatedAssociation,
@@ -1101,8 +910,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for a Registered Society sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = testRegisteredSociety,
@@ -1146,8 +954,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
 
     "return a SignUpRequestSubmitted for a Charity sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = Charity,
@@ -1191,8 +998,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
 
     "return a SignUpRequestSubmitted for a Government Organisation sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = GovernmentOrganisation,
@@ -1235,8 +1041,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     }
     "return a SignUpRequestSubmitted for a Overseas sign up" in {
       disable(HybridSolution)
-      enable(EtmpEntityType)
-
+      
       val signUpRequest = SignUpRequest(
         vatNumber = testVatNumber,
         businessEntity = Overseas,

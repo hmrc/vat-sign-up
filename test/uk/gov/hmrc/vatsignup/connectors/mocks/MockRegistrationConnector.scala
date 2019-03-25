@@ -23,6 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.RegistrationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdentifiersResponse
+import uk.gov.hmrc.vatsignup.models.BusinessEntity
 
 import scala.concurrent.Future
 
@@ -31,26 +32,17 @@ trait MockRegistrationConnector extends MockitoSugar with BeforeAndAfterEach {
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockRegistrationConnector)
+    reset(mockEntityTypeRegistrationConnector)
   }
 
-  val mockRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
+  val mockEntityTypeRegistrationConnector: RegistrationConnector = mock[RegistrationConnector]
 
-  def mockRegisterCompany(vatNumber: String,
-                          companyNumber: String
-                         )(response: Future[RegisterWithMultipleIdentifiersResponse]): Unit = {
-    when(mockRegistrationConnector.registerCompany(
+  def mockRegisterBusinessEntity(vatNumber: String,
+                                 businessEntity: BusinessEntity
+                                )(response: Future[RegisterWithMultipleIdentifiersResponse]): Unit = {
+    when(mockEntityTypeRegistrationConnector.registerBusinessEntity(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(companyNumber)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-  }
-
-  def mockRegisterIndividual(vatNumber: String,
-                             nino: String
-                            )(response: Future[RegisterWithMultipleIdentifiersResponse]): Unit = {
-    when(mockRegistrationConnector.registerIndividual(
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(nino)
+      ArgumentMatchers.eq(businessEntity)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
