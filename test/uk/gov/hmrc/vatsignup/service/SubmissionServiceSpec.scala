@@ -22,7 +22,6 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, HybridSolution}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
@@ -44,8 +43,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
   with MockSubscriptionRequestRepository
   with MockCustomerSignUpConnector with MockRegistrationConnector
   with MockTaxEnrolmentsConnector with MockAuditService with MockEmailRequestRepository
-  with MockConfig
-  with FeatureSwitching {
+  with MockConfig {
 
   object TestSubmissionService extends SubmissionService(
     mockSubscriptionRequestRepository,
@@ -56,14 +54,8 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
     mockConfig
   )
 
-
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private implicit val request = FakeRequest("POST", "testUrl")
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    enable(HybridSolution)
-  }
 
   val testIsMigratable = true
 
@@ -74,166 +66,491 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
       "the registration request is successful" when {
         "the sign up request is successful" when {
           "the enrolment call is successful" when {
-            "HybridSolution is disabled" should {
-              "return a SignUpRequestSubmitted for an individual signup" in {
-                disable(HybridSolution)
+            "return a SignUpRequestSubmitted for an individual signup" in {
 
-                val signUpRequest = SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = testSoleTrader,
-                  signUpEmail = Some(testSignUpEmail),
-                  transactionEmail = testSignUpEmail,
-                  isDelegated = true,
-                  isMigratable = testIsMigratable,
-                  contactPreference = Some(testContactPreference)
-                )
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testSoleTrader,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
 
-                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
-                  Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-                )
-                mockSignUp(testSafeId,
-                  testVatNumber,
-                  Some(testEmail),
-                  emailVerified = Some(true),
-                  optIsPartialMigration = None,
-                  optContactPreference = Some(testContactPreference)
-                )(
-                  Future.successful(Right(CustomerSignUpResponseSuccess))
-                )
-                mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+              mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
-                val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-                res.right.value shouldBe SignUpRequestSubmitted
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+              res.right.value shouldBe SignUpRequestSubmitted
 
-                verifyAudit(RegisterWithMultipleIDsAuditModel(
-                  vatNumber = testVatNumber,
-                  nino = Some(testNino),
-                  businessEntity = SoleTraderKey,
-                  agentReferenceNumber = Some(testAgentReferenceNumber),
-                  isSuccess = true
-                ))
-              }
-              "return a SignUpRequestSubmitted for a company sign up" in {
-                disable(HybridSolution)
-
-                val signUpRequest = SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = testLimitedCompany,
-                  signUpEmail = Some(testSignUpEmail),
-                  transactionEmail = testSignUpEmail,
-                  isDelegated = true,
-                  isMigratable = testIsMigratable,
-                  contactPreference = Some(testContactPreference)
-                )
-
-                mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
-                  Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-                )
-                mockSignUp(testSafeId,
-                  testVatNumber,
-                  Some(testEmail),
-                  emailVerified = Some(true),
-                  optIsPartialMigration = None,
-                  optContactPreference = Some(testContactPreference)
-                )(
-                  Future.successful(Right(CustomerSignUpResponseSuccess))
-                )
-                mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-                val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-                res.right.value shouldBe SignUpRequestSubmitted
-
-                verifyAudit(RegisterWithMultipleIDsAuditModel(
-                  vatNumber = testVatNumber,
-                  companyNumber = Some(testCompanyNumber),
-                  businessEntity = LimitedCompanyKey,
-                  agentReferenceNumber = Some(testAgentReferenceNumber),
-                  isSuccess = true
-                ))
-                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                  Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-                ))
-              }
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                nino = Some(testNino),
+                businessEntity = SoleTraderKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
             }
-            "HybridSolution is enabled" should {
-              "return a SignUpRequestSubmitted for an individual signup" in {
+            "return a SignUpRequestSubmitted for a company sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testLimitedCompany,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
 
-                val signUpRequest = SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = testSoleTrader,
-                  signUpEmail = Some(testSignUpEmail),
-                  transactionEmail = testSignUpEmail,
-                  isDelegated = true,
-                  isMigratable = testIsMigratable,
-                  contactPreference = Some(testContactPreference)
-                )
+              mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
-                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
-                  Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-                )
-                mockSignUp(testSafeId,
-                  testVatNumber,
-                  Some(testEmail),
-                  emailVerified = Some(true),
-                  optIsPartialMigration = Some(!testIsMigratable),
-                  optContactPreference = Some(testContactPreference)
-                )(
-                  Future.successful(Right(CustomerSignUpResponseSuccess))
-                )
-                mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-                val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-                res.right.value shouldBe SignUpRequestSubmitted
+              res.right.value shouldBe SignUpRequestSubmitted
 
-                verifyAudit(RegisterWithMultipleIDsAuditModel(
-                  vatNumber = testVatNumber,
-                  nino = Some(testNino),
-                  businessEntity = SoleTraderKey,
-                  agentReferenceNumber = Some(testAgentReferenceNumber),
-                  isSuccess = true
-                ))
-              }
-              "return a SignUpRequestSubmitted for a company sign up" in {
-                val signUpRequest = SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = testLimitedCompany,
-                  signUpEmail = Some(testSignUpEmail),
-                  transactionEmail = testSignUpEmail,
-                  isDelegated = true,
-                  isMigratable = testIsMigratable,
-                  contactPreference = Some(testContactPreference)
-                )
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedCompanyKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a general partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testGeneralPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
 
-                mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
-                  Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-                )
-                mockSignUp(testSafeId,
-                  testVatNumber,
-                  Some(testEmail),
-                  emailVerified = Some(true),
-                  optIsPartialMigration = Some(!testIsMigratable),
-                  optContactPreference = Some(testContactPreference)
-                )(
-                  Future.successful(Right(CustomerSignUpResponseSuccess))
-                )
-                mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+              mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
-                val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-                res.right.value shouldBe SignUpRequestSubmitted
+              res.right.value shouldBe SignUpRequestSubmitted
 
-                verifyAudit(RegisterWithMultipleIDsAuditModel(
-                  vatNumber = testVatNumber,
-                  companyNumber = Some(testCompanyNumber),
-                  businessEntity = LimitedCompanyKey,
-                  agentReferenceNumber = Some(testAgentReferenceNumber),
-                  isSuccess = true
-                ))
-                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                  Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-                ))
-              }
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                businessEntity = GeneralPartnershipKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a limited partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testLimitedPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testLimitedPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedPartnershipKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testLimitedLiabilityPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testLimitedLiabilityPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedLiabilityPartnershipKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testScottishLimitedPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testScottishLimitedPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = ScottishLimitedPartnershipKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a VAT group sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = VatGroup,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, VatGroup)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = VatGroupKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Division sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = AdministrativeDivision,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = AdministrativeDivisionKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for an Unincorporated Associations sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = UnincorporatedAssociation,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = UnincorporatedAssociationKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Registered Society sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testRegisteredSociety,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testRegisteredSociety)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = RegisteredSocietyKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Charity sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Charity,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, Charity)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = CharityKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Government Organisation sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisation,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = GovernmentOrganisationKey,
+                agentReferenceNumber = Some(testAgentReferenceNumber),
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
             }
           }
           "the enrolment call fails" should {
@@ -255,7 +572,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 testVatNumber,
                 Some(testEmail),
                 emailVerified = Some(true),
-                optIsPartialMigration = Some(!testIsMigratable),
+                isPartialMigration = !testIsMigratable,
                 optContactPreference = Some(testContactPreference)
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
@@ -298,7 +615,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               testVatNumber,
               Some(testEmail),
               emailVerified = Some(true),
-              optIsPartialMigration = Some(!testIsMigratable),
+              isPartialMigration = !testIsMigratable,
               optContactPreference = Some(testContactPreference)
             )(
               Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST)))
@@ -352,6 +669,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         }
       }
     }
+
     "the user is principal" when {
       val enrolments = Enrolments(Set(testPrincipalEnrolment))
 
@@ -369,7 +687,6 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 contactPreference = Some(testContactPreference)
               )
 
-
               mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
                 Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
               )
@@ -377,7 +694,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 testVatNumber,
                 Some(testEmail),
                 emailVerified = Some(true),
-                optIsPartialMigration = Some(!testIsMigratable),
+                isPartialMigration = !testIsMigratable,
                 optContactPreference = Some(testContactPreference)
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
@@ -417,7 +734,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 testVatNumber,
                 Some(testEmail),
                 emailVerified = Some(true),
-                optIsPartialMigration = Some(!testIsMigratable),
+                isPartialMigration = !testIsMigratable,
                 optContactPreference = Some(testContactPreference)
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
@@ -439,50 +756,412 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
               ))
             }
+            "return a SignUpRequestSubmitted for a general partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testGeneralPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
 
-            // TODO: Add tests for missing principal entity types
+              mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
-            "return a SignUpRequestSubmitted for a Government Organisation sign up" when {
-              "the ETMP entity type feature switch is enabled" in {
-                
-                val signUpRequest = SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = GovernmentOrganisation,
-                  signUpEmail = Some(testSignUpEmail),
-                  transactionEmail = testSignUpEmail,
-                  isDelegated = false,
-                  isMigratable = testIsMigratable,
-                  contactPreference = Some(testContactPreference)
-                )
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-                mockRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(
-                  Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-                )
-                mockSignUp(testSafeId,
-                  testVatNumber,
-                  Some(testEmail),
-                  emailVerified = Some(true),
-                  optIsPartialMigration = Some(!testIsMigratable),
-                  optContactPreference = Some(testContactPreference)
-                )(
-                  Future.successful(Right(CustomerSignUpResponseSuccess))
-                )
-                mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+              res.right.value shouldBe SignUpRequestSubmitted
 
-                val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                businessEntity = GeneralPartnershipKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a limited partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testLimitedPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
 
-                res.right.value shouldBe SignUpRequestSubmitted
+              mockRegisterBusinessEntity(testVatNumber, testLimitedPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
-                verifyAudit(RegisterWithMultipleIDsAuditModel(
-                  vatNumber = testVatNumber,
-                  businessEntity = GovernmentOrganisationKey,
-                  agentReferenceNumber = None,
-                  isSuccess = true
-                ))
-                verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
-                  Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
-                ))
-              }
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedPartnershipKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testLimitedLiabilityPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testLimitedLiabilityPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = LimitedLiabilityPartnershipKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testScottishLimitedPartnership,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testScottishLimitedPartnership)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = Some(testUtr),
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = ScottishLimitedPartnershipKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a VAT group sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = VatGroup,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, VatGroup)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = VatGroupKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Division sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = AdministrativeDivision,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = AdministrativeDivisionKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for an Unincorporated Associations sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = UnincorporatedAssociation,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = UnincorporatedAssociationKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Registered Society sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = testRegisteredSociety,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, testRegisteredSociety)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = Some(testCompanyNumber),
+                businessEntity = RegisteredSocietyKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Charity sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Charity,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, Charity)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                sautr = None,
+                companyNumber = None,
+                businessEntity = CharityKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
+                None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
+            }
+            "return a SignUpRequestSubmitted for a Government Organisation sign up" in {
+              val signUpRequest = SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisation,
+                signUpEmail = Some(testSignUpEmail),
+                transactionEmail = testSignUpEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = Some(testContactPreference)
+              )
+
+              mockRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(
+                Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+              )
+              mockSignUp(testSafeId,
+                testVatNumber,
+                Some(testEmail),
+                emailVerified = Some(true),
+                isPartialMigration = !testIsMigratable,
+                optContactPreference = Some(testContactPreference)
+              )(
+                Future.successful(Right(CustomerSignUpResponseSuccess))
+              )
+              mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
+
+              val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
+
+              res.right.value shouldBe SignUpRequestSubmitted
+
+              verifyAudit(RegisterWithMultipleIDsAuditModel(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisationKey,
+                agentReferenceNumber = None,
+                isSuccess = true
+              ))
+              verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
+                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+              ))
             }
           }
 
@@ -506,7 +1185,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 testVatNumber,
                 Some(testEmail),
                 emailVerified = Some(true),
-                optIsPartialMigration = Some(!testIsMigratable),
+                isPartialMigration = !testIsMigratable,
                 optContactPreference = Some(testContactPreference)
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
@@ -550,7 +1229,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               testVatNumber,
               Some(testEmail),
               emailVerified = Some(true),
-              optIsPartialMigration = Some(!testIsMigratable),
+              isPartialMigration = !testIsMigratable,
               optContactPreference = Some(testContactPreference)
             )(
               Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST)))
@@ -602,485 +1281,6 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
           ))
         }
       }
-    }
-  }
-
-  "when ETMP entity type feature switch is enabled" should {
-    val enrolments = Enrolments(Set(testAgentEnrolment))
-    "return a SignUpRequestSubmitted for a general partnership sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testGeneralPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = Some(testUtr),
-        businessEntity = GeneralPartnershipKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for a limited partnership sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testLimitedPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, testLimitedPartnership)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = Some(testUtr),
-        companyNumber = Some(testCompanyNumber),
-        businessEntity = LimitedPartnershipKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testLimitedLiabilityPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, testLimitedLiabilityPartnership)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = Some(testUtr),
-        companyNumber = Some(testCompanyNumber),
-        businessEntity = LimitedLiabilityPartnershipKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testScottishLimitedPartnership,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, testScottishLimitedPartnership)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = Some(testUtr),
-        companyNumber = Some(testCompanyNumber),
-        businessEntity = ScottishLimitedPartnershipKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-
-    "return a SignUpRequestSubmitted for a VAT group sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = VatGroup,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, VatGroup)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = None,
-        businessEntity = VatGroupKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for a Division sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = AdministrativeDivision,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = None,
-        businessEntity = AdministrativeDivisionKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for an Unincorporated Associations sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = UnincorporatedAssociation,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = None,
-        businessEntity = UnincorporatedAssociationKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for a Registered Society sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = testRegisteredSociety,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, testRegisteredSociety)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = Some(testCompanyNumber),
-        businessEntity = RegisteredSocietyKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-
-    "return a SignUpRequestSubmitted for a Charity sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = Charity,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, Charity)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = None,
-        businessEntity = CharityKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-
-    "return a SignUpRequestSubmitted for a Government Organisation sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = GovernmentOrganisation,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = None,
-        businessEntity = GovernmentOrganisationKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
-    }
-    "return a SignUpRequestSubmitted for a Overseas sign up" in {
-      disable(HybridSolution)
-      
-      val signUpRequest = SignUpRequest(
-        vatNumber = testVatNumber,
-        businessEntity = Overseas,
-        signUpEmail = Some(testSignUpEmail),
-        transactionEmail = testSignUpEmail,
-        isDelegated = true,
-        isMigratable = testIsMigratable,
-        contactPreference = Some(testContactPreference)
-      )
-
-      mockRegisterBusinessEntity(testVatNumber, Overseas)(
-        Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-      )
-      mockSignUp(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        optContactPreference = Some(testContactPreference)
-      )(
-        Future.successful(Right(CustomerSignUpResponseSuccess))
-      )
-      mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
-
-      val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
-
-      res.right.value shouldBe SignUpRequestSubmitted
-
-      verifyAudit(RegisterWithMultipleIDsAuditModel(
-        vatNumber = testVatNumber,
-        sautr = None,
-        companyNumber = None,
-        businessEntity = OverseasKey,
-        agentReferenceNumber = Some(testAgentReferenceNumber),
-        isSuccess = true
-      ))
-      verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-        Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
-      ))
     }
   }
 }

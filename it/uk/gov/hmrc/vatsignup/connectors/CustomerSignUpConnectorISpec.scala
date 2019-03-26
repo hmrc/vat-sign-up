@@ -29,27 +29,15 @@ class CustomerSignUpConnectorISpec extends ComponentSpecBase {
 
   "customerSignUp" should {
     "add the additional headers to des" when {
-      "isPartialMigration is None" should {
-        "should not include the isPartialMigration field in the json" in {
-          implicit val hc = HeaderCarrier()
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None)(OK)
+      "should include the isPartialMigration field with the boolean in the json" in {
+        val testIsPartialMigration = true
 
-          val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = None, None)
+        implicit val hc = HeaderCarrier()
+        stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(testIsPartialMigration))(OK)
 
-          await(res) shouldBe Right(CustomerSignUpResponseSuccess)
-        }
-      }
-      "isPartialMigration is Some(Boolean)" should {
-        "should include the isPartialMigration field with the boolean in the json" in {
-          val testIsPartialMigration = true
+        val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), isPartialMigration = testIsPartialMigration, None)
 
-          implicit val hc = HeaderCarrier()
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(testIsPartialMigration))(OK)
-
-          val res = connector.signUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(testIsPartialMigration), None)
-
-          await(res) shouldBe Right(CustomerSignUpResponseSuccess)
-        }
+        await(res) shouldBe Right(CustomerSignUpResponseSuccess)
       }
     }
   }

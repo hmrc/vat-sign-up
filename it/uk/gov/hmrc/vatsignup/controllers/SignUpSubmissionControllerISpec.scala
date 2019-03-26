@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import play.api.http.Status._
 import play.api.libs.json.Json
-import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, HybridSolution}
+import uk.gov.hmrc.vatsignup.config.featureswitch.CaptureContactPreference
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
@@ -39,7 +39,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
     super.beforeEach
     await(submissionRequestRepo.drop)
     await(emailRequestRepo.drop)
-    enable(HybridSolution)
   }
 
   "/subscription-request/vat-number/:vatNumber/submit" when {
@@ -445,7 +444,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
               emptyBody
             )
           }
-
         }
         "transaction email should not be sent to sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(

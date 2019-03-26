@@ -29,7 +29,6 @@ object FeatureSwitch {
   val switches: Set[FeatureSwitch] = Set(
     StubDESFeature,
     StubAgentServicesFeature,
-    HybridSolution,
     CaptureContactPreference,
     AdditionalKnownFacts
   )
@@ -55,11 +54,6 @@ object StubDESFeature extends FeatureSwitch {
 object StubAgentServicesFeature extends FeatureSwitch {
   val displayName = s"Use stub for Agent Services connection"
   val name = s"$prefix.stub-agent-services"
-}
-
-object HybridSolution extends FeatureSwitch {
-  val displayName = s"Enable the hybrid solution"
-  val name = s"$prefix.hybrid-solution"
 }
 
 object CaptureContactPreference extends FeatureSwitch {
