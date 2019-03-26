@@ -40,7 +40,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
              vatNumber: String,
              email: Option[String],
              emailVerified: Option[Boolean],
-             optIsPartialMigration: Option[Boolean],
+             isPartialMigration: Boolean,
              optContactPreference: Option[ContactPreference]
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
     val headerCarrier = hc
@@ -49,7 +49,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
 
     http.POST[JsObject, CustomerSignUpResponse](
       url = url,
-      body = buildRequest(safeId, vatNumber, email, emailVerified, optIsPartialMigration, optContactPreference)
+      body = buildRequest(safeId, vatNumber, email, emailVerified, isPartialMigration, optContactPreference)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[CustomerSignUpResponse]],
@@ -68,7 +68,7 @@ object CustomerSignUpConnector {
                                        vatNumber: String,
                                        email: Option[String],
                                        emailVerified: Option[Boolean],
-                                       optIsPartialMigration: Option[Boolean],
+                                       isPartialMigration: Boolean,
                                        optContactPreference: Option[ContactPreference]
                                       ): JsObject = {
     Json.obj(
@@ -93,7 +93,9 @@ object CustomerSignUpConnector {
           case _ => Json.obj()
         }
       )
-      .++(optionalField("isPartialMigration", optIsPartialMigration))
+      .++(
+        Json.obj("isPartialMigration" -> isPartialMigration)
+      )
       .++(optionalField("channel", optContactPreference))
     )
   }

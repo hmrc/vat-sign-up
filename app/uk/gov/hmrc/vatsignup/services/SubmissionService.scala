@@ -23,7 +23,6 @@ import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.HybridSolution
 import uk.gov.hmrc.vatsignup.connectors.{CustomerSignUpConnector, RegistrationConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
@@ -99,7 +98,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       vatNumber,
       emailAddress,
       emailAddressVerified,
-      optIsPartialMigration = if (appConfig.isEnabled(HybridSolution)) Some(isPartialMigration) else None,
+      isPartialMigration = isPartialMigration,
       contactPreference
     )) bimap( {
       _ => {

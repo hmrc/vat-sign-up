@@ -29,7 +29,7 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
         testVatNumber,
         Some(testEmail),
         emailVerified = Some(true),
-        optIsPartialMigration = Some(true),
+        isPartialMigration = true,
         Some(testContactPreference)
       )
 
@@ -68,7 +68,7 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
         testVatNumber,
         None,
         emailVerified = None,
-        optIsPartialMigration = Some(false),
+        isPartialMigration = false,
         Some(testContactPreference)
       )
 
@@ -87,43 +87,6 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
            |      }
            |    ],
            |    "isPartialMigration" : false,
-           |    "channel" : "Digital"
-           |  }
-           |}
-        """.stripMargin
-      )
-      requestJson shouldBe expectedJson
-    }
-
-    "convert the request into the correct DES format when isPartialMigration is not defined" in {
-      val requestJson = buildRequest(testSafeId,
-        testVatNumber,
-        Some(testEmail),
-        emailVerified = Some(true),
-        optIsPartialMigration = None,
-        Some(testContactPreference)
-      )
-      val expectedJson = Json.parse(
-        s"""
-           |{
-           |  "signUpRequest": {
-           |    "identification": [
-           |      {
-           |        "idType": "SAFEID",
-           |        "idValue": "$testSafeId"
-           |      },
-           |     {
-           |        "idType": "VRN",
-           |        "idValue": "$testVatNumber"
-           |      }
-           |    ],
-           |    "additionalInformation": [
-           |      {
-           |        "typeOfField": "EMAIL",
-           |        "fieldContents": "$testEmail",
-           |        "infoVerified": true
-           |      }
-           |    ],
            |    "channel" : "Digital"
            |  }
            |}
