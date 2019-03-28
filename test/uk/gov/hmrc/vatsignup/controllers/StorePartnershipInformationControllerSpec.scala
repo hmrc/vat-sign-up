@@ -61,6 +61,21 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
           status(result) shouldBe NO_CONTENT
         }
       }
+      "store partnership information returns StorePartnershipInformationSuccess when the UTR isn't provided" should {
+        val noUtrRequest: Request[StorePartnershipRequest] = FakeRequest().withBody[StorePartnershipRequest](StorePartnershipRequest(testNoUtrGeneralPartnership, postCode = None))
+        "return NO_CONTENT" in {
+          mockAuthRetrievePartnershipEnrolment()
+          mockStorePartnershipInformationWithEnrolment(
+            testVatNumber,
+            testNoUtrGeneralPartnership,
+            testUtr
+          )(Future.successful(Right(StorePartnershipInformationSuccess)))
+
+          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(noUtrRequest))
+
+          status(result) shouldBe NO_CONTENT
+        }
+      }
       "store partnership information returns StorePartnershipInformationSuccess for LimitedPartnership" should {
         "return NO_CONTENT" in {
           mockAuthRetrievePartnershipEnrolment()

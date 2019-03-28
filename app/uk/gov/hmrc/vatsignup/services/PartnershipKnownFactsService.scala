@@ -36,6 +36,7 @@ class PartnershipKnownFactsService @Inject()(partnershipKnownFactsConnector: Par
                            saUtr: String,
                            postCode: String
                           )(implicit hc: HeaderCarrier, request: Request[_]): Future[CheckKnownFactsMatchResponse] =
+
     partnershipKnownFactsConnector.getPartnershipKnownFacts(saUtr) map {
       case Right(knownFacts) =>
         val matched = knownFacts contains postCode

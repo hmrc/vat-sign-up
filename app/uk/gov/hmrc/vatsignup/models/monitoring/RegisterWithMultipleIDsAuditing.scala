@@ -71,7 +71,7 @@ object RegisterWithMultipleIDsAuditing {
         case GeneralPartnership(sautr) =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
-            sautr = Some(sautr),
+            sautr = sautr,
             businessEntity = GeneralPartnershipKey,
             agentReferenceNumber = agentReferenceNumber,
             isSuccess = isSuccess
@@ -79,7 +79,7 @@ object RegisterWithMultipleIDsAuditing {
         case LimitedPartnership(sautr, companyNumber) =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
-            sautr = Some(sautr),
+            sautr = sautr,
             companyNumber = Some(companyNumber),
             businessEntity = LimitedPartnershipKey,
             agentReferenceNumber = agentReferenceNumber,
@@ -88,7 +88,7 @@ object RegisterWithMultipleIDsAuditing {
         case LimitedLiabilityPartnership(sautr, companyNumber) =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
-            sautr = Some(sautr),
+            sautr = sautr,
             companyNumber = Some(companyNumber),
             businessEntity = LimitedLiabilityPartnershipKey,
             agentReferenceNumber = agentReferenceNumber,
@@ -97,7 +97,7 @@ object RegisterWithMultipleIDsAuditing {
         case ScottishLimitedPartnership(sautr, companyNumber) =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
-            sautr = Some(sautr),
+            sautr = sautr,
             companyNumber = Some(companyNumber),
             businessEntity = ScottishLimitedPartnershipKey,
             agentReferenceNumber = agentReferenceNumber,

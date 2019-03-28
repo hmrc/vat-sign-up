@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.utils.JsonUtils._
 
 object RegistrationStub extends WireMockMethods {
   private val registerUri = "/cross-regime/register/VATC"
@@ -39,11 +40,11 @@ object RegistrationStub extends WireMockMethods {
       )
     )
 
-  private def registerGeneralPartnershipJsonBody(vatNumber: String, sautr: String): JsObject =
+  private def registerGeneralPartnershipJsonBody(vatNumber: String, sautr: Option[String]): JsObject =
     Json.obj(
-      "ordinaryPartnership" -> Json.obj(
-        "vrn" -> vatNumber,
-        "sautr" -> sautr
+      "ordinaryPartnership" -> (
+        Json.obj("vrn" -> vatNumber)
+        + ("sautr" -> sautr)
       )
     )
 
@@ -54,30 +55,36 @@ object RegistrationStub extends WireMockMethods {
       )
     )
 
-  private def registerLimitedPartnershipJsonBody(vatNumber: String, sautr: String, companyNumber: String): JsObject =
+  private def registerLimitedPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
     Json.obj(
-      "limitedPartnership" -> Json.obj(
-        "vrn" -> vatNumber,
-        "sautr" -> sautr,
-        "crn" -> companyNumber
+      "limitedPartnership" -> (
+        Json.obj(
+          "vrn" -> vatNumber,
+          "crn" -> companyNumber
+        )
+        + ("sautr" -> sautr)
       )
     )
 
-  private def registerLimitedLiabilityPartnershipJsonBody(vatNumber: String, sautr: String, companyNumber: String): JsObject =
+  private def registerLimitedLiabilityPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
     Json.obj(
-      "limitedLiabilityPartnership" -> Json.obj(
-        "vrn" -> vatNumber,
-        "sautr" -> sautr,
-        "crn" -> companyNumber
+      "limitedLiabilityPartnership" -> (
+        Json.obj(
+          "vrn" -> vatNumber,
+          "crn" -> companyNumber
+        )
+        + ("sautr" -> sautr)
       )
     )
 
-  private def registerScottishLimitedPartnershipJsonBody(vatNumber: String, sautr: String, companyNumber: String): JsObject =
+  private def registerScottishLimitedPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
     Json.obj(
-      "scottishLimitedPartnership" -> Json.obj(
-        "vrn" -> vatNumber,
-        "sautr" -> sautr,
-        "crn" -> companyNumber
+      "scottishLimitedPartnership" -> (
+        Json.obj(
+          "vrn" -> vatNumber,
+          "crn" -> companyNumber
+        )
+        + ("sautr" -> sautr)
       )
     )
 

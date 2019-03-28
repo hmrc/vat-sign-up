@@ -263,7 +263,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for general partnership sign up" in {
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              businessEntity = Some(GeneralPartnership(testUtr)),
+              businessEntity = Some(GeneralPartnership(Some(testUtr))),
               email = Some(testEmail),
               isMigratable = testIsMigratable,
               isDirectDebit = false
@@ -271,7 +271,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
             stubGetEmailVerified(testEmail)
-            stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
+            stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
             stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
             stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -286,7 +286,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           "return NO_CONTENT for limited partnership sign up" in {
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+              businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
               email = Some(testEmail),
               isMigratable = testIsMigratable,
               isDirectDebit = false
@@ -294,7 +294,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
             stubGetEmailVerified(testEmail)
-            stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+            stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
             stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
             stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -309,7 +309,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           "return NO_CONTENT for limited liability partnership sign up" in {
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+              businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
               email = Some(testEmail),
               isMigratable = testIsMigratable,
               isDirectDebit = false
@@ -317,7 +317,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
             stubGetEmailVerified(testEmail)
-            stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))(testSafeId)
+            stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
             stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
             stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -332,7 +332,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           "return NO_CONTENT for scottish limited partnership sign up" in {
             val testSubscriptionRequest = SubscriptionRequest(
               vatNumber = testVatNumber,
-              businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+              businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
               email = Some(testEmail),
               isMigratable = testIsMigratable,
               isDirectDebit = false
@@ -340,7 +340,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
             stubAuth(OK, successfulAuthResponse(agentEnrolment))
             stubGetEmailVerified(testEmail)
-            stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+            stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
             stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
             stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -631,7 +631,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for general partnership sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(GeneralPartnership(testUtr)),
+            businessEntity = Some(GeneralPartnership(Some(testUtr))),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false
@@ -639,7 +639,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -654,7 +654,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for limited partnership sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+            businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false
@@ -662,7 +662,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -677,7 +677,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for limited liability partnership sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+            businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false
@@ -685,7 +685,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -700,7 +700,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         "return NO_CONTENT for scottish limited partnership sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+            businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false
@@ -708,7 +708,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable))(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
