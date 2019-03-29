@@ -33,9 +33,9 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "the business entity is a general partnership" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(testUtr))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
 
-          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GeneralPartnership(testUtr)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr))))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
         }
@@ -57,9 +57,9 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "tbe business entity is a limited partnership" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
 
-          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber)))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
         }
@@ -69,9 +69,9 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "the business entity is a limited liability partnership" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
 
-          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
         }
@@ -81,9 +81,9 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "the business entity is a scottish limited partnership" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
 
-          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber)))
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
         }

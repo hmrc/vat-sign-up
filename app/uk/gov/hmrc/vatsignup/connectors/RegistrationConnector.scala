@@ -27,6 +27,7 @@ import uk.gov.hmrc.vatsignup.connectors.RegistrationConnector._
 import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.utils.JsonUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -76,9 +77,9 @@ object RegistrationConnector {
       )
     case GeneralPartnership(sautr) =>
       Json.obj(
-        GeneralPartnershipKey -> Json.obj(
-          VrnKey -> vatNumber,
-          SautrKey -> sautr
+        GeneralPartnershipKey -> (
+          Json.obj(VrnKey -> vatNumber)
+          + (SautrKey -> sautr)
         )
       )
     case JointVenture =>
@@ -89,26 +90,32 @@ object RegistrationConnector {
       )
     case LimitedPartnership(sautr, companyNumber) =>
       Json.obj(
-        LimitedPartnershipKey -> Json.obj(
-          VrnKey -> vatNumber,
-          SautrKey -> sautr,
-          CrnKey -> companyNumber
+        LimitedPartnershipKey -> (
+          Json.obj(
+            VrnKey -> vatNumber,
+            CrnKey -> companyNumber
+          )
+          + (SautrKey -> sautr)
         )
       )
     case LimitedLiabilityPartnership(sautr, companyNumber) =>
       Json.obj(
-        LimitedLiabilityPartnershipKey -> Json.obj(
-          VrnKey -> vatNumber,
-          SautrKey -> sautr,
-          CrnKey -> companyNumber
+        LimitedLiabilityPartnershipKey -> (
+          Json.obj(
+            VrnKey -> vatNumber,
+            CrnKey -> companyNumber
+          )
+          + (SautrKey -> sautr)
         )
       )
     case ScottishLimitedPartnership(sautr, companyNumber) =>
       Json.obj(
-        ScottishLimitedPartnershipKey -> Json.obj(
-          VrnKey -> vatNumber,
-          SautrKey -> sautr,
-          CrnKey -> companyNumber
+        ScottishLimitedPartnershipKey -> (
+          Json.obj(
+            VrnKey -> vatNumber,
+            CrnKey -> companyNumber
+          )
+          + (SautrKey -> sautr)
         )
       )
     case VatGroup =>

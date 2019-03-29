@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.EitherT
 import cats.implicits._
 import play.api.mvc.Request
@@ -39,7 +38,7 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
                                                partnershipInformation: PartnershipBusinessEntity,
                                                enrolmentSautr: String
                                               )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
-    if (enrolmentSautr == partnershipInformation.sautr) {
+    if (partnershipInformation.sautr contains enrolmentSautr) {
       storePartnershipInformationCore(vatNumber, partnershipInformation)
     } else {
       Future.successful(Left(EnrolmentMatchFailure))
@@ -48,18 +47,26 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
 
   def storePartnershipInformation(vatNumber: String,
                                   partnershipInformation: PartnershipBusinessEntity,
-                                  businessPostcode: String
+                                  businessPostcode: Option[String]
                                  )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+
     for {
-      _ <- EitherT(partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, partnershipInformation.sautr, businessPostcode)) leftMap {
-        case PartnershipKnownFactsService.PostCodeDoesNotMatch =>
-          KnownFactsMismatch
-        case PartnershipKnownFactsService.NoPostCodesReturned =>
-          InsufficientData
-        case PartnershipKnownFactsService.InvalidSautr =>
-          InvalidSautr
+      _ <- (partnershipInformation.sautr, businessPostcode) match {
+        case (Some(sautr), Some(postCode)) =>
+          EitherT(partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, sautr, postCode)) leftMap {
+            case PartnershipKnownFactsService.PostCodeDoesNotMatch =>
+              KnownFactsMismatch
+            case PartnershipKnownFactsService.NoPostCodesReturned =>
+              InsufficientData
+            case PartnershipKnownFactsService.InvalidSautr =>
+              InvalidSautr
+            case _ =>
+              GetPartnershipKnownFactsFailure
+          }
+        case (None, None) =>
+          EitherT.right(Future.successful(NoSaUtrProvided))
         case _ =>
-          GetPartnershipKnownFactsFailure
+          EitherT.left(Future.successful(InsufficientData))
       }
       _ <- EitherT(storePartnershipInformationCore(vatNumber, partnershipInformation)
       )
@@ -83,7 +90,11 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
 
 object StorePartnershipInformationService {
 
-  case object StorePartnershipInformationSuccess
+  sealed trait StorePartnershipInformationSuccess
+
+  case object StorePartnershipInformationSuccess extends StorePartnershipInformationSuccess
+
+  case object NoSaUtrProvided extends StorePartnershipInformationSuccess
 
   sealed trait StorePartnershipInformationFailure
 

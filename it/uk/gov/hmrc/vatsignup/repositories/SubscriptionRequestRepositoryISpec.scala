@@ -292,56 +292,56 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     "store a General Partnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
-        _ <- repo.upsertBusinessEntity(testVatNumber, GeneralPartnership(testUtr))
+        _ <- repo.upsertBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(GeneralPartnership(testUtr)),
+        businessEntity = Some(GeneralPartnership(Some(testUtr))),
         isDirectDebit = false
       ))
     }
     "store a Limited Partnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
-        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedPartnership(testUtr, testCompanyNumber))
+        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+        businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
         isDirectDebit = false
       ))
     }
     "store a Limited Liabiility Partnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
-        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedLiabilityPartnership(testUtr, testCompanyNumber))
+        _ <- repo.upsertBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
         isDirectDebit = false
       ))
     }
     "store a Scottish Limited Partnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
-        _ <- repo.upsertBusinessEntity(testVatNumber, ScottishLimitedPartnership(testUtr, testCompanyNumber))
+        _ <- repo.upsertBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))
         model <- repo.findById(testVatNumber)
       } yield model
 
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
         isDirectDebit = false
       ))
     }

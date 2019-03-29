@@ -35,7 +35,7 @@ object StorePartnershipRequest {
   object PartnershipBusinessEntityReader extends Reads[PartnershipBusinessEntity] {
     override def reads(json: JsValue): JsResult[PartnershipBusinessEntity] =
       for {
-        sautr <- (json \ "sautr").validate[String]
+        sautr <- (json \ "sautr").validateOpt[String]
         optCompanyNumber <- (json \ "crn").validateOpt[String]
         partnershipType <- (json \ "partnershipType").validate[String]
       } yield (partnershipType, optCompanyNumber) match {

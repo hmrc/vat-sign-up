@@ -546,7 +546,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                   val testSubscriptionRequest =
                     SubscriptionRequest(
                       vatNumber = testVatNumber,
-                      businessEntity = Some(GeneralPartnership(testUtr)),
+                      businessEntity = Some(GeneralPartnership(Some(testUtr))),
                       email = Some(testEmail),
                       isMigratable = testIsMigratable,
                       isDirectDebit = false
@@ -562,7 +562,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                   await(res) shouldBe Right(
                     SignUpRequest(
                       vatNumber = testVatNumber,
-                      businessEntity = GeneralPartnership(testUtr),
+                      businessEntity = GeneralPartnership(Some(testUtr)),
                       signUpEmail = Some(verifiedEmail),
                       transactionEmail = verifiedEmail,
                       isDelegated = false,
@@ -579,7 +579,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                   val testSubscriptionRequest =
                     SubscriptionRequest(
                       vatNumber = testVatNumber,
-                      businessEntity = Some(GeneralPartnership(testUtr)),
+                      businessEntity = Some(GeneralPartnership(Some(testUtr))),
                       email = Some(testEmail),
                       isMigratable = testIsMigratable,
                       isDirectDebit = false
@@ -595,7 +595,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                   await(res) shouldBe Right(
                     SignUpRequest(
                       vatNumber = testVatNumber,
-                      businessEntity = GeneralPartnership(testUtr),
+                      businessEntity = GeneralPartnership(Some(testUtr)),
                       signUpEmail = Some(verifiedEmail),
                       transactionEmail = verifiedEmail,
                       isDelegated = false,
@@ -619,7 +619,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -635,7 +635,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = LimitedPartnership(testUtr, testCompanyNumber),
+                        businessEntity = LimitedPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -652,7 +652,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -668,7 +668,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = LimitedPartnership(testUtr, testCompanyNumber),
+                        businessEntity = LimitedPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -693,7 +693,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -709,7 +709,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -726,7 +726,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -742,7 +742,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -767,7 +767,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -783,7 +783,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -800,7 +800,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -816,7 +816,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -841,7 +841,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -856,7 +856,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -873,7 +873,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(ScottishLimitedPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -888,7 +888,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = ScottishLimitedPartnership(testUtr, testCompanyNumber),
+                        businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -913,7 +913,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -928,7 +928,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,
@@ -945,7 +945,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     val testSubscriptionRequest =
                       SubscriptionRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedLiabilityPartnership(testUtr, testCompanyNumber)),
+                        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
                         email = Some(testEmail),
                         isMigratable = testIsMigratable,
                         isDirectDebit = false
@@ -960,7 +960,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                     await(res) shouldBe Right(
                       SignUpRequest(
                         vatNumber = testVatNumber,
-                        businessEntity = LimitedLiabilityPartnership(testUtr, testCompanyNumber),
+                        businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
                         signUpEmail = Some(verifiedEmail),
                         transactionEmail = verifiedEmail,
                         isDelegated = false,

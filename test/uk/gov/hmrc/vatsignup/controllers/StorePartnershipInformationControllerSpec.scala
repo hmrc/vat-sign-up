@@ -61,6 +61,21 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
           status(result) shouldBe NO_CONTENT
         }
       }
+      "store partnership information returns StorePartnershipInformationSuccess when the UTR isn't provided" should {
+        val noUtrRequest: Request[StorePartnershipRequest] = FakeRequest().withBody[StorePartnershipRequest](StorePartnershipRequest(testNoUtrGeneralPartnership, postCode = None))
+        "return NO_CONTENT" in {
+          mockAuthRetrievePartnershipEnrolment()
+          mockStorePartnershipInformationWithEnrolment(
+            testVatNumber,
+            testNoUtrGeneralPartnership,
+            testUtr
+          )(Future.successful(Right(StorePartnershipInformationSuccess)))
+
+          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(noUtrRequest))
+
+          status(result) shouldBe NO_CONTENT
+        }
+      }
       "store partnership information returns StorePartnershipInformationSuccess for LimitedPartnership" should {
         "return NO_CONTENT" in {
           mockAuthRetrievePartnershipEnrolment()
@@ -118,7 +133,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testGeneralPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
             val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -132,7 +147,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testLimitedPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
             val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
@@ -150,7 +165,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testGeneralPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Left(KnownFactsMismatch)))
 
             val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -164,7 +179,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testGeneralPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Left(InsufficientData)))
 
             intercept[InternalServerException] {
@@ -178,7 +193,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testGeneralPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Left(InvalidSautr)))
 
             val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -193,7 +208,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testGeneralPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
 
             val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -207,7 +222,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             mockStorePartnershipInformation(
               testVatNumber,
               testGeneralPartnership,
-              testPostCode
+              Some(testPostCode)
             )(Future.successful(Left(PartnershipInformationDatabaseFailure)))
 
             val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
@@ -218,16 +233,23 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
       }
     }
 
-    "post code is not provided" should {
-      "return PRECONDITION_FAILED" in {
+    "post code and sautr is not provided" should {
+      "return No Content" in {
+        mockAuthRetrievePrincipalEnrolment()
+        mockStorePartnershipInformation(
+          testVatNumber,
+          testNoUtrGeneralPartnership,
+          None
+        )(Future.successful(Right(StorePartnershipInformationSuccess)))
+
         val request: Request[StorePartnershipRequest] = FakeRequest().withBody[StorePartnershipRequest](
-          StorePartnershipRequest(testGeneralPartnership, postCode = None)
+          StorePartnershipRequest(testNoUtrGeneralPartnership, postCode = None)
         )
 
         mockAuthRetrievePrincipalEnrolment()
         val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
 
-        status(result) shouldBe PRECONDITION_FAILED
+        status(result) shouldBe NO_CONTENT
       }
     }
   }

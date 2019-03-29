@@ -51,7 +51,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
 
           val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
 
-          dbRequest.businessEntity shouldBe Some(GeneralPartnership(testUtr))
+          dbRequest.businessEntity shouldBe Some(GeneralPartnership(Some(testUtr)))
         }
       }
       "enrolment matches the utr and a crn is provided" should {
@@ -74,10 +74,10 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
           )
 
           val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-          dbRequest.businessEntity shouldBe Some(LimitedPartnership(testUtr, testCompanyNumber))
+          dbRequest.businessEntity shouldBe Some(LimitedPartnership(Some(testUtr), testCompanyNumber))
         }
       }
-      "enrolment does not matches the utr" should {
+      "enrolment does not match the utr" should {
         "return FORBIDDEN" in {
           stubAuth(OK, successfulAuthResponse(partnershipEnrolment))
 
@@ -140,7 +140,7 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
 
             val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
 
-            dbRequest.businessEntity shouldBe Some(GeneralPartnership(testUtr))
+            dbRequest.businessEntity shouldBe Some(GeneralPartnership(Some(testUtr)))
           }
         }
         "the postcode and a crn is provided and the postcode matches one of the postcodes retrieved using the sautr" should {
@@ -165,7 +165,26 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
             )
 
             val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
-            dbRequest.businessEntity shouldBe Some(LimitedPartnership(testUtr, testCompanyNumber))
+            dbRequest.businessEntity shouldBe Some(LimitedPartnership(Some(testUtr), testCompanyNumber))
+          }
+        }
+        "No utr and no postcode was provided" should {
+          "return NO_CONTENT" in {
+            stubAuth(OK, successfulAuthResponse())
+
+            await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+            val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
+              Json.obj("partnershipType" -> BusinessEntity.GeneralPartnershipKey)
+            )
+
+            res should have(
+              httpStatus(NO_CONTENT),
+              emptyBody
+            )
+
+            val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
+            dbRequest.businessEntity shouldBe Some(GeneralPartnership(None))
           }
         }
         "the postcode provided does not match any of the postcodes retrieved using the utr" should {
@@ -263,28 +282,6 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
           }
         }
       }
-
-      "a postcode is also not provided" should {
-        "return PRECONDITION_FAILED" in {
-          stubAuth(OK, successfulAuthResponse())
-
-          val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
-            Json.obj(
-              "partnershipType" -> BusinessEntity.GeneralPartnershipKey,
-              "sautr" -> testUtr
-            )
-          )
-
-          res should have(
-            httpStatus(PRECONDITION_FAILED),
-            jsonBodyAs(Json.obj(
-              "statusCode" -> PRECONDITION_FAILED,
-              "message" -> "no enrolment or postcode"
-            ))
-          )
-        }
-      }
-
     }
   }
 

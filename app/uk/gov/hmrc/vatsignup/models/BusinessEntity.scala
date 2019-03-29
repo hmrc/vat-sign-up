@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.models
 
 import play.api.libs.json._
+import uk.gov.hmrc.vatsignup.utils.JsonUtils._
 
 sealed trait BusinessEntity
 
@@ -25,16 +26,16 @@ case class LimitedCompany(companyNumber: String) extends BusinessEntity
 case class SoleTrader(nino: String) extends BusinessEntity
 
 sealed trait PartnershipBusinessEntity extends BusinessEntity {
-  val sautr: String
+  val sautr: Option[String]
 }
 
-case class GeneralPartnership(sautr: String) extends BusinessEntity with PartnershipBusinessEntity
+case class GeneralPartnership(sautr: Option[String]) extends BusinessEntity with PartnershipBusinessEntity
 
-case class LimitedPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
+case class LimitedPartnership(sautr: Option[String], companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
 
-case class LimitedLiabilityPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
+case class LimitedLiabilityPartnership(sautr: Option[String], companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
 
-case class ScottishLimitedPartnership(sautr: String, companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
+case class ScottishLimitedPartnership(sautr: Option[String], companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity
 
 case object VatGroup extends BusinessEntity
 
@@ -91,32 +92,36 @@ object BusinessEntity {
           EntityTypeKey -> SoleTraderKey,
           NinoKey -> nino
         )
-      case GeneralPartnership(sautr) =>
-        Json.obj(
-          EntityTypeKey -> GeneralPartnershipKey,
-          SautrKey -> sautr
+      case GeneralPartnership(sautr) => (
+          Json.obj(
+            EntityTypeKey -> GeneralPartnershipKey
+          )
+          + (SautrKey -> sautr)
         )
       case JointVenture =>
         Json.obj(
           EntityTypeKey -> JointVentureKey
         )
-      case LimitedPartnership(sautr, companyNumber) =>
-        Json.obj(
-          EntityTypeKey -> LimitedPartnershipKey,
-          SautrKey -> sautr,
-          CompanyNumberKey -> companyNumber
+      case LimitedPartnership(sautr, companyNumber) => (
+          Json.obj(
+            EntityTypeKey -> LimitedPartnershipKey,
+            CompanyNumberKey -> companyNumber
+          )
+          + (SautrKey -> sautr)
         )
-      case LimitedLiabilityPartnership(sautr, companyNumber) =>
-        Json.obj(
-          EntityTypeKey -> LimitedLiabilityPartnershipKey,
-          SautrKey -> sautr,
-          CompanyNumberKey -> companyNumber
+      case LimitedLiabilityPartnership(sautr, companyNumber) => (
+          Json.obj(
+            EntityTypeKey -> LimitedLiabilityPartnershipKey,
+            CompanyNumberKey -> companyNumber
+          )
+          + (SautrKey -> sautr)
         )
-      case ScottishLimitedPartnership(sautr, companyNumber) =>
-        Json.obj(
-          EntityTypeKey -> ScottishLimitedPartnershipKey,
-          SautrKey -> sautr,
-          CompanyNumberKey -> companyNumber
+      case ScottishLimitedPartnership(sautr, companyNumber) => (
+          Json.obj(
+            EntityTypeKey -> ScottishLimitedPartnershipKey,
+            CompanyNumberKey -> companyNumber
+          )
+          + (SautrKey -> sautr)
         )
       case VatGroup =>
         Json.obj(
@@ -172,24 +177,24 @@ object BusinessEntity {
             } yield SoleTrader(nino)
           case GeneralPartnershipKey =>
             for {
-              sautr <- (json \ SautrKey).validate[String]
+              sautr <- (json \ SautrKey).validateOpt[String]
             } yield GeneralPartnership(sautr)
           case JointVentureKey =>
             JsSuccess(JointVenture)
           case LimitedPartnershipKey =>
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]
-              sautr <- (json \ SautrKey).validate[String]
+              sautr <- (json \ SautrKey).validateOpt[String]
             } yield LimitedPartnership(sautr, companyNumber)
           case LimitedLiabilityPartnershipKey =>
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]
-              sautr <- (json \ SautrKey).validate[String]
+              sautr <- (json \ SautrKey).validateOpt[String]
             } yield LimitedLiabilityPartnership(sautr, companyNumber)
           case ScottishLimitedPartnershipKey =>
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]
-              sautr <- (json \ SautrKey).validate[String]
+              sautr <- (json \ SautrKey).validateOpt[String]
             } yield ScottishLimitedPartnership(sautr, companyNumber)
           case VatGroupKey =>
             JsSuccess(VatGroup)

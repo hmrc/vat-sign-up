@@ -51,7 +51,7 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
 
   def mockStorePartnershipInformation(vatNumber: String,
                                       partnershipInformation: PartnershipBusinessEntity,
-                                      businessPostcode: String
+                                      businessPostcode: Option[String]
                                      )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
     when(mockStorePartnershipInformationService.storePartnershipInformation(
       ArgumentMatchers.eq(vatNumber),
