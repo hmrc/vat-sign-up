@@ -47,13 +47,13 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
 
   def storePartnershipInformation(vatNumber: String,
                                   partnershipInformation: PartnershipBusinessEntity,
-                                  businessPostcode: String
+                                  businessPostcode: Option[String]
                                  )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
 
     for {
-      _ <- partnershipInformation.sautr match {
-        case Some(sautr) =>
-          EitherT(partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, sautr, businessPostcode)) leftMap {
+      _ <- (partnershipInformation.sautr, businessPostcode) match {
+        case (Some(sautr), Some(postCode)) =>
+          EitherT(partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, sautr, postCode)) leftMap {
             case PartnershipKnownFactsService.PostCodeDoesNotMatch =>
               KnownFactsMismatch
             case PartnershipKnownFactsService.NoPostCodesReturned =>
@@ -63,7 +63,10 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
             case _ =>
               GetPartnershipKnownFactsFailure
           }
-        case None => EitherT.right(Future.successful(NoSaUtrProvided))
+        case (None, None) =>
+          EitherT.right(Future.successful(NoSaUtrProvided))
+        case _ =>
+          EitherT.left(Future.successful(InsufficientData))
       }
       _ <- EitherT(storePartnershipInformationCore(vatNumber, partnershipInformation)
       )

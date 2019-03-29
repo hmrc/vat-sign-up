@@ -168,18 +168,14 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
             dbRequest.businessEntity shouldBe Some(LimitedPartnership(Some(testUtr), testCompanyNumber))
           }
         }
-        "No utr was provided" should {
+        "No utr and no postcode was provided" should {
           "return NO_CONTENT" in {
             stubAuth(OK, successfulAuthResponse())
-            stubGetPartnershipKnownFacts(testUtr)(OK, Some(fullPartnershipKnownFactsBody))
 
             await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
-              Json.obj(
-                "partnershipType" -> BusinessEntity.GeneralPartnershipKey,
-                "postCode" -> testPostCode
-              )
+              Json.obj("partnershipType" -> BusinessEntity.GeneralPartnershipKey)
             )
 
             res should have(
@@ -286,28 +282,6 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
           }
         }
       }
-
-      "a postcode is also not provided" should {
-        "return PRECONDITION_FAILED" in {
-          stubAuth(OK, successfulAuthResponse())
-
-          val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(
-            Json.obj(
-              "partnershipType" -> BusinessEntity.GeneralPartnershipKey,
-              "sautr" -> testUtr
-            )
-          )
-
-          res should have(
-            httpStatus(PRECONDITION_FAILED),
-            jsonBodyAs(Json.obj(
-              "statusCode" -> PRECONDITION_FAILED,
-              "message" -> "no enrolment or postcode"
-            ))
-          )
-        }
-      }
-
     }
   }
 
