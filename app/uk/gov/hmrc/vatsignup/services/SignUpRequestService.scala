@@ -84,7 +84,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
     businessEntity match {
       case _: LimitedCompany if subscriptionRequest.ctReference.isDefined =>
         Right(RequestAuthorised)
-      case _: SoleTrader if (subscriptionRequest.ninoSource exists (_.isFromEnrolment)) || subscriptionRequest.identityVerified =>
+      case _: SoleTrader =>
         Right(RequestAuthorised)
       case _: PartnershipBusinessEntity =>
         Right(RequestAuthorised)

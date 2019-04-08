@@ -283,254 +283,77 @@ class SignUpRequestServiceSpec extends UnitSpec
         }
       }
       "there is a stored NINO" when {
-        "the NINO source is IR-SA" when {
-          "there is a stored sign up email address" when {
-            "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" when {
-                "the CaptureContactPreference feature switch is enabled" should {
-                  "return a successful SignUpRequest" in {
-                    enable(CaptureContactPreference)
+        "there is a stored sign up email address" when {
+          "the sign up email address is verified" when {
+            "there is not a transaction e-mail address" when {
+              "the CaptureContactPreference feature switch is enabled" should {
+                "return a successful SignUpRequest" in {
+                  enable(CaptureContactPreference)
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(SoleTrader(testNino)),
-                        ninoSource = Some(IRSA),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = SoleTrader(testNino),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = Some(testContactPreference)
-                      )
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(SoleTrader(testNino)),
+                      ninoSource = Some(IRSA),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable,
+                      isDirectDebit = false
                     )
-                  }
-                }
-                "the CaptureContactPreference feature switch is disabled" should {
-                  "return a successful SignUpRequest" in {
-                    disable(CaptureContactPreference)
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(SoleTrader(testNino)),
-                        ninoSource = Some(IRSA),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false
-                      )
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = SoleTrader(testNino),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = None
-                      )
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = SoleTrader(testNino),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = Some(testContactPreference)
                     )
-                  }
+                  )
                 }
               }
-            }
-          }
-        }
-        "the NINO source is auth profile" when {
-          "there is a stored sign up email address" when {
-            "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" when {
-                "the CaptureContactPreference feature switch is enabled" should {
-                  "return a successful SignUpRequest" in {
-                    enable(CaptureContactPreference)
+              "the CaptureContactPreference feature switch is disabled" should {
+                "return a successful SignUpRequest" in {
+                  disable(CaptureContactPreference)
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(SoleTrader(testNino)),
-                        ninoSource = Some(AuthProfile),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = SoleTrader(testNino),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = Some(testContactPreference)
-                      )
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(SoleTrader(testNino)),
+                      ninoSource = Some(IRSA),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable,
+                      isDirectDebit = false
                     )
-                  }
-                }
-                "the CaptureContactPreference feature switch is disabled" should {
-                  "return a successful SignUpRequest" in {
-                    disable(CaptureContactPreference)
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(SoleTrader(testNino)),
-                        ninoSource = Some(AuthProfile),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false
-                      )
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = SoleTrader(testNino),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = None
-                      )
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = SoleTrader(testNino),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = None
                     )
-                  }
+                  )
                 }
               }
-            }
-          }
-        }
-        "the NINO source is UserEntered" when {
-          "there is a stored identity verified flag" when {
-            "there is a stored sign up email address" when {
-              "the sign up email address is verified" when {
-                "there is not a transaction e-mail address" when {
-                  "the CaptureContactPreference feature switch is enabled" should {
-                    "return a successful SignUpRequest" in {
-                      enable(CaptureContactPreference)
-
-                      val testSubscriptionRequest =
-                        SubscriptionRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = Some(SoleTrader(testNino)),
-                          ninoSource = Some(UserEntered),
-                          email = Some(testEmail),
-                          identityVerified = true,
-                          isMigratable = testIsMigratable,
-                          isDirectDebit = false
-                        )
-
-                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                      await(res) shouldBe Right(
-                        SignUpRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = SoleTrader(testNino),
-                          signUpEmail = Some(verifiedEmail),
-                          transactionEmail = verifiedEmail,
-                          isDelegated = false,
-                          isMigratable = testIsMigratable,
-                          contactPreference = Some(testContactPreference)
-                        )
-                      )
-                    }
-                  }
-                  "the CaptureContactPreference feature switch is disabled" should {
-                    "return a successful SignUpRequest" in {
-                      disable(CaptureContactPreference)
-
-                      val testSubscriptionRequest =
-                        SubscriptionRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = Some(SoleTrader(testNino)),
-                          ninoSource = Some(UserEntered),
-                          email = Some(testEmail),
-                          identityVerified = true,
-                          isMigratable = testIsMigratable,
-                          isDirectDebit = false
-                        )
-
-                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                      await(res) shouldBe Right(
-                        SignUpRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = SoleTrader(testNino),
-                          signUpEmail = Some(verifiedEmail),
-                          transactionEmail = verifiedEmail,
-                          isDelegated = false,
-                          isMigratable = testIsMigratable,
-                          contactPreference = None
-                        )
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
-          "there is not a identity verified flag" should {
-            "return RequestNotAuthorised" in {
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(SoleTrader(testNino)),
-                  ninoSource = Some(UserEntered),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Left(RequestNotAuthorised)
             }
           }
         }
