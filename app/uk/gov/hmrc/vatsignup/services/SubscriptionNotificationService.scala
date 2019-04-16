@@ -23,17 +23,20 @@ import play.api.Logger
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.connectors.EmailConnector
+import uk.gov.hmrc.vatsignup.connectors.{EmailConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
+import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated
+
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailRequestRepository,
                                                 emailConnector: EmailConnector,
+                                                enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                                 appConfig: AppConfig
                                                )(implicit ec: ExecutionContext) {
   def sendEmailNotification(vatNumber: String,
@@ -70,9 +73,17 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
           _ => EmailServiceFailure,
           _ => NotificationSent
         )
-        case _ =>
-          Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
-          EitherT.rightT(TaxEnrolmentFailure)
+        case _ => EitherT[Future, NotificationFailure, NotificationSuccess](
+          enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
+            case Right(EnrolmentAlreadyAllocated) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None).map {
+              case Right(_) => Right(NotificationSent)
+              case Left(_) => Left(EmailServiceFailure)
+            }
+            case _ =>
+              Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
+              Future.successful(Right(TaxEnrolmentFailure))
+          }
+        )
       }
     }
   }
