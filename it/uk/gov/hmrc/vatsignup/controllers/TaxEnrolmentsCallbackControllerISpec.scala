@@ -20,7 +20,7 @@ import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailStub
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EmailStub, EnrolmentStoreProxyStub}
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
@@ -42,27 +42,54 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
         )
       }
 
-      "callback is unsuccessful" should {
-        "return no Email" in {
-          await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
+      "callback is unsuccessful" when {
+        "EnrolmentStoreProxy returns OK (200)" should {
+          "Send Email is successful" should {
+            "return NO_CONTENT (204) with the status" in {
+              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-          val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
-          res should have(
-            httpStatus(NO_CONTENT)
-          )
+              EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
+              EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(ACCEPTED)
+
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
+
+              res should have(
+                httpStatus(NO_CONTENT)
+              )
+            }
+          }
+        }
+      }
+
+      "callback is unsuccessful" when {
+        "EnrolmentStoreProxy returns NO_CONTENT (204)" should {
+          "return no Email" in {
+            await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
+
+            EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
+
+            val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
+            res should have(
+              httpStatus(NO_CONTENT)
+            )
+          }
         }
       }
 
       "callback is unsuccessful with EnrolmentError" should {
-        "return no Email" in {
-          await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
+        "EnrolmentStoreProxy returns an unsuccessful status" should {
+          "return no Email" in {
+            await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-          val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
-            Json.obj("state" -> "EnrolmentError")
-          )
-          res should have(
-            httpStatus(NO_CONTENT)
-          )
+            EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(SERVICE_UNAVAILABLE)
+
+            val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
+              Json.obj("state" -> "EnrolmentError")
+            )
+            res should have(
+              httpStatus(NO_CONTENT)
+            )
+          }
         }
       }
     }

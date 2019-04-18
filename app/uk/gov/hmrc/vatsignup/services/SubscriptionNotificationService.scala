@@ -73,8 +73,8 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
           _ => EmailServiceFailure,
           _ => NotificationSent
         )
-        case _ => EitherT[Future, NotificationFailure, NotificationSuccess](
-          enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
+        case _ =>
+          val result = enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
             case Right(EnrolmentAlreadyAllocated) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None).map {
               case Right(_) => Right(NotificationSent)
               case Left(_) => Left(EmailServiceFailure)
@@ -83,7 +83,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
               Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
               Future.successful(Right(TaxEnrolmentFailure))
           }
-        )
+          EitherT[Future, NotificationFailure, NotificationSuccess](result)
       }
     }
   }
