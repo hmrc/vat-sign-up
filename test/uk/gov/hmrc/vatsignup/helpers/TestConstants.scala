@@ -160,6 +160,21 @@ object TestConstants {
     )
   )
 
+  val testFilingDateConfig: Map[Stagger, Set[DateRange]] = Map(
+    Stagger1 -> Set(
+      DateRange(LocalDate.of(2018, 10, 18), LocalDate.of(2018, 11, 13)),
+      DateRange(LocalDate.of(2019, 1, 18), LocalDate.of(2019, 2, 13))
+    ),
+    Stagger2 -> Set(
+      DateRange(LocalDate.of(2018, 11, 17), LocalDate.of(2018, 12, 13)),
+      DateRange(LocalDate.of(2019, 2, 15), LocalDate.of(2019, 3, 13))
+    ),
+    Stagger3 -> Set(
+      DateRange(LocalDate.of(2018, 12, 13), LocalDate.of(2019, 1, 13)),
+      DateRange(LocalDate.of(2019, 3, 16), LocalDate.of(2019, 4, 11))
+    )
+  )
+
   val testMigratableDate: LocalDate = LocalDate.now()
   val testMigratableDates: MigratableDates = MigratableDates(Some(testMigratableDate), Some(testMigratableDate))
 

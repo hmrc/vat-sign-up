@@ -31,6 +31,8 @@ object ControlListAuditing {
 
   val directDebitMigrationRestrictionMessage = "Sign up restricted by Direct Debit migration timeframe"
 
+  val filingDateMigrationRestrictionMessage = "Sign up restricted by Filing Date migration timeframe"
+
   case class ControlListAuditModel(vatNumber: String,
                                    isSuccess: Boolean,
                                    failureReasons: Seq[String] = Nil,
@@ -77,6 +79,9 @@ object ControlListAuditing {
 
     def directDebitMigrationRestriction(vatNumber: String): ControlListAuditModel = {
       ControlListAuditModel(vatNumber, isSuccess = false, failureReasons = Seq(directDebitMigrationRestrictionMessage))
+    }
+    def filingDateMigrationRestriction(vatNumber: String): ControlListAuditModel = {
+      ControlListAuditModel(vatNumber, isSuccess = false, failureReasons = Seq(filingDateMigrationRestrictionMessage))
     }
 
     def fromEligibilityState(vatNumber: String, controlListEligibility: ControlListInformation.Ineligible): ControlListAuditModel = {
