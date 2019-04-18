@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.models.{MigratableDates, NonMTDfB}
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 import MigratableDates._
 
-class StoreVatNumberControllerDirectDebitsISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
+class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
   val testDate: LocalDate = LocalDate.of(2018, 10, 18)
 
   override lazy val currentDateProvider:CurrentDateProvider = new CurrentDateProvider() {
@@ -53,6 +53,26 @@ class StoreVatNumberControllerDirectDebitsISpec extends ComponentSpecBase with C
         res should have(
           httpStatus(UNPROCESSABLE_ENTITY),
           jsonBodyAs(MigratableDates(Some(nonRestrictedPeriodStart), Some(nonRestrictedPeriodEnd)))
+        )
+      }
+    }
+    "the user is attempting to sign up in a restricted period close to the filing dates" should {
+      "return OK as there are no filing dates in the config" in {
+      // TODO: "return UNPROCESSABLE_ENTITY" when the filing dates are available
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+        stubGetKnownFactsAndControlListInformation33(
+          testVatNumber,
+          testPostCode,
+          testDateOfRegistration
+        )
+
+        val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
+
+        res should have(
+          httpStatus(OK)
+          //TODO should have jsonBody as above for the filing dates
         )
       }
     }

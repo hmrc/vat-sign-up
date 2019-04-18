@@ -126,8 +126,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
       case _ => throw new Exception(s"Missing migratability configuration key: ${param.configKey}")
     }
 
-  def loadDirectDebitConfig: Map[Stagger, Set[DateRange]] =
-    loadConfigFromEnvFirst("dd-config") match {
+  private def loadDatesConfig(configKey: String): Map[Stagger, Set[DateRange]] =
+    loadConfigFromEnvFirst(configKey) match {
       case Some(jsonConfig) =>
         val config = Json.parse(jsonConfig.replaceAll("[\n\r]", ""))
         val stagger1Dates = (config \ "Stagger1").validate[Set[DateRange]].asOpt
@@ -138,7 +138,12 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
           Stagger2 -> stagger2Dates,
           Stagger3 -> stagger3Dates
         ).collect { case (key, Some(value)) => (key, value) }
-      case _ => throw new Exception("Missing migratability configuration key: dd-config")
+      case _ => throw new Exception(s"Missing migratability configuration key: $configKey")
     }
+
+  def loadFilingDateConfig: Map[Stagger, Set[DateRange]] = loadDatesConfig("filing-config")
+
+  def loadDirectDebitConfig: Map[Stagger, Set[DateRange]] = loadDatesConfig("dd-config")
+
 
 }

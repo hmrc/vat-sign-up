@@ -17,42 +17,46 @@
 package uk.gov.hmrc.vatsignup.services
 
 import cats.data._
+import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
-import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, MigratableDates, VatKnownFacts}
-import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, NonStandardTaxPeriod, OverseasTrader}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
+import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, OverseasTrader, Stagger}
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
+import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, MigratableDates, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
-import cats.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ControlListEligibilityService @Inject()(knownFactsAndControlListInformationConnector: KnownFactsAndControlListInformationConnector,
                                               eligibilityConfig: EligibilityConfig,
-                                              directDebitMigrationCheckService: DirectDebitMigrationCheckService,
-                                              auditService: AuditService)(implicit ec: ExecutionContext) {
+                                              migrationCheckService: MigrationCheckService,
+                                              auditService: AuditService
+                                             )(implicit ec: ExecutionContext) {
   def getEligibilityStatus(vatNumber: String
                           )(implicit hc: HeaderCarrier, request: Request[_]): Future[Eligibility] = {
     for {
       knownFactsAndControlListInformation <- getKnownFactsAndControlListInformation(vatNumber)
       controlListInformation = knownFactsAndControlListInformation.controlListInformation
       migratableStatus <- checkControlListEligibility(vatNumber, controlListInformation)
-      _ <- checkDirectDebitMigrationRestrictions(vatNumber, controlListInformation, migratableStatus)
+      isMigratable = migratableStatus == Migratable
+      isDirectDebit = controlListInformation.controlList contains DirectDebit
+      stagger = controlListInformation.stagger
+      _ <- checkMigrationRestrictions(vatNumber, stagger, isDirectDebit = isDirectDebit, isMigratable = isMigratable)
     } yield {
       auditService.audit(ControlListAuditModel.fromEligibilityState(vatNumber, migratableStatus))
 
       EligibilitySuccess(
         vatKnownFacts = knownFactsAndControlListInformation.vatKnownFacts,
-        isMigratable = migratableStatus == Migratable,
+        isMigratable = isMigratable,
         isOverseas = controlListInformation.controlList contains OverseasTrader,
-        isDirectDebit = controlListInformation.controlList contains DirectDebit
+        isDirectDebit = isDirectDebit
       )
     }
   }.value
@@ -82,25 +86,15 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
         IneligibleVatNumber(MigratableDates.empty)
     }
 
-  private def checkDirectDebitMigrationRestrictions(vatNumber: String,
-                                                    controlListInformation: ControlListInformation,
-                                                    migratableStatus: ControlListInformation.Eligible
-                                                   )(implicit hc: HeaderCarrier,
-                                                     request: Request[_]): EitherT[Future, EligibilityFailure, DirectDebitMigrationCheckService.Eligible.type] = {
-    val ControlListInformation(parameters, stagger, _) = controlListInformation
-
-    migratableStatus match {
-      case Migratable if (parameters contains DirectDebit) && stagger != NonStandardTaxPeriod =>
-        EitherT.fromEither[Future](directDebitMigrationCheckService.checkMigrationDate(stagger)) leftMap {
-          migratableDates =>
-            auditService.audit(ControlListAuditModel.directDebitMigrationRestriction(vatNumber))
-
-            IneligibleVatNumber(migratableDates)
-        }
-      case _ => EitherT.rightT(DirectDebitMigrationCheckService.Eligible)
-
+  private def checkMigrationRestrictions(vatNumber: String,
+                                         stagger: Stagger,
+                                         isDirectDebit: Boolean,
+                                         isMigratable: Boolean
+                                        )(implicit hc: HeaderCarrier,
+                                          request: Request[_]): EitherT[Future, EligibilityFailure, MigrationCheckService.Eligible.type] =
+    EitherT.fromEither[Future](migrationCheckService.checkMigrationRestrictions(vatNumber, stagger, isDirectDebit, isMigratable)) leftMap {
+      migratableDates => IneligibleVatNumber(migratableDates)
     }
-  }
 }
 
 object ControlListEligibilityService {

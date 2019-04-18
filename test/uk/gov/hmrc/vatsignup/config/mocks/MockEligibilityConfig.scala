@@ -43,7 +43,10 @@ trait MockEligibilityConfig extends MockitoSugar with BeforeAndAfterEach {
   def mockNonMigratableParameters(nonMigratableParameters: Set[ControlListParameter]): Unit =
     when(mockEligibilityConfig.nonMigratableParameters) thenReturn nonMigratableParameters
 
-  def mockStaggerParameters(config: Map[Stagger, Set[DateRange]] = TestConstants.testDDConfig): Unit =
-    when(mockEligibilityConfig.staggerParameters) thenReturn config
+  def mockDirectDebitStaggerParameters(config: Map[Stagger, Set[DateRange]] = TestConstants.testDDConfig): Unit =
+    when(mockEligibilityConfig.directDebitStaggerParameters) thenReturn config
+
+  def mockFilingDateStaggerParameters(config: Map[Stagger, Set[DateRange]] = TestConstants.testFilingDateConfig): Unit =
+    when(mockEligibilityConfig.filingDateStaggerParameters) thenReturn config
 
 }

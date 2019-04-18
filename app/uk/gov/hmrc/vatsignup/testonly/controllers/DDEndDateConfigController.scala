@@ -31,7 +31,7 @@ class DDEndDateConfigController @Inject()(eligibilityConfig: EligibilityConfig) 
   import DDEndDateConfigController._
 
   def getConfig = Action {
-    request => Ok(Json.toJson(eligibilityConfig.staggerParameters))
+    request => Ok(Json.toJson(eligibilityConfig.directDebitStaggerParameters))
   }
 
 }

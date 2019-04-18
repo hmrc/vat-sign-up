@@ -31,6 +31,8 @@ class EligibilityConfig @Inject()(appConfig: AppConfig) {
   lazy val nonMigratableParameters: Set[ControlListParameter] =
     ControlListParameter.getParameterMap.values.filterNot(appConfig.loadIsMigratableConfig).toSet
 
-  lazy val staggerParameters: Map[Stagger, Set[DateRange]] = appConfig.loadDirectDebitConfig
+  lazy val directDebitStaggerParameters: Map[Stagger, Set[DateRange]] = appConfig.loadDirectDebitConfig
+
+  lazy val filingDateStaggerParameters: Map[Stagger, Set[DateRange]] = appConfig.loadFilingDateConfig
 
 }
