@@ -62,7 +62,7 @@ class StoreNinoServiceSpec
     nino = testNino
   )
 
-  "storeNino" when {
+  "storeNinoWithMatching" when {
     "Nino source is user entered" when {
       "user is matched" should {
         "store the record and return StoreNinoSuccess" in {
@@ -70,7 +70,7 @@ class StoreNinoServiceSpec
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
           mockUpsertNinoSource(testVatNumber, UserEntered)(Future.successful(mock[UpdateWriteResult]))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, agentUser, UserEntered)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, agentUser, UserEntered)
           await(res) shouldBe Right(StoreNinoSuccess)
 
           verifyAudit(UserMatchingAuditModel(testUserDetails, Some(TestConstants.testAgentReferenceNumber), isSuccess = true))
@@ -81,7 +81,7 @@ class StoreNinoServiceSpec
         "return NoMatchFoundFailure" in {
           mockMatchUserNotMatched(testUserDetails)
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, UserEntered)
           await(res) shouldBe Left(NoMatchFoundFailure)
 
           verifyAudit(UserMatchingAuditModel(testUserDetails, None, isSuccess = false))
@@ -92,7 +92,7 @@ class StoreNinoServiceSpec
         "return AuthenticatorFailure" in {
           mockMatchUserFailure(testUserDetails)
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, UserEntered)
           await(res) shouldBe Left(AuthenticatorFailure)
         }
       }
@@ -102,7 +102,7 @@ class StoreNinoServiceSpec
           mockMatchUserMatched(testUserDetails)
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, UserEntered)
           await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
         }
       }
@@ -112,7 +112,7 @@ class StoreNinoServiceSpec
           mockMatchUserMatched(testUserDetails)
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, UserEntered)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, UserEntered)
           await(res) shouldBe Left(NinoDatabaseFailure)
         }
       }
@@ -123,14 +123,14 @@ class StoreNinoServiceSpec
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
         mockUpsertNinoSource(testVatNumber, IRSA)(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
+        val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, IRSA)
         await(res) shouldBe Right(StoreNinoSuccess)
       }
       "the VAT number is not in mongo" should {
         "return NinoDatabaseFailureNoVATNumber" in {
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, IRSA)
           await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
         }
       }
@@ -139,7 +139,7 @@ class StoreNinoServiceSpec
         "return NinoDatabaseFailure" in {
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, IRSA)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, IRSA)
           await(res) shouldBe Left(NinoDatabaseFailure)
         }
       }
@@ -150,14 +150,14 @@ class StoreNinoServiceSpec
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
         mockUpsertNinoSource(testVatNumber, AuthProfile)(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, AuthProfile)
+        val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, AuthProfile)
         await(res) shouldBe Right(StoreNinoSuccess)
       }
       "the VAT number is not in mongo" should {
         "return NinoDatabaseFailureNoVATNumber" in {
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, AuthProfile)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, AuthProfile)
           await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
         }
       }
@@ -166,9 +166,56 @@ class StoreNinoServiceSpec
         "return NinoDatabaseFailure" in {
           mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
-          val res = TestStoreNinoService.storeNino(testVatNumber, testUserDetails, principalUser, AuthProfile)
+          val res = TestStoreNinoService.storeNinoWithMatching(testVatNumber, testUserDetails, principalUser, AuthProfile)
           await(res) shouldBe Left(NinoDatabaseFailure)
         }
+      }
+    }
+  }
+  "storeNinoWithoutMatching" should {
+    "return StoreNinoSuccess" when {
+      "nino source is Auth Profile" in {
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertNinoSource(testVatNumber, AuthProfile)(Future.successful(mock[UpdateWriteResult]))
+
+        val res = TestStoreNinoService.storeNinoWithoutMatching(testVatNumber, testNino, AuthProfile)
+
+        await(res) shouldBe Right(StoreNinoSuccess)
+      }
+
+      "nino source is IRSA" in {
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertNinoSource(testVatNumber, IRSA)(Future.successful(mock[UpdateWriteResult]))
+
+        val res = TestStoreNinoService.storeNinoWithoutMatching(testVatNumber, testNino, IRSA)
+
+        await(res) shouldBe Right(StoreNinoSuccess)
+      }
+
+      "nino source is User Entered" in {
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
+        mockUpsertNinoSource(testVatNumber, UserEntered)(Future.successful(mock[UpdateWriteResult]))
+
+        val res = TestStoreNinoService.storeNinoWithoutMatching(testVatNumber, testNino, UserEntered)
+
+        await(res) shouldBe Right(StoreNinoSuccess)
+      }
+    }
+
+    "return NinoDatabaseFailureNoVATNumber" when {
+      "vat number is not found in mongo" in {
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
+
+        val res = TestStoreNinoService.storeNinoWithoutMatching(testVatNumber, testNino, AuthProfile)
+        await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
+      }
+    }
+    "return NinoDatabaseFailure" when {
+      "calls to mongo fail" in {
+        mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
+
+        val res = TestStoreNinoService.storeNinoWithoutMatching(testVatNumber, testNino, AuthProfile)
+        await(res) shouldBe Left(NinoDatabaseFailure)
       }
     }
   }

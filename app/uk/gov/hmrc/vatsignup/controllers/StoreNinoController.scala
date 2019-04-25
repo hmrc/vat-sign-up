@@ -45,7 +45,7 @@ class StoreNinoController @Inject()(val authConnector: AuthConnector,
           enrolments =>
             (req.body.validate[UserDetailsModel], (req.body \ ninoSourceFrontEndKey).validate[NinoSource]) match {
               case (JsSuccess(userDetails, _), JsSuccess(ninoSource, _)) =>
-                storeNinoService.storeNino(vatNumber, userDetails, enrolments, ninoSource) map {
+                storeNinoService.storeNinoWithMatching(vatNumber, userDetails, enrolments, ninoSource) map {
                   case Right(StoreNinoSuccess) => NoContent
                   case Left(AuthenticatorFailure) => InternalServerError("calls to authenticator failed")
                   case Left(NoMatchFoundFailure) => Forbidden
