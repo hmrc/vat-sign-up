@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,93 +16,80 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import java.time.LocalDate
-import java.util.UUID
-
 import play.api.http.Status._
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.helpers._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthenticatorStub._
-import uk.gov.hmrc.vatsignup.models.NinoSource._
-import uk.gov.hmrc.vatsignup.models.{AuthProfile, IRSA, UserDetailsModel}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse}
+import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestSubmissionRequestRepository}
+import uk.gov.hmrc.vatsignup.models.{AuthProfile, IRSA, NinoSource, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+
 class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
-  "PUT /subscription-request/:vrn/nino" when {
-    "nino source is not supplied" should {
-      val userDetails: UserDetailsModel = UserDetailsModel(
-        UUID.randomUUID().toString,
-        UUID.randomUUID().toString,
-        LocalDate.now(),
-        testNino
-      )
+  private def requestBody(ninoSource: NinoSource) = Json.obj("nino" -> testNino, "ninoSource" -> ninoSource)
 
-      lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> IRSAKey))
-
-      "if vat number exists return no content when the nino has been stored successfully" in {
+  "PUT /subscription-request/:vrn/national-insurance-number" should {
+    "return NoContent" when {
+      "Nino is stored successfully in Mongo when Nino Source is User Entered" in {
         stubAuth(OK, successfulAuthResponse())
 
         await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
 
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/national-insurance-number")(requestBody(UserEntered))
 
         res should have(
           httpStatus(NO_CONTENT),
           emptyBody
         )
+        await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(UserEntered)
 
+      }
+      "Nino is stored successfully in Mongo when Nino Source is IRSA" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/national-insurance-number")(requestBody(IRSA))
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
         await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(IRSA)
+
       }
-
-      "the nino source is UserEntered" should {
-        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> UserEnteredKey))
-
-        "if the user is not matched in CID then return FORBIDDEN" in {
-          stubAuth(OK, successfulAuthResponse())
-          stubMatchUser(userDetails)(matched = false)
-
-          val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
-
-          res should have(
-            httpStatus(FORBIDDEN)
-          )
-        }
-      }
-
-      "the nino source is auth profile return no content when the nino has been stored successfully" in {
-        lazy val requestBody: JsValue = Json.toJson(userDetails).as[JsObject].deepMerge(Json.obj(ninoSourceFrontEndKey -> AuthProfileKey))
-        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
-
+      "Nino is stored successfully in Mongo when Nino Source is Auth Profile" in {
         stubAuth(OK, successfulAuthResponse())
 
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/national-insurance-number")(requestBody(AuthProfile))
 
         res should have(
           httpStatus(NO_CONTENT),
           emptyBody
         )
-
         await(submissionRequestRepo.findById(testVatNumber)).get.ninoSource shouldBe Some(AuthProfile)
-      }
 
-      "if the vat number does not already exist then return NOT_FOUND" in {
+      }
+    }
+    "return Not Found" when {
+      "The VAT number is not found in Mongo" in {
         stubAuth(OK, successfulAuthResponse())
 
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(requestBody)
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/national-insurance-number")(requestBody(UserEntered))
 
         res should have(
           httpStatus(NOT_FOUND)
         )
       }
-
-      "return BAD_REQUEST when the json is invalid" in {
+    }
+    "return Bad Request" when {
+      "Empty body or Invalid Json" in {
         stubAuth(OK, successfulAuthResponse())
-
-        val res = put(s"/subscription-request/vat-number/$testVatNumber/nino")(Json.obj())
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/national-insurance-number")(Json.obj())
 
         res should have(
           httpStatus(BAD_REQUEST)
@@ -110,5 +97,4 @@ class StoreNinoControllerISpec extends ComponentSpecBase with CustomMatchers wit
       }
     }
   }
-
 }
