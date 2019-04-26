@@ -39,12 +39,12 @@ trait MockStoreNinoService extends MockitoSugar with BeforeAndAfterEach {
     reset(mockStoreNinoService)
   }
 
-  def mockStoreNino(vatNumber: String,
+  def mockStoreNinoWithMatching(vatNumber: String,
                     userDetails: UserDetailsModel,
                     enrolments: Enrolments,
                     ninoSource: NinoSource
                    )(response: Future[Either[StoreNinoFailure, StoreNinoSuccess.type]]): Unit = {
-    when(mockStoreNinoService.storeNino(
+    when(mockStoreNinoService.storeNinoWithMatching(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(userDetails),
       ArgumentMatchers.any[Enrolments],

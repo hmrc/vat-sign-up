@@ -37,8 +37,8 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
 
   import StoreNinoService._
 
-  def storeNino(vatNumber: String, userDetailsModel: UserDetailsModel, enrolments: Enrolments, ninoSource: NinoSource)
-               (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreNinoFailure, StoreNinoSuccess.type]] = {
+  def storeNinoWithMatching(vatNumber: String, userDetailsModel: UserDetailsModel, enrolments: Enrolments, ninoSource: NinoSource)
+                           (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreNinoFailure, StoreNinoSuccess.type]] = {
 
     val optAgentReferenceNumber: Option[String] =
       enrolments getEnrolment AgentEnrolmentKey flatMap {
@@ -55,6 +55,11 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
           case Left(failure) => Future.successful(Left(failure))
         }
     }
+  }
+
+  def storeNinoWithoutMatching(vatNumber: String, nino: String, ninoSource: NinoSource)
+                              (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[MongoFailure, StoreNinoService.StoreNinoSuccess.type]] = {
+    storeNinoToMongo(vatNumber, nino, ninoSource)
   }
 
   private def matchUser(userDetailsModel: UserDetailsModel, agentReferenceNumber: Option[String])
