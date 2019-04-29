@@ -33,7 +33,7 @@ import MigratableDates._
 class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
   val testDate: LocalDate = LocalDate.of(2018, 10, 18)
 
-  override lazy val currentDateProvider:CurrentDateProvider = new CurrentDateProvider() {
+  override lazy val currentDateProvider: CurrentDateProvider = new CurrentDateProvider() {
     override def getCurrentDate(): LocalDate = testDate
   }
 
@@ -57,8 +57,7 @@ class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBa
       }
     }
     "the user is attempting to sign up in a restricted period close to the filing dates" should {
-      "return OK as there are no filing dates in the config" in {
-      // TODO: "return UNPROCESSABLE_ENTITY" when the filing dates are available
+      "return UNPROCESSABLE_ENTITY when the filing dates are available in the config" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
@@ -68,11 +67,13 @@ class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBa
           testDateOfRegistration
         )
 
+        val nonRestrictedPeriodStart = LocalDate.of(2018, 11, 14)
+
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 
         res should have(
-          httpStatus(OK)
-          //TODO should have jsonBody as above for the filing dates
+          httpStatus(UNPROCESSABLE_ENTITY),
+          jsonBodyAs(MigratableDates(Some(nonRestrictedPeriodStart), None))
         )
       }
     }
