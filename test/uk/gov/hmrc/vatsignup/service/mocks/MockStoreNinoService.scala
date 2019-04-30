@@ -18,6 +18,7 @@ package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
+import org.mockito.internal.verification.argumentmatching.ArgumentMatchingTool
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import play.api.mvc.Request
@@ -52,5 +53,15 @@ trait MockStoreNinoService extends MockitoSugar with BeforeAndAfterEach {
     )(ArgumentMatchers.any[HeaderCarrier],
       ArgumentMatchers.any[Request[_]])) thenReturn response
   }
-
+  def mockStoreNinoWithoutMatching(vatNumber: String,
+                                  nino: String,
+                                  ninoSource: NinoSource
+                                 )(response:  Future[Either[MongoFailure, StoreNinoSuccess.type]]): Unit = {
+    when(mockStoreNinoService.storeNinoWithoutMatching(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(nino),
+      ArgumentMatchers.eq(ninoSource)
+    )(ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]])) thenReturn response
+  }
 }
