@@ -18,8 +18,9 @@ package uk.gov.hmrc.vatsignup.utils
 
 import java.time.LocalDate
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 
+@Singleton
 class CurrentDateProvider @Inject()() {
   def getCurrentDate(): LocalDate = LocalDate.now()
 }

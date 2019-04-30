@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.vatsignup.models.ContactPreference
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StoreContactPreferenceService._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@Singleton
 class StoreContactPreferenceService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository
                                              )(implicit ec: ExecutionContext) {
   def storeContactPreference(vatNumber: String,

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.testonly.controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
@@ -24,6 +24,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitch.switches
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitchSetting, FeatureSwitching}
 
+@Singleton
 class FeatureSwitchController @Inject()(val messagesApi: MessagesApi)
   extends BaseController with FeatureSwitching {
 
