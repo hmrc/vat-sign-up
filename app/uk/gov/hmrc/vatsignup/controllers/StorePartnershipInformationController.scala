@@ -23,6 +23,7 @@ import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, SkipPartnershipKnownFactsMismatch}
 import uk.gov.hmrc.vatsignup.controllers.StorePartnershipInformationController._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
@@ -34,7 +35,7 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class StorePartnershipInformationController @Inject()(val authConnector: AuthConnector,
                                                       storePartnershipUtrService: StorePartnershipInformationService
-                                                     )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                                     )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions with FeatureSwitching {
 
   def storePartnershipInformation(vatNumber: String): Action[StorePartnershipRequest] =
     Action.async(parse.json[StorePartnershipRequest](StorePartnershipRequest.reader)) { implicit request =>
@@ -54,6 +55,7 @@ class StorePartnershipInformationController @Inject()(val authConnector: AuthCon
             case (None, Some(_)) =>
               storePartnershipUtrService.storePartnershipInformation(vatNumber, body.partnership, body.postCode) map {
                 case Right(_) => NoContent
+                case Left(KnownFactsMismatch | InsufficientData) if isEnabled(SkipPartnershipKnownFactsMismatch) => NoContent
                 case Left(KnownFactsMismatch) => Forbidden
                 case Left(InsufficientData) => throw new InternalServerException("No postcodes returned for the partnership")
                 case Left(InvalidSautr) => PreconditionFailed(Json.obj("statusCode" -> PRECONDITION_FAILED, "message" -> invalidSautrKey))

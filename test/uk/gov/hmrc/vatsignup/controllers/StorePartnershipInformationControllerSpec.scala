@@ -18,12 +18,14 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import org.scalatest.BeforeAndAfterEach
 import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.mvc.{Request, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, SkipPartnershipKnownFactsMismatch}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.StorePartnershipRequest
@@ -33,7 +35,7 @@ import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthConnector with MockStorePartnershipInformationService {
+class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthConnector with MockStorePartnershipInformationService with FeatureSwitching with BeforeAndAfterEach {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -42,6 +44,11 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
     mockAuthConnector,
     mockStorePartnershipInformationService
   )
+
+  override def beforeEach() {
+    super.beforeEach()
+    FeatureSwitch.switches foreach disable
+  }
 
   "storePartnershipInformation" when {
 
@@ -159,31 +166,67 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             status(result) shouldBe NO_CONTENT
           }
         }
-        "store partnership information returns KnownFactsMismatch" should {
-          "return FORBIDDEN" in {
-            mockAuthRetrievePrincipalEnrolment()
-            mockStorePartnershipInformation(
-              testVatNumber,
-              testGeneralPartnership,
-              Some(testPostCode)
-            )(Future.successful(Left(KnownFactsMismatch)))
+        "store partnership information returns KnownFactsMismatch" when {
+          s"the $SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
+            "return FORBIDDEN" in {
+              mockAuthRetrievePrincipalEnrolment()
+              mockStorePartnershipInformation(
+                testVatNumber,
+                testGeneralPartnership,
+                Some(testPostCode)
+              )(Future.successful(Left(KnownFactsMismatch)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+              val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
 
-            status(result) shouldBe FORBIDDEN
+              status(result) shouldBe FORBIDDEN
+            }
+          }
+          s"the $SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
+            "return NO_CONTENT" in {
+              enable(SkipPartnershipKnownFactsMismatch)
+
+              mockAuthRetrievePrincipalEnrolment()
+              mockStorePartnershipInformation(
+                testVatNumber,
+                testGeneralPartnership,
+                Some(testPostCode)
+              )(Future.successful(Left(KnownFactsMismatch)))
+
+              val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+
+              status(result) shouldBe NO_CONTENT
+            }
           }
         }
         "store partnership information returns InsufficientData" should {
-          "throws Internal server exception" in {
-            mockAuthRetrievePrincipalEnrolment()
-            mockStorePartnershipInformation(
-              testVatNumber,
-              testGeneralPartnership,
-              Some(testPostCode)
-            )(Future.successful(Left(InsufficientData)))
+          s"the $SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
+            "throws Internal server exception" in {
+              mockAuthRetrievePrincipalEnrolment()
+              mockStorePartnershipInformation(
+                testVatNumber,
+                testGeneralPartnership,
+                Some(testPostCode)
+              )(Future.successful(Left(InsufficientData)))
 
-            intercept[InternalServerException] {
-              await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+              intercept[InternalServerException] {
+                await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+              }
+            }
+          }
+          s"the $SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
+            "throws Internal server exception" in {
+              enable(SkipPartnershipKnownFactsMismatch)
+
+              mockAuthRetrievePrincipalEnrolment()
+              mockStorePartnershipInformation(
+                testVatNumber,
+                testGeneralPartnership,
+                Some(testPostCode)
+              )(Future.successful(Left(InsufficientData)))
+
+              val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+
+              status(result) shouldBe NO_CONTENT
             }
           }
         }
