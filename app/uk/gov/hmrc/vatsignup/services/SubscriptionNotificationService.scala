@@ -75,7 +75,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
         )
         case _ =>
           val result = enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
-            case Right(EnrolmentAlreadyAllocated) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None).map {
+            case Right(EnrolmentAlreadyAllocated(_)) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None).map {
               case Right(_) => Right(NotificationSent)
               case Left(_) => Left(EmailServiceFailure)
             }

@@ -25,6 +25,7 @@ object Constants {
   val PartnershipIrsaEnrolmentKey: String = "IR-SA-PART-ORG"
   val PartnershipIrsaReferenceNumberKey: String = "UTR"
 
+
   object Des {
     val IdTypeKey = "idType"
     val IdValueKey = "idValue"
@@ -36,6 +37,9 @@ object Constants {
 
     val RegistrationRequestKey = "registrationRequest"
     val IdentificationKey = "identification"
+
+    val principalGroupKey = "principalGroupIds"
+    val delegatedGroupKey = "delegatedGroupIds"
   }
 
   object TaxEnrolments {

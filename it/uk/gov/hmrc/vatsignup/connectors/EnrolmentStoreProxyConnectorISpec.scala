@@ -21,6 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub.testGroupID1
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 
 
@@ -32,12 +33,12 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
   "The enrolment is already allocated" when {
     "EnrolmentStoreProxy ES1 returns an OK and Json Response" should {
-      "return a success" in {
+      "return a group ID" in {
         EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
 
         val res = connector.getAllocatedEnrolments(testVatNumber)
 
-        await(res) shouldBe Right(EnrolmentAlreadyAllocated)
+        await(res) shouldBe Right(EnrolmentAlreadyAllocated(testGroupID1))
       }
     }
   }

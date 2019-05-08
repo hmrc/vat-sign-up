@@ -50,7 +50,7 @@ class CheckEnrolmentAllocationServiceSpec extends UnitSpec
     }
     "EnrolmentStoreProxy returns EnrolmentAlreadyAllocated" should {
       "return EnrolmentAlreadyAllocated" in {
-        mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated)))
+        mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(""))))
 
         val res = TestCheckEnrolmentAllocationService.getEnrolmentAllocationStatus(testVatNumber)
 

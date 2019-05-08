@@ -18,19 +18,22 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.vatsignup.config.Constants.Des.{principalGroupKey, delegatedGroupKey}
 
 object EnrolmentStoreProxyStub extends WireMockMethods {
+  val testGroupID1 = "ABCEDEFGI1234567"
+  val testGroupID2 = "ABCEDEFGI1234568"
 
   val jsonResponseBody: JsValue = Json.parse(input =
-    """
+    s"""
       {
-        "principalGroupIds": [
-          "ABCEDEFGI1234567",
-          "ABCEDEFGI1234568"
+        "$principalGroupKey": [
+          "$testGroupID1",
+          "$testGroupID2"
         ],
-        "delegatedGroupIds": [
-          "ABCEDEFGI1234567",
-          "ABCEDEFGI1234568"
+        "$delegatedGroupKey": [
+          "$testGroupID1",
+          "$testGroupID2"
         ]
       }
     """

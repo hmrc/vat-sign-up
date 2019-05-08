@@ -31,7 +31,7 @@ class CheckEnrolmentAllocationService @Inject()(enrolmentStoreProxyConnector: En
                                   (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
     enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber) map {
       case Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated) => Right(EnrolmentNotAllocated)
-      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated) => Left(EnrolmentAlreadyAllocated)
+      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(_)) => Left(EnrolmentAlreadyAllocated)
       case Left(EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyFailure(status)) => Left(UnexpectedEnrolmentStoreProxyFailure(status))
     }
   }
