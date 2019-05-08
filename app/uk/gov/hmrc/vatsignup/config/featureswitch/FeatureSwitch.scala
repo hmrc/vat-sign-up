@@ -46,22 +46,29 @@ object FeatureSwitch {
     }
 }
 
-object StubDESFeature extends FeatureSwitch {
+case object StubDESFeature extends FeatureSwitch {
   val displayName = s"Use stub for DES connection"
   val name = s"$prefix.stub-des"
 }
 
-object StubAgentServicesFeature extends FeatureSwitch {
+case object StubAgentServicesFeature extends FeatureSwitch {
   val displayName = s"Use stub for Agent Services connection"
   val name = s"$prefix.stub-agent-services"
 }
 
-object CaptureContactPreference extends FeatureSwitch {
+case object CaptureContactPreference extends FeatureSwitch {
   val displayName = s"Send contact preference to Sign up API"
   val name = s"$prefix.capture-contact-preference"
 }
 
-object AdditionalKnownFacts extends FeatureSwitch {
+case object AdditionalKnownFacts extends FeatureSwitch {
   val displayName: String = "Enable additional known facts check (Box 5 and filing month)"
   val name: String = s"$prefix.additional-known-facts"
 }
+
+case object SkipPartnershipKnownFactsMismatch extends FeatureSwitch {
+  val displayName: String = "Skip known facts mismatches for partnerships"
+  val name: String = s"$prefix.skip-partnership-kf-mismatch"
+}
+
+
