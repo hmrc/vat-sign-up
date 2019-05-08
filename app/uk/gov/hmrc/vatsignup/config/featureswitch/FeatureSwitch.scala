@@ -30,7 +30,8 @@ object FeatureSwitch {
     StubDESFeature,
     StubAgentServicesFeature,
     CaptureContactPreference,
-    AdditionalKnownFacts
+    AdditionalKnownFacts,
+    SkipPartnershipKnownFactsMismatch
   )
 
   def apply(str: String): FeatureSwitch =
