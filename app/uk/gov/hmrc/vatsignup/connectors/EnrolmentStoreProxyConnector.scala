@@ -23,6 +23,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
 
 import scala.concurrent.Future
 
@@ -33,5 +34,17 @@ class EnrolmentStoreProxyConnector @Inject()(http: HttpClient,
   def getAllocatedEnrolments(vatNumber: String)(implicit hc: HeaderCarrier): Future[EnrolmentStoreProxyResponse] = {
     http.GET[EnrolmentStoreProxyResponse](appConfig.getAllocatedEnrolmentUrl(vatNumber))
   }
+
+  def getUserIds(vatNumber: String)(implicit hc: HeaderCarrier): Future[QueryUsersResponse] = {
+    http.GET[QueryUsersResponse](
+      url = appConfig.queryUsersUrl(vatNumber),
+      queryParams = Seq(EnrolmentStoreProxyConnector.principalQueryKey))
+  }
+
+}
+
+object EnrolmentStoreProxyConnector {
+
+  val principalQueryKey: (String, String) = "type" -> "principal"
 
 }

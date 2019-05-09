@@ -21,7 +21,18 @@ import play.api.libs.json.{JsValue, Json}
 
 object EnrolmentStoreProxyStub extends WireMockMethods {
 
-  val jsonResponseBody: JsValue = Json.parse(input =
+  val ES0ResponseBody: JsValue = Json.parse(input =
+    """
+      {
+        "principalUserIds": [
+          "ABCEDEFGI1234567",
+          "ABCEDEFGI1234568"
+        ]
+      }
+    """
+  )
+
+  val ES1ResponseBody: JsValue = Json.parse(input =
     """
       {
         "principalGroupIds": [
@@ -36,9 +47,15 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
     """
   )
 
+  def stubGetUserIds(vatNumber: String)(status: Int): StubMapping = {
+    when(method = GET, uri = s"/enrolment-store-proxy/enrolment-store/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users\\?type=principal")
+      .thenReturn(status = status, body = ES0ResponseBody)
+    // Escaping the ? allows the regex url matching to work
+  }
+
   def stubGetAllocatedEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
     when(method = GET, uri = s"/enrolment-store-proxy/enrolment-store/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups")
-      .thenReturn(status = status, body = jsonResponseBody)
+      .thenReturn(status = status, body = ES1ResponseBody)
   }
 
 }
