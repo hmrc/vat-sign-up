@@ -38,8 +38,6 @@ object Constants {
     val RegistrationRequestKey = "registrationRequest"
     val IdentificationKey = "identification"
 
-    val principalGroupKey = "principalGroupIds"
-    val delegatedGroupKey = "delegatedGroupIds"
   }
 
   object TaxEnrolments {

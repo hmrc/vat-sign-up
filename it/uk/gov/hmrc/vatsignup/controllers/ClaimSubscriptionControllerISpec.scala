@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.controllers
 import play.api.http.Status._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse, vatDecEnrolment}
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
@@ -33,7 +33,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,
@@ -53,7 +53,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return Conflict" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
 
           val res = post(s"/claim-subscription/vat-number/$testVatNumber")(ClaimSubscriptionRequest(isFromBta = true))
 
@@ -68,7 +68,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,
@@ -94,7 +94,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
     "the enrolment is already allocated" should {
       "return Conflict" in {
         stubAuth(OK, successfulAuthResponse())
-        stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
+        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
 
         val res = post(s"/claim-subscription/vat-number/$testVatNumber")(
           ClaimSubscriptionRequest(

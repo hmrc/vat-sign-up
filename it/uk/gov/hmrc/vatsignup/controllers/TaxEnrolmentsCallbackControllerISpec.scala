@@ -48,7 +48,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
             "return NO_CONTENT (204) with the status" in {
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
+              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
               EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(ACCEPTED)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
@@ -66,7 +66,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
           "return no Email" in {
             await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-            EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
+            EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
             res should have(
@@ -81,7 +81,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
           "return no Email" in {
             await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-            EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(SERVICE_UNAVAILABLE)
+            EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(SERVICE_UNAVAILABLE)
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
               Json.obj("state" -> "EnrolmentError")

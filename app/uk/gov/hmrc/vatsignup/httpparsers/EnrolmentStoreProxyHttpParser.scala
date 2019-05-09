@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.httpparsers
 import play.api.http.Status._
 import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
-import uk.gov.hmrc.vatsignup.config.Constants.Des.principalGroupKey
+
 object EnrolmentStoreProxyHttpParser {
   type EnrolmentStoreProxyResponse = Either[EnrolmentStoreFailure, EnrolmentStoreProxySuccess]
 
@@ -28,13 +28,15 @@ object EnrolmentStoreProxyHttpParser {
       response.status match {
         case OK =>
           (response.json \ principalGroupKey \ 0).validate[String] match {
-              case JsSuccess(groupId, _) => Right(EnrolmentAlreadyAllocated(groupId))
-              case _ => Left(InvalidJsonResponse)
+            case JsSuccess(groupId, _) => Right(EnrolmentAlreadyAllocated(groupId))
+            case _ => Left(InvalidJsonResponse)
           }
         case NO_CONTENT => Right(EnrolmentNotAllocated)
         case status => Left(EnrolmentStoreProxyFailure(status))
       }
   }
+
+  val principalGroupKey = "principalGroupIds"
 
   sealed trait EnrolmentStoreProxySuccess
 

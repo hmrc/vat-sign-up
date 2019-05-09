@@ -45,4 +45,8 @@ object EnrolmentUtils {
     def isDelegated: Boolean = agentReferenceNumber.isDefined
   }
 
+  def mtdVatEnrolmentKey(vatNumber: String): String = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+  def legacyVatEnrolmentKey(vatNumber: String): String = s"HMCE-VATDEC-ORG~VATRegNo~$vatNumber"
+
 }
