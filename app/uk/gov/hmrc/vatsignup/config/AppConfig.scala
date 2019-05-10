@@ -103,6 +103,9 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   def getAllocatedEnrolmentUrl(enrolmentKey: String): String =
     s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/$enrolmentKey/groups"
 
+  def queryUsersUrl(vatNumber: String): String =
+    s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users"
+
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 
   def isDisabled(featureSwitch: FeatureSwitch): Boolean = !isEnabled(featureSwitch)

@@ -27,7 +27,7 @@ object EnrolmentStoreProxyHttpParser {
     override def read(method: String, url: String, response: HttpResponse): EnrolmentStoreProxyResponse =
       response.status match {
         case OK =>
-          (response.json \ principalGroupKey \ 0).validate[String] match {
+          (response.json \ principalGroupIdKey \ 0).validate[String] match {
             case JsSuccess(groupId, _) => Right(EnrolmentAlreadyAllocated(groupId))
             case _ => Left(InvalidJsonResponse)
           }
@@ -36,7 +36,7 @@ object EnrolmentStoreProxyHttpParser {
       }
   }
 
-  val principalGroupKey = "principalGroupIds"
+  val principalGroupIdKey = "principalGroupIds"
 
   sealed trait EnrolmentStoreProxySuccess
 

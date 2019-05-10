@@ -18,16 +18,16 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.principalGroupKey
+import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.principalGroupIdKey
+import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.principalUserIdKey
+import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.{testGroupID1, testGroupID2}
 
 object EnrolmentStoreProxyStub extends WireMockMethods {
-  val testGroupID1 = "ABCEDEFGI1234567"
-  val testGroupID2 = "ABCEDEFGI1234568"
 
-  val jsonResponseBody: JsValue = Json.parse(input =
+  def jsonResponseBody(idKey: String): JsValue = Json.parse(input =
     s"""
       {
-        "$principalGroupKey": [
+        "$idKey": [
           "$testGroupID1",
           "$testGroupID2"
         ]
@@ -35,9 +35,14 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
     """
   )
 
+  def stubGetUserIds(vatNumber: String)(status: Int): StubMapping = {
+    when(method = GET, uri = s"/enrolment-store-proxy/enrolment-store/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users\\?type=principal")
+      .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey))
+  }
+
   def stubGetAllocatedMtdVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
     when(method = GET, uri = s"/enrolment-store-proxy/enrolment-store/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups\\?type=principal")
-      .thenReturn(status = status, body = jsonResponseBody)
+      .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey))
   }
 
 }

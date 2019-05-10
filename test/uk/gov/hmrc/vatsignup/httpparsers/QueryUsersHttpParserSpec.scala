@@ -22,27 +22,27 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
-import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyHttpReads.read
+import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersHttpReads.read
+import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser._
 
-class EnrolmentStoreProxyHttpParserSpec extends UnitSpec with EitherValues {
+class QueryUsersHttpParserSpec extends UnitSpec with EitherValues {
   val testMethod = "GET"
   val testUrl = "/"
 
-  "EnrolmentStoreProxyHttpReads#read" when {
+  "QueryUserHttpReads#read" when {
     "the http status is OK" when {
       s"the json is valid" should {
-        s"return ${EnrolmentAlreadyAllocated(testGroupId)}" in {
+        s"return ${UsersFound(Set(testGroupId, testGroupId))}" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
             responseJson = Some(
               Json.obj(
-                principalGroupIdKey -> Json.arr(testGroupId)
+                principalUserIdKey -> Json.arr(testGroupId, testGroupId)
               )
             )
           )
 
-          read(testMethod, testUrl, testResponse) shouldBe Right(EnrolmentAlreadyAllocated(testGroupId))
+          read(testMethod, testUrl, testResponse) shouldBe Right(UsersFound(Set(testGroupId, testGroupId)))
         }
       }
     }
@@ -51,15 +51,15 @@ class EnrolmentStoreProxyHttpParserSpec extends UnitSpec with EitherValues {
       "return EnrolmentNotAllocated" in {
         val testResponse = HttpResponse(NO_CONTENT)
 
-        read(testMethod, testUrl, testResponse) shouldBe Right(EnrolmentNotAllocated)
+        read(testMethod, testUrl, testResponse) shouldBe Right(NoUsersFound)
       }
     }
 
     "the http status is anything else" should {
-      s"return ${EnrolmentStoreProxyFailure(INTERNAL_SERVER_ERROR)}" in {
+      s"return ${EnrolmentStoreProxyConnectionFailure(INTERNAL_SERVER_ERROR)}" in {
         val testResponse = HttpResponse(INTERNAL_SERVER_ERROR)
 
-        read(testMethod, testUrl, testResponse) shouldBe Left(EnrolmentStoreProxyFailure(INTERNAL_SERVER_ERROR))
+        read(testMethod, testUrl, testResponse) shouldBe Left(EnrolmentStoreProxyConnectionFailure(INTERNAL_SERVER_ERROR))
       }
     }
   }
