@@ -22,6 +22,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
+import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
 import EnrolmentStoreProxyConnector.principalQueryKey
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,6 +36,12 @@ class EnrolmentStoreProxyConnector @Inject()(http: HttpClient,
       url = appConfig.getAllocatedEnrolmentUrl(enrolmentKey),
       queryParams = Seq(principalQueryKey)
     )
+  }
+
+  def getUserIds(vatNumber: String)(implicit hc: HeaderCarrier): Future[QueryUsersResponse] = {
+    http.GET[QueryUsersResponse](
+      url = appConfig.queryUsersUrl(vatNumber),
+      queryParams = Seq(principalQueryKey))
   }
 
 }
