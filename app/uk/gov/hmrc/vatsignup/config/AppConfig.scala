@@ -100,8 +100,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   def getPartnershipKnownFactsUrl(sautr: String): String =
     s"$desUrl/income-tax-self-assessment/known-facts/utr/$sautr"
 
-  def getAllocatedEnrolmentUrl(vatNumber: String): String =
-    s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups"
+  def getAllocatedEnrolmentUrl(enrolmentKey: String): String =
+    s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/$enrolmentKey/groups"
 
   override def isEnabled(featureSwitch: FeatureSwitch): Boolean = super.isEnabled(featureSwitch)
 

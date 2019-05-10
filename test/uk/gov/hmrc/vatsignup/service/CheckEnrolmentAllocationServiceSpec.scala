@@ -25,6 +25,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService
 import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService._
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,33 +39,64 @@ class CheckEnrolmentAllocationServiceSpec extends UnitSpec
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  "CheckEnrolmentAllocation" when {
+  "getGroupIdForMtdVatEnrolment" when {
     "EnrolmentStoreProxy returns EnrolmentNotAllocated" should {
       "return EnrolmentNotAllocated" in {
-        mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
+        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber))(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
 
-        val res = TestCheckEnrolmentAllocationService.getEnrolmentAllocationStatus(testVatNumber)
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber)
 
         await(res) shouldBe Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)
       }
     }
     "EnrolmentStoreProxy returns EnrolmentAlreadyAllocated" should {
       "return EnrolmentAlreadyAllocated" in {
-        mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated)))
+        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber))(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(""))))
 
-        val res = TestCheckEnrolmentAllocationService.getEnrolmentAllocationStatus(testVatNumber)
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber)
 
         await(res) shouldBe Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated)
       }
     }
+    "EnrolmentStoreProxy returns an unexpected failure" should {
+      "return Failure" in {
+        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber))(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
+
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber)
+
+        await(res) shouldBe Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))
+      }
+    }
   }
-  "EnrolmentStoreProxy returns an unexpected failure" should {
-    "return Failure" in {
-      mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
 
-      val res = TestCheckEnrolmentAllocationService.getEnrolmentAllocationStatus(testVatNumber)
 
-      await(res) shouldBe Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))
+  "getGroupIdForLegacyVatEnrolment" when {
+    "EnrolmentStoreProxy returns EnrolmentNotAllocated" should {
+      "return EnrolmentNotAllocated" in {
+        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber))(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
+
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(testVatNumber)
+
+        await(res) shouldBe Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)
+      }
+    }
+    "EnrolmentStoreProxy returns EnrolmentAlreadyAllocated" should {
+      "return EnrolmentAlreadyAllocated" in {
+        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber))(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(""))))
+
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(testVatNumber)
+
+        await(res) shouldBe Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated)
+      }
+    }
+    "EnrolmentStoreProxy returns an unexpected failure" should {
+      "return Failure" in {
+        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber))(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
+
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(testVatNumber)
+
+        await(res) shouldBe Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))
+      }
     }
   }
 }

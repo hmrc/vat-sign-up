@@ -21,21 +21,35 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser
 import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService._
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils.{legacyVatEnrolmentKey, mtdVatEnrolmentKey}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CheckEnrolmentAllocationService @Inject()(enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector)
                                                (implicit ec: ExecutionContext) {
-  def getEnrolmentAllocationStatus(vatNumber: String)
-                                  (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
-    enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber) map {
+  private def getGroupIdForEnrolment(enrolmentKey: String)
+                            (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
+    enrolmentStoreProxyConnector.getAllocatedEnrolments(enrolmentKey) map {
       case Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated) => Right(EnrolmentNotAllocated)
-      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated) => Left(EnrolmentAlreadyAllocated)
+      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(_)) => Left(EnrolmentAlreadyAllocated)
       case Left(EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyFailure(status)) => Left(UnexpectedEnrolmentStoreProxyFailure(status))
     }
   }
 
+  def getGroupIdForMtdVatEnrolment(vatNumber: String)
+                                        (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
+    val enrolmentKey = mtdVatEnrolmentKey(vatNumber)
+
+    getGroupIdForEnrolment(enrolmentKey)
+  }
+
+  def getGroupIdForLegacyVatEnrolment(vatNumber: String)
+                                  (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
+    val enrolmentKey = legacyVatEnrolmentKey(vatNumber)
+
+    getGroupIdForEnrolment(enrolmentKey)
+  }
 }
 
 object CheckEnrolmentAllocationService {

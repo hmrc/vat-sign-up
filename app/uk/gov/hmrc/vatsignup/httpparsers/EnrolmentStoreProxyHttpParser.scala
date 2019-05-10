@@ -17,26 +17,37 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
+import play.api.libs.json.JsSuccess
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object EnrolmentStoreProxyHttpParser {
-  type EnrolmentStoreProxyResponse = Either[EnrolmentStoreProxyFailure, EnrolmentStoreProxySuccess]
+  type EnrolmentStoreProxyResponse = Either[EnrolmentStoreFailure, EnrolmentStoreProxySuccess]
 
   implicit object EnrolmentStoreProxyHttpReads extends HttpReads[EnrolmentStoreProxyResponse] {
     override def read(method: String, url: String, response: HttpResponse): EnrolmentStoreProxyResponse =
       response.status match {
-        case OK => Right(EnrolmentAlreadyAllocated)
+        case OK =>
+          (response.json \ principalGroupKey \ 0).validate[String] match {
+            case JsSuccess(groupId, _) => Right(EnrolmentAlreadyAllocated(groupId))
+            case _ => Left(InvalidJsonResponse)
+          }
         case NO_CONTENT => Right(EnrolmentNotAllocated)
         case status => Left(EnrolmentStoreProxyFailure(status))
       }
   }
 
+  val principalGroupKey = "principalGroupIds"
+
   sealed trait EnrolmentStoreProxySuccess
 
-  case object EnrolmentAlreadyAllocated extends EnrolmentStoreProxySuccess
+  case class EnrolmentAlreadyAllocated(groupID: String) extends EnrolmentStoreProxySuccess
 
   case object EnrolmentNotAllocated extends EnrolmentStoreProxySuccess
 
-  case class EnrolmentStoreProxyFailure(status: Int)
+  sealed trait EnrolmentStoreFailure
+
+  case object InvalidJsonResponse extends EnrolmentStoreFailure
+
+  case class EnrolmentStoreProxyFailure(status: Int) extends EnrolmentStoreFailure
 
 }

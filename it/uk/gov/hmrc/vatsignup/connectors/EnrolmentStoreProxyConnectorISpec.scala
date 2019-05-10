@@ -21,7 +21,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub.testGroupID1
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 
 class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
@@ -32,12 +34,12 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
   "The enrolment is already allocated" when {
     "EnrolmentStoreProxy ES1 returns an OK and Json Response" should {
-      "return a success" in {
-        EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(OK)
+      "return a group ID" in {
+        EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
 
-        val res = connector.getAllocatedEnrolments(testVatNumber)
+        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
 
-        await(res) shouldBe Right(EnrolmentAlreadyAllocated)
+        await(res) shouldBe Right(EnrolmentAlreadyAllocated(testGroupID1))
       }
     }
   }
@@ -45,9 +47,9 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
   "The enrolment is not allocated" when {
     "EnrolmentStoreProxy ES1 returns No Content" should {
       "return a success" in {
-        EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(NO_CONTENT)
+        EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
 
-        val res = connector.getAllocatedEnrolments(testVatNumber)
+        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
 
         await(res) shouldBe Right(EnrolmentNotAllocated)
 
@@ -58,9 +60,9 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
   "The request is invalid" when {
     "EnrolmentStoreProxy ES1 returns Bad Request" should {
       "return a success" in {
-        EnrolmentStoreProxyStub.stubGetAllocatedEnrolmentStatus(testVatNumber)(BAD_REQUEST)
+        EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(BAD_REQUEST)
 
-        val res = connector.getAllocatedEnrolments(testVatNumber)
+        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
 
         await(res) shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
 

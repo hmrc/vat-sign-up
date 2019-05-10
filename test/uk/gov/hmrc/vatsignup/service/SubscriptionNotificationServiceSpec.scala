@@ -87,7 +87,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               "return NotificationSent" in {
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentAlreadyAllocated)))
+                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Right(EmailQueued)))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -101,7 +101,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               "return EmailServiceFailure" in {
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentAlreadyAllocated)))
+                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
