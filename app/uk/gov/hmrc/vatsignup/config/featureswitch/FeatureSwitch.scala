@@ -31,7 +31,8 @@ object FeatureSwitch {
     StubAgentServicesFeature,
     CaptureContactPreference,
     AdditionalKnownFacts,
-    SkipPartnershipKnownFactsMismatch
+    SkipPartnershipKnownFactsMismatch,
+    AutoClaimEnrolment
   )
 
   def apply(str: String): FeatureSwitch =
@@ -72,4 +73,7 @@ case object SkipPartnershipKnownFactsMismatch extends FeatureSwitch {
   val name: String = s"$prefix.skip-partnership-kf-mismatch"
 }
 
-
+case object AutoClaimEnrolment extends FeatureSwitch {
+  val displayName: String = "Enable the auto claim enrolment"
+  val name: String = s"$prefix.auto-claim-enrolment"
+}
