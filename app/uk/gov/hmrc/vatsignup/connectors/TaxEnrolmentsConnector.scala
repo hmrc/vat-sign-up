@@ -17,22 +17,21 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
+import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TaxEnrolmentsConnector @Inject()(http: HttpClient,
-                                       applicationConfig: AppConfig) {
+                                       applicationConfig: AppConfig)(implicit ec: ExecutionContext) {
 
   private def taxEnrolmentsCallbackUrl(vatNumber: String) =
     s"${applicationConfig.baseUrl}/vat-sign-up/subscription-request/vat-number/$vatNumber/callback"
@@ -105,6 +104,16 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
     http.POST[JsObject, AllocateEnrolmentResponse](
       url = applicationConfig.allocateEnrolmentUrl(groupId, enrolmentKey),
       body = requestBody
+    )
+  }
+
+  def assignEnrolment(credentialId: String,
+                      vatNumber: String
+                     )(implicit hc: HeaderCarrier): Future[AssignEnrolmentToUserResponse] = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    http.POSTEmpty[AssignEnrolmentToUserResponse](
+      url = applicationConfig.assignEnrolmentUrl(credentialId, enrolmentKey)
     )
   }
 
