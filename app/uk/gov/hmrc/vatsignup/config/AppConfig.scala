@@ -97,6 +97,8 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def allocateEnrolmentUrl(groupId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/groups/$groupId/enrolments/$enrolmentKey"
 
+  def assignEnrolmentUrl(userId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/users/$userId/enrolments/$enrolmentKey"
+
   def getPartnershipKnownFactsUrl(sautr: String): String =
     s"$desUrl/income-tax-self-assessment/known-facts/utr/$sautr"
 

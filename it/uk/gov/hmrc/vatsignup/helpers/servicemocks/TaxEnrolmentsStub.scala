@@ -36,6 +36,9 @@ object TaxEnrolmentsStub extends WireMockMethods {
   private def allocateEnrolmentUrl(groupId: String, enrolmentKey: String) =
     s"/tax-enrolments/groups/$groupId/enrolments/$enrolmentKey"
 
+  private def assignEnrolmentUrl(userId: String, enrolmentKey: String) =
+    s"/tax-enrolments/users/$userId/enrolments/$enrolmentKey"
+
   def stubRegisterEnrolment(vatNumber: String, safeId: String)(status: Int): Unit = {
     val registerEnrolmentJsonBody = Json.obj(
       "serviceName" -> Constants.TaxEnrolments.ServiceName,
@@ -98,8 +101,21 @@ object TaxEnrolmentsStub extends WireMockMethods {
       uri = allocateEnrolmentUrl(
         groupId = groupId,
         enrolmentKey = enrolmentKey
-    ),
+      ),
       body = allocateEnrolmentJsonBody
+    ) thenReturn status
+  }
+
+
+  def stubAssignEnrolment(vatNumber: String, userId: String)(status: Int): Unit = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    when(
+      method = POST,
+      uri = assignEnrolmentUrl(
+        userId = userId,
+        enrolmentKey = enrolmentKey
+      )
     ) thenReturn status
   }
 
