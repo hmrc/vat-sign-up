@@ -71,8 +71,8 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
 
   def mockAllocateEnrolmentWithoutKnownFacts(groupId: String,
-                            credentialId: String,
-                            vatNumber: String)(response: Future[AllocateEnrolmentResponse]): Unit =
+                                             credentialId: String,
+                                             vatNumber: String)(response: Future[AllocateEnrolmentResponse]): Unit =
     when(mockTaxEnrolmentsConnector.allocateEnrolmentWithoutKnownFacts(
       ArgumentMatchers.eq(groupId),
       ArgumentMatchers.eq(credentialId),
