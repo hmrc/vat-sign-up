@@ -23,6 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
+import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.TaxEnrolmentsResponse
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
@@ -77,4 +78,11 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
       ArgumentMatchers.eq(credentialId),
       ArgumentMatchers.eq(vatNumber)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+
+  def mockAssignEnrolment(userId: String, vatNumber: String)(response: Future[AssignEnrolmentToUserResponse]): Unit =
+    when(mockTaxEnrolmentsConnector.assignEnrolment(
+      ArgumentMatchers.eq(userId),
+      ArgumentMatchers.eq(vatNumber)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+
 }
