@@ -17,10 +17,9 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-import cats.data.EitherT
-import cats.implicits._
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, SkipPartnershipKnownFactsMismatch}
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
@@ -31,13 +30,12 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StorePartnershipInformationService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                                    partnershipKnownFactsService: PartnershipKnownFactsService
-                                                  )
-                                                  (implicit ec: ExecutionContext) {
+                                                  )(implicit ec: ExecutionContext) extends FeatureSwitching {
 
   def storePartnershipInformationWithEnrolment(vatNumber: String,
                                                partnershipInformation: PartnershipBusinessEntity,
                                                enrolmentSautr: String
-                                              )(implicit hc: HeaderCarrier): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+                                              )(implicit hc: HeaderCarrier): Future[StorePartnershipResponse] = {
     if (partnershipInformation.sautr contains enrolmentSautr) {
       storePartnershipInformationCore(vatNumber, partnershipInformation)
     } else {
@@ -48,35 +46,34 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
   def storePartnershipInformation(vatNumber: String,
                                   partnershipInformation: PartnershipBusinessEntity,
                                   businessPostcode: Option[String]
-                                 )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+                                 )(implicit hc: HeaderCarrier, request: Request[_]): Future[StorePartnershipResponse] = {
 
-    for {
-      _ <- (partnershipInformation.sautr, businessPostcode) match {
-        case (Some(sautr), Some(postCode)) =>
-          EitherT(partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, sautr, postCode)) leftMap {
-            case PartnershipKnownFactsService.PostCodeDoesNotMatch =>
-              KnownFactsMismatch
-            case PartnershipKnownFactsService.NoPostCodesReturned =>
-              InsufficientData
-            case PartnershipKnownFactsService.InvalidSautr =>
-              InvalidSautr
-            case _ =>
-              GetPartnershipKnownFactsFailure
-          }
-        case (None, None) =>
-          EitherT.right(Future.successful(NoSaUtrProvided))
-        case _ =>
-          EitherT.left(Future.successful(InsufficientData))
-      }
-      _ <- EitherT(storePartnershipInformationCore(vatNumber, partnershipInformation)
-      )
-    } yield StorePartnershipInformationSuccess
-  }.value
+    (partnershipInformation.sautr, businessPostcode) match {
+      case (Some(sautr), Some(postCode)) =>
+        partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, sautr, postCode) flatMap {
+          case Right(_) =>
+            storePartnershipInformationCore(vatNumber, partnershipInformation)
+          case Left(PartnershipKnownFactsService.NoPostCodesReturned) if isEnabled(SkipPartnershipKnownFactsMismatch) =>
+            storePartnershipInformationCore(vatNumber, PartnershipBusinessEntity.copyWithoutSautr(partnershipInformation))
+          case Left(PartnershipKnownFactsService.NoPostCodesReturned) =>
+            Future.successful(Left(InsufficientData))
+          case Left(PartnershipKnownFactsService.PostCodeDoesNotMatch) =>
+            Future.successful(Left(KnownFactsMismatch))
+          case Left(PartnershipKnownFactsService.InvalidSautr) =>
+            Future.successful(Left(InvalidSautr))
+          case _ =>
+            Future.successful(Left(GetPartnershipKnownFactsFailure))
+        }
+      case (None, None) =>
+        storePartnershipInformationCore(vatNumber, partnershipInformation)
+      case _ =>
+        Future.successful(Left(InsufficientData))
+    }
+  }
 
   private def storePartnershipInformationCore(vatNumber: String,
                                               partnership: PartnershipBusinessEntity
-                                             )(implicit hc: HeaderCarrier)
-  : Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]] = {
+                                             )(implicit hc: HeaderCarrier): Future[StorePartnershipResponse] = {
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, partnership) map {
       _ => Right(StorePartnershipInformationSuccess)
     } recover {
@@ -89,6 +86,8 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
 }
 
 object StorePartnershipInformationService {
+
+  type StorePartnershipResponse = Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess]
 
   sealed trait StorePartnershipInformationSuccess
 

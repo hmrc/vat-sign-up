@@ -18,6 +18,7 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import play.api.http.Status._
 import play.api.libs.json.Json
+import uk.gov.hmrc.vatsignup.config.featureswitch.SkipPartnershipKnownFactsMismatch
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
@@ -251,20 +252,42 @@ class StorePartnershipInformationControllerISpec extends ComponentSpecBase with 
           }
         }
 
-        "no post codes were retrieved using the utr" should {
-          "return INTERNAL_SERVER_ERROR" in {
-            stubAuth(OK, successfulAuthResponse())
-            stubGetPartnershipKnownFacts(testUtr)(OK, Some(Json.obj()))
+        "no post codes were retrieved using the utr" when {
+          "the SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
+            "return INTERNAL_SERVER_ERROR" in {
+              stubAuth(OK, successfulAuthResponse())
+              stubGetPartnershipKnownFacts(testUtr)(OK, Some(Json.obj()))
 
-            val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
 
-            res should have(
-              httpStatus(INTERNAL_SERVER_ERROR),
-              jsonBodyAs(Json.obj(
-                "statusCode" -> INTERNAL_SERVER_ERROR,
-                "message" -> "No postcodes returned for the partnership"
-              ))
-            )
+              res should have(
+                httpStatus(INTERNAL_SERVER_ERROR),
+                jsonBodyAs(Json.obj(
+                  "statusCode" -> INTERNAL_SERVER_ERROR,
+                  "message" -> "No postcodes returned for the partnership"
+                ))
+              )
+            }
+          }
+
+          "the SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
+            "return No Content" in {
+              enable(SkipPartnershipKnownFactsMismatch)
+              stubAuth(OK, successfulAuthResponse())
+              stubGetPartnershipKnownFacts(testUtr)(OK, Some(Json.obj()))
+
+              await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/partnership-information")(requestBody)
+
+              res should have(
+                httpStatus(NO_CONTENT),
+                emptyBody
+              )
+
+              val dbRequest = await(submissionRequestRepo.findById(testVatNumber)).get
+              dbRequest.businessEntity shouldBe Some(GeneralPartnership(None))
+            }
           }
         }
 

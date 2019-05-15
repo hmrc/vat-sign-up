@@ -29,6 +29,19 @@ sealed trait PartnershipBusinessEntity extends BusinessEntity {
   val sautr: Option[String]
 }
 
+object PartnershipBusinessEntity {
+
+  def copyWithoutSautr(partnershipBusinessEntity: PartnershipBusinessEntity): PartnershipBusinessEntity = {
+    partnershipBusinessEntity match {
+      case GeneralPartnership(_) => GeneralPartnership(None)
+      case LimitedPartnership(_, companyNumber) => LimitedPartnership(None, companyNumber)
+      case LimitedLiabilityPartnership(_, companyNumber) => LimitedLiabilityPartnership(None, companyNumber)
+      case ScottishLimitedPartnership(_, companyNumber) => ScottishLimitedPartnership(None, companyNumber)
+    }
+  }
+
+}
+
 case class GeneralPartnership(sautr: Option[String]) extends BusinessEntity with PartnershipBusinessEntity
 
 case class LimitedPartnership(sautr: Option[String], companyNumber: String) extends BusinessEntity with PartnershipBusinessEntity

@@ -166,39 +166,21 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             status(result) shouldBe NO_CONTENT
           }
         }
-        "store partnership information returns KnownFactsMismatch" when {
-          s"the $SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
-            "return FORBIDDEN" in {
-              mockAuthRetrievePrincipalEnrolment()
-              mockStorePartnershipInformation(
-                testVatNumber,
-                testGeneralPartnership,
-                Some(testPostCode)
-              )(Future.successful(Left(KnownFactsMismatch)))
+        "store partnership information returns KnownFactsMismatch" should {
+          "return FORBIDDEN" in {
+            mockAuthRetrievePrincipalEnrolment()
+            mockStorePartnershipInformation(
+              testVatNumber,
+              testGeneralPartnership,
+              Some(testPostCode)
+            )(Future.successful(Left(KnownFactsMismatch)))
 
-              val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
 
-              status(result) shouldBe FORBIDDEN
-            }
-          }
-          s"the $SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
-            "return NO_CONTENT" in {
-              enable(SkipPartnershipKnownFactsMismatch)
-
-              mockAuthRetrievePrincipalEnrolment()
-              mockStorePartnershipInformation(
-                testVatNumber,
-                testGeneralPartnership,
-                Some(testPostCode)
-              )(Future.successful(Left(KnownFactsMismatch)))
-
-              val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
-
-              status(result) shouldBe NO_CONTENT
-            }
+            status(result) shouldBe FORBIDDEN
           }
         }
-        "store partnership information returns InsufficientData" should {
+        "store partnership information returns NoPostCodeReturned" when {
           s"the $SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
             "throws Internal server exception" in {
               mockAuthRetrievePrincipalEnrolment()
@@ -214,7 +196,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             }
           }
           s"the $SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
-            "throws Internal server exception" in {
+            "return No Content" in {
               enable(SkipPartnershipKnownFactsMismatch)
 
               mockAuthRetrievePrincipalEnrolment()
@@ -222,7 +204,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
                 testVatNumber,
                 testGeneralPartnership,
                 Some(testPostCode)
-              )(Future.successful(Left(InsufficientData)))
+              )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
               val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
 

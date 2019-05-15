@@ -24,7 +24,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
-import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.{StorePartnershipInformationFailure, StorePartnershipInformationSuccess}
+import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService.StorePartnershipResponse
 
 import scala.concurrent.Future
 
@@ -41,7 +41,7 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
   def mockStorePartnershipInformationWithEnrolment(vatNumber: String,
                                                    partnership: PartnershipBusinessEntity,
                                                    enrolmentSautr: String
-                                                  )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
+                                                  )(response: Future[StorePartnershipResponse]): Unit = {
     when(mockStorePartnershipInformationService.storePartnershipInformationWithEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(partnership),
@@ -52,7 +52,7 @@ trait MockStorePartnershipInformationService extends MockitoSugar with BeforeAnd
   def mockStorePartnershipInformation(vatNumber: String,
                                       partnershipInformation: PartnershipBusinessEntity,
                                       businessPostcode: Option[String]
-                                     )(response: Future[Either[StorePartnershipInformationFailure, StorePartnershipInformationSuccess.type]]): Unit = {
+                                     )(response: Future[StorePartnershipResponse]): Unit = {
     when(mockStorePartnershipInformationService.storePartnershipInformation(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(partnershipInformation),
