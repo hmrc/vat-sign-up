@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import java.text.SimpleDateFormat
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
@@ -26,6 +25,7 @@ import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFact
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
+import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,19 +33,19 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnector,
                                           taxEnrolmentsConnector: TaxEnrolmentsConnector,
-                                          checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
-                                          enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector
+                                          enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
+                                          assignEnrolmentToUserService: AssignEnrolmentToUserService
                                          )(implicit ec: ExecutionContext) {
 
   def autoClaimEnrolment(vatNumber: String)
                         (implicit hc: HeaderCarrier, request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
     for {
       groupId <- getLegacyEnrolmentAllocation(vatNumber)
-      credentialId <- getUserIDs(vatNumber)
+      credentialIds <- getUserIDs(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
-      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, groupId, credentialId)
-      _ <- assignEnrolmentToUser(credentialId, vatNumber)
+      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, groupId, credentialIds.head)
+      _ <- assignEnrolmentToUser(credentialIds, vatNumber)
     } yield EnrolmentAssigned
   }.value
 
@@ -61,14 +61,14 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   }
 
   private def getUserIDs(vatNumber: String)
-                        (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] = {
+                        (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] = {
     EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)) transform {
-      case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) =>
-        Right(retrievedUserIds.head)
-      case Right(_) =>
-        Left(NoUsersFound)
+      case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) if retrievedUserIds.nonEmpty =>
+        Right(retrievedUserIds)
       case Left(QueryUsersHttpParser.EnrolmentStoreProxyConnectionFailure(status)) =>
         Left(EnrolmentStoreProxyConnectionFailure(status))
+      case _ =>
+        Left(NoUsersFound)
     }
   }
 
@@ -108,19 +108,20 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     }
   }
 
-  private def assignEnrolmentToUser(credentalId: String, vatNumber: String)
+  private def assignEnrolmentToUser(credentialIds: Set[String], vatNumber: String)
                                    (implicit hc: HeaderCarrier, request: Request[_]
                                    ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
-    EitherT(taxEnrolmentsConnector.assignEnrolment(
-      credentialId = credentalId,
+    EitherT(assignEnrolmentToUserService.assignEnrolment(
+      userIds = credentialIds,
       vatNumber = vatNumber
     )) transform {
-      case Right(AssignEnrolmentToUserHttpParser.EnrolmentAssigned) =>
+      case Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers) =>
         Right(AutoClaimEnrolmentService.EnrolmentAssigned)
-      case Left(AssignEnrolmentToUserHttpParser.EnrolmentAssignmentFailure(status, _)) =>
-        Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailure(status))
+      case Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed) =>
+        Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailure)
     }
   }
+
 }
 
 object AutoClaimEnrolmentService {
@@ -142,6 +143,8 @@ object AutoClaimEnrolmentService {
 
   sealed trait AutoClaimEnrolmentFailure
 
+  case object NoUsersFound extends AutoClaimEnrolmentFailure
+
   case class EnrolFailure(message: String) extends AutoClaimEnrolmentFailure
 
   case object EnrolmentNotAllocated extends AutoClaimEnrolmentFailure
@@ -152,24 +155,12 @@ object AutoClaimEnrolmentService {
 
   case object VatNumberNotFound extends AutoClaimEnrolmentFailure
 
-  case object NoUsersFound extends AutoClaimEnrolmentFailure
-
   case class EnrolmentStoreProxyFailure(status: Int) extends AutoClaimEnrolmentFailure
 
   case class EnrolmentStoreProxyConnectionFailure(status: Int) extends AutoClaimEnrolmentFailure
 
   case class UpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentFailure
 
-  case class EnrolmentAssignmentFailure(status: Int) extends AutoClaimEnrolmentFailure
-
-  implicit class KnownFactsDateFormatter(date: String) {
-    def toTaxEnrolmentsFormat: String = {
-      val desFormat = new SimpleDateFormat("yyyy-MM-dd")
-      val taxEnrolmentsFormat = new SimpleDateFormat("dd/MM/yy")
-      val parsedDate = desFormat parse date
-
-      taxEnrolmentsFormat format parsedDate
-    }
-  }
+  case object EnrolmentAssignmentFailure extends AutoClaimEnrolmentFailure
 
 }
