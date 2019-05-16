@@ -201,7 +201,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                 }
               }
             }
-            "the sign up email address is not at verified" should {
+            "the sign up email address is not verified" should {
               "return EmailVerificationRequired" in {
                 val testSubscriptionRequest =
                   SubscriptionRequest(

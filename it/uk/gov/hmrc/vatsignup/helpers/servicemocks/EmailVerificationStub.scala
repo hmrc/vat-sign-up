@@ -19,15 +19,19 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification._
+import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.testEmail
 
 object EmailVerificationStub extends WireMockMethods {
-  private def getEmailVerifiedUri(email: String) = s"/email-verification/verified-email-addresses/$email"
+  private val emailVerifiedUri = "/email-verification/verified-email-check"
 
   private val verifyEmailUri = "/email-verification/verification-requests"
 
   def stubGetEmailVerified(email: String): Unit =
-    when(method = GET, uri = getEmailVerifiedUri(email))
-      .thenReturn(OK)
+    when(
+      method = POST,
+      uri = emailVerifiedUri,
+      body = Json.obj("email" -> email)
+    ) thenReturn(OK)
 
   def stubVerifyEmail(emailAddress: String, continueUrl: String)(response: Int): Unit =
     when(
