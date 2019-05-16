@@ -55,7 +55,6 @@ class StorePartnershipInformationController @Inject()(val authConnector: AuthCon
             case (None, Some(_)) =>
               storePartnershipUtrService.storePartnershipInformation(vatNumber, body.partnership, body.postCode) map {
                 case Right(_) => NoContent
-                case Left(KnownFactsMismatch | InsufficientData) if isEnabled(SkipPartnershipKnownFactsMismatch) => NoContent
                 case Left(KnownFactsMismatch) => Forbidden
                 case Left(InsufficientData) => throw new InternalServerException("No postcodes returned for the partnership")
                 case Left(InvalidSautr) => PreconditionFailed(Json.obj("statusCode" -> PRECONDITION_FAILED, "message" -> invalidSautrKey))
