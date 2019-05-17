@@ -24,7 +24,7 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetK
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
-import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.KnownFactsDateFormatter
+import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatchers {
   "/claim-subscription/vat-number/:vatNumber" when {

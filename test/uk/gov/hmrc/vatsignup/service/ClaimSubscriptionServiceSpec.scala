@@ -33,6 +33,7 @@ import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import uk.gov.hmrc.vatsignup.services.{CheckEnrolmentAllocationService, ClaimSubscriptionService}
+import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

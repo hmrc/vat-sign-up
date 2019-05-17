@@ -35,6 +35,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, K
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
+import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -220,15 +221,5 @@ object ClaimSubscriptionService {
   case object UpsertEnrolmentSuccess extends UpsertEnrolmentResponse
 
   case class IgnoredUpsertEnrolmentFailure(failureMessage: String) extends UpsertEnrolmentResponse
-
-  implicit class KnownFactsDateFormatter(date: String) {
-    def toTaxEnrolmentsFormat: String = {
-      val desFormat = new SimpleDateFormat("yyyy-MM-dd")
-      val taxEnrolmentsFormat = new SimpleDateFormat("dd/MM/yy")
-      val parsedDate = desFormat parse date
-
-      taxEnrolmentsFormat format parsedDate
-    }
-  }
 
 }

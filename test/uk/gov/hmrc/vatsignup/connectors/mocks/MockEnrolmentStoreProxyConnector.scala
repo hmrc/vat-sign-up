@@ -23,7 +23,7 @@ import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
-
+import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
 
 import scala.concurrent.Future
 
@@ -39,6 +39,12 @@ trait MockEnrolmentStoreProxyConnector extends MockitoSugar with BeforeAndAfterE
 
   def mockGetAllocatedEnrolment(vatNumber: String)(response: Future[EnrolmentStoreProxyResponse]): Unit = {
     when(mockEnrolmentStoreProxyConnector.getAllocatedEnrolments(
+      ArgumentMatchers.eq(vatNumber)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+  }
+
+  def mockGetUserIds(vatNumber: String)(response: Future[QueryUsersResponse]): Unit = {
+    when(mockEnrolmentStoreProxyConnector.getUserIds(
       ArgumentMatchers.eq(vatNumber)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
