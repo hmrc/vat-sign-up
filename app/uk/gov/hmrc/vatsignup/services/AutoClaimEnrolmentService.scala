@@ -65,10 +65,10 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)) transform {
       case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) if retrievedUserIds.nonEmpty =>
         Right(retrievedUserIds)
-      case Left(QueryUsersHttpParser.EnrolmentStoreProxyConnectionFailure(status)) =>
-        Left(EnrolmentStoreProxyConnectionFailure(status))
-      case _ =>
+      case Right(QueryUsersHttpParser.NoUsersFound) =>
         Left(NoUsersFound)
+      case _ =>
+        Left(EnrolmentStoreProxyConnectionFailure)
     }
   }
 
@@ -157,7 +157,7 @@ object AutoClaimEnrolmentService {
 
   case class EnrolmentStoreProxyFailure(status: Int) extends AutoClaimEnrolmentFailure
 
-  case class EnrolmentStoreProxyConnectionFailure(status: Int) extends AutoClaimEnrolmentFailure
+  case object EnrolmentStoreProxyConnectionFailure extends AutoClaimEnrolmentFailure
 
   case class UpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentFailure
 

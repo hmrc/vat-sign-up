@@ -147,7 +147,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
 
           val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
-          res shouldBe Left(NoUsersFound)
+          res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
         }
       }
       "legacy user IDS are not returned" when {
@@ -167,7 +167,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
 
           val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
-          res shouldBe Left(EnrolmentStoreProxyConnectionFailure(BAD_REQUEST))
+          res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
         }
       }
     }
