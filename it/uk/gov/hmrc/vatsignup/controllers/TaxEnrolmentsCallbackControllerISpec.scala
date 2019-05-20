@@ -21,6 +21,7 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubFailureVatNumberNotFound
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EmailStub, EnrolmentStoreProxyStub}
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
@@ -97,18 +98,79 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
       }
     }
     "the user is delegated" when {
-//      "the feature switch is enabled" when {
-//        enable(AutoClaimEnrolment)
-//        "callback is successful" should {
-//          "return NO_CONTENT" in {
-//
-//          }
-//        }
-//      }
-      "the feature switch is disabled" when {
-        disable(AutoClaimEnrolment)
+      "the feature switch is enabled" when {
         "callback is successful" should {
           "return SUCCEEDED with the status" in {
+            enable(AutoClaimEnrolment)
+
+            await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+
+            EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+
+            val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
+            res should have(
+              httpStatus(NO_CONTENT)
+            )
+          }
+        }
+        "callback is successful" should {
+          "auto claim enrolment fails" should {
+            "return SUCCEEDED with the status" in {
+              enable(AutoClaimEnrolment)
+
+              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+
+              stubFailureVatNumberNotFound(testVatNumber)
+
+              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
+              res should have(
+                httpStatus(NO_CONTENT)
+              )
+            }
+          }
+        }
+        "callback is unsuccessful" when {
+          "Send Email is successful" should {
+            "return ERROR with the status" in {
+              enable(AutoClaimEnrolment)
+
+              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+
+              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
+
+              res should have
+              httpStatus(BAD_GATEWAY)
+            }
+          }
+        }
+
+        "callback is unsuccessful with EnrolmentError" should {
+          "EnrolmentStoreProxy returns an unsuccessful status" should {
+            "return EnrolmentError" in {
+              enable(AutoClaimEnrolment)
+
+              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
+                Json.obj("state" -> "EnrolmentError")
+              )
+              res should have(
+                httpStatus(BAD_GATEWAY)
+              )
+            }
+          }
+        }
+      }
+
+      "the feature switch is disabled" when {
+        "callback is successful" should {
+          "return SUCCEEDED with the status" in {
+            disable(AutoClaimEnrolment)
+
             await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
             EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
@@ -120,44 +182,28 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
           }
         }
         "callback is unsuccessful" when {
-          "EnrolmentStoreProxy returns OK (200)" should {
-            "Send Email is successful" should {
-              "return ERROR with the status" in {
-                await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+          "Send Email is successful" should {
+            "return ERROR with the status" in {
+              disable(AutoClaimEnrolment)
 
-                EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
-                EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
-
-                val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
-
-                res should have
-                  httpStatus(BAD_GATEWAY)
-              }
-            }
-          }
-        }
-
-        "callback is unsuccessful" when {
-          "EnrolmentStoreProxy returns NO_CONTENT (204)" should {
-            "return no Email" in {
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
-              res should have(
-                httpStatus(BAD_GATEWAY)
-              )
+
+              res should have
+              httpStatus(BAD_GATEWAY)
             }
           }
         }
 
         "callback is unsuccessful with EnrolmentError" should {
           "EnrolmentStoreProxy returns an unsuccessful status" should {
-            "return no Email" in {
-              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+            "return EnrolmentError" in {
+              disable(AutoClaimEnrolment)
 
-              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(SERVICE_UNAVAILABLE)
+              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
                 Json.obj("state" -> "EnrolmentError")
@@ -171,5 +217,4 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
       }
     }
   }
-
 }

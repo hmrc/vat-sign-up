@@ -20,16 +20,18 @@ import play.api.http.Status.BAD_REQUEST
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockEmailConnector, MockEnrolmentStoreProxyConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.{EnrolmentAlreadyAllocated, EnrolmentNotAllocated, EnrolmentStoreProxyFailure}
+import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.models.SubscriptionState.{AuthRefreshed, Failure, Success}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
-import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
+import uk.gov.hmrc.vatsignup.service.mocks.MockAutoClaimEnrolmentService
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
+import uk.gov.hmrc.vatsignup.services.{AutoClaimEnrolmentService, SubscriptionNotificationService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,12 +40,14 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
   with MockEmailRequestRepository
   with MockEmailConnector
   with MockEnrolmentStoreProxyConnector
+  with MockAutoClaimEnrolmentService
   with MockConfig {
 
   object TestSubscriptionNotificationService extends SubscriptionNotificationService(
     mockEmailRequestRepository,
     mockEmailConnector,
     mockEnrolmentStoreProxyConnector,
+    mockAutoClaimEnrolmentService,
     mockConfig
   )
 
@@ -163,40 +167,89 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
       "the subscription request was for a delegated user" when {
 
         val testEmailRequest = EmailRequest(testVatNumber, testEmail, isDelegated = true)
+        "the feature switch is disabled" when {
+          "the e-mail request is successful" should {
+            "return DelegatedSubscription" in {
+              disable(AutoClaimEnrolment)
 
-        "the e-mail request is successful" should {
-          "return DelegatedSubscription" in {
+              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+              mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
 
-            mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-            mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-            mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
+              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-            val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+              res shouldBe Right(DelegatedSubscription)
+            }
+          }
+          "the e-mail request fails" should {
+            "return EmailServiceFailure" in {
+              disable(AutoClaimEnrolment)
 
-            res shouldBe Right(DelegatedSubscription)
+              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+
+              res shouldBe Left(EmailServiceFailure)
+            }
           }
         }
+        "the feature switch is enabled" when {
+          "the auto claim enrolment is successful" when {
+            "the e-mail request is successful" should {
+              "return DelegatedSubscription" in {
+                enable(AutoClaimEnrolment)
 
-        "the e-mail request fails" should {
-          "return EmailServiceFailure" in {
+                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+                mockAutoClaimEnrolment(testVatNumber)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
+                mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
 
-            mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-            mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
-            val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+                val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-            res shouldBe Left(EmailServiceFailure)
+                res shouldBe Right(DelegatedSubscription)
+              }
+            }
+            "the e-mail request fails" should {
+              "return EmailServiceFailure" in {
+                enable(AutoClaimEnrolment)
+
+                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockAutoClaimEnrolment(testVatNumber)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
+
+                mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+                val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+
+                res shouldBe Left(EmailServiceFailure)
+              }
+            }
+
+          }
+          "the auto claim enrolment fails but the email request is successful" when {
+            "return DelegatedSubscription" in {
+              enable(AutoClaimEnrolment)
+
+              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
+              mockAutoClaimEnrolment(testVatNumber)(Future.successful(Left(AutoClaimEnrolmentService.NoUsersFound)))
+              mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
+
+              val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
+
+              res shouldBe Right(DelegatedSubscription)
+            }
           }
         }
-      }
-    }
-
-    "the e-mail request does not exist in the database" should {
-      "return EmailRequestDataNotFound" in {
-        mockFindEmailRequestById(testVatNumber)(None)
-        val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
-
-        res shouldBe Left(EmailRequestDataNotFound)
       }
     }
   }
+
+  "the e-mail request does not exist in the database" should {
+    "return EmailRequestDataNotFound" in {
+      mockFindEmailRequestById(testVatNumber)(None)
+      val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
+
+      res shouldBe Left(EmailRequestDataNotFound)
+    }
+  }
+
 }
