@@ -196,7 +196,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
         "the feature switch is enabled" when {
           "the auto claim enrolment is successful" when {
             "the e-mail request is successful" should {
-              "return DelegatedSubscription" in {
+              "return AutoClaimDelegatedSubscription" in {
                 enable(AutoClaimEnrolment)
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -206,7 +206,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-                res shouldBe Right(DelegatedSubscription)
+                res shouldBe Right(AutoEnroledAndSubscribed)
               }
             }
             "the e-mail request fails" should {
@@ -222,10 +222,9 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
                 res shouldBe Left(EmailServiceFailure)
               }
             }
-
           }
           "the auto claim enrolment fails but the email request is successful" when {
-            "return DelegatedSubscription" in {
+            "return AutoClaimFailedDelegatedSubscription" in {
               enable(AutoClaimEnrolment)
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
@@ -235,7 +234,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-              res shouldBe Right(DelegatedSubscription)
+              res shouldBe Right(NoAutoEnroledButSubscribed)
             }
           }
         }

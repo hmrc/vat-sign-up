@@ -26,6 +26,7 @@ import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AutoClaimEnrolment, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.connectors.{EmailConnector, EnrolmentStoreProxyConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated
+import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
@@ -46,7 +47,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                            )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     (for {
       emailRequest <- getEmailRequest(vatNumber)
-      notificationResult <- sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated)
+      notificationResult <- EitherT(sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated))
       _ <- deleteEmailRequest(vatNumber)
     } yield notificationResult).value
   }
@@ -60,8 +61,8 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
 
 
   private def autoEnrolment(vatNumber: String)
-                           (implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
-    EitherT(autoClaimEnrolmentService.autoClaimEnrolment(vatNumber)) transform {
+                           (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+    autoClaimEnrolmentService.autoClaimEnrolment(vatNumber) map {
       case Right(_) =>
         Right(AutoClaimEnrol)
       case Left(_) =>
@@ -70,31 +71,29 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
   }
 
   private def sendEmailDelegated(emailAddress: String, vatNumber: String, subscriptionState: SubscriptionState)
-                                (implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
-    EitherT(emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber))) bimap(
-      _ => EmailServiceFailure,
-      _ => DelegatedSubscription
-    )
+                                (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+    emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber)) map {
+      case Left(SendEmailHttpParser.SendEmailFailure(_, _)) => Left(EmailServiceFailure)
+      case Right(_) => Right(DelegatedSubscription)
+    }
   }
 
   private def sendEmailIndividual(emailAddress: String, vatNumber: String, subscriptionState: SubscriptionState)
-                                 (implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
+                                 (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     subscriptionState match {
-      case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None)) bimap(
-        _ => EmailServiceFailure,
-        _ => NotificationSent
-      )
-      case _ =>
-        val result = enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
-          case Right(EnrolmentAlreadyAllocated(_)) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None).map {
-            case Right(_) => Right(NotificationSent)
-            case Left(_) => Left(EmailServiceFailure)
-          }
-          case _ =>
-            Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
-            Future.successful(Right(TaxEnrolmentFailure))
+      case Success => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None) map {
+        case Left(_) => Left(EmailServiceFailure)
+        case Right(_) => Right(NotificationSent)
+      }
+      case _ => enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
+        case Right(EnrolmentAlreadyAllocated(_)) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None) map {
+          case Left(_) => Left(EmailServiceFailure)
+          case Right(_) => Right(NotificationSent)
         }
-        EitherT[Future, NotificationFailure, NotificationSuccess](result)
+        case _ =>
+          Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
+          Future.successful(Right(TaxEnrolmentFailure))
+      }
     }
   }
 
@@ -102,12 +101,19 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                         vatNumber: String,
                         subscriptionState: SubscriptionState,
                         isDelegated: Boolean
-                       )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
-
+                       )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     if (isDelegated) {
-      if (isEnabled(AutoClaimEnrolment)) autoEnrolment(vatNumber)
-      sendEmailDelegated(emailAddress, vatNumber, subscriptionState)
-
+      if (isEnabled(AutoClaimEnrolment)) {
+        sendEmailDelegated(emailAddress, vatNumber, subscriptionState).flatMap {
+          case Right(DelegatedSubscription) =>
+            autoEnrolment(vatNumber) map {
+              case Right(_) => Right(AutoEnroledAndSubscribed)
+              case Left(_) => Right(NoAutoEnroledButSubscribed)
+            }
+          case _ => Future.successful(Left(EmailServiceFailure))
+        }
+      }
+      else sendEmailDelegated(emailAddress, vatNumber, subscriptionState)
     }
     else sendEmailIndividual(emailAddress, vatNumber, subscriptionState)
   }
@@ -128,6 +134,11 @@ object SubscriptionNotificationService {
   case object TaxEnrolmentFailure extends NotificationSuccess
 
   case object AutoClaimEnrol extends NotificationSuccess
+
+  case object NoAutoEnroledButSubscribed extends NotificationSuccess
+
+  case object AutoEnroledAndSubscribed extends NotificationSuccess
+
 
   sealed trait NotificationFailure
 
