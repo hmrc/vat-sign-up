@@ -23,7 +23,7 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
-import uk.gov.hmrc.vatsignup.models._
+import uk.gov.hmrc.vatsignup.models.{controllist, _}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
@@ -173,6 +173,10 @@ object TestConstants {
     Stagger3 -> Set(
       DateRange(LocalDate.of(2018, 12, 13), LocalDate.of(2019, 1, 13)),
       DateRange(LocalDate.of(2019, 3, 16), LocalDate.of(2019, 4, 11))
+    ),
+    MonthlyStagger -> Set(
+      DateRange(LocalDate.of(2018, 10, 18), LocalDate.of(2018, 11, 13)),
+      DateRange(LocalDate.of(2019, 1, 18), LocalDate.of(2019, 2, 13))
     )
   )
 

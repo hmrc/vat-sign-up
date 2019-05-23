@@ -138,10 +138,12 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
         val stagger1Dates = (config \ "Stagger1").validate[Set[DateRange]].asOpt
         val stagger2Dates = (config \ "Stagger2").validate[Set[DateRange]].asOpt
         val stagger3Dates = (config \ "Stagger3").validate[Set[DateRange]].asOpt
+        val monthlyStaggerDates = (config \ "MonthlyStagger").validate[Set[DateRange]].asOpt
         Map(
           Stagger1 -> stagger1Dates,
           Stagger2 -> stagger2Dates,
-          Stagger3 -> stagger3Dates
+          Stagger3 -> stagger3Dates,
+          MonthlyStagger -> monthlyStaggerDates
         ).collect { case (key, Some(value)) => (key, value) }
       case _ => throw new Exception(s"Missing migratability configuration key: $configKey")
     }
@@ -149,6 +151,5 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   def loadFilingDateConfig: Map[Stagger, Set[DateRange]] = loadDatesConfig("filing-config")
 
   def loadDirectDebitConfig: Map[Stagger, Set[DateRange]] = loadDatesConfig("dd-config")
-
 
 }
