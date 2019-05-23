@@ -234,7 +234,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
-              res shouldBe Right(NoAutoEnroledButSubscribed)
+              res shouldBe Right(NotAutoEnroledButSubscribed)
             }
           }
         }

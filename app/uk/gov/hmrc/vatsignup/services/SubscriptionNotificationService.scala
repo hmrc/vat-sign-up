@@ -108,7 +108,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
           case Right(DelegatedSubscription) =>
             autoEnrolment(vatNumber) map {
               case Right(_) => Right(AutoEnroledAndSubscribed)
-              case Left(_) => Right(NoAutoEnroledButSubscribed)
+              case Left(_) => Right(NotAutoEnroledButSubscribed)
             }
           case _ => Future.successful(Left(EmailServiceFailure))
         }
@@ -135,7 +135,7 @@ object SubscriptionNotificationService {
 
   case object AutoClaimEnrol extends NotificationSuccess
 
-  case object NoAutoEnroledButSubscribed extends NotificationSuccess
+  case object NotAutoEnroledButSubscribed extends NotificationSuccess
 
   case object AutoEnroledAndSubscribed extends NotificationSuccess
 

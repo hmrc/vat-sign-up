@@ -172,7 +172,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
             res should have(
-              httpStatus(BAD_GATEWAY)
+              httpStatus(NO_CONTENT)
             )
           }
         }
