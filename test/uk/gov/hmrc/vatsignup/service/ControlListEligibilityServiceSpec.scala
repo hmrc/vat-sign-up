@@ -183,6 +183,31 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         res shouldBe Left(IneligibleVatNumber(testMigratableDates))
       }
     }
+    "the control list indicates the user ineligible due to monthly filing date migration restrictions" should {
+      "return IneligibleVatNumber" in {
+        val testDateRange = DateRange(testMigratableDate, testMigratableDate)
+
+        mockIneligibleParameters(Set.empty)
+        mockDirectDebitStaggerParameters(Map(MonthlyStagger -> Set.empty))
+        mockFilingDateStaggerParameters(Map(MonthlyStagger -> Set(testDateRange)))
+
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, MonthlyStagger, Company), MonthlyStagger, Company)
+
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(
+          Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)))
+        )
+
+        mockCheckMigrationRestrictions(
+          vatNumber = testVatNumber,
+          stagger = MonthlyStagger,
+          isDirectDebit = true,
+          isMigratable = true
+        )(Left(testMigratableDates))
+
+        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+        res shouldBe Left(IneligibleVatNumber(testMigratableDates))
+      }
+    }
     "the control list indicates the user eligible as the current date is not within any timeframe restrictions" should {
       "return EligibilitySuccess" in {
         val testDateRange = DateRange(testMigratableDate, testMigratableDate)

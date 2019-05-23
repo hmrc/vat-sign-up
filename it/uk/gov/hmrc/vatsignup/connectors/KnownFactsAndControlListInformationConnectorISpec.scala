@@ -74,7 +74,6 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
         )
       }
     }
-
   }
   "getKnownFactsAndControlListInformation" when {
     "DES returns a BAD_REQUEST" should {
