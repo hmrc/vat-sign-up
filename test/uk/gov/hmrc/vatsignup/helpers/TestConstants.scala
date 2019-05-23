@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.helpers
 
-import java.time
 import java.time.{LocalDate, Month}
 import java.util.UUID
 
