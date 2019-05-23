@@ -145,6 +145,20 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
             }
           }
         }
+        "callback is unsuccessful" when {
+          "Send Email is successful" should {
+            "return ERROR with the status" in {
+              await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+
+              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+
+              val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
+
+              res should have
+              httpStatus(BAD_GATEWAY)
+            }
+          }
+        }
       }
 
       "the feature switch is disabled" when {
@@ -158,7 +172,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
             res should have(
-              httpStatus(NO_CONTENT)
+              httpStatus(BAD_GATEWAY)
             )
           }
         }
