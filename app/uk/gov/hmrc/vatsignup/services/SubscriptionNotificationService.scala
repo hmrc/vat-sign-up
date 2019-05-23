@@ -23,13 +23,14 @@ import play.api.Logger
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.featureswitch.{AutoClaimEnrolment, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.connectors.{EmailConnector, EnrolmentStoreProxyConnector}
+import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated
+import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
-import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated
-import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,14 +38,16 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailRequestRepository,
                                                 emailConnector: EmailConnector,
                                                 enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
+                                                autoClaimEnrolmentService: AutoClaimEnrolmentService,
                                                 appConfig: AppConfig
-                                               )(implicit ec: ExecutionContext) {
+                                               )(implicit ec: ExecutionContext)
+  extends FeatureSwitching {
   def sendEmailNotification(vatNumber: String,
                             subscriptionState: SubscriptionState
                            )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     (for {
       emailRequest <- getEmailRequest(vatNumber)
-      notificationResult <- sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated)
+      notificationResult <- EitherT(sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated))
       _ <- deleteEmailRequest(vatNumber)
     } yield notificationResult).value
   }
@@ -57,35 +60,62 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
     EitherT.liftF(emailRequestRepository.removeById(vatNumber))
 
 
+  private def autoEnrolment(vatNumber: String)
+                           (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+    autoClaimEnrolmentService.autoClaimEnrolment(vatNumber) map {
+      case Right(_) =>
+        Right(AutoClaimEnrol)
+      case Left(_) =>
+        Left(AutoClaimEnrolmentFailure)
+    }
+  }
+
+  private def sendEmailDelegated(emailAddress: String, vatNumber: String, subscriptionState: SubscriptionState)
+                                (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+    emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber)) map {
+      case Left(SendEmailHttpParser.SendEmailFailure(_, _)) => Left(EmailServiceFailure)
+      case Right(_) => Right(DelegatedSubscription)
+    }
+  }
+
+  private def sendEmailIndividual(emailAddress: String, vatNumber: String, subscriptionState: SubscriptionState)
+                                 (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+    subscriptionState match {
+      case Success => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None) map {
+        case Left(_) => Left(EmailServiceFailure)
+        case Right(_) => Right(NotificationSent)
+      }
+      case _ => enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
+        case Right(EnrolmentAlreadyAllocated(_)) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None) map {
+          case Left(_) => Left(EmailServiceFailure)
+          case Right(_) => Right(NotificationSent)
+        }
+        case _ =>
+          Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
+          Future.successful(Right(TaxEnrolmentFailure))
+      }
+    }
+  }
+
   private def sendEmail(emailAddress: String,
                         vatNumber: String,
                         subscriptionState: SubscriptionState,
                         isDelegated: Boolean
-                       )(implicit hc: HeaderCarrier): EitherT[Future, NotificationFailure, NotificationSuccess] = {
+                       )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     if (isDelegated) {
-      EitherT(emailConnector.sendEmail(emailAddress, agentSuccessEmailTemplate, Some(vatNumber))) bimap (
-        _ => EmailServiceFailure,
-        _ => DelegatedSubscription
-      )
-    } else {
-      subscriptionState match {
-        case Success => EitherT(emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None)) bimap(
-          _ => EmailServiceFailure,
-          _ => NotificationSent
-        )
-        case _ =>
-          val result = enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber).flatMap {
-            case Right(EnrolmentAlreadyAllocated(_)) => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None).map {
-              case Right(_) => Right(NotificationSent)
-              case Left(_) => Left(EmailServiceFailure)
+      if (isEnabled(AutoClaimEnrolment)) {
+        sendEmailDelegated(emailAddress, vatNumber, subscriptionState).flatMap {
+          case Right(DelegatedSubscription) =>
+            autoEnrolment(vatNumber) map {
+              case Right(_) => Right(AutoEnroledAndSubscribed)
+              case Left(_) => Right(NotAutoEnroledButSubscribed)
             }
-            case _ =>
-              Logger.error(s"Tax Enrolment Failure vrn=$vatNumber")
-              Future.successful(Right(TaxEnrolmentFailure))
-          }
-          EitherT[Future, NotificationFailure, NotificationSuccess](result)
+          case _ => Future.successful(Left(EmailServiceFailure))
+        }
       }
+      else sendEmailDelegated(emailAddress, vatNumber, subscriptionState)
     }
+    else sendEmailIndividual(emailAddress, vatNumber, subscriptionState)
   }
 }
 
@@ -103,10 +133,20 @@ object SubscriptionNotificationService {
 
   case object TaxEnrolmentFailure extends NotificationSuccess
 
+  case object AutoClaimEnrol extends NotificationSuccess
+
+  case object NotAutoEnroledButSubscribed extends NotificationSuccess
+
+  case object AutoEnroledAndSubscribed extends NotificationSuccess
+
+
   sealed trait NotificationFailure
 
   case object EmailRequestDataNotFound extends NotificationFailure
 
   case object EmailServiceFailure extends NotificationFailure
+
+  case object AutoClaimEnrolmentFailure extends NotificationFailure
+
 
 }

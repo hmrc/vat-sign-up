@@ -38,7 +38,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                          )(implicit ec: ExecutionContext) {
 
   def autoClaimEnrolment(vatNumber: String)
-                        (implicit hc: HeaderCarrier, request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
+                        (implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
     for {
       groupId <- getLegacyEnrolmentAllocation(vatNumber)
       credentialIds <- getUserIDs(vatNumber)
@@ -80,7 +80,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     }
 
   private def upsertEnrolmentAllocation(vatNumber: String, knownFacts: KnownFacts)
-                                       (implicit hc: HeaderCarrier, request: Request[_]
+                                       (implicit hc: HeaderCarrier
                                        ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
     EitherT(taxEnrolmentsConnector.upsertEnrolment(
       vatNumber = vatNumber,
@@ -94,7 +94,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     }
 
   private def allocateEnrolmentWithoutKnownFacts(vatNumber: String, groupId: String, credentialId: String)
-                                                (implicit hc: HeaderCarrier, request: Request[_]
+                                                (implicit hc: HeaderCarrier
                                                 ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
     EitherT(taxEnrolmentsConnector.allocateEnrolmentWithoutKnownFacts(
       groupId = groupId,
@@ -109,7 +109,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   }
 
   private def assignEnrolmentToUser(credentialIds: Set[String], vatNumber: String)
-                                   (implicit hc: HeaderCarrier, request: Request[_]
+                                   (implicit hc: HeaderCarrier
                                    ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
     EitherT(assignEnrolmentToUserService.assignEnrolment(
       userIds = credentialIds,
