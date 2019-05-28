@@ -201,7 +201,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
             "return a EnrolmentAlreadyAllocated" in {
               mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
               mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
-                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated))
+                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
               )
 
               val res = await(TestClaimSubscriptionService.claimSubscription(
@@ -343,7 +343,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               "return a EnrolmentAlreadyAllocated" in {
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
-                  Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated))
+                  Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                 )
 
                 val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(

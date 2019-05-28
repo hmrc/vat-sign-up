@@ -24,9 +24,9 @@ import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockEnrolmentStoreProxyConnector, MockKnownFactsConnector, MockTaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers._
-import uk.gov.hmrc.vatsignup.service.mocks.MockAssignEnrolmentToUserService
+import uk.gov.hmrc.vatsignup.service.mocks.{MockAssignEnrolmentToUserService, MockCheckEnrolmentAllocationService}
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
-import uk.gov.hmrc.vatsignup.services.{AssignEnrolmentToUserService, AutoClaimEnrolmentService}
+import uk.gov.hmrc.vatsignup.services.{AssignEnrolmentToUserService, AutoClaimEnrolmentService, CheckEnrolmentAllocationService}
 import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -34,12 +34,13 @@ import scala.concurrent.Future
 
 
 class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConnector with MockTaxEnrolmentsConnector
-  with MockEnrolmentStoreProxyConnector with MockAssignEnrolmentToUserService {
+  with MockEnrolmentStoreProxyConnector with MockCheckEnrolmentAllocationService with MockAssignEnrolmentToUserService {
 
   object TestAutoClaimEnrolmentService extends AutoClaimEnrolmentService(
     mockKnownFactsConnector,
     mockTaxEnrolmentsConnector,
     mockEnrolmentStoreProxyConnector,
+    mockCheckEnrolmentAllocationService,
     mockAssignEnrolmentToUserService
   )
 
@@ -56,15 +57,20 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             "allocate the new group ID is successful" when {
               "assign the new user IDs is successful" when {
                 "returns successful" in {
-                  mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+                  mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+                    Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+                  )
                   mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
                   mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
                   mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                    Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess)))
+                    Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
+                  )
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                    Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess)))
+                    Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
+                  )
                   mockAssignEnrolmentToUser(testSetCredentialIds, testVatNumber)(
-                    Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers)))
+                    Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
+                  )
 
                   val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
@@ -73,15 +79,20 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
               }
               "assign the new user IDs fails" when {
                 "return Failure" in {
-                  mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+                  mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+                    Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+                  )
                   mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
                   mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
                   mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                    Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess)))
+                    Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
+                  )
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                    Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess)))
+                    Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
+                  )
                   mockAssignEnrolmentToUser(testSetCredentialIds, testVatNumber)(
-                    Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed)))
+                    Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed))
+                  )
 
                   val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
@@ -91,13 +102,17 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             }
             "allocate the new group ID fails" when {
               "return Failure" in {
-                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+                mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+                  Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+                )
                 mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess)))
+                  Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
+                )
                 mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                  Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(testErrorMsg))))
+                  Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(testErrorMsg)))
+                )
 
                 val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
@@ -107,11 +122,14 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           }
           "upsert the enrolment fails" when {
             "return Failure" in {
-              mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+              mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+              )
               mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
               mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
               mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg))))
+                Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
+              )
 
               val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
@@ -121,7 +139,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
         }
         "the known facts connector fails" when {
           "returns InvalidVatNumber" in {
-            mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+            mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+              Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+            )
             mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
             mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
 
@@ -130,7 +150,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             res shouldBe Left(InvalidVatNumber)
           }
           "returns VatNumberNotFound" in {
-            mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+            mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+              Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+            )
             mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
             mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
 
@@ -142,7 +164,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
       }
       "legacy user IDS don't exist and the set is empty" when {
         "returns NoUsersFound" in {
-          mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+          )
           mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(Set()))))
 
           val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
@@ -152,7 +176,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
       }
       "legacy user IDS are not returned" when {
         "returns NoUsersFound" in {
-          mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+          )
           mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.NoUsersFound)))
 
           val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
@@ -162,7 +188,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
       }
       "legacy user IDs are not returned" when {
         "returns ConnectionFailure" in {
-          mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId))))
+          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+          )
           mockGetUserIds(testVatNumber)(Future.successful(Left(QueryUsersHttpParser.EnrolmentStoreProxyConnectionFailure(BAD_REQUEST))))
 
           val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
@@ -173,7 +201,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
     }
     "legacy group ID is not returned" when {
       "returns EnrolmentNotAllocated" in {
-        mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
 
         val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 
@@ -182,7 +212,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
     }
     "legacy group ID is not returned" when {
       "returns EnrolmentStoreProxyFailure" in {
-        mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Left(EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyFailure(BAD_REQUEST))))
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
+        )
 
         val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber))
 

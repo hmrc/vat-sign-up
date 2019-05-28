@@ -19,12 +19,12 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
+import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated
 import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,6 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnector,
                                           taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                           enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
+                                          checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService
                                          )(implicit ec: ExecutionContext) {
 
@@ -51,11 +52,12 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
 
   private def getLegacyEnrolmentAllocation(vatNumber: String)
                                           (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] = {
-    EitherT(enrolmentStoreProxyConnector.getAllocatedEnrolments(vatNumber)) transform {
-      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(groupId)) => Right(groupId)
+    EitherT(checkEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(vatNumber)) transform {
       case Right(_) =>
         Left(EnrolmentNotAllocated)
-      case Left(EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyFailure(status)) =>
+      case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(groupId)) =>
+        Right(groupId)
+      case Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status)) =>
         Left(EnrolmentStoreProxyFailure(status))
     }
   }

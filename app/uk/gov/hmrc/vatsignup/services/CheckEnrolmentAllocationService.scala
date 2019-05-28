@@ -32,7 +32,7 @@ class CheckEnrolmentAllocationService @Inject()(enrolmentStoreProxyConnector: En
                             (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
     enrolmentStoreProxyConnector.getAllocatedEnrolments(enrolmentKey) map {
       case Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated) => Right(EnrolmentNotAllocated)
-      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(_)) => Left(EnrolmentAlreadyAllocated)
+      case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(groupId)) => Left(EnrolmentAlreadyAllocated(groupId))
       case Left(EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyFailure(status)) => Left(UnexpectedEnrolmentStoreProxyFailure(status))
     }
   }
@@ -59,7 +59,7 @@ object CheckEnrolmentAllocationService {
 
   sealed trait CheckEnrolmentAllocationFailure
 
-  case object EnrolmentAlreadyAllocated extends CheckEnrolmentAllocationFailure
+  case class EnrolmentAlreadyAllocated(groupId: String) extends CheckEnrolmentAllocationFailure
 
   case class UnexpectedEnrolmentStoreProxyFailure(status: Int) extends CheckEnrolmentAllocationFailure
 }
