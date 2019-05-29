@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.connectors
 import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
-import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.{testUserIdSet, _}
+import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser._
@@ -39,7 +39,7 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
         val res = connector.getUserIds(testVatNumber)
 
-        await(res) shouldBe Right(UsersFound(testUserIdSet))
+        await(res) shouldBe Right(UsersFound(Set(testCredentialId, testCredentialId2, testCredentialId3)))
       }
     }
 

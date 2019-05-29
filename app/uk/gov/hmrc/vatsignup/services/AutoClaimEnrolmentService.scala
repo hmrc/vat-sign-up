@@ -43,8 +43,9 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       credentialIds <- getUserIDs(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
-      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, groupId, credentialIds.head)
-      _ <- assignEnrolmentToUser(credentialIds, vatNumber)
+      principalCredentialId = credentialIds.head
+      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, groupId, principalCredentialId)
+      _ <- assignEnrolmentToUser(credentialIds filterNot (_ == principalCredentialId), vatNumber)
     } yield EnrolmentAssigned
   }.value
 

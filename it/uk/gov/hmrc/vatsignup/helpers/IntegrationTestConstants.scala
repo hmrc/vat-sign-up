@@ -36,12 +36,13 @@ object IntegrationTestConstants {
   val testEmailTemplate: String = "template"
   val testGroupId: String = UUID.randomUUID().toString
   val testCredentialId: String = UUID.randomUUID().toString
+  val testCredentialId2: String = UUID.randomUUID().toString
+  val testCredentialId3: String = UUID.randomUUID().toString
   val testRequestId: String = UUID.randomUUID().toString
   val testNonUKCompanyWithUKEstablishmentCompanyNumberFC = "FC123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberSF = "SF123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberNF = "NF123321"
   val testContactPreference = "Digital"
-  val testUserIdSet = Set(testCredentialId, testCredentialId.drop(3))
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
   val testLastReturnMonthPeriod: String = "MAR"

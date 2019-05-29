@@ -26,20 +26,15 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
 
   val enrolmentStoreProxyUri = "/enrolment-store-proxy/enrolment-store/enrolments"
 
-  def jsonResponseBody(idKey: String, testId: String): JsValue = Json.parse(input =
-    s"""
-      {
-        "$idKey": [
-          "$testId",
-          "${testId.drop(3)}"
-        ]
-      }
-    """
-  )
+  def jsonResponseBody(idKey: String, idValues: String*): JsValue =
+    Json.obj(
+      idKey -> idValues
+    )
+
 
   def stubGetUserIds(vatNumber: String)(status: Int): StubMapping = {
     when(method = GET, uri = s"$enrolmentStoreProxyUri/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users\\?type=principal")
-      .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey, testCredentialId))
+      .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey, testCredentialId, testCredentialId2, testCredentialId3))
   }
 
   def stubGetAllocatedMtdVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
