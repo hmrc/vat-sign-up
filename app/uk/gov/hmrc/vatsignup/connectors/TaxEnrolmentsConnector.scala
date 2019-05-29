@@ -75,6 +75,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
       url = applicationConfig.upsertEnrolmentUrl(enrolmentKey),
       body = requestBody
     )
+
   }
 
   def allocateEnrolment(groupId: String,
@@ -119,7 +120,6 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
       "friendlyName" -> "Making Tax Digital - VAT",
       "type" -> "principal"
     )
-
     http.POST[JsObject, AllocateEnrolmentResponse](
       url = applicationConfig.allocateEnrolmentUrl(groupId, enrolmentKey),
       body = requestBody

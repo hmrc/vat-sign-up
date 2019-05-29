@@ -24,7 +24,6 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
-import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.testGroupID1
 
 
 class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
@@ -72,7 +71,7 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
         val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
 
-        await(res) shouldBe Right(EnrolmentAlreadyAllocated(testGroupID1))
+        await(res) shouldBe Right(EnrolmentAlreadyAllocated(testGroupId))
       }
     }
 

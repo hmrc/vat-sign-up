@@ -21,11 +21,11 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubFailureVatNumberNotFound
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EmailStub, EnrolmentStoreProxyStub, KnownFactsStub, TaxEnrolmentsStub}
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
+import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -107,12 +107,12 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
+              EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
-              TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(OK)
-              TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(OK)
-              TaxEnrolmentsStub.stubAssignEnrolment(testVatNumber, testCredentialId)(OK)
+              TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+              TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
+              TaxEnrolmentsStub.stubAssignEnrolment(testVatNumber, testCredentialId)(CREATED)
 
               EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
@@ -120,6 +120,11 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               res should have(
                 httpStatus(NO_CONTENT)
               )
+
+              TaxEnrolmentsStub.verifyUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)
+              TaxEnrolmentsStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
+              TaxEnrolmentsStub.verifyAssignEnrolment(testVatNumber, testCredentialId)
+
             }
           }
 
@@ -129,11 +134,11 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
+              EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
-              TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(OK)
-              TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(OK)
+              TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+              TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
               TaxEnrolmentsStub.stubAssignEnrolment(testVatNumber, testCredentialId)(BAD_GATEWAY)
 
               EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
@@ -142,6 +147,10 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               res should have(
                 httpStatus(NO_CONTENT)
               )
+
+              TaxEnrolmentsStub.verifyUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)
+              TaxEnrolmentsStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
+              TaxEnrolmentsStub.verifyAssignEnrolment(testVatNumber, testCredentialId)
             }
           }
         }

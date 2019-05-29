@@ -104,7 +104,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     EitherT(checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber)) transform {
       case Right(_) =>
         Right(EnrolmentNotAllocated)
-      case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated) =>
+      case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(_)) =>
         Left(EnrolmentAlreadyAllocated)
       case Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status)) =>
         Left(CheckEnrolmentAllocationFailed(status))

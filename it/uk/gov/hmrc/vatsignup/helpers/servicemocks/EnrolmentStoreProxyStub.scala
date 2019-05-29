@@ -18,31 +18,38 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.principalGroupIdKey
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.principalUserIdKey
-import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.{testGroupID1, testGroupID2}
 
 object EnrolmentStoreProxyStub extends WireMockMethods {
 
-  def jsonResponseBody(idKey: String): JsValue = Json.parse(input =
+  val enrolmentStoreProxyUri = "/enrolment-store-proxy/enrolment-store/enrolments"
+
+  def jsonResponseBody(idKey: String, testId: String): JsValue = Json.parse(input =
     s"""
       {
         "$idKey": [
-          "$testGroupID1",
-          "$testGroupID2"
+          "$testId",
+          "${testId.drop(3)}"
         ]
       }
     """
   )
 
   def stubGetUserIds(vatNumber: String)(status: Int): StubMapping = {
-    when(method = GET, uri = s"/enrolment-store-proxy/enrolment-store/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users\\?type=principal")
-      .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey))
+    when(method = GET, uri = s"$enrolmentStoreProxyUri/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users\\?type=principal")
+      .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey, testCredentialId))
   }
 
   def stubGetAllocatedMtdVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
-    when(method = GET, uri = s"/enrolment-store-proxy/enrolment-store/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups\\?type=principal")
-      .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey))
+    when(method = GET, uri = s"$enrolmentStoreProxyUri/HMRC-MTD-VAT~VRN~$vatNumber/groups\\?type=principal")
+      .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey, testGroupId))
+  }
+
+  def stubGetAllocatedLegacyVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
+    when(method = GET, uri = s"$enrolmentStoreProxyUri/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/groups\\?type=principal")
+      .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey, testGroupId))
   }
 
 }
