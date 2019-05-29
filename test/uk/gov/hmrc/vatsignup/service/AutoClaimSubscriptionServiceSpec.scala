@@ -68,7 +68,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
                     Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
                   )
-                  mockAssignEnrolmentToUser(testSetCredentialIds, testVatNumber)(
+                  mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
                     Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
                   )
 
@@ -90,7 +90,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
                     Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
                   )
-                  mockAssignEnrolmentToUser(testSetCredentialIds, testVatNumber)(
+                  mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
                     Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed))
                   )
 
