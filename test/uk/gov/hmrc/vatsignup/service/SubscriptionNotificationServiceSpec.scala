@@ -22,14 +22,14 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
-import uk.gov.hmrc.vatsignup.connectors.mocks.{MockEmailConnector, MockEnrolmentStoreProxyConnector}
+import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.models.SubscriptionState.{AuthRefreshed, Failure, Success}
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
-import uk.gov.hmrc.vatsignup.service.mocks.MockAutoClaimEnrolmentService
+import uk.gov.hmrc.vatsignup.service.mocks.{MockAutoClaimEnrolmentService, MockCheckEnrolmentAllocationService}
+import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService._
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 import uk.gov.hmrc.vatsignup.services.{AutoClaimEnrolmentService, SubscriptionNotificationService}
 
@@ -39,15 +39,15 @@ import scala.concurrent.Future
 class SubscriptionNotificationServiceSpec extends UnitSpec
   with MockEmailRequestRepository
   with MockEmailConnector
-  with MockEnrolmentStoreProxyConnector
   with MockAutoClaimEnrolmentService
+  with MockCheckEnrolmentAllocationService
   with MockConfig {
 
   object TestSubscriptionNotificationService extends SubscriptionNotificationService(
     mockEmailRequestRepository,
     mockEmailConnector,
-    mockEnrolmentStoreProxyConnector,
     mockAutoClaimEnrolmentService,
+    mockCheckEnrolmentAllocationService,
     mockConfig
   )
 
@@ -91,7 +91,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               "return NotificationSent" in {
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentAlreadyAllocated(""))))
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Right(EmailQueued)))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -105,7 +105,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               "return EmailServiceFailure" in {
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-                mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentAlreadyAllocated(""))))
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
@@ -118,7 +118,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "return no email" in {
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-              mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
@@ -129,7 +129,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-              mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, AuthRefreshed))
@@ -142,7 +142,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "return no email" in {
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-              mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
@@ -153,7 +153,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-              mockGetAllocatedEnrolment(testVatNumber)(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, AuthRefreshed))

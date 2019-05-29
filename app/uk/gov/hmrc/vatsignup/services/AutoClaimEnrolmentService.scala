@@ -24,7 +24,6 @@ import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFact
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
-import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated
 import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,8 +37,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService
                                          )(implicit ec: ExecutionContext) {
 
-  def autoClaimEnrolment(vatNumber: String)
-                        (implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
+  def autoClaimEnrolment(vatNumber: String)(implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
     for {
       groupId <- getLegacyEnrolmentAllocation(vatNumber)
       credentialIds <- getUserIDs(vatNumber)
@@ -50,8 +48,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     } yield EnrolmentAssigned
   }.value
 
-  private def getLegacyEnrolmentAllocation(vatNumber: String)
-                                          (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] = {
+  private def getLegacyEnrolmentAllocation(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] = {
     EitherT(checkEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(vatNumber)) transform {
       case Right(_) =>
         Left(EnrolmentNotAllocated)
@@ -62,8 +59,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     }
   }
 
-  private def getUserIDs(vatNumber: String)
-                        (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] = {
+  private def getUserIDs(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] = {
     EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)) transform {
       case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) if retrievedUserIds.nonEmpty =>
         Right(retrievedUserIds)
@@ -81,9 +77,9 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       case _ => KnownFactsFailure
     }
 
-  private def upsertEnrolmentAllocation(vatNumber: String, knownFacts: KnownFacts)
-                                       (implicit hc: HeaderCarrier
-                                       ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
+  private def upsertEnrolmentAllocation(vatNumber: String,
+                                        knownFacts: KnownFacts
+                                       )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
     EitherT(taxEnrolmentsConnector.upsertEnrolment(
       vatNumber = vatNumber,
       postcode = knownFacts.businessPostcode,
@@ -95,9 +91,10 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
         Left(AutoClaimEnrolmentService.UpsertEnrolmentFailure(message))
     }
 
-  private def allocateEnrolmentWithoutKnownFacts(vatNumber: String, groupId: String, credentialId: String)
-                                                (implicit hc: HeaderCarrier
-                                                ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
+  private def allocateEnrolmentWithoutKnownFacts(vatNumber: String,
+                                                 groupId: String,
+                                                 credentialId: String
+                                                )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
     EitherT(taxEnrolmentsConnector.allocateEnrolmentWithoutKnownFacts(
       groupId = groupId,
       credentialId = credentialId,
@@ -111,8 +108,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   }
 
   private def assignEnrolmentToUser(credentialIds: Set[String], vatNumber: String)
-                                   (implicit hc: HeaderCarrier
-                                   ): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
+                                   (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
     EitherT(assignEnrolmentToUserService.assignEnrolment(
       userIds = credentialIds,
       vatNumber = vatNumber
@@ -141,7 +137,6 @@ object AutoClaimEnrolmentService {
   case class KnownFacts(businessPostcode: String, vatRegistrationDate: String)
 
   case object UpsertEnrolmentSuccess extends AutoClaimEnrolmentSuccess
-
 
   sealed trait AutoClaimEnrolmentFailure
 

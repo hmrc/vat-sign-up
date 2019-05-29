@@ -41,9 +41,7 @@ object IntegrationTestConstants {
   val testNonUKCompanyWithUKEstablishmentCompanyNumberSF = "SF123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberNF = "NF123321"
   val testContactPreference = "Digital"
-  val testGroupID1 = "ABCEDEFGI1234567"
-  val testGroupID2 = "ABCEDEFGI1234568"
-  val testUserIdSet = Set(testGroupID1, testGroupID2)
+  val testUserIdSet = Set(testCredentialId, testCredentialId.drop(3))
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
   val testLastReturnMonthPeriod: String = "MAR"

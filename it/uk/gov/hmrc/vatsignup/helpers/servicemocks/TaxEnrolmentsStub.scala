@@ -77,6 +77,32 @@ object TaxEnrolmentsStub extends WireMockMethods {
     ) thenReturn status
   }
 
+  def verifyUpsertEnrolment(vatNumber: String, postcode: String, vatRegistrationDate: String): Unit = {
+    val allocateEnrolmentJsonBody = Json.obj(
+      "verifiers" -> Json.arr(
+        Json.obj(
+          "key" -> "Postcode",
+          "value" -> postcode
+        ),
+        Json.obj(
+          "key" -> "VATRegistrationDate",
+          "value" -> vatRegistrationDate
+        )
+      )
+    )
+
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    verify(
+      method = PUT,
+      uri = upsertEnrolmentUrl(
+        enrolmentKey = enrolmentKey
+      ),
+      body = allocateEnrolmentJsonBody
+    )
+
+  }
+
   def stubAllocateEnrolment(vatNumber: String, groupId: String, credentialId: String, postcode: String, vatRegistrationDate: String)(status: Int): Unit = {
     val allocateEnrolmentJsonBody = Json.obj(
       "userId" -> credentialId,
@@ -124,6 +150,24 @@ object TaxEnrolmentsStub extends WireMockMethods {
       body = allocateEnrolmentJsonBody
     ) thenReturn status
   }
+
+  def verifyAllocateEnrolmentWithoutKnownFacts(vatNumber: String, groupId: String, credentialId: String): Unit = {
+    val allocateEnrolmentJsonBody = Json.obj(
+      "userId" -> credentialId,
+      "friendlyName" -> "Making Tax Digital - VAT",
+      "type" -> "principal"
+    )
+
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    verify(
+      method = POST,
+      uri = allocateEnrolmentUrl(
+        groupId = groupId,
+        enrolmentKey = enrolmentKey
+      ),
+      body = allocateEnrolmentJsonBody)
+  }
   
   def stubAssignEnrolment(vatNumber: String, userId: String)(status: Int): Unit = {
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
@@ -137,4 +181,15 @@ object TaxEnrolmentsStub extends WireMockMethods {
     ) thenReturn status
   }
 
+  def verifyAssignEnrolment(vatNumber: String, userId: String): Unit = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    verify(
+      method = POST,
+      uri = assignEnrolmentUrl(
+        userId = userId,
+        enrolmentKey = enrolmentKey
+      )
+    )
+  }
 }
