@@ -126,6 +126,7 @@ object TaxEnrolmentsStub extends WireMockMethods {
       method = POST,
       uri = allocateEnrolmentUrl(
         groupId = groupId,
+
         enrolmentKey = enrolmentKey
       ),
       body = allocateEnrolmentJsonBody
@@ -135,8 +136,8 @@ object TaxEnrolmentsStub extends WireMockMethods {
   def stubAllocateEnrolmentWithoutKnownFacts(vatNumber: String, groupId: String, credentialId: String)(status: Int): Unit = {
     val allocateEnrolmentJsonBody = Json.obj(
       "userId" -> credentialId,
-      "friendlyName" -> "Making Tax Digital - VAT",
-      "type" -> "principal"
+      "type" -> "principal",
+      "action" -> "enrolAndActivate"
     )
 
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
@@ -154,8 +155,8 @@ object TaxEnrolmentsStub extends WireMockMethods {
   def verifyAllocateEnrolmentWithoutKnownFacts(vatNumber: String, groupId: String, credentialId: String): Unit = {
     val allocateEnrolmentJsonBody = Json.obj(
       "userId" -> credentialId,
-      "friendlyName" -> "Making Tax Digital - VAT",
-      "type" -> "principal"
+      "type" -> "principal",
+      "action" -> "enrolAndActivate"
     )
 
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"

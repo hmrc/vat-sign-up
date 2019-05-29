@@ -117,8 +117,8 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
 
     val requestBody = Json.obj(
       "userId" -> credentialId,
-      "friendlyName" -> "Making Tax Digital - VAT",
-      "type" -> "principal"
+      "type" -> "principal",
+      "action" -> "enrolAndActivate"
     )
     http.POST[JsObject, AllocateEnrolmentResponse](
       url = applicationConfig.allocateEnrolmentUrl(groupId, enrolmentKey),
