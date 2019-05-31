@@ -44,7 +44,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
       principalCredentialId = credentialIds.head
-      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, groupId, principalCredentialId)
+      _ <- allocateEnrolment(vatNumber, groupId, principalCredentialId, knownFacts)
       _ <- assignEnrolmentToUser(credentialIds filterNot (_ == principalCredentialId), vatNumber)
     } yield EnrolmentAssigned
   }.value
@@ -92,14 +92,17 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
         Left(AutoClaimEnrolmentService.UpsertEnrolmentFailure(message))
     }
 
-  private def allocateEnrolmentWithoutKnownFacts(vatNumber: String,
-                                                 groupId: String,
-                                                 credentialId: String
-                                                )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
-    EitherT(taxEnrolmentsConnector.allocateEnrolmentWithoutKnownFacts(
+  private def allocateEnrolment(vatNumber: String,
+                                groupId: String,
+                                credentialId: String,
+                                knownFacts: KnownFacts
+                               )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
+    EitherT(taxEnrolmentsConnector.allocateEnrolment(
       groupId = groupId,
       credentialId = credentialId,
-      vatNumber = vatNumber
+      vatNumber = vatNumber,
+      postcode = knownFacts.businessPostcode,
+      vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
     )) transform {
       case Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess) =>
         Right(AutoClaimEnrolmentService.EnrolSuccess)

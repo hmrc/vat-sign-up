@@ -109,24 +109,6 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
   }
 
 
-  def allocateEnrolmentWithoutKnownFacts(groupId: String,
-                        credentialId: String,
-                        vatNumber: String
-                       )(implicit hc: HeaderCarrier): Future[AllocateEnrolmentResponse] = {
-    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
-
-    val requestBody = Json.obj(
-      "userId" -> credentialId,
-      "type" -> "principal",
-      "action" -> "enrolAndActivate"
-    )
-    http.POST[JsObject, AllocateEnrolmentResponse](
-      url = applicationConfig.allocateEnrolmentUrl(groupId, enrolmentKey),
-      body = requestBody
-    )
-  }
-
-
   def assignEnrolment(credentialId: String,
                       vatNumber: String
                      )(implicit hc: HeaderCarrier): Future[AssignEnrolmentToUserResponse] = {
