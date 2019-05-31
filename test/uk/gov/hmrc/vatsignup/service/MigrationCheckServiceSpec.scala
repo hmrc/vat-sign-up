@@ -231,7 +231,6 @@ class MigrationCheckServiceSpec extends UnitSpec
         mockFilingDateStaggerParameters(Map(MonthlyStagger -> Set(
           DateRange(startDate, endDate)
         )))
-        // TODO will need to change this to reflect the filing dates when available
 
         mockCurrentDate(currentDate)
 
@@ -251,6 +250,39 @@ class MigrationCheckServiceSpec extends UnitSpec
           testVatNumber,
           isSuccess = false,
           failureReasons = Seq(ControlListAuditing.filingDateMigrationRestrictionMessage)
+        ))
+      }
+    }
+
+    "the current date and stagger fall within the monthly direct debit dates" should {
+      "return Left(MigratableDates)" in {
+        val startDate = LocalDate.of(2018, 1, 1)
+        val endDate = LocalDate.of(2018, 2, 1)
+
+        val currentDate = startDate plusDays 2
+
+        mockDirectDebitStaggerParameters(Map(MonthlyStagger -> Set(
+          DateRange(startDate, endDate)
+        )))
+
+        mockCurrentDate(currentDate)
+
+        val res = TestMigrationCheckService.checkMigrationRestrictions(
+          vatNumber = testVatNumber,
+          stagger = MonthlyStagger,
+          isDirectDebit = true,
+          isMigratable = true
+        )
+
+        res shouldBe Left(MigratableDates(
+          Some(endDate plusDays 1),
+          None
+        ))
+
+        verifyAudit(ControlListAuditModel(
+          testVatNumber,
+          isSuccess = false,
+          failureReasons = Seq(ControlListAuditing.directDebitMigrationRestrictionMessage)
         ))
       }
     }
