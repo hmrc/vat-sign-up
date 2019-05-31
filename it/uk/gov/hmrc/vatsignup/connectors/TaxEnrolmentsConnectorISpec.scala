@@ -98,6 +98,28 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
     }
   }
 
+  "allocateEnrolmentWithoutKnownFacts" when {
+    "Tax Enrolments returns a Created" should {
+      "return an EnrolSuccess" in {
+        TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
+
+        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
+
+        await(res) shouldBe Right(EnrolSuccess)
+      }
+    }
+
+    "Tax Enrolments returns a Bad Request" should {
+      "return an EnrolFailure" in {
+        TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(BAD_REQUEST)
+
+        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
+
+        await(res) shouldBe Left(EnrolFailure(""))
+      }
+    }
+  }
+
   "assignEnrolment" when {
     "Tax Enrolments returns a Created" should {
       "return an EnrolSuccess" in {

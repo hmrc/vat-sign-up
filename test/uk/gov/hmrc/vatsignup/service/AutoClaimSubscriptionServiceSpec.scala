@@ -65,7 +65,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
-                  mockAllocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
                     Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
                   )
                   mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
@@ -87,7 +87,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
-                  mockAllocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
                     Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
                   )
                   mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
@@ -110,7 +110,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                 )
-                mockAllocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
                   Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(testErrorMsg)))
                 )
 
