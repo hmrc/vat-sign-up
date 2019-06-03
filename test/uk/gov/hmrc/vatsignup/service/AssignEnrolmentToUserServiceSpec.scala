@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.service
 import play.mvc.Http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.connectors.mocks.MockTaxEnrolmentsConnector
+import uk.gov.hmrc.vatsignup.connectors.mocks.MockEnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.{EnrolmentAssigned, EnrolmentAssignmentFailure}
 import uk.gov.hmrc.vatsignup.services.AssignEnrolmentToUserService
@@ -28,9 +28,9 @@ import uk.gov.hmrc.vatsignup.services.AssignEnrolmentToUserService.{EnrolmentAss
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockTaxEnrolmentsConnector {
+class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreProxyConnector {
 
-  object TestAssignEnrolmentToUserService extends AssignEnrolmentToUserService(mockTaxEnrolmentsConnector)
+  object TestAssignEnrolmentToUserService extends AssignEnrolmentToUserService(mockEnrolmentStoreProxyConnector)
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 

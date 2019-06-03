@@ -21,8 +21,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolFailure, EnrolSuccess}
+import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.EnrolmentAssigned
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser._
+import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 
@@ -92,6 +95,64 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
         val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
 
         await(res) shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
+      }
+    }
+  }
+
+
+  "allocateEnrolmentWithoutKnownFacts" when {
+    "Enrolment Store Proxy returns a Created" should {
+      "return an EnrolSuccess" in {
+        stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
+
+        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
+
+        await(res) shouldBe Right(EnrolSuccess)
+      }
+    }
+
+    "Enrolment Store Proxy returns a Bad Request" should {
+      "return an EnrolFailure" in {
+        stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(BAD_REQUEST)
+
+        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
+
+        await(res) shouldBe Left(EnrolFailure(""))
+      }
+    }
+  }
+
+  "assignEnrolment" when {
+    "Enrolment Store Proxy returns a Created" should {
+      "return an EnrolSuccess" in {
+        stubAssignEnrolment(vatNumber = testVatNumber, userId = testCredentialId)(CREATED)
+
+        val res = connector.assignEnrolment(testCredentialId, testVatNumber)
+
+        await(res) shouldBe Right(EnrolmentAssigned)
+      }
+    }
+  }
+
+
+  "upsertEnrolment" when {
+    "Enrolment Store Proxy returns a successful response" should {
+      "return an EnrolSuccess" in {
+        stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(NO_CONTENT)
+
+        val res = connector.upsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Right(UpsertEnrolmentSuccess)
+      }
+    }
+
+    "Enrolment Store Proxy returns an unsuccessful response" should {
+      "return an EnrolFailure" in {
+        stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(BAD_REQUEST)
+
+        val res = connector.upsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)
+
+        await(res) shouldBe Left(UpsertEnrolmentFailure(BAD_REQUEST, ""))
       }
     }
   }

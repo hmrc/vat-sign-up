@@ -98,48 +98,5 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
     }
   }
 
-  "allocateEnrolmentWithoutKnownFacts" when {
-    "Tax Enrolments returns a Created" should {
-      "return an EnrolSuccess" in {
-        TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
-
-        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
-
-        await(res) shouldBe Right(EnrolSuccess)
-      }
-    }
-
-    "Tax Enrolments returns a Bad Request" should {
-      "return an EnrolFailure" in {
-        TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(BAD_REQUEST)
-
-        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
-
-        await(res) shouldBe Left(EnrolFailure(""))
-      }
-    }
-  }
-
-  "assignEnrolment" when {
-    "Tax Enrolments returns a Created" should {
-      "return an EnrolSuccess" in {
-        TaxEnrolmentsStub.stubAssignEnrolment(vatNumber = testVatNumber, userId = testCredentialId)(CREATED)
-
-        val res = connector.assignEnrolment(testCredentialId, testVatNumber)
-
-        await(res) shouldBe Right(EnrolmentAssigned)
-      }
-    }
-
-    "Tax Enrolments returns a Bad Request" should {
-      "return an EnrolFailure" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, testPostCode, testDateOfRegistration)(BAD_REQUEST)
-
-        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, testPostCode, testDateOfRegistration)
-
-        await(res) shouldBe Left(EnrolFailure(""))
-      }
-    }
-  }
 
 }

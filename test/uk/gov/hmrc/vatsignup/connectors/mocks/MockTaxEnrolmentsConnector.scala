@@ -47,7 +47,6 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
       ArgumentMatchers.eq(postcode),
       ArgumentMatchers.eq(vatRegistrationDate)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-
   }
 
   def mockRegisterEnrolment(vatNumber: String, safeId: String)(response: Future[TaxEnrolmentsResponse]): Unit = {
@@ -68,21 +67,6 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(postcode),
       ArgumentMatchers.eq(vatRegistrationDate)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-
-  def mockAllocateEnrolmentWithoutKnownFacts(groupId: String,
-                                             credentialId: String,
-                                             vatNumber: String)(response: Future[AllocateEnrolmentResponse]): Unit =
-    when(mockTaxEnrolmentsConnector.allocateEnrolmentWithoutKnownFacts(
-      ArgumentMatchers.eq(groupId),
-      ArgumentMatchers.eq(credentialId),
-      ArgumentMatchers.eq(vatNumber)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-
-  def mockAssignEnrolment(userId: String, vatNumber: String)(response: Future[AssignEnrolmentToUserResponse]): Unit =
-    when(mockTaxEnrolmentsConnector.assignEnrolment(
-      ArgumentMatchers.eq(userId),
-      ArgumentMatchers.eq(vatNumber)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
 
 }
