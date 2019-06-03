@@ -24,6 +24,10 @@ import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
 import EnrolmentStoreProxyConnector.principalQueryKey
+import play.api.libs.json.{JsObject, Json}
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
+import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
+import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,6 +48,58 @@ class EnrolmentStoreProxyConnector @Inject()(http: HttpClient,
       queryParams = Seq(principalQueryKey))
   }
 
+  def upsertEnrolment(vatNumber: String,
+                      postcode: String,
+                      vatRegistrationDate: String)
+                     (implicit hc: HeaderCarrier): Future[UpsertEnrolmentResponse] = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    val requestBody = Json.obj(
+      "verifiers" -> Json.arr(
+        Json.obj(
+          "key" -> "Postcode",
+          "value" -> postcode
+        ),
+        Json.obj(
+          "key" -> "VATRegistrationDate",
+          "value" -> vatRegistrationDate
+        )
+      )
+    )
+    http.PUT[JsObject, UpsertEnrolmentResponse](
+      url = appConfig.upsertEnrolmentEnrolmentStoreUrl(enrolmentKey),
+      body = requestBody
+    )
+
+  }
+
+  def allocateEnrolmentWithoutKnownFacts(groupId: String,
+                                         credentialId: String,
+                                         vatNumber: String
+                                        )(implicit hc: HeaderCarrier): Future[AllocateEnrolmentResponse] = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    val requestBody = Json.obj(
+      "userId" -> credentialId,
+      "type" -> "principal",
+      "action" -> "enrolAndActivate"
+    )
+    http.POST[JsObject, AllocateEnrolmentResponse](
+      url = appConfig.allocateEnrolmentEnrolmentStoreUrl(groupId, enrolmentKey),
+      body = requestBody
+    )
+  }
+
+
+  def assignEnrolment(credentialId: String,
+                      vatNumber: String
+                     )(implicit hc: HeaderCarrier): Future[AssignEnrolmentToUserResponse] = {
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    http.POSTEmpty[AssignEnrolmentToUserResponse](
+      url = appConfig.assignEnrolmentUrl(credentialId, enrolmentKey)
+    )
+  }
 }
 
 object EnrolmentStoreProxyConnector {

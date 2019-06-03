@@ -51,7 +51,7 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   lazy val desEnvironmentHeader: (String, String) =
     "Environment" -> loadConfig("microservice.services.des.environment")
 
-  lazy val enrolmentStoreProxyUrl: String = baseUrl("enrolment-store-proxy")
+  lazy val enrolmentStoreProxyUrl: String = baseUrl("enrolment-store-proxy") + "/enrolment-store-proxy/enrolment-store"
 
   def registerWithMultipleIdentifiersUrl: String = s"$desUrl/cross-regime/register/VATC"
 
@@ -97,16 +97,20 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
 
   def allocateEnrolmentUrl(groupId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/groups/$groupId/enrolments/$enrolmentKey"
 
-  def assignEnrolmentUrl(userId: String, enrolmentKey: String): String = s"$taxEnrolmentsUrl/users/$userId/enrolments/$enrolmentKey"
-
   def getPartnershipKnownFactsUrl(sautr: String): String =
     s"$desUrl/income-tax-self-assessment/known-facts/utr/$sautr"
 
   def getAllocatedEnrolmentUrl(enrolmentKey: String): String =
-    s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/$enrolmentKey/groups"
+    s"$enrolmentStoreProxyUrl/enrolments/$enrolmentKey/groups"
 
   def queryUsersUrl(vatNumber: String): String =
-    s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users"
+    s"$enrolmentStoreProxyUrl/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users"
+
+  def upsertEnrolmentEnrolmentStoreUrl(enrolmentKey: String): String = s"$enrolmentStoreProxyUrl/enrolments/$enrolmentKey"
+
+  def assignEnrolmentUrl(userId: String, enrolmentKey: String): String = s"$enrolmentStoreProxyUrl/users/$userId/enrolments/$enrolmentKey"
+
+  def allocateEnrolmentEnrolmentStoreUrl(groupId: String, enrolmentKey: String): String = s"$enrolmentStoreProxyUrl/groups/$groupId/enrolments/$enrolmentKey"
 
   def usersGroupsSearchUrl: String = baseUrl("users-groups-search")
 

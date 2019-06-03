@@ -22,8 +22,11 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EnrolmentStoreProxyConnector
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
+import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
+import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
 import scala.concurrent.Future
 
@@ -49,4 +52,29 @@ trait MockEnrolmentStoreProxyConnector extends MockitoSugar with BeforeAndAfterE
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
+  def mockAllocateEnrolmentWithoutKnownFacts(groupId: String,
+                                             credentialId: String,
+                                             vatNumber: String)(response: Future[AllocateEnrolmentResponse]): Unit =
+    when(mockEnrolmentStoreProxyConnector.allocateEnrolmentWithoutKnownFacts(
+      ArgumentMatchers.eq(groupId),
+      ArgumentMatchers.eq(credentialId),
+      ArgumentMatchers.eq(vatNumber)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+
+  def mockAssignEnrolment(userId: String, vatNumber: String)(response: Future[AssignEnrolmentToUserResponse]): Unit =
+    when(mockEnrolmentStoreProxyConnector.assignEnrolment(
+      ArgumentMatchers.eq(userId),
+      ArgumentMatchers.eq(vatNumber)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+
+
+  def mockEnrolmentStoreUpsertEnrolment(vatNumber: String,
+                          postcode: String,
+                          vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
+    when(mockEnrolmentStoreProxyConnector.upsertEnrolment(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(postcode),
+      ArgumentMatchers.eq(vatRegistrationDate)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
+  }
 }

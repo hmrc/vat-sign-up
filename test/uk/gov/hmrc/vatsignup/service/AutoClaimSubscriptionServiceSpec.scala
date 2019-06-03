@@ -35,13 +35,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConnector with MockTaxEnrolmentsConnector
+class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConnector
   with MockEnrolmentStoreProxyConnector with MockCheckEnrolmentAllocationService with MockAssignEnrolmentToUserService
   with MockUsersGroupsSearchConnector {
 
   object TestAutoClaimEnrolmentService extends AutoClaimEnrolmentService(
     mockKnownFactsConnector,
-    mockTaxEnrolmentsConnector,
     mockEnrolmentStoreProxyConnector,
     mockCheckEnrolmentAllocationService,
     mockAssignEnrolmentToUserService,
@@ -78,7 +77,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   mockGetKnownFacts(testVatNumber)(
                     Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration)))
                   )
-                  mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -103,7 +102,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                     Future.successful(Right(UsersFound(testMapCredentialRoles)))
                   )
                   mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
-                  mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -129,7 +128,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   Future.successful(Right(UsersFound(testMapCredentialRoles)))
                 )
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -152,7 +151,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                 Future.successful(Right(UsersFound(testMapCredentialRoles)))
               )
               mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
-              mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+              mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                 Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
               )
 

@@ -111,10 +111,10 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
-              TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
-              TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
-              TaxEnrolmentsStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(CREATED)
-              TaxEnrolmentsStub.stubAssignEnrolment(testVatNumber, testCredentialId3)(CREATED)
+              EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+              EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
+              EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(CREATED)
+              EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId3)(CREATED)
 
               EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
@@ -123,10 +123,10 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
                 httpStatus(NO_CONTENT)
               )
 
-              TaxEnrolmentsStub.verifyUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)
-              TaxEnrolmentsStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
-              TaxEnrolmentsStub.verifyAssignEnrolment(testVatNumber, testCredentialId2)
-              TaxEnrolmentsStub.verifyAssignEnrolment(testVatNumber, testCredentialId3)
+              EnrolmentStoreProxyStub.verifyUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)
+              EnrolmentStoreProxyStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
+              EnrolmentStoreProxyStub.verifyAssignEnrolment(testVatNumber, testCredentialId2)
+              EnrolmentStoreProxyStub.verifyAssignEnrolment(testVatNumber, testCredentialId3)
 
             }
           }
@@ -141,9 +141,9 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
-              TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
-              TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
-              TaxEnrolmentsStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(BAD_GATEWAY)
+              EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+              EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
+              EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(BAD_GATEWAY)
 
               EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
@@ -152,9 +152,9 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
                 httpStatus(NO_CONTENT)
               )
 
-              TaxEnrolmentsStub.verifyUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)
-              TaxEnrolmentsStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
-              TaxEnrolmentsStub.verifyAssignEnrolment(testVatNumber, testCredentialId2)
+              EnrolmentStoreProxyStub.verifyUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)
+              EnrolmentStoreProxyStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
+              EnrolmentStoreProxyStub.verifyAssignEnrolment(testVatNumber, testCredentialId2)
             }
           }
         }

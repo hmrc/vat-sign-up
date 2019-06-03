@@ -21,7 +21,7 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Admin
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, TaxEnrolmentsConnector, UsersGroupsSearchConnector}
+import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, UsersGroupsSearchConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UsersFound
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
@@ -33,7 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnector,
-                                          taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                           enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                           checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService,
@@ -98,7 +97,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   private def upsertEnrolmentAllocation(vatNumber: String,
                                         knownFacts: KnownFacts
                                        )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
-    EitherT(taxEnrolmentsConnector.upsertEnrolment(
+    EitherT(enrolmentStoreProxyConnector.upsertEnrolment(
       vatNumber = vatNumber,
       postcode = knownFacts.businessPostcode,
       vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
@@ -113,7 +112,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                                  groupId: String,
                                                  credentialId: String
                                                 )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
-    EitherT(taxEnrolmentsConnector.allocateEnrolmentWithoutKnownFacts(
+    EitherT(enrolmentStoreProxyConnector.allocateEnrolmentWithoutKnownFacts(
       groupId = groupId,
       credentialId = credentialId,
       vatNumber = vatNumber

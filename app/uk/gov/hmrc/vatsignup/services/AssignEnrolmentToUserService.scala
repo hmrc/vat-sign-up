@@ -19,13 +19,13 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.TaxEnrolmentsConnector
+import uk.gov.hmrc.vatsignup.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.services.AssignEnrolmentToUserService._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AssignEnrolmentToUserService @Inject()(taxEnrolmentsConnector: TaxEnrolmentsConnector) {
+class AssignEnrolmentToUserService @Inject()(enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector) {
 
   def assignEnrolment(userIds: Set[String],
                       vatNumber: String
@@ -34,7 +34,7 @@ class AssignEnrolmentToUserService @Inject()(taxEnrolmentsConnector: TaxEnrolmen
     Future.sequence(
       userIds map {
         userId =>
-          taxEnrolmentsConnector.assignEnrolment(userId, vatNumber)
+          enrolmentStoreProxyConnector.assignEnrolment(userId, vatNumber)
       }
     ) map {
       userIds =>
