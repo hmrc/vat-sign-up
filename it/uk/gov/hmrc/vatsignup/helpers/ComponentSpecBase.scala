@@ -40,32 +40,35 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
     .configure(config)
     .build
 
-  val mockHost = WiremockHelper.wiremockHost
-  val mockPort = WiremockHelper.wiremockPort.toString
-  val mockUrl = s"http://$mockHost:$mockPort"
+  private val mockHost = WiremockHelper.wiremockHost
+  private val mockPort = WiremockHelper.wiremockPort.toString
+  private val mockUrl = s"http://$mockHost:$mockPort"
 
   def config: Map[String, String] = Map(
     "microservice.services.base.host" -> mockHost,
     "microservice.services.base.port" -> mockPort,
-    "microservice.services.auth.host" -> mockHost,
-    "microservice.services.auth.port" -> mockPort,
     "microservice.services.agent-client-relationships.url" -> mockUrl,
-    "microservice.services.tax-enrolments.host" -> mockHost,
-    "microservice.services.tax-enrolments.port" -> mockPort,
-    "microservice.services.email-verification.host" -> mockHost,
-    "microservice.services.email-verification.port" -> mockPort,
-    "microservice.services.des.url" -> mockUrl,
-    "microservice.services.authenticator.host" -> mockHost,
-    "microservice.services.authenticator.port" -> mockPort,
-    "microservice.services.identity-verification-frontend.host" -> mockHost,
-    "microservice.services.identity-verification-frontend.port" -> mockPort,
-    "microservice.services.vat-subscription.host" -> mockHost,
-    "microservice.services.vat-subscription.port" -> mockPort,
-    "microservice.services.email.host" -> mockHost,
-    "microservice.services.email.port" -> mockPort,
-    "microservice.services.enrolment-store-proxy.host" -> mockHost,
-    "microservice.services.enrolment-store-proxy.port" -> mockPort
+    "microservice.services.des.url" -> mockUrl
+  ) ++ mockedServices(
+    "auth",
+    "tax-enrolments",
+    "email-verification",
+    "authenticator",
+    "identity-verification-frontend",
+    "vat-subscription",
+    "email",
+    "enrolment-store-proxy",
+    "users-groups-search"
   )
+
+  private def mockedServices(serviceNames: String*) =
+    (serviceNames flatMap {
+      serviceName =>
+        Seq(
+          s"microservice.services.$serviceName.host" -> mockHost,
+          s"microservice.services.$serviceName.port" -> mockPort
+        )
+    }).toMap
 
   override def beforeAll(): Unit = {
     super.beforeAll()
