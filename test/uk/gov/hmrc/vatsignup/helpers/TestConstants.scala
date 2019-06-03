@@ -23,7 +23,7 @@ import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
-import uk.gov.hmrc.vatsignup.models.{controllist, _}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
@@ -55,6 +55,7 @@ object TestConstants {
 
   val testCredentialId: String = UUID.randomUUID().toString
   val testCredentialId2: String = UUID.randomUUID().toString
+  val testCredentialId3: String = UUID.randomUUID().toString
   val testCredentials: Credentials = Credentials(testCredentialId, GGProviderId)
   val testGroupId: String = UUID.randomUUID().toString
   val testUserIdSet: Set[String] = Set(testGroupId, testGroupId, testGroupId)

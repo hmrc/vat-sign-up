@@ -21,7 +21,7 @@ import play.api.http.Status._
 import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EmailStub, EnrolmentStoreProxyStub, KnownFactsStub, TaxEnrolmentsStub}
+import uk.gov.hmrc.vatsignup.helpers.servicemocks._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestEmailRequestRepository}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
@@ -109,6 +109,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
+              UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
               TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
               TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
@@ -138,6 +139,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
+              UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
               TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
               TaxEnrolmentsStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)

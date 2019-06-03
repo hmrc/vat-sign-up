@@ -19,8 +19,10 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.auth.core.Admin
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, TaxEnrolmentsConnector, UsersGroupsSearchConnector}
+import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UsersFound
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
@@ -34,18 +36,19 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                           taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                           enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                           checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
-                                          assignEnrolmentToUserService: AssignEnrolmentToUserService
+                                          assignEnrolmentToUserService: AssignEnrolmentToUserService,
+                                          usersGroupsSearchConnector: UsersGroupsSearchConnector
                                          )(implicit ec: ExecutionContext) {
 
   def autoClaimEnrolment(vatNumber: String)(implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
     for {
-      groupId <- getLegacyEnrolmentAllocation(vatNumber)
-      credentialIds <- getUserIDs(vatNumber)
+      legacyVatGroupId <- getLegacyEnrolmentAllocation(vatNumber)
+      legacyVatUserIds <- getLegacyEnrolmentUserIDs(vatNumber)
+      adminUserId <- EitherT(getAdminUserId(legacyVatGroupId, legacyVatUserIds))
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
-      principalCredentialId = credentialIds.head
-      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, groupId, principalCredentialId)
-      _ <- assignEnrolmentToUser(credentialIds filterNot (_ == principalCredentialId), vatNumber)
+      _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, legacyVatGroupId, adminUserId)
+      _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
     } yield EnrolmentAssigned
   }.value
 
@@ -60,7 +63,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     }
   }
 
-  private def getUserIDs(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] = {
+  private def getLegacyEnrolmentUserIDs(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] = {
     EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)) transform {
       case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) if retrievedUserIds.nonEmpty =>
         Right(retrievedUserIds)
@@ -68,6 +71,20 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
         Left(NoUsersFound)
       case _ =>
         Left(EnrolmentStoreProxyConnectionFailure)
+    }
+  }
+
+  private def getAdminUserId(groupId: String, legacyVatUserIds: Set[String])(implicit hc: HeaderCarrier): Future[Either[AutoClaimEnrolmentFailure, String]] = {
+    usersGroupsSearchConnector.getUsersForGroup(groupId) map {
+      case Right(UsersFound(userIds)) =>
+        userIds collectFirst {
+          case (userId, Admin) if legacyVatUserIds contains userId => userId
+        } match {
+          case Some(userId) => Right(userId)
+          case None => Left(NoAdminUsers)
+        }
+      case Left(_) =>
+        Left(UsersGroupsSearchFailure)
     }
   }
 
@@ -160,5 +177,9 @@ object AutoClaimEnrolmentService {
   case class UpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentFailure
 
   case object EnrolmentAssignmentFailure extends AutoClaimEnrolmentFailure
+
+  case object UsersGroupsSearchFailure extends AutoClaimEnrolmentFailure
+
+  case object NoAdminUsers extends AutoClaimEnrolmentFailure
 
 }
