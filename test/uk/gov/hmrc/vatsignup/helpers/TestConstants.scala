@@ -54,6 +54,7 @@ object TestConstants {
 
 
   val testCredentialId: String = UUID.randomUUID().toString
+  val testCredentialId2: String = UUID.randomUUID().toString
   val testCredentials: Credentials = Credentials(testCredentialId, GGProviderId)
   val testGroupId: String = UUID.randomUUID().toString
   val testUserIdSet: Set[String] = Set(testGroupId, testGroupId, testGroupId)
