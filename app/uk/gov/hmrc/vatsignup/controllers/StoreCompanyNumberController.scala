@@ -51,10 +51,8 @@ class StoreCompanyNumberController @Inject()(val authConnector: AuthConnector,
       implicit req =>
         authorised().retrieve(Retrievals.allEnrolments) { enrolments =>
           req.body match {
-            case (companyNumber, None) if enrolments.agentReferenceNumber.isDefined =>
-              handleStoreCompanyNumberResult(storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber))
             case (companyNumber, None) =>
-              Future.successful(Forbidden)
+              handleStoreCompanyNumberResult(storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber))
             case (companyNumber, Some(ctReference)) =>
               handleStoreCompanyNumberResult(storeCompanyNumberService.storeCompanyNumber(vatNumber, companyNumber, ctReference))
           }

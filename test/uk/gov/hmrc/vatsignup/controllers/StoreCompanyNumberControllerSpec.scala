@@ -56,14 +56,14 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
       }
 
       "the CTUTR is not provided" should {
-        "return FORBIDDEN" in {
+        "return NO_CONTENT" in {
           mockAuthRetrievePrincipalEnrolment()
+          mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Right(StoreCompanyNumberSuccess)))
 
           val request = FakeRequest() withBody(testCompanyNumber, None)
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
-          status(res) shouldBe FORBIDDEN
+          status(res) shouldBe NO_CONTENT
         }
       }
 
@@ -73,7 +73,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceMismatch)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
           status(res) shouldBe BAD_REQUEST
@@ -87,7 +86,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(DatabaseFailureNoVATNumber)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
           status(res) shouldBe NOT_FOUND
@@ -100,7 +98,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CompanyNumberDatabaseFailure)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
@@ -113,7 +110,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceDatabaseFailure)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
@@ -128,7 +124,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Right(StoreCompanyNumberSuccess)))
 
           val request = FakeRequest() withBody(testCompanyNumber, None)
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
           status(res) shouldBe NO_CONTENT
@@ -141,7 +136,6 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(MatchCtReferenceFailure)))
 
           val request = FakeRequest() withBody(testCompanyNumber, None)
-
           val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
 
           status(res) shouldBe BAD_GATEWAY
