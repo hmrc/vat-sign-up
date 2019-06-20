@@ -40,7 +40,6 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
         res should have(
           httpStatus(NO_CONTENT)
         )
-
       }
 
       "for principal user return NO_CONTENT for non uk with uk establishment companies with a FC prefix on CRN" in {
@@ -56,7 +55,6 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
         res should have(
           httpStatus(NO_CONTENT)
         )
-
       }
 
       "for principal user return NO_CONTENT for non uk with uk establishment companies with a SF prefix on CRN" in {
@@ -88,7 +86,18 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
         res should have(
           httpStatus(NO_CONTENT)
         )
+      }
 
+      "for principal user return NO_CONTENT when no CT UTR is provided" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj("companyNumber" -> testCompanyNumber))
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
       }
 
       "if the vat number does not already exist then return NOT_FOUND" in {
@@ -139,7 +148,6 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
         httpStatus(BAD_REQUEST)
       )
     }
-
   }
 
 }

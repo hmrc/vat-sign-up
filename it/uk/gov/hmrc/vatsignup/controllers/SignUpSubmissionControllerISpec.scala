@@ -497,8 +497,9 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             emptyBody
           )
         }
-
-        "return NO_CONTENT for company sign up" in {
+      }
+      "the user is signing up a limited company" should {
+        "return NO_CONTENT for company sign up when the user has provided a CT reference" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
@@ -522,13 +523,11 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             emptyBody
           )
         }
-      }
-      "the user is signing up a limited company and has provided a CT reference" should {
-        "return NO_CONTENT for company sign up" in {
+        "return NO_CONTENT for company sign up when the user has not provided a CT reference" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
-            ctReference = Some(testCtReference),
+            ctReference = None,
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false
