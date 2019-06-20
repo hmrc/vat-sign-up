@@ -82,7 +82,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
                                  hasVatEnrolment: Boolean,
                                  hasPartnershipEnrolment: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
     businessEntity match {
-      case _: LimitedCompany if subscriptionRequest.ctReference.isDefined =>
+      case _: LimitedCompany =>
         Right(RequestAuthorised)
       case _: SoleTrader =>
         Right(RequestAuthorised)
