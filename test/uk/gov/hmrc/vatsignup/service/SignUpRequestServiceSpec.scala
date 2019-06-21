@@ -41,7 +41,6 @@ class SignUpRequestServiceSpec extends UnitSpec
     super.beforeEach()
   }
 
-
   object TestSignUpRequestService extends SignUpRequestService(
     mockSubscriptionRequestRepository,
     mockEmailVerificationConnector
@@ -264,21 +263,35 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
         "there is not a stored CT reference" when {
-          "return RequestNotAuthorised" in {
+          "return a SignUpRequest" in {
             val testSubscriptionRequest =
               SubscriptionRequest(
                 vatNumber = testVatNumber,
                 businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                ctReference = None,
                 email = Some(testEmail),
                 isMigratable = testIsMigratable,
                 isDirectDebit = false
               )
 
             mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
             val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-            await(res) shouldBe Left(RequestNotAuthorised)
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = LimitedCompany(testCompanyNumber),
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = None
+              )
+            )
           }
         }
       }
