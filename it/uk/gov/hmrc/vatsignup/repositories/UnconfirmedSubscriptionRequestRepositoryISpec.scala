@@ -20,7 +20,7 @@ import java.util.UUID
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{JsObject, Json, OFormat}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.models.ExplicitEntityType.{GeneralPartnership, LimitedPartnership}
@@ -51,7 +51,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
     def findSubscriptionRequest(
                                  credentialId: String
                                )(implicit format: OFormat[UnconfirmedSubscriptionRequest]): Future[Option[UnconfirmedSubscriptionRequest]] =
-      repo.collection.find(selector = Json.obj(
+      repo.collection.find[JsObject](selector = Json.obj(
         credentialIdKey -> credentialId
       )).one[UnconfirmedSubscriptionRequest]
 
