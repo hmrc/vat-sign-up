@@ -41,7 +41,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
              email: Option[String],
              emailVerified: Option[Boolean],
              isPartialMigration: Boolean,
-             optContactPreference: Option[ContactPreference]
+             contactPreference: ContactPreference
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
     val headerCarrier = hc
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
@@ -49,7 +49,7 @@ class CustomerSignUpConnector @Inject()(val http: HttpClient,
 
     http.POST[JsObject, CustomerSignUpResponse](
       url = url,
-      body = buildRequest(safeId, vatNumber, email, emailVerified, isPartialMigration, optContactPreference)
+      body = buildRequest(safeId, vatNumber, email, emailVerified, isPartialMigration, contactPreference)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[CustomerSignUpResponse]],
@@ -69,7 +69,7 @@ object CustomerSignUpConnector {
                                        email: Option[String],
                                        emailVerified: Option[Boolean],
                                        isPartialMigration: Boolean,
-                                       optContactPreference: Option[ContactPreference]
+                                       contactPreference: ContactPreference
                                       ): JsObject = {
     Json.obj(
       "signUpRequest" -> Json.obj(
@@ -84,26 +84,20 @@ object CustomerSignUpConnector {
             Json.obj("additionalInformation" ->
               Json.arr(
                 Json.obj(
-                  "typeOfField" -> emailKey,
-                  "fieldContents" -> address,
-                  "infoVerified" -> isVerified
+                  "typeOfField"  -> emailKey,
+                  "fieldContents"       -> address,
+                  "infoVerified"        -> isVerified
                 )
               )
             )
           case _ => Json.obj()
         }
       )
-      .++(
-        Json.obj("isPartialMigration" -> isPartialMigration)
+      .++(Json.obj(
+          "isPartialMigration" -> isPartialMigration,
+                 "channel"            -> contactPreference
+        )
       )
-      .++(optionalField("channel", optContactPreference))
     )
   }
-
-  private def optionalField[T](key: String, optValue: Option[T])(implicit writes: Writes[T]): JsObject =
-    optValue match {
-    case Some(value) => Json.obj(key -> Json.toJson(value))
-    case _ => Json.obj()
-  }
-
 }

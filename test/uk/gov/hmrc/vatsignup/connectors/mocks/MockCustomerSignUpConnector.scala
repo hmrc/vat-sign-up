@@ -41,7 +41,7 @@ trait MockCustomerSignUpConnector extends MockitoSugar with BeforeAndAfterEach {
                  email: Option[String],
                  emailVerified: Option[Boolean],
                  isPartialMigration: Boolean,
-                 optContactPreference: Option[ContactPreference]
+                 contactPreference: ContactPreference
                 )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),
@@ -49,7 +49,7 @@ trait MockCustomerSignUpConnector extends MockitoSugar with BeforeAndAfterEach {
       ArgumentMatchers.eq(email),
       ArgumentMatchers.eq(emailVerified),
       ArgumentMatchers.eq(isPartialMigration),
-      ArgumentMatchers.eq(optContactPreference)
+      ArgumentMatchers.eq(contactPreference)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 }

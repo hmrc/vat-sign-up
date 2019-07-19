@@ -30,7 +30,7 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
         Some(testEmail),
         emailVerified = Some(true),
         isPartialMigration = true,
-        Some(testContactPreference)
+        testContactPreference
       )
 
       val expectedJson = Json.parse(
@@ -69,7 +69,7 @@ class CustomerSignUpConnectorSpec extends UnitSpec {
         None,
         emailVerified = None,
         isPartialMigration = false,
-        Some(testContactPreference)
+        testContactPreference
       )
 
       val expectedJson = Json.parse(

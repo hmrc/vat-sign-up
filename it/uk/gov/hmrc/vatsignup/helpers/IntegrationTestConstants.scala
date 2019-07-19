@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.helpers
 import java.util.UUID
 
 import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.vatsignup.models.Digital
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
 
@@ -42,7 +43,9 @@ object IntegrationTestConstants {
   val testNonUKCompanyWithUKEstablishmentCompanyNumberFC = "FC123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberSF = "SF123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberNF = "NF123321"
-  val testContactPreference = "Digital"
+  val testContactPreference = Digital
+  val testContactPreferenceString = testContactPreference.toString
+
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
   val testLastReturnMonthPeriod: String = "MAR"

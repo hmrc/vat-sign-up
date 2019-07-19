@@ -75,7 +75,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
@@ -86,9 +86,9 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
-                Future.successful(Right(CustomerSignUpResponseSuccess))
+                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
@@ -111,7 +111,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
@@ -122,7 +122,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -140,7 +140,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a general partnership sign up" in {
@@ -151,7 +151,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(
@@ -162,7 +162,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -180,7 +180,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a limited partnership sign up" in {
@@ -191,7 +191,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedPartnership)(
@@ -202,7 +202,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -221,7 +221,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
@@ -232,7 +232,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedLiabilityPartnership)(
@@ -243,7 +243,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -262,7 +262,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
@@ -273,7 +273,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testScottishLimitedPartnership)(
@@ -284,7 +284,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -303,7 +303,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a VAT group sign up" in {
@@ -314,7 +314,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, VatGroup)(
@@ -325,7 +325,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -344,7 +344,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Division sign up" in {
@@ -355,7 +355,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
@@ -366,7 +366,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -385,7 +385,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for an Unincorporated Associations sign up" in {
@@ -396,7 +396,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
@@ -407,7 +407,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -426,7 +426,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Registered Society sign up" in {
@@ -437,7 +437,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testRegisteredSociety)(
@@ -448,7 +448,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -467,7 +467,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Charity sign up" in {
@@ -478,7 +478,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, Charity)(
@@ -489,7 +489,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -508,7 +508,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Government Organisation sign up" in {
@@ -519,7 +519,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(
@@ -530,7 +530,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -549,7 +549,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
           }
@@ -562,7 +562,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = true,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
@@ -573,7 +573,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -591,7 +591,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(testAgentReferenceNumber), isSuccess = true, contactPreference = testContactPreference
               ))
             }
           }
@@ -605,7 +605,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               transactionEmail = testSignUpEmail,
               isDelegated = true,
               isMigratable = testIsMigratable,
-              contactPreference = Some(testContactPreference)
+              contactPreference = testContactPreference
             )
 
             mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
@@ -616,7 +616,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               Some(testEmail),
               emailVerified = Some(true),
               isPartialMigration = !testIsMigratable,
-              optContactPreference = Some(testContactPreference)
+              contactPreference = testContactPreference
             )(
               Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST)))
             )
@@ -633,7 +633,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               isSuccess = true
             ))
             verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-              Some(testAgentReferenceNumber), isSuccess = false, contactPreference = Some(testContactPreference)
+              Some(testAgentReferenceNumber), isSuccess = false, contactPreference = testContactPreference
             ))
           }
         }
@@ -647,7 +647,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             transactionEmail = testSignUpEmail,
             isDelegated = true,
             isMigratable = testIsMigratable,
-            contactPreference = Some(testContactPreference)
+            contactPreference = testContactPreference
           )
 
           mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
@@ -684,7 +684,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(
@@ -695,7 +695,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -713,7 +713,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
-                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(true), None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a company sign up" in {
@@ -724,7 +724,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
@@ -735,7 +735,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -753,7 +753,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
-                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(true), None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a general partnership sign up" in {
@@ -764,7 +764,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testGeneralPartnership)(
@@ -775,7 +775,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -793,7 +793,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a limited partnership sign up" in {
@@ -804,7 +804,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedPartnership)(
@@ -815,7 +815,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -834,7 +834,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a limited liability partnership sign up" in {
@@ -845,7 +845,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testLimitedLiabilityPartnership)(
@@ -856,7 +856,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -875,7 +875,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a scottish limited partnership sign up" in {
@@ -886,7 +886,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testScottishLimitedPartnership)(
@@ -897,7 +897,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -916,7 +916,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a VAT group sign up" in {
@@ -927,7 +927,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, VatGroup)(
@@ -938,7 +938,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -957,7 +957,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Division sign up" in {
@@ -968,7 +968,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
@@ -979,7 +979,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -998,7 +998,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for an Unincorporated Associations sign up" in {
@@ -1009,7 +1009,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
@@ -1020,7 +1020,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -1039,7 +1039,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Registered Society sign up" in {
@@ -1050,7 +1050,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, testRegisteredSociety)(
@@ -1061,7 +1061,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -1080,7 +1080,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Charity sign up" in {
@@ -1091,7 +1091,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, Charity)(
@@ -1102,7 +1102,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -1121,7 +1121,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail, Some(true),
-                None, isSuccess = true, contactPreference = Some(testContactPreference)
+                None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
             "return a SignUpRequestSubmitted for a Government Organisation sign up" in {
@@ -1132,7 +1132,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
               mockRegisterBusinessEntity(testVatNumber, GovernmentOrganisation)(
@@ -1143,7 +1143,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -1160,7 +1160,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
-                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(true), None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
           }
@@ -1174,7 +1174,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 transactionEmail = testSignUpEmail,
                 isDelegated = false,
                 isMigratable = testIsMigratable,
-                contactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )
 
 
@@ -1186,7 +1186,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 Some(testEmail),
                 emailVerified = Some(true),
                 isPartialMigration = !testIsMigratable,
-                optContactPreference = Some(testContactPreference)
+                contactPreference = testContactPreference
               )(
                 Future.successful(Right(CustomerSignUpResponseSuccess))
               )
@@ -1204,7 +1204,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isSuccess = true
               ))
               verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
-                Some(true), None, isSuccess = true, contactPreference = Some(testContactPreference)
+                Some(true), None, isSuccess = true, contactPreference = testContactPreference
               ))
             }
           }
@@ -1218,7 +1218,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               transactionEmail = testSignUpEmail,
               isDelegated = false,
               isMigratable = testIsMigratable,
-              contactPreference = Some(testContactPreference)
+              contactPreference = testContactPreference
             )
 
 
@@ -1230,7 +1230,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               Some(testEmail),
               emailVerified = Some(true),
               isPartialMigration = !testIsMigratable,
-              optContactPreference = Some(testContactPreference)
+              contactPreference = testContactPreference
             )(
               Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST)))
             )
@@ -1247,7 +1247,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               isSuccess = true
             ))
             verifyAudit(SignUpAuditModel(testSafeId, testVatNumber, Some(testEmail), testEmail,
-              Some(true), None, isSuccess = false, contactPreference = Some(testContactPreference)
+              Some(true), None, isSuccess = false, contactPreference = testContactPreference
             ))
           }
         }
@@ -1261,7 +1261,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
             transactionEmail = testSignUpEmail,
             isDelegated = false,
             isMigratable = testIsMigratable,
-            contactPreference = Some(testContactPreference)
+            contactPreference = testContactPreference
           )
 
           mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(

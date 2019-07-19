@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models
 
-import SignUpRequest._
+import uk.gov.hmrc.vatsignup.models.SignUpRequest._
 
 case class SignUpRequest(vatNumber: String,
                          businessEntity: BusinessEntity,
@@ -24,7 +24,7 @@ case class SignUpRequest(vatNumber: String,
                          transactionEmail: EmailAddress,
                          isDelegated: Boolean,
                          isMigratable: Boolean,
-                         contactPreference: Option[ContactPreference]
+                         contactPreference: ContactPreference
                         )
 
 object SignUpRequest {

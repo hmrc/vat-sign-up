@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.services.monitoring
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.Configuration
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
@@ -25,7 +24,6 @@ import uk.gov.hmrc.play.audit.AuditExtensions
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.DataEvent
 
-import scala.annotation.implicitNotFound
 import scala.concurrent.ExecutionContext
 
 @Singleton

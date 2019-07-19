@@ -29,7 +29,6 @@ object FeatureSwitch {
   val switches: Set[FeatureSwitch] = Set(
     StubDESFeature,
     StubAgentServicesFeature,
-    CaptureContactPreference,
     AdditionalKnownFacts,
     SkipPartnershipKnownFactsMismatch,
     AutoClaimEnrolment
@@ -56,11 +55,6 @@ case object StubDESFeature extends FeatureSwitch {
 case object StubAgentServicesFeature extends FeatureSwitch {
   val displayName = s"Use stub for Agent Services connection"
   val name = s"$prefix.stub-agent-services"
-}
-
-case object CaptureContactPreference extends FeatureSwitch {
-  val displayName = s"Send contact preference to Sign up API"
-  val name = s"$prefix.capture-contact-preference"
 }
 
 case object AdditionalKnownFacts extends FeatureSwitch {

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.repositories
 
-import java.util.UUID
+import java.util.{NoSuchElementException, UUID}
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -32,7 +32,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   private val testSubscriptionRequest = SubscriptionRequest(
     vatNumber = testVatNumber,
     businessEntity = Some(LimitedCompany(testCompanyNumber)),
-    isDirectDebit = false
+    isDirectDebit = false,
+    contactPreference = None
   )
 
   override def beforeEach: Unit = {
@@ -54,7 +55,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
   "insertVatNumber" should {
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
-      isDirectDebit = false
+      isDirectDebit = false,
+      contactPreference = None
     )
 
     "insert the subscription request where there is not already one" when {
@@ -94,7 +96,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
             ninoSource = Some(UserEntered),
             email = Some(testEmail),
             identityVerified = true,
-            isDirectDebit = false
+            isDirectDebit = false,
+            contactPreference = Some(testContactPreference)
           )
         )
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
@@ -110,7 +113,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
       email = Some(testEmail),
-      isDirectDebit = false
+      isDirectDebit = false,
+      contactPreference = None
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
@@ -142,7 +146,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         model <- repo.findById(testVatNumber)
       } yield model
 
-      await(res) should contain(SubscriptionRequest(testVatNumber, email = Some(newEmail), isDirectDebit = false))
+      await(res) should contain(SubscriptionRequest(
+      testVatNumber, email = Some(newEmail), isDirectDebit = false, contactPreference = None))
     }
   }
 
@@ -150,7 +155,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     val testSubscriptionRequest = SubscriptionRequest(
       vatNumber = testVatNumber,
       transactionEmail = Some(testEmail),
-      isDirectDebit = false
+      isDirectDebit = false,
+      contactPreference = None
     )
 
     "throw NoSuchElementException where the vat number doesn't exist" in {
@@ -185,7 +191,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) should contain(SubscriptionRequest(
         testVatNumber,
         transactionEmail = Some(newEmail),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
   }
@@ -212,13 +219,14 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
         identityVerified = true,
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
   }
 
   "upsertBusinessEntity" should {
-    "store a Sole Trader" in {
+    s"store a $SoleTrader" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, SoleTrader(testNino))
@@ -230,10 +238,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         isMigratable = true,
         ninoSource = Some(UserEntered),
         businessEntity = Some(SoleTrader(testNino)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a Limited Company" in {
+    s"store a $LimitedCompany" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))
@@ -244,10 +253,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(LimitedCompany(testCompanyNumber)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a non UK company with UK establishment with FC prefix in CRN" in {
+    s"store a non UK $LimitedCompany with UK establishment with FC prefix in CRN" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))
@@ -258,10 +268,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a non UK company with UK establishment with SF prefix in CRN" in {
+    s"store a non UK $LimitedCompany with UK establishment with SF prefix in CRN" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))
@@ -272,10 +283,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a non UK company with UK establishment with NF prefix in CRN" in {
+    s"store a non UK $LimitedCompany with UK establishment with NF prefix in CRN" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))
@@ -286,10 +298,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a General Partnership" in {
+    s"store a $GeneralPartnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))
@@ -300,10 +313,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(GeneralPartnership(Some(testUtr))),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a Limited Partnership" in {
+    s"store a $LimitedPartnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))
@@ -314,10 +328,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a Limited Liabiility Partnership" in {
+    s"store a $LimitedLiabilityPartnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))
@@ -328,10 +343,11 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
-    "store a Scottish Limited Partnership" in {
+    s"store a $ScottishLimitedPartnership" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))
@@ -342,11 +358,12 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
 
-    "store a VAT Group" in {
+    s"store a $VatGroup" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, VatGroup)
@@ -357,11 +374,12 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(VatGroup),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
 
-    "store a Registered Society" in {
+    s"store a $RegisteredSociety" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, RegisteredSociety(testCompanyNumber))
@@ -372,11 +390,12 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(RegisteredSociety(testCompanyNumber)),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
 
-    "store a Charity" in {
+    s"store a $Charity" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, Charity)
@@ -387,11 +406,12 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(Charity),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
 
-    "store an Overseas company" in {
+    s"store an $Overseas company" in {
       val res = for {
         _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
         _ <- repo.upsertBusinessEntity(testVatNumber, Overseas)
@@ -402,7 +422,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
         vatNumber = testVatNumber,
         isMigratable = true,
         businessEntity = Some(Overseas),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
   }
@@ -429,7 +450,8 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) should contain(SubscriptionRequest(
         vatNumber = testVatNumber,
         ctReference = Some(testCtReference),
-        isDirectDebit = false
+        isDirectDebit = false,
+        contactPreference = None
       ))
     }
   }
@@ -484,7 +506,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       } yield (inserted, postDelete)
 
       val (inserted, postDelete) = await(res)
-      inserted should contain(SubscriptionRequest(testVatNumber, isDirectDebit = false))
+      inserted should contain(SubscriptionRequest(testVatNumber, isDirectDebit = false, contactPreference = None))
       postDelete shouldBe None
     }
   }
