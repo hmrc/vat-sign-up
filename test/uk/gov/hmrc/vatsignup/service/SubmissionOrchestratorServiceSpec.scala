@@ -26,6 +26,7 @@ import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest
 import uk.gov.hmrc.vatsignup.repositories.mocks.{MockEmailRequestRepository, MockSubscriptionRequestRepository}
 import uk.gov.hmrc.vatsignup.service.mocks.{MockSignUpRequestService, MockSubmissionService}
+import uk.gov.hmrc.vatsignup.services.SignUpRequestService.{RequestNotAuthorised, SignUpRequestNotFound}
 import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService
 import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService._
 
@@ -52,16 +53,16 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
     transactionEmail = testSignUpEmail,
     isDelegated = true,
     isMigratable = true,
-    contactPreference = Some(testContactPreference)
+    contactPreference = testContactPreference
   )
   val enrolments = Enrolments(Set(testAgentEnrolment))
 
   "submitSignUpRequest" when {
-    "getSignUpRequest returns a SignUpRequest" when {
+    s"getSignUpRequest returns a $SignUpRequest" when {
       "submit sign up request was successful" when {
         "upsert email was successful" when {
           "delete record request was successful" when {
-            "return SignUpRequestSubmitted" in {
+            s"return $SignUpRequestSubmitted" in {
 
               mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
               mockSubmitSignUpRequestSuccessful(testSignUpRequest, enrolments)
@@ -74,7 +75,7 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
             }
           }
           "delete record request failed" when {
-            "return DeleteRecordFailure" in {
+            s"return $DeleteRecordFailure" in {
 
               mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
               mockSubmitSignUpRequestSuccessful(testSignUpRequest, enrolments)
@@ -88,7 +89,7 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
           }
         }
         "upsert email failed" should {
-          "return DeleteRecordFailure" in {
+          s"return $DeleteRecordFailure" in {
 
             mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
             mockSubmitSignUpRequestSuccessful(testSignUpRequest, enrolments)
@@ -101,8 +102,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
         }
       }
       "the submit sign up request failed" when {
-        "it returned an EnrolmentFailure" should {
-          "return an EnrolmentFailure" in {
+        s"it returned an $EnrolmentFailure" should {
+          s"return an $EnrolmentFailure" in {
 
             mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
             mockSubmitEnrolmentFailure(testSignUpRequest, enrolments)
@@ -112,8 +113,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
             res.left.value shouldBe EnrolmentFailure
           }
         }
-        "it returned a SignUpFailure" should {
-          "return a SignUpFailure" in {
+        s"it returned a $SignUpFailure" should {
+          s"return a $SignUpFailure" in {
 
             mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
             mockSignUpFailure(testSignUpRequest, enrolments)
@@ -123,8 +124,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
             res.left.value shouldBe SignUpFailure
           }
         }
-        "it returned a RegistrationFailure" should {
-          "return a RegistrationFailure" in {
+        s"it returned a $RegistrationFailure" should {
+          s"return a $RegistrationFailure" in {
 
             mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
             mockRegistrationFailure(testSignUpRequest, enrolments)
@@ -138,8 +139,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
     }
 
     "the get sign up request failed" when {
-      "it returned an EmailVerificationFailure" should {
-        "return an EmailVerificationFailure" in {
+      s"it returned an $EmailVerificationFailure" should {
+        s"return an $EmailVerificationFailure" in {
 
           mockEmailVerificationFailure(testVatNumber, enrolments)
 
@@ -148,8 +149,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
           res.left.value shouldBe EmailVerificationFailure
         }
       }
-      "it returned an InsufficientData" should {
-        "return an InsufficientData" in {
+      s"it returned an $InsufficientData" should {
+        s"return an $InsufficientData" in {
 
           mockInsufficientData(testVatNumber, enrolments)
 
@@ -158,8 +159,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
           res.left.value shouldBe InsufficientData
         }
       }
-      "it returned a DatabaseFailure" should {
-        "return DatabaseFailure" in {
+      s"it returned a $DatabaseFailure" should {
+        s"return $DatabaseFailure" in {
 
           mockDatabaseFailure(testVatNumber, enrolments)
 
@@ -168,8 +169,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
           res.left.value shouldBe DatabaseFailure
         }
       }
-      "it returned a SignUpRequestNotFound" should {
-        "return InsufficientData" in {
+      s"it returned a $SignUpRequestNotFound" should {
+        s"return $InsufficientData" in {
 
           mockSignUpRequestNotFound(testVatNumber, enrolments)
 
@@ -178,8 +179,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
           res.left.value shouldBe InsufficientData
         }
       }
-      "it returned a RequestNotAuthorised" should {
-        "return InsufficientData" in {
+      s"it returned a $RequestNotAuthorised" should {
+        s"return $InsufficientData" in {
 
           mockRequestNotAuthorised(testVatNumber, enrolments)
 
@@ -188,8 +189,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
           res.left.value shouldBe InsufficientData
         }
       }
-      "it returned a EmailVerificationRequired" should {
-        "return EmailVerificationRequired" in {
+      s"it returned a $EmailVerificationRequired" should {
+        s"return $EmailVerificationRequired" in {
 
           mockEmailVerificationRequired(testVatNumber, enrolments)
 

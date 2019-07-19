@@ -31,7 +31,7 @@ case class SubscriptionRequest(vatNumber: String,
                                identityVerified: Boolean = false,
                                isMigratable: Boolean = true,
                                isDirectDebit: Boolean,
-                               contactPreference: Option[ContactPreference] = None
+                               contactPreference: Option[ContactPreference]
                               )
 
 object SubscriptionRequest {

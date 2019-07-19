@@ -57,7 +57,6 @@ class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with
       } yield model
 
       await(res) should contain(testEmailRequest)
-
     }
   }
 

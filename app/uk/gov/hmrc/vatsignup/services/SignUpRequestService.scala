@@ -21,7 +21,7 @@ import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.{CaptureContactPreference, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
@@ -46,7 +46,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
         val hasVatEnrolment = enrolments.vatNumber contains subscriptionRequest.vatNumber
 
         val res: EitherT[Future, GetSignUpRequestFailure, SignUpRequest] = for {
-          businessEntity <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
+          businessEntity    <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
+          contactPreference <- EitherT.fromOption[Future](subscriptionRequest.contactPreference, InsufficientData)
           _ <- EitherT.fromEither[Future](checkAuthorisation(
             businessEntity,
             subscriptionRequest,
@@ -54,11 +55,9 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
             hasVatEnrolment,
             hasPartnershipEnrolment
           ))
-          optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
-          transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
+          optSignUpEmail    <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
+          transactionEmail  <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable = subscriptionRequest.isMigratable
-          contactPreference =
-          if (isEnabled(CaptureContactPreference)) subscriptionRequest.contactPreference orElse Some(Digital) else None
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
           businessEntity,

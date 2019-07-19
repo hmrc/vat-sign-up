@@ -29,7 +29,7 @@ object SignUpStub extends WireMockMethods {
                     email: Option[String],
                     emailVerified: Option[Boolean],
                     optIsPartialMigration: Option[Boolean],
-                    optContactPreference: Option[ContactPreference] = None
+                    contactPreference: ContactPreference
                    )(status: Int): StubMapping =
     when(method = POST, uri = "/cross-regime/signup/VATC",
       body = Json.obj(
@@ -58,10 +58,7 @@ object SignUpStub extends WireMockMethods {
             case _ => Json.obj()
           }
         ).++(
-          optContactPreference match {
-            case Some(contactPreference) => Json.obj("channel" -> contactPreference)
-            case _ => Json.obj()
-          }
+          Json.obj("channel" -> contactPreference)
         )
 
       ),
