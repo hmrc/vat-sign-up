@@ -281,6 +281,75 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
       }
+      "4 known facts are passed in" when {
+        "the box 5 value is negative" should {
+          "return OK when the KFs match" in {
+            enable(AdditionalKnownFacts)
+            stubAuth(OK, successfulAuthResponse())
+            stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+            stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+            val res = post("/subscription-request/vat-number")(Json.obj(
+              "vatNumber" -> testVatNumber,
+              "postCode" -> testPostCode,
+              "registrationDate" -> testDateOfRegistration,
+              "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
+              "lastNetDue" -> "-10000.02"
+            ))
+
+            res should have(
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(
+                OverseasKey -> false,
+                DirectDebitKey -> false
+              ))
+            )
+          }
+          "return FORBIDDEN when the KFs don't match" in {
+            enable(AdditionalKnownFacts)
+            stubAuth(OK, successfulAuthResponse())
+            stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+            stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+            val res = post("/subscription-request/vat-number")(Json.obj(
+              "vatNumber" -> testVatNumber,
+              "postCode" -> testPostCode,
+              "registrationDate" -> testDateOfRegistration,
+              "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
+              "lastNetDue" -> "-12345.02"
+            ))
+
+            res should have(
+              httpStatus(FORBIDDEN),
+              jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "KNOWN_FACTS_MISMATCH"))
+            )
+          }
+        }
+        "the box 5 value is positive" should {
+          "Return OK" in {
+            enable(AdditionalKnownFacts)
+            stubAuth(OK, successfulAuthResponse())
+            stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+            stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+            val res = post("/subscription-request/vat-number")(Json.obj(
+              "vatNumber" -> testVatNumber,
+              "postCode" -> testPostCode,
+              "registrationDate" -> testDateOfRegistration,
+              "lastReturnMonthPeriod" -> testFrontendLastReturnMonthPeriod,
+              "lastNetDue" -> testLastNetDue
+            ))
+
+            res should have(
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(
+                OverseasKey -> false,
+                DirectDebitKey -> false
+              ))
+            )
+          }
+        }
+      }
 
       "When known facts mismatch" should {
         "return FORBIDDEN" in {

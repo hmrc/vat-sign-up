@@ -31,6 +31,13 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class KnownFactsMatchingService @Inject()(auditService: AuditService)(implicit ec: ExecutionContext) extends FeatureSwitching {
 
+  implicit class AbsoluteValue(optValue: Option[String]) {
+    def absoluteValue: Option[String] = optValue map { value =>
+      if (value.isEmpty) value
+      else Math.abs(value.toDouble).toString
+    }
+  }
+
   def checkKnownFactsMatch(vatNumber: String,
                            enteredKfs: VatKnownFacts,
                            retrievedKfs: VatKnownFacts,
@@ -46,9 +53,7 @@ class KnownFactsMatchingService @Inject()(auditService: AuditService)(implicit e
     }
 
     val vatRegDateMatch = enteredKfs.vatRegistrationDate == retrievedKfs.vatRegistrationDate
-
-    val lastNetDueMatch = enteredKfs.lastNetDue == retrievedKfs.lastNetDue
-
+    val lastNetDueMatch = enteredKfs.lastNetDue.absoluteValue == retrievedKfs.lastNetDue.absoluteValue
     val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
 
     if (isEnabled(AdditionalKnownFacts)) {
