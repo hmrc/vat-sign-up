@@ -46,6 +46,15 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
     lastNetDue = Some(testLastNetDue)
   )
 
+  val testLastNetDueNegative = (testLastNetDue.toDouble * -1).toString
+
+  val testEnteredKnownFactsNegativeBox5 = VatKnownFacts(
+    businessPostcode = Some(testPostCode),
+    vatRegistrationDate = testDateOfRegistration,
+    lastReturnMonthPeriod = Some(Month.MARCH),
+    lastNetDue = Some(testLastNetDueNegative)
+  )
+
   "the feature switch is enabled" when {
     "4 valid known facts are provided" should {
       "return KnownFactsMatch" in {
@@ -67,6 +76,26 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
         res shouldBe Right(KnownFactsMatch)
       }
     }
+    "4 valid known facts are provided, but the Box 5 figure value sent from the front end is negative" should {
+      "return KnownFactsMatch" in {
+        enable(AdditionalKnownFacts)
+        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
+          enteredKfs = testEnteredKnownFactsNegativeBox5,
+          retrievedKfs = testFourKnownFacts,
+          isOverseas = false
+        ))
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testEnteredKnownFactsNegativeBox5,
+          testFourKnownFacts,
+          matched = true
+        ))
+
+        res shouldBe Right(KnownFactsMatch)
+      }
+    }
     "4 invalid known facts are provided" should {
       "return KnownFactsMismatch" in {
         val testInvalidKnownFacts = VatKnownFacts(
@@ -74,6 +103,32 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
           vatRegistrationDate = "",
           lastReturnMonthPeriod = Some(Month.MARCH),
           lastNetDue = Some("")
+        )
+
+        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+          vatNumber = testVatNumber,
+          enteredKfs = testInvalidKnownFacts,
+          retrievedKfs = testFourKnownFacts,
+          isOverseas = false
+        ))
+
+        verifyAudit(KnownFactsAuditModel(
+          testVatNumber,
+          testInvalidKnownFacts,
+          testFourKnownFacts,
+          matched = false
+        ))
+
+        res shouldBe Left(KnownFactsMismatch)
+      }
+    }
+    "4 invalid known facts are provided and the Box 5 figure value sent from the front end is negative" should {
+      "return KnownFactsMismatch" in {
+        val testInvalidKnownFacts = VatKnownFacts(
+          businessPostcode = Some(""),
+          vatRegistrationDate = "",
+          lastReturnMonthPeriod = Some(Month.MARCH),
+          lastNetDue = Some("-12345.01")
         )
 
         val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
