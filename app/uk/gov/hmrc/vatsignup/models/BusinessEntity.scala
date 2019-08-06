@@ -68,7 +68,7 @@ case object Overseas extends BusinessEntity
 
 case object JointVenture extends BusinessEntity
 
-case class OverseasWithUkEstablishment(companyNumber: String) extends BusinessEntity
+case class OverseasWithUkEstablishment(companyNumber: Option[String]) extends BusinessEntity
 
 object BusinessEntity {
   val EntityTypeKey = "entityType"
@@ -171,9 +171,8 @@ object BusinessEntity {
         )
       case OverseasWithUkEstablishment(companyNumber) =>
         Json.obj(
-          EntityTypeKey -> OverseasWithUkEstablishmentKey,
-          CompanyNumberKey -> companyNumber
-        )
+          EntityTypeKey -> OverseasWithUkEstablishmentKey
+        ) + (CompanyNumberKey -> companyNumber)
     }
 
     override def reads(json: JsValue): JsResult[BusinessEntity] =
@@ -229,7 +228,7 @@ object BusinessEntity {
             JsSuccess(Overseas)
           case OverseasWithUkEstablishmentKey =>
             for {
-              companyNumber <- (json \ CompanyNumberKey).validate[String]
+              companyNumber <- (json \ CompanyNumberKey).validateOpt[String]
             } yield OverseasWithUkEstablishment(companyNumber)
         }
       } yield businessEntity

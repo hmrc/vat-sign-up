@@ -142,11 +142,12 @@ object RegistrationStub extends WireMockMethods {
         "vrn" -> vatNumber
       )
     )
-  private def registerOverseasWithUkEstablishmentJsonBody(vatNumber: String, companyNumber: String): JsObject =
+  private def registerOverseasWithUkEstablishmentJsonBody(vatNumber: String, companyNumber: Option[String]): JsObject =
     Json.obj(
-      "nonUKCompanyWithUKEstablishment" -> Json.obj(
-        "vrn" -> vatNumber,
-        "crn" -> companyNumber
+      "nonUKCompanyWithUKEstablishment" -> (
+        Json.obj(
+          "vrn" -> vatNumber
+        ) + ("crn" -> companyNumber)
       )
     )
 

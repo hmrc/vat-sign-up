@@ -72,7 +72,7 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
     }
 
   private def upsertOverseasWithUkEstablishment(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
-    subscriptionRequestRepository.upsertBusinessEntity(vatNumber, OverseasWithUkEstablishment(companyNumber)) map {
+    subscriptionRequestRepository.upsertBusinessEntity(vatNumber, OverseasWithUkEstablishment(Some(companyNumber))) map {
       _ => Right(StoreCompanyNumberSuccess)
     } recover {
       case e: NoSuchElementException => Left(DatabaseFailureNoVATNumber)

@@ -186,7 +186,7 @@ object RegisterWithMultipleIDsAuditing {
         case OverseasWithUkEstablishment(companyNumber) =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
-            companyNumber = Some(companyNumber),
+            companyNumber = companyNumber,
             businessEntity = OverseasWithUkEstablishmentKey,
             agentReferenceNumber = agentReferenceNumber,
             isSuccess = isSuccess

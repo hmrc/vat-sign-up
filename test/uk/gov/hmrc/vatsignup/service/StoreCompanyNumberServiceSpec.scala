@@ -57,7 +57,7 @@ class StoreCompanyNumberServiceSpec extends UnitSpec
 
       "the database stores a non UK Company without UK Establishment" should {
         "return StoreCompanyNumberSuccess" in {
-          mockUpsertBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUkNoEstablishmentCompanyNumber))(
+          mockUpsertBusinessEntity(testVatNumber, OverseasWithUkEstablishment(Some(testNonUkNoEstablishmentCompanyNumber)))(
             Future.successful(mock[UpdateWriteResult])
           )
           val res = TestStoreCompanyNumberService.storeCompanyNumber(testVatNumber, testNonUkNoEstablishmentCompanyNumber)
