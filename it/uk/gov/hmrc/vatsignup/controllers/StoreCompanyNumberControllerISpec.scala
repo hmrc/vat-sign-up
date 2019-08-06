@@ -100,6 +100,20 @@ class StoreCompanyNumberControllerISpec extends ComponentSpecBase with CustomMat
         )
       }
 
+      "for principal user return NO_CONTENT when no CT UTR is provided for a non uk with uk establishment company" in {
+        stubAuth(OK, successfulAuthResponse())
+        await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/company-number")(Json.obj(
+          "companyNumber" -> testNonUKCompanyWithUKEstablishmentCompanyNumberFC
+        ))
+
+        res should have(
+          httpStatus(NO_CONTENT),
+          emptyBody
+        )
+      }
+
       "if the vat number does not already exist then return NOT_FOUND" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
