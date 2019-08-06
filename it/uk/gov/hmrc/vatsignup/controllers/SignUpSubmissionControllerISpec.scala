@@ -189,10 +189,10 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           )
         }
 
-        s"return $NO_CONTENT for non UK-company sign up with FC prefix in CRN" in {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up with FC prefix in CRN" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false,
@@ -201,7 +201,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -214,10 +214,10 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           )
         }
 
-        s"return $NO_CONTENT for non UK-company sign up with SF prefix in CRN" in {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up with SF prefix in CRN" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false,
@@ -226,7 +226,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -239,10 +239,10 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           )
         }
 
-        s"return $NO_CONTENT for non UK-company sign up with NF prefix in CRN" in {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up with NF prefix in CRN" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false,
@@ -251,7 +251,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(agentEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -564,10 +564,10 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         }
       }
       "the user is signing up a non UK with UK establishment with FC prefix and has provided a CT reference" should {
-        s"return $NO_CONTENT for $LimitedCompany sign up" in {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
@@ -577,7 +577,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -591,10 +591,10 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         }
       }
       "the user is signing up a non UK with UK establishment with SF prefix and has provided a CT reference" should {
-        s"return $NO_CONTENT for $LimitedCompany sign up" in {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
@@ -604,7 +604,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -618,10 +618,10 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
         }
       }
       "the user is signing up a non UK with UK establishment with NF prefix and has provided a CT reference" should {
-        s"return $NO_CONTENT for $LimitedCompany sign up" in {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up" in {
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
-            businessEntity = Some(LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
@@ -631,7 +631,34 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
 
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
           stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
+          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
+          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
+
+          await(submissionRequestRepo.insert(testSubscriptionRequest))
+          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
+
+          res should have(
+            httpStatus(NO_CONTENT),
+            emptyBody
+          )
+        }
+      }
+      "the user is signing up a non UK with UK establishment with NF prefix and has not provided a CT reference" should {
+        s"return $NO_CONTENT for $OverseasWithUkEstablishment sign up" in {
+          val testSubscriptionRequest = SubscriptionRequest(
+            vatNumber = testVatNumber,
+            businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
+            ctReference = None,
+            email = Some(testEmail),
+            isMigratable = testIsMigratable,
+            isDirectDebit = false,
+            contactPreference = Some(testContactPreference)
+          )
+
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubGetEmailVerified(testEmail)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 

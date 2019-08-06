@@ -36,10 +36,12 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
 
   import StoreCompanyNumberService._
 
-  val overseasPrefixes = Seq("FC", "SF", "NF")
+  val overseasPrefixes: Seq[String] = Seq("FC", "SF", "NF")
+
+  def isOverseas(companyNumber: String): Boolean = overseasPrefixes exists (companyNumber.toUpperCase.startsWith(_))
 
   def storeCompanyNumber(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] = {
-    if (overseasPrefixes exists (companyNumber.toUpperCase.startsWith(_)))
+    if (isOverseas(companyNumber))
       upsertOverseasWithUkEstablishment(vatNumber, companyNumber)
     else
       upsertLimitedCompany(vatNumber, companyNumber)
@@ -54,7 +56,7 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
         case CompanyMatchService.CtReferenceMismatch => StoreCompanyNumberService.CtReferenceMismatch
         case GetCtReferenceFailure => MatchCtReferenceFailure
       }
-      _ <- if (overseasPrefixes exists (companyNumber.toUpperCase.startsWith(_)))
+      _ <- if (isOverseas(companyNumber))
         EitherT(upsertOverseasWithUkEstablishment(vatNumber, companyNumber))
       else
         EitherT(upsertLimitedCompany(vatNumber, companyNumber))
