@@ -30,6 +30,7 @@ import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.utils.JsonUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.vatsignup.utils.JsonUtils._
 
 @Singleton
 class RegistrationConnector @Inject()(val http: HttpClient,
@@ -169,9 +170,10 @@ object RegistrationConnector {
       )
     case OverseasWithUkEstablishment(companyNumber) =>
       Json.obj(
-        OverseasWithUkEstablishmentKey -> Json.obj(
-          VrnKey -> vatNumber,
-          CrnKey -> companyNumber
+        OverseasWithUkEstablishmentKey -> (
+          Json.obj(
+            VrnKey -> vatNumber
+          ) + (CrnKey -> companyNumber)
         )
       )
   }

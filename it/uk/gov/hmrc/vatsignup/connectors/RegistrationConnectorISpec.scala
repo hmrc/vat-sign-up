@@ -105,11 +105,11 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "the business entity is a non uk with uk establishment limited company with a FC prefix on CRN" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(Some(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)))(testSafeId)
 
           val res = await(registrationConnector.registerBusinessEntity(
             vatNumber = testVatNumber,
-            businessEntity = OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)
+            businessEntity = OverseasWithUkEstablishment(Some(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))
           ))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
@@ -120,11 +120,11 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "the business entity is a non uk with uk establishment limited company with a SF" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(Some(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)))(testSafeId)
 
           val res = await(registrationConnector.registerBusinessEntity(
             vatNumber = testVatNumber,
-            businessEntity = OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)
+            businessEntity = OverseasWithUkEstablishment(Some(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))
           ))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
@@ -135,11 +135,26 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
     "the business entity is a non uk with uk establishment limited company with a NF" when {
       "DES returns a successful response" should {
         "return a RegistrationSuccess with the SAFE ID" in {
-          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(Some(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)))(testSafeId)
 
           val res = await(registrationConnector.registerBusinessEntity(
             vatNumber = testVatNumber,
-            businessEntity = OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)
+            businessEntity = OverseasWithUkEstablishment(Some(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))
+          ))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
+      }
+    }
+
+    "the business entity is a non uk with uk establishment limited company without a company number" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(None))(testSafeId)
+
+          val res = await(registrationConnector.registerBusinessEntity(
+            vatNumber = testVatNumber,
+            businessEntity = OverseasWithUkEstablishment(None)
           ))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
