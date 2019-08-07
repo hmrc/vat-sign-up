@@ -31,52 +31,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
-                                 authenticatorConnector: AuthenticatorConnector,
-                                 auditService: AuditService
+                                 authenticatorConnector: AuthenticatorConnector
                                 )(implicit ec: ExecutionContext) {
 
   import StoreNinoService._
 
-  def storeNinoWithMatching(vatNumber: String, userDetailsModel: UserDetailsModel, enrolments: Enrolments, ninoSource: NinoSource)
-                           (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreNinoFailure, StoreNinoSuccess.type]] = {
-
-    val optAgentReferenceNumber: Option[String] =
-      enrolments getEnrolment AgentEnrolmentKey flatMap {
-        agentEnrolment =>
-          agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
-      }
-
-    ninoSource match {
-      case ninoSource @ (IRSA | AuthProfile) =>
-        storeNinoToMongo(vatNumber, userDetailsModel.nino, ninoSource)
-      case UserEntered =>
-        matchUser(userDetailsModel, optAgentReferenceNumber) flatMap {
-          case Right(nino) => storeNinoToMongo(vatNumber, nino, UserEntered)
-          case Left(failure) => Future.successful(Left(failure))
-        }
-    }
-  }
-
-  def storeNinoWithoutMatching(vatNumber: String, nino: String, ninoSource: NinoSource)
-                              (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[MongoFailure, StoreNinoService.StoreNinoSuccess.type]] = {
+  def storeNino(vatNumber: String, nino: String, ninoSource: NinoSource)
+                              (implicit hc: HeaderCarrier, request: Request[_]): Future[StoreNinoServiceResponse] = {
     storeNinoToMongo(vatNumber, nino, ninoSource)
   }
 
-  private def matchUser(userDetailsModel: UserDetailsModel, agentReferenceNumber: Option[String])
-                       (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[UserMatchingFailure, String]] =
-    authenticatorConnector.matchUser(userDetailsModel).map {
-      case Right(Some(nino)) => {
-        auditService.audit(UserMatchingAuditModel(userDetailsModel, agentReferenceNumber, isSuccess = true))
-        Right(nino)
-      }
-      case Right(None) => {
-        auditService.audit(UserMatchingAuditModel(userDetailsModel, agentReferenceNumber, isSuccess = false))
-        Left(NoMatchFoundFailure)
-      }
-      case _ => Left(AuthenticatorFailure)
-    }
-
-  private def storeNinoToMongo(vatNumber: String, nino: String, ninoSource: NinoSource): Future[Either[MongoFailure, StoreNinoSuccess.type]] = {
+  private def storeNinoToMongo(vatNumber: String, nino: String, ninoSource: NinoSource): Future[StoreNinoServiceResponse] = {
     val res = for {
       _ <- subscriptionRequestRepository.upsertBusinessEntity(vatNumber, SoleTrader(nino))
       _ <- subscriptionRequestRepository.upsertNinoSource(vatNumber, ninoSource)
@@ -93,20 +58,14 @@ class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequ
 
 object StoreNinoService {
 
+  type StoreNinoServiceResponse = Either[StoreNinoFailure, StoreNinoSuccess.type]
+
   case object StoreNinoSuccess
 
   sealed trait StoreNinoFailure
 
-  sealed trait UserMatchingFailure extends StoreNinoFailure
+  case object NinoDatabaseFailure extends StoreNinoFailure
 
-  sealed trait MongoFailure extends StoreNinoFailure
-
-  case object AuthenticatorFailure extends UserMatchingFailure
-
-  case object NoMatchFoundFailure extends UserMatchingFailure
-
-  case object NinoDatabaseFailure extends MongoFailure
-
-  case object NinoDatabaseFailureNoVATNumber extends MongoFailure
+  case object NinoDatabaseFailureNoVATNumber extends StoreNinoFailure
 
 }

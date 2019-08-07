@@ -42,7 +42,7 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
     "return OK" when {
       "Nino has been stored" in {
         mockAuthorise()()
-        mockStoreNinoWithoutMatching(testVatNumber, testNino, IRSA)(Future.successful(Right(StoreNinoSuccess)))
+        mockStoreNino(testVatNumber, testNino, IRSA)(Future.successful(Right(StoreNinoSuccess)))
 
         val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(testReq))
         status(res) shouldBe NO_CONTENT
@@ -51,7 +51,7 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
     "return NotFound" when {
       "Vat number not found in Mongo" in {
         mockAuthorise()()
-        mockStoreNinoWithoutMatching(testVatNumber, testNino, IRSA)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
+        mockStoreNino(testVatNumber, testNino, IRSA)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
 
         val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(testReq))
         status(res) shouldBe NOT_FOUND
@@ -60,7 +60,7 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
     "return Internal Server Error" when {
       "Mongo fails" in {
         mockAuthorise()()
-        mockStoreNinoWithoutMatching(testVatNumber, testNino, IRSA)(Future.successful(Left(NinoDatabaseFailure)))
+        mockStoreNino(testVatNumber, testNino, IRSA)(Future.successful(Left(NinoDatabaseFailure)))
 
         val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(testReq))
         status(res) shouldBe INTERNAL_SERVER_ERROR

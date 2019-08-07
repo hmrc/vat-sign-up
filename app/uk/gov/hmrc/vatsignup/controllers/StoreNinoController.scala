@@ -38,7 +38,7 @@ class StoreNinoController @Inject()(val authConnector: AuthConnector, storeNinoS
       authorised() {
         ((req.body \ NinoKey).validate[String], (req.body \ ninoSourceFrontEndKey).validate[NinoSource]) match {
           case (JsSuccess(nino, _), JsSuccess(ninoSource, _)) =>
-            storeNinoService.storeNinoWithoutMatching(vatNumber, nino, ninoSource) map {
+            storeNinoService.storeNino(vatNumber, nino, ninoSource) map {
               case Right(StoreNinoSuccess) => NoContent
               case Left(NinoDatabaseFailureNoVATNumber) => NotFound
               case Left(NinoDatabaseFailure) => InternalServerError
