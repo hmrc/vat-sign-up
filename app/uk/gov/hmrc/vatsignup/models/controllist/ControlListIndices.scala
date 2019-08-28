@@ -50,4 +50,5 @@ object ControlListIndices {
   val REPAYMENT_TRADER = 30
   val MOSS_TRADER = 31
   val FLAT_RATE = 32
+  val PENDING_OA = 33
 }

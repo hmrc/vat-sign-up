@@ -67,7 +67,8 @@ object ControlListParameter {
       ANYTHING_UNDER_APPEAL -> AnythingUnderAppeal,
       REPAYMENT_TRADER -> RepaymentTrader,
       MOSS_TRADER -> MossTrader,
-      FLAT_RATE -> FlatRate
+      FLAT_RATE -> FlatRate,
+      PENDING_OA -> PendingOA
     )
 }
 
@@ -268,4 +269,10 @@ case object FlatRate extends ControlListParameter {
   val configKey: String = "flat_rate"
   val ordinal = FLAT_RATE
   val errorMessage: String = flatRateMessage
+}
+
+case object PendingOA extends ControlListParameter {
+  val configKey: String = "pending_oa"
+  val ordinal = PENDING_OA
+  val errorMessage: String = pendingOaMessage
 }
