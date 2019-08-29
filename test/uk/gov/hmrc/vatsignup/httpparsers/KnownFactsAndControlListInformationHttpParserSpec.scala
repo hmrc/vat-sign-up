@@ -47,7 +47,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
                   "lastNetDue" -> testLastNetDue.toDouble,
-                  "controlListInformation" -> ControlList32.valid
+                  "controlListInformation" -> ControlList33.valid
                 )
               )
             )
@@ -66,7 +66,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> "N/A",
                   "lastNetDue" -> testLastNetDue.toDouble,
-                  "controlListInformation" -> ControlList32.valid
+                  "controlListInformation" -> ControlList33.valid
                 )
               )
             )
@@ -94,7 +94,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> "N/A",
                   "lastNetDue" -> 0.00,
-                  "controlListInformation" -> ControlList32.valid
+                  "controlListInformation" -> ControlList33.valid
                 )
               )
             )
@@ -147,7 +147,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with Ei
                 Json.obj(
                   "postcode" -> testPostCode,
                   "dateOfReg" -> testDateOfRegistration,
-                  "controlListInformation" -> ControlList32.valid
+                  "controlListInformation" -> ControlList33.valid
                 )
               )
             )

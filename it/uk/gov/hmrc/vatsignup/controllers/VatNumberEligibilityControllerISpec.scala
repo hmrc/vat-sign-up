@@ -30,12 +30,12 @@ import uk.gov.hmrc.vatsignup.models.MTDfBVoluntary
 class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
 
   "/subscription-request/vat-number/:vatNumber/mtdfb-eligibility" when {
-    "the control list info is 32 bit" when {
+    "the control list info is 33 bit" when {
       "the user does not exist on ETMP" when {
         "the user is eligible" should {
           "return OK" in {
             stubAuth(OK, successfulAuthResponse())
-            stubGetKnownFactsAndControlListInformation32(testVatNumber, testPostCode, testDateOfRegistration)
+            stubGetKnownFactsAndControlListInformation33(testVatNumber, testPostCode, testDateOfRegistration)
 
             val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 
@@ -46,12 +46,12 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
         }
       }
     }
-    "the control list info is 33 bit" when {
+    "the control list info is 34 bit" when {
       "the user does not exist on ETMP" when {
         "the user is eligible" should {
           "return OK" in {
             stubAuth(OK, successfulAuthResponse())
-            stubGetKnownFactsAndControlListInformation33(testVatNumber, testPostCode, testDateOfRegistration)
+            stubGetKnownFactsAndControlListInformation34(testVatNumber, testPostCode, testDateOfRegistration)
 
             val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 
