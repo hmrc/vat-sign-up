@@ -31,15 +31,6 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
       )
     ).thenReturn(status = status, body = body)
 
-  def stubGetKnownFactsAndControlListInformation32(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
-    val body = Json.obj(
-      "postcode" -> businessPostcode,
-      "dateOfReg" -> vatRegistrationDate,
-      "controlListInformation" -> ControlList32.eligible
-    )
-    stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
-  }
-
   def stubGetKnownFactsAndControlListInformation33(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
     val body = Json.obj(
       "postcode" -> businessPostcode,
@@ -49,11 +40,20 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
 
+  def stubGetKnownFactsAndControlListInformation34(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
+    val body = Json.obj(
+      "postcode" -> businessPostcode,
+      "dateOfReg" -> vatRegistrationDate,
+      "controlListInformation" -> ControlList34.eligible
+    )
+    stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
+  }
+
   def stubIneligibleControlListInformation(vatNumber: String): Unit = {
     val body = Json.obj(
       "postcode" -> testPostCode,
       "dateOfReg" -> testDateOfRegistration,
-      "controlListInformation" -> ControlList33.ineligible
+      "controlListInformation" -> ControlList34.ineligible
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
@@ -62,7 +62,7 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
     val body = Json.obj(
       "postcode" -> testPostCode,
       "dateOfReg" -> testDateOfRegistration,
-      "controlListInformation" -> ControlList33.directDebit
+      "controlListInformation" -> ControlList34.directDebit
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
@@ -71,7 +71,7 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
     val body = Json.obj(
       "postcode" -> testPostCode,
       "dateOfReg" -> testDateOfRegistration,
-      "controlListInformation" -> ControlList33.overseas
+      "controlListInformation" -> ControlList34.overseas
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
@@ -82,7 +82,7 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
       "dateOfReg" -> testDateOfRegistration,
       "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
       "lastNetDue" -> testLastNetDue.toDouble,
-      "controlListInformation" -> ControlList33.overseas
+      "controlListInformation" -> ControlList34.overseas
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
@@ -102,7 +102,7 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
       "dateOfReg" -> testDateOfRegistration,
       "lastReturnMonthPeriod" -> "N/A",
       "lastNetDue" -> 0,
-      "controlListInformation" -> ControlList33.eligible
+      "controlListInformation" -> ControlList34.eligible
     )))
 
   private def successResponseBody =
@@ -111,7 +111,7 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
       "dateOfReg" -> testDateOfRegistration,
       "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
       "lastNetDue" -> testLastNetDue.toDouble,
-      "controlListInformation" -> ControlList33.eligible
+      "controlListInformation" -> ControlList34.eligible
     )
 
 }
