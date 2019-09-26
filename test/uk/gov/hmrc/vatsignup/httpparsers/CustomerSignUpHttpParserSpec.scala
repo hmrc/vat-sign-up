@@ -38,11 +38,12 @@ class CustomerSignUpHttpParserSpec extends UnitSpec {
       }
 
       "parse a BAD_REQUEST response as a CustomerSignUpResponseFailure" in {
-        val httpResponse = HttpResponse(BAD_REQUEST, Some(Json.obj("code" -> "INVALID_REGIME")))
+        val testJson = Json.obj("code" -> "INVALID_REGIME")
+        val httpResponse = HttpResponse(BAD_REQUEST, Some(testJson))
 
         val res = CustomerSignUpHttpReads.read(testHttpVerb, testUri, httpResponse)
 
-        res shouldBe Left(CustomerSignUpResponseFailure(BAD_REQUEST))
+        res shouldBe Left(CustomerSignUpResponseFailure(BAD_REQUEST, "{\n  \"code\" : \"INVALID_REGIME\"\n}"))
       }
 
     }

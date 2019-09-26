@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.httpparsers
 import org.scalatest.EitherValues
 import play.api.http.Status._
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HttpResponse, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants.Des._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -45,13 +45,13 @@ class RegisterWithMultipleIdentifiersHttpParserSpec extends UnitSpec with Either
         }
       }
       "the JSON body is not correctly formatted" should {
-        "return an InvalidJsonResponse" in {
+        "throw an InternalServerException" in {
           val httpResponse = HttpResponse(
             responseStatus = OK,
             responseJson = Some(Json.obj())
           )
 
-          read("", "", httpResponse).left.value shouldBe an[InvalidJsonResponse]
+          intercept[InternalServerException](read("", "", httpResponse))
         }
       }
     }

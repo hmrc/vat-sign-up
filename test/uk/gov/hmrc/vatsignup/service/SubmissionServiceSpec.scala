@@ -88,7 +88,7 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
                 isPartialMigration = !testIsMigratable,
                 contactPreference = testContactPreference
               )(
-                 Future.successful(Right(CustomerSignUpResponseSuccess))
+                Future.successful(Right(CustomerSignUpResponseSuccess))
               )
               mockRegisterEnrolment(testVatNumber, testSafeId)(Future.successful(Right(SuccessfulTaxEnrolment)))
 
@@ -598,6 +598,9 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         }
         "the sign up request fails" should {
           "return a SignUpFailure" in {
+            val failureStatus = BAD_REQUEST
+            val failureBody = "Some response from DES"
+
             val signUpRequest = SignUpRequest(
               vatNumber = testVatNumber,
               businessEntity = testLimitedCompany,
@@ -618,12 +621,12 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               isPartialMigration = !testIsMigratable,
               contactPreference = testContactPreference
             )(
-              Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST)))
+              Future.successful(Left(CustomerSignUpResponseFailure(failureStatus, failureBody)))
             )
 
             val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-            res.left.value shouldBe SignUpFailure
+            res.left.value shouldBe SignUpFailure(failureStatus, failureBody)
 
             verifyAudit(RegisterWithMultipleIDsAuditModel(
               vatNumber = testVatNumber,
@@ -640,6 +643,9 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
       }
       "the registration request fails" should {
         "return a RegistrationFailure" in {
+          val failureStatus = BAD_REQUEST
+          val failureBody = "Some response from DES"
+
           val signUpRequest = SignUpRequest(
             vatNumber = testVatNumber,
             businessEntity = testLimitedCompany,
@@ -651,12 +657,12 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
           )
 
           mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
-            Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
+            Future.successful(Left(RegisterWithMultipleIdsErrorResponse(failureStatus, failureBody)))
           )
 
           val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-          res.left.value shouldBe RegistrationFailure
+          res.left.value shouldBe RegistrationFailure(failureStatus, failureBody)
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -1211,6 +1217,9 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
         }
         "the sign up request fails" should {
           "return a SignUpFailure" in {
+            val failureStatus = BAD_REQUEST
+            val failureBody = "Some response from DES"
+
             val signUpRequest = SignUpRequest(
               vatNumber = testVatNumber,
               businessEntity = testLimitedCompany,
@@ -1232,12 +1241,12 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
               isPartialMigration = !testIsMigratable,
               contactPreference = testContactPreference
             )(
-              Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST)))
+              Future.successful(Left(CustomerSignUpResponseFailure(failureStatus, failureBody)))
             )
 
             val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-            res.left.value shouldBe SignUpFailure
+            res.left.value shouldBe SignUpFailure(failureStatus, failureBody)
 
             verifyAudit(RegisterWithMultipleIDsAuditModel(
               vatNumber = testVatNumber,
@@ -1254,6 +1263,9 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
       }
       "the registration request fails" should {
         "return a RegistrationFailure" in {
+          val failureStatus = BAD_REQUEST
+          val failureBody = "Some response from DES"
+
           val signUpRequest = SignUpRequest(
             vatNumber = testVatNumber,
             businessEntity = testLimitedCompany,
@@ -1265,12 +1277,12 @@ class SubmissionServiceSpec extends UnitSpec with EitherValues
           )
 
           mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
-            Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
+            Future.successful(Left(RegisterWithMultipleIdsErrorResponse(failureStatus, failureBody)))
           )
 
           val res = await(TestSubmissionService.submitSignUpRequest(signUpRequest, enrolments))
 
-          res.left.value shouldBe RegistrationFailure
+          res.left.value shouldBe RegistrationFailure(failureStatus, failureBody)
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,

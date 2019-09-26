@@ -18,11 +18,11 @@ package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
 import play.api.libs.json.{JsError, JsSuccess}
-import uk.gov.hmrc.http.{HttpReads, HttpResponse}
+import uk.gov.hmrc.http.{HttpReads, HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.config.Constants.Des._
 
 object RegisterWithMultipleIdentifiersHttpParser {
-  type RegisterWithMultipleIdentifiersResponse = Either[RegisterWithMultipleIdsFailure, RegisterWithMultipleIdsSuccess]
+  type RegisterWithMultipleIdentifiersResponse = Either[RegisterWithMultipleIdsErrorResponse, RegisterWithMultipleIdsSuccess]
 
   implicit object RegisterWithMultipleIdentifiersHttpReads extends HttpReads[RegisterWithMultipleIdentifiersResponse] {
     override def read(method: String, url: String, response: HttpResponse): RegisterWithMultipleIdentifiersResponse = {
@@ -34,7 +34,7 @@ object RegisterWithMultipleIdentifiersHttpParser {
             safeId <- (response.json \ IdentificationKey \ 0 \ IdValueKey).validate[String]
           } yield safeId) match {
             case JsSuccess(safeId, _) => Right(RegisterWithMultipleIdsSuccess(safeId))
-            case error: JsError => Left(InvalidJsonResponse(error))
+            case error: JsError => throw new InternalServerException(s"Invalid JSON returned on Register API: ${response.body}")
           }
         case status =>
           Left(RegisterWithMultipleIdsErrorResponse(status, response.body))
@@ -44,10 +44,6 @@ object RegisterWithMultipleIdentifiersHttpParser {
 
   case class RegisterWithMultipleIdsSuccess(safeId: String)
 
-  sealed trait RegisterWithMultipleIdsFailure
-
-  case class InvalidJsonResponse(jsError: JsError) extends RegisterWithMultipleIdsFailure
-
-  case class RegisterWithMultipleIdsErrorResponse(status: Int, body: String) extends RegisterWithMultipleIdsFailure
+  case class RegisterWithMultipleIdsErrorResponse(status: Int, body: String)
 
 }
