@@ -20,4 +20,4 @@ sealed trait CustomerSignUpResponse
 
 case object CustomerSignUpResponseSuccess extends CustomerSignUpResponse
 
-case class CustomerSignUpResponseFailure(status: Int) extends CustomerSignUpResponse
+case class CustomerSignUpResponseFailure(status: Int, response: String) extends CustomerSignUpResponse

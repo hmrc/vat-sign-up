@@ -48,8 +48,8 @@ class SubmissionOrchestrationService @Inject()(signUpRequestService: SignUpReque
         case SignUpRequestService.EmailVerificationFailure => EmailVerificationFailure
       }
       _ <- EitherT(submissionService.submitSignUpRequest(signUpRequest, enrolments)) leftMap {
-        case SubmissionService.SignUpFailure => SignUpFailure
-        case SubmissionService.RegistrationFailure => RegistrationFailure
+        case _: SubmissionService.SignUpFailure => SignUpFailure
+        case _: SubmissionService.RegistrationFailure => RegistrationFailure
         case SubmissionService.EnrolmentFailure => EnrolmentFailure
       }
       _ <- saveTemporarySubscriptionData(vatNumber, signUpRequest.transactionEmail.emailAddress, signUpRequest.isDelegated)

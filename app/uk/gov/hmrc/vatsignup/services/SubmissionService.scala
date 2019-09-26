@@ -19,6 +19,8 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data._
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
+import play.api.libs.json.{JsString, JsValue, Json}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -68,16 +70,43 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       _ <- registerEnrolment(signUpRequest.vatNumber, safeId)
     } yield SignUpRequestSubmitted
 
-    result.value
+    result.leftMap {
+      failure =>
+        val apiFailure: JsValue = failure match {
+          case SignUpFailure(status, body) => Json.obj(
+              "api" -> "Sign Up",
+              "status" -> status,
+              "body" -> body
+            )
+          case RegistrationFailure(status, body) => Json.obj(
+              "api" -> "Register",
+              "status" -> status,
+              "body" -> body
+            )
+          case _ => JsString("other")
+        }
+
+        val failureLog = Json.obj(
+          "type" -> "Sign-up request submission failure",
+          "vatNumber" -> signUpRequest.vatNumber,
+          "businessEntity" -> signUpRequest.businessEntity.toString,
+          "isDelegated" -> optAgentReferenceNumber.isDefined,
+          "failure" -> apiFailure
+        )
+
+        Logger.error(failureLog.toString)
+
+        failure
+    }.value
   }
 
   private def registerBusinessEntity(vatNumber: String,
                                      businessEntity: BusinessEntity,
                                      agentReferenceNumber: Option[String]
                                     )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, SignUpRequestSubmissionFailure, String] =
-    EitherT(registrationConnector.registerBusinessEntity(vatNumber, businessEntity)) bimap( { _ =>
+    EitherT(registrationConnector.registerBusinessEntity(vatNumber, businessEntity)) bimap( { registrationFailure =>
       auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, businessEntity, agentReferenceNumber, isSuccess = false))
-      RegistrationFailure
+      RegistrationFailure(registrationFailure.status, registrationFailure.body)
     }, {
       case RegisterWithMultipleIdsSuccess(safeId) =>
         auditService.audit(RegisterWithMultipleIDsAuditModel(vatNumber, businessEntity, agentReferenceNumber, isSuccess = true))
@@ -101,7 +130,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       isPartialMigration = isPartialMigration,
       contactPreference
     )) bimap( {
-      _ => {
+      signUpFailure => {
         auditService.audit(SignUpAuditModel(
           safeId = safeId,
           vatNumber = vatNumber,
@@ -112,7 +141,7 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
           isSuccess = false,
           contactPreference = contactPreference
         ))
-        SignUpFailure
+        SignUpFailure(signUpFailure.status, signUpFailure.response)
       }
     }, {
       customerSignUpSuccess => {
@@ -149,9 +178,9 @@ object SubmissionService {
 
   sealed trait SignUpRequestSubmissionFailure
 
-  case object SignUpFailure extends SignUpRequestSubmissionFailure
+  case class SignUpFailure(status: Int, body: String) extends SignUpRequestSubmissionFailure
 
-  case object RegistrationFailure extends SignUpRequestSubmissionFailure
+  case class RegistrationFailure(status: Int, body: String) extends SignUpRequestSubmissionFailure
 
   case object EnrolmentFailure extends SignUpRequestSubmissionFailure
 

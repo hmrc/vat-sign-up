@@ -27,7 +27,7 @@ object CustomerSignUpHttpParser {
     override def read(method: String, url: String, response: HttpResponse): CustomerSignUpResponse =
       response.status match {
         case OK => Right(CustomerSignUpResponseSuccess)
-        case status => Left(CustomerSignUpResponseFailure(status))
+        case status => Left(CustomerSignUpResponseFailure(status, response.body))
       }
   }
 

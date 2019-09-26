@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import play.api.http.Status._
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -50,13 +51,10 @@ trait MockSubmissionService extends MockitoSugar with BeforeAndAfterEach {
     mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Left(EnrolmentFailure)))
 
   def mockSignUpFailure(signUpRequest: SignUpRequest, enrolments: Enrolments): Unit =
-    mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Left(SignUpFailure)))
+    mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Left(SignUpFailure(INTERNAL_SERVER_ERROR, ""))))
 
   def mockRegistrationFailure(signUpRequest: SignUpRequest, enrolments: Enrolments): Unit =
-    mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Left(RegistrationFailure)))
-
-  def mockDeleteRecordFailure(signUpRequest: SignUpRequest, enrolments: Enrolments): Unit =
-    mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Left(RegistrationFailure)))
+    mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Left(RegistrationFailure(INTERNAL_SERVER_ERROR, ""))))
 
   def mockSubmitSignUpRequestSuccessful(signUpRequest: SignUpRequest, enrolments: Enrolments): Unit =
     mockSubmitSignUpRequest(signUpRequest, enrolments)(Future.successful(Right(SignUpRequestSubmitted)))
