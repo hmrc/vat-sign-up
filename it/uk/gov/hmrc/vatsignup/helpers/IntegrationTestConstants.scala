@@ -22,6 +22,7 @@ import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.Digital
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
 
 object IntegrationTestConstants {
   val testVatNumber: String = UUID.randomUUID().toString
@@ -45,6 +46,8 @@ object IntegrationTestConstants {
   val testNonUKCompanyWithUKEstablishmentCompanyNumberNF = "NF123321"
   val testContactPreference = Digital
   val testContactPreferenceString = testContactPreference.toString
+  val testMtdVatRelationship = MtdVatRelationship
+  val testLegacyRelationship = LegacyRelationship
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"

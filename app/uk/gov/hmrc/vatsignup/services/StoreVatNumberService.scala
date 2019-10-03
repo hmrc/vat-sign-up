@@ -23,11 +23,11 @@ import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
-import uk.gov.hmrc.vatsignup.connectors.{AgentClientRelationshipsConnector, MandationStatusConnector}
+import uk.gov.hmrc.vatsignup.connectors.MandationStatusConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{MigrationInProgress, VatNumberNotFound}
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{RelationshipCheckFailure, RelationshipCheckNotFound, RelationshipCheckSuccess}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService.{KnownFactsMismatch, _}
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -37,11 +37,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreVatNumberService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
-                                      agentClientRelationshipsConnector: AgentClientRelationshipsConnector,
                                       mandationStatusConnector: MandationStatusConnector,
                                       controlListEligibilityService: ControlListEligibilityService,
                                       knownFactsMatchingService: KnownFactsMatchingService,
-                                      auditService: AuditService,
+                                      agentClientRelationshipService: AgentClientRelationshipService,
                                       appConfig: AppConfig
                                      )(implicit ec: ExecutionContext) {
 
@@ -72,7 +71,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       eligibilitySuccess.isOverseas,
       eligibilitySuccess.isDirectDebit
     )
-  }.value
+    }.value
 
   private def checkUserAuthority(vatNumber: String,
                                  enrolments: Enrolments,
@@ -85,26 +84,19 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       case (_, None) if vatKnownFacts.isDefined =>
         Future.successful(Right(UserHasKnownFacts))
       case (_, Some(agentReferenceNumber)) =>
-        checkAgentClientRelationship(vatNumber, agentReferenceNumber)
+        agentClientRelationshipService.checkAgentClientRelationship(vatNumber, agentReferenceNumber) flatMap {
+          case Right(RelationshipCheckSuccess) =>
+            Future.successful(Right(HaveRelationshipResponse))
+          case Left(RelationshipCheckNotFound) =>
+            Future.successful(Left(RelationshipNotFound))
+          case _ =>
+            Future.successful(Left(AgentServicesConnectionFailure))
+        }
       case _ =>
         Future.successful(Left(InsufficientEnrolments))
     })
   }
 
-  private def checkAgentClientRelationship(vatNumber: String,
-                                           agentReferenceNumber: String
-                                          )(implicit hc: HeaderCarrier, request: Request[_]) = {
-    agentClientRelationshipsConnector.checkAgentClientRelationship(agentReferenceNumber, vatNumber) map {
-      case Right(HaveRelationshipResponse) =>
-        auditService.audit(AgentClientRelationshipAuditModel(vatNumber, agentReferenceNumber, haveRelationship = true))
-        Right(HaveRelationshipResponse)
-      case Right(NoRelationshipResponse) =>
-        auditService.audit(AgentClientRelationshipAuditModel(vatNumber, agentReferenceNumber, haveRelationship = false))
-        Left(RelationshipNotFound)
-      case _ =>
-        Left(AgentServicesConnectionFailure)
-    }
-  }
 
   private def checkEligibility(vatNumber: String,
                                optVatKnownFacts: Option[VatKnownFacts]
@@ -165,7 +157,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
 
 object StoreVatNumberService {
 
-  case class StoreVatNumberSuccess (isOverseas: Boolean, isDirectDebit: Boolean)
+  case class StoreVatNumberSuccess(isOverseas: Boolean, isDirectDebit: Boolean)
 
   case object NotSubscribed
 

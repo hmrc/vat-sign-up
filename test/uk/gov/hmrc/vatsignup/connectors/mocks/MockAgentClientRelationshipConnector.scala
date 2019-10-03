@@ -20,14 +20,15 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.reset
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.vatsignup.connectors.AgentClientRelationshipsConnector
+import uk.gov.hmrc.vatsignup.connectors.AgentClientRelationshipConnector
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.CheckAgentClientRelationshipResponse
 import org.mockito.Mockito._
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship, Relationship}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait MockAgentClientRelationshipsConnector extends MockitoSugar with BeforeAndAfterEach {
+trait MockAgentClientRelationshipConnector extends MockitoSugar with BeforeAndAfterEach {
   this: Suite =>
 
   override def beforeEach(): Unit = {
@@ -35,12 +36,16 @@ trait MockAgentClientRelationshipsConnector extends MockitoSugar with BeforeAndA
     reset(mockAgentClientRelationshipsConnector)
   }
 
-  val mockAgentClientRelationshipsConnector: AgentClientRelationshipsConnector = mock[AgentClientRelationshipsConnector]
+  val mockAgentClientRelationshipsConnector: AgentClientRelationshipConnector = mock[AgentClientRelationshipConnector]
 
-  def mockCheckAgentClientRelationship(agentNumber: String, vatNumber: String)(response: Future[CheckAgentClientRelationshipResponse]): Unit = {
+  def mockCheckAgentClientRelationship(agentNumber: String,
+                                       vatNumber: String,
+                                       relationshipType: Relationship)(response: Future[CheckAgentClientRelationshipResponse]): Unit = {
+
     when(mockAgentClientRelationshipsConnector.checkAgentClientRelationship(
       ArgumentMatchers.eq(agentNumber),
-      ArgumentMatchers.eq(vatNumber)
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(relationshipType)
     )(
       ArgumentMatchers.any[HeaderCarrier],
       ArgumentMatchers.any[ExecutionContext]

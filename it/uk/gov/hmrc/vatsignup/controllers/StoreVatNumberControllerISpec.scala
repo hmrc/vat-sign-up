@@ -37,9 +37,27 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
   "PUT /subscription-request/vat-number" when {
     "the user is an agent" should {
-      "return OK when the vat number has been stored successfully" in {
+      "return OK when the vat number has been stored successfully based on a legacy relationship" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+        stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
+
+        val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(
+            OverseasKey -> false,
+            DirectDebitKey -> false
+          ))
+        )
+      }
+
+      "return OK when the vat number has been stored successfully based on a mtd vat relationship" in {
+        stubAuth(OK, successfulAuthResponse(agentEnrolment))
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testMtdVatRelationship)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
@@ -56,7 +74,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
       "return CONFLICT when the client is already subscribed" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
@@ -69,7 +87,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
       "return BAD REQUEST when the client's VAT migration is in progress" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
@@ -82,7 +100,9 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
       "return FORBIDDEN when there is no relationship" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testMtdVatRelationship)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
+
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 
@@ -123,7 +143,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
         "claim the enrolment when the user is already subscribed" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
-          stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+          stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
           stubSuccessGetKnownFacts(testVatNumber)
 
@@ -451,7 +471,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
   "storing an overseas trader" should {
     "return OK with overseas flag included" in {
       stubAuth(OK, successfulAuthResponse(agentEnrolment))
-      stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+      stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
       stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
       stubOverseasControlListInformation(testVatNumber)
 
