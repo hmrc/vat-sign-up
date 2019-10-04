@@ -37,7 +37,7 @@ import scala.concurrent.Future
 class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService with MockAgentClientRelationshipConnector {
 
   object TestAgentClientRelationshipService extends AgentClientRelationshipService(
-    mockAgentClientRelationshipsConnector,
+    mockAgentClientRelationshipConnector,
     mockAuditService
   )
 
