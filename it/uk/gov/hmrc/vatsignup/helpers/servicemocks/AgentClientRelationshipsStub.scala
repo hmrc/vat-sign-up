@@ -17,16 +17,23 @@
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import play.api.http.HeaderNames
-import play.api.http.Status._
-import play.api.libs.json.{JsObject, Json, Writes}
+import play.api.libs.json.Writes
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{Relationship, LegacyRelationship, MtdVatRelationship}
 
 object AgentClientRelationshipsStub extends WireMockMethods {
-  def checkAgentClientRelationship(agentNumber: String, vatNumber: String): String =
-    s"/agent-client-relationships/agent/$agentNumber/service/HMCE-VATDEC-ORG/client/vrn/$vatNumber/"
+  def checkAgentClientRelationship(agentNumber: String, vatNumber: String, relationship: String): String =
+    s"/agent-client-relationships/agent/$agentNumber/service/$relationship/client/vrn/$vatNumber/"
 
-  def stubCheckAgentClientRelationship[T](agentNumber: String, vatNumber: String)(status: Int, body: T)(implicit writes: Writes[T]): StubMapping = {
-    when(method = GET, uri = checkAgentClientRelationship(agentNumber, vatNumber))
+  def stubCheckAgentClientRelationship[T](agentNumber: String,
+                                          vatNumber: String,
+                                          relationshipType: Relationship)(status: Int, body: T)(implicit writes: Writes[T]): StubMapping = {
+
+    val relationship = relationshipType match {
+      case LegacyRelationship => "HMCE-VATDEC-ORG"
+      case MtdVatRelationship => "HMRC-MTD-VAT"
+    }
+
+    when(method = GET, uri = checkAgentClientRelationship(agentNumber, vatNumber, relationship))
       .thenReturn(status = status, body = writes.writes(body))
   }
 }

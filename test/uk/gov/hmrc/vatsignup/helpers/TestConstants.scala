@@ -26,7 +26,9 @@ import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist._
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
+import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 
 
 object TestConstants {
@@ -51,6 +53,8 @@ object TestConstants {
   val testRegisteredSociety = RegisteredSociety(testCompanyNumber)
   val testNonUkNoEstablishmentCompanyNumber = "FC123321"
   val testContactPreference = Digital
+  val testMtdVatRelationship = MtdVatRelationship
+  val testLegacyRelationship = LegacyRelationship
 
 
   val testCredentialId: String = UUID.randomUUID().toString

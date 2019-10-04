@@ -41,7 +41,7 @@ class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBa
     "the user pays by direct debits, and is attempting to sign up in a restricted period" should {
       "return UNPROCESSABLE_ENTITY with dates included" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubDirectDebitControlListInformation(testVatNumber)
 
@@ -59,7 +59,7 @@ class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBa
     "the user is attempting to sign up in a restricted period close to the filing dates" should {
       "return UNPROCESSABLE_ENTITY when the filing dates are available in the config" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber)(OK, Json.obj())
+        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubGetKnownFactsAndControlListInformation33(
           testVatNumber,

@@ -17,24 +17,32 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
-
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser._
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship, Relationship}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AgentClientRelationshipsConnector @Inject()(val http: HttpClient,
-                                                  val applicationConfig: AppConfig) {
+class AgentClientRelationshipConnector @Inject()(val http: HttpClient,
+                                                 val applicationConfig: AppConfig) {
 
   def checkAgentClientRelationship(agentNumber: String,
-                                   vatNumber: String
+                                   vatNumber: String,
+                                   relationshipType: Relationship
                                   )(implicit hc: HeaderCarrier,
-                                    ec: ExecutionContext): Future[CheckAgentClientRelationshipResponse] =
+                                    ec: ExecutionContext): Future[CheckAgentClientRelationshipResponse] = {
+
+    val relationship = relationshipType match {
+      case LegacyRelationship => "HMCE-VATDEC-ORG"
+      case MtdVatRelationship => "HMRC-MTD-VAT"
+    }
+
     http.GET[CheckAgentClientRelationshipResponse](
-      s"${applicationConfig.agentClientRelationshipUrl}/agent/$agentNumber/service/HMCE-VATDEC-ORG/client/vrn/$vatNumber/"
+      s"${applicationConfig.agentClientRelationshipUrl}/agent/$agentNumber/service/$relationship/client/vrn/$vatNumber/"
     )
+  }
 
 }

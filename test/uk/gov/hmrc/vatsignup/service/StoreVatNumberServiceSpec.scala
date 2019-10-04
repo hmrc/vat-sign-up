@@ -18,8 +18,6 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.util.UUID
 
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
@@ -27,17 +25,15 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
-import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipsConnector, MockMandationStatusConnector}
-import uk.gov.hmrc.vatsignup.helpers.TestConstants
+import uk.gov.hmrc.vatsignup.connectors.mocks.MockMandationStatusConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.MigrationInProgress
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.models.monitoring.AgentClientRelationshipAuditing.AgentClientRelationshipAuditModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
-import uk.gov.hmrc.vatsignup.service.mocks.{MockControlListEligibilityService, MockKnownFactsMatchingService}
+import uk.gov.hmrc.vatsignup.service.mocks.{MockAgentClientRelationshipService, MockControlListEligibilityService, MockKnownFactsMatchingService}
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{RelationshipCheckError, RelationshipCheckNotFound, RelationshipCheckSuccess}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.EligibilitySuccess
-import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService.{KnownFactsMismatch, KnownFactsMatch}
+import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService.{KnownFactsMatch, KnownFactsMismatch}
 import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import uk.gov.hmrc.vatsignup.services._
 
@@ -45,17 +41,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreVatNumberServiceSpec
-  extends UnitSpec with MockAgentClientRelationshipsConnector with MockSubscriptionRequestRepository
-    with MockAuditService with MockConfig with MockMandationStatusConnector
-    with MockControlListEligibilityService with MockKnownFactsMatchingService {
+  extends UnitSpec with MockSubscriptionRequestRepository with MockConfig with MockMandationStatusConnector
+    with MockControlListEligibilityService with MockKnownFactsMatchingService with MockAgentClientRelationshipService {
 
   object TestStoreVatNumberService extends StoreVatNumberService(
     mockSubscriptionRequestRepository,
-    mockAgentClientRelationshipsConnector,
     mockMandationStatusConnector,
     mockControlListEligibilityService,
     mockKnownFactsMatchingService,
-    mockAuditService,
+    mockAgentClientRelationshipService,
     mockConfig
   )
 
@@ -73,7 +67,9 @@ class StoreVatNumberServiceSpec
           "the VAT number is eligible for MTD" when {
             "the vat number is stored successfully" should {
               "return a StoreVatNumberSuccess" in {
-                mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
+                mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+                  Future.successful(Right(RelationshipCheckSuccess))
+                )
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
                   Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
@@ -82,13 +78,13 @@ class StoreVatNumberServiceSpec
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
                 res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
-
-                verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
               }
             }
             "the vat number is not stored successfully" should {
               "return a VatNumberDatabaseFailure" in {
-                mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(Future.successful(Right(HaveRelationshipResponse)))
+                mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+                  Future.successful(Right(RelationshipCheckSuccess))
+                )
                 mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
                   Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
@@ -97,55 +93,47 @@ class StoreVatNumberServiceSpec
 
                 val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
                 res shouldBe Left(VatNumberDatabaseFailure)
-
-                verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
               }
             }
           }
           "the VAT number is already voluntarily subscribed for MTD-VAT" should {
             "return AlreadySubscribed" in {
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-                Future.successful(Right(HaveRelationshipResponse))
+              mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+                Future.successful(Right(RelationshipCheckSuccess))
               )
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
               res shouldBe Left(AlreadySubscribed)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
           }
           "the VAT number is already mandated for MTD-VAT" should {
             "return AlreadySubscribed" in {
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-                Future.successful(Right(HaveRelationshipResponse))
+              mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+                Future.successful(Right(RelationshipCheckSuccess))
               )
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
               res shouldBe Left(AlreadySubscribed)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
           }
           "the VAT number migration is already in progress for MTD-VAT" should {
             "return VatMigrationInProgress" in {
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-                Future.successful(Right(HaveRelationshipResponse))
+              mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+                Future.successful(Right(RelationshipCheckSuccess))
               )
               mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
 
               val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
               res shouldBe Left(VatMigrationInProgress)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
             }
           }
         }
         "the VAT number is eligible but non migratable" should {
           "return StoreVatNumberSuccess" in {
-            mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-              Future.successful(Right(HaveRelationshipResponse))
+            mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+              Future.successful(Right(RelationshipCheckSuccess))
             )
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
@@ -155,14 +143,12 @@ class StoreVatNumberServiceSpec
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
             res shouldBe Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))
-
-            verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
         }
         "the VAT number is not eligible for MTD" should {
           "return Ineligible" in {
-            mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-              Future.successful(Right(HaveRelationshipResponse))
+            mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+              Future.successful(Right(RelationshipCheckSuccess))
             )
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(
@@ -171,29 +157,25 @@ class StoreVatNumberServiceSpec
 
             val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
             res shouldBe Left(StoreVatNumberService.Ineligible(testMigratableDates))
-
-            verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
           }
         }
       }
 
-      "there is not an agent-client-relationship" should {
+      "the AgentClientRelationshipService does not find a relationship" should {
         "return a RelationshipNotFound" in {
-          mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-            Future.successful(Right(NoRelationshipResponse))
+          mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+            Future.successful(Left(RelationshipCheckNotFound))
           )
 
           val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
           res shouldBe Left(RelationshipNotFound)
-
-          verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = false))
         }
       }
 
-      "the call to agent-client-relationships-fails" should {
+      "the AgentClientRelationshipService fails on the relationship check" should {
         "return an AgentServicesConnectionFailure" in {
-          mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber)(
-            Future.successful(Left(CheckAgentClientRelationshipResponseFailure(INTERNAL_SERVER_ERROR, Json.obj())))
+          mockCheckAgentClientRelationship(testVatNumber, testAgentReferenceNumber)(
+            Future.successful(Left(RelationshipCheckError))
           )
 
           val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
