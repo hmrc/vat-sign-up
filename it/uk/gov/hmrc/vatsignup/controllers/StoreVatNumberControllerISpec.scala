@@ -54,24 +54,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         )
       }
 
-      "return OK when the vat number has been stored successfully based on a mtd vat relationship" in {
-        stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testMtdVatRelationship)(OK, Json.obj())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-        stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
-
-        val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
-
-        res should have(
-          httpStatus(OK),
-          jsonBodyAs(Json.obj(
-            OverseasKey -> false,
-            DirectDebitKey -> false
-          ))
-        )
-      }
-
       "return CONFLICT when the client is already subscribed" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
@@ -101,8 +83,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       "return FORBIDDEN when there is no relationship" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testMtdVatRelationship)(NOT_FOUND, Json.obj("code" -> NoRelationshipCode))
-
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 

@@ -33,16 +33,16 @@ trait MockAgentClientRelationshipConnector extends MockitoSugar with BeforeAndAf
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockAgentClientRelationshipsConnector)
+    reset(mockAgentClientRelationshipConnector)
   }
 
-  val mockAgentClientRelationshipsConnector: AgentClientRelationshipConnector = mock[AgentClientRelationshipConnector]
+  val mockAgentClientRelationshipConnector: AgentClientRelationshipConnector = mock[AgentClientRelationshipConnector]
 
   def mockCheckAgentClientRelationship(agentNumber: String,
                                        vatNumber: String,
                                        relationshipType: Relationship)(response: Future[CheckAgentClientRelationshipResponse]): Unit = {
 
-    when(mockAgentClientRelationshipsConnector.checkAgentClientRelationship(
+    when(mockAgentClientRelationshipConnector.checkAgentClientRelationship(
       ArgumentMatchers.eq(agentNumber),
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(relationshipType)
