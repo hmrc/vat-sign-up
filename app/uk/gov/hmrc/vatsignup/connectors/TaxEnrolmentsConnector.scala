@@ -40,7 +40,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
 
     val enrolmentRequestBody = {
       Json.obj(
-        "serviceName" -> ServiceName,
+        "serviceName" -> MtdEnrolmentKey,
         "callback" -> taxEnrolmentsCallbackUrl(vatNumber),
         "etmpId" -> safeId
       )

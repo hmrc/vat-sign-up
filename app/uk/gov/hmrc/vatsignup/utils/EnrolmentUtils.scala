@@ -18,26 +18,34 @@ package uk.gov.hmrc.vatsignup.utils
 
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.vatsignup.config.Constants._
+import uk.gov.hmrc.vatsignup.config.Constants.Des._
+import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
 
 object EnrolmentUtils {
 
   implicit class EnrolmentUtils(enrolments: Enrolments) {
-    val vatNumber: Option[String] =
-      enrolments getEnrolment VatDecEnrolmentKey flatMap {
-        vatDecEnrolment =>
-          vatDecEnrolment getIdentifier VatReferenceKey map (_.value)
+    def vatNumber: Option[String] = {
+      val vatDecEnrolment = enrolments getEnrolment VatDecEnrolmentKey flatMap {
+        _.getIdentifier(VatReferenceKey)
       }
+      val mtdEnrolment = enrolments getEnrolment MtdEnrolmentKey flatMap {
+        _.getIdentifier(VrnKey)
+      }
+      val result = mtdEnrolment ++ vatDecEnrolment map (_.value)
+      result.headOption
+    }
 
     val agentReferenceNumber: Option[String] =
-      enrolments getEnrolment AgentEnrolmentKey flatMap {
-        agentEnrolment =>
-          agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
+      enrolments getEnrolment AgentEnrolmentKey flatMap { agentEnrolment =>
+        agentEnrolment getIdentifier AgentReferenceNumberKey map (_.value)
       }
 
     val partnershipUtr: Option[String] =
       enrolments getEnrolment PartnershipIrsaEnrolmentKey flatMap {
         partnershipEnrolment =>
-          partnershipEnrolment.getIdentifier(PartnershipIrsaReferenceNumberKey).map(_.value)
+          partnershipEnrolment
+            .getIdentifier(PartnershipIrsaReferenceNumberKey)
+            .map(_.value)
       }
 
     def isPrincipal: Boolean = agentReferenceNumber.isEmpty
