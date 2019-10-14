@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.utils
 
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.config.Constants.Des._
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
+import uk.gov.hmrc.vatsignup.config.Constants._
 
 object EnrolmentUtils {
 
