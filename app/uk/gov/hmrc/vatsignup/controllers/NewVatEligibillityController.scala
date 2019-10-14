@@ -23,6 +23,7 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
+import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 
 import scala.concurrent.ExecutionContext
 
@@ -35,16 +36,34 @@ class NewVatEligibillityController @Inject()(val authConnector: AuthConnector,
     implicit request =>
       authorised() {
         vatNumberEligibilityService.getMtdStatus(vatNumber) map {
-          case AlreadySubscribed => Ok(Json.obj("mtdStatus" -> "AlreadySubscribed"))
+          case AlreadySubscribed => Ok(Json.obj(MtdStatusKey -> AlreadySubscribedValue))
           case Eligible(isMigrated, isOverseas) =>
-            Ok(Json.obj("mtdStatus" -> "MigrationInProgress",
-              "eligibilityDetails" -> Json.obj("isMigrated" -> isMigrated, "isOverseas" -> isOverseas)))
-          case Ineligible => Ok(Json.obj("mtdStatus" -> "Ineligible"))
-          case Inhibited(migratableDates) => Ok(Json.obj("mtdStatus" -> "Inhibited",  "migratableDates" -> Json.toJson(migratableDates)))
-          case MigrationInProgress => Ok(Json.obj("mtdStatus" -> "MigrationInProgress"))
+            Ok(Json.obj(
+              MtdStatusKey -> EligibleValue,
+              EligiblityDetailsKey -> Json.obj(
+                IsMigratedKey -> isMigrated,
+                IsOverseasKey -> isOverseas)))
+          case Ineligible => Ok(Json.obj(MtdStatusKey -> IneligibleValue))
+          case Inhibited(migratableDates) => Ok(Json.obj(MtdStatusKey -> InhibitedValue, MigratableDatesKey -> Json.toJson(migratableDates)))
+          case MigrationInProgress => Ok(Json.obj(MtdStatusKey -> MigraitonInProgressValue))
         }
       }
 
   }
+
+}
+
+object NewVatEligibillityController {
+
+  val MtdStatusKey = "mtdStatus"
+  val AlreadySubscribedValue = "AlreadySubscribed"
+  val EligibleValue = "Eligible"
+  val EligiblityDetailsKey = "eligibilityDetails"
+  val IsMigratedKey = "isMigrated"
+  val IsOverseasKey = "isOverseas"
+  val IneligibleValue = "Ineligible"
+  val InhibitedValue = "Inhibited"
+  val MigratableDatesKey = "migratableDates"
+  val MigraitonInProgressValue = "MigrationInProgress"
 
 }

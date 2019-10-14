@@ -20,6 +20,7 @@ POST        /subscription-request/vat-number/:vatNumber/contact-preference      
 POST        /subscription-request/vat-number/:vatNumber/joint-venture                @uk.gov.hmrc.vatsignup.controllers.StoreJointVentureController.storeJointVenture(vatNumber: String)
 
 GET         /subscription-request/vat-number/:vatNumber/mtdfb-eligibility            @uk.gov.hmrc.vatsignup.controllers.VatNumberEligibilityController.checkVatNumberEligibility(vatNumber: String)
+GET         /subscription-request/vat-number/:vatNumber/new-mtdfb-eligibility        @uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController.checkVatNumberEligibillity(vatNumber: String)
 
 POST        /subscription-request/vat-number/:vatNumber/callback                     @uk.gov.hmrc.vatsignup.controllers.TaxEnrolmentsCallbackController.taxEnrolmentsCallback(vatNumber: String)
 POST        /claim-subscription/vat-number/:vatNumber                                @uk.gov.hmrc.vatsignup.controllers.ClaimSubscriptionController.claimSubscription(vatNumber: String)

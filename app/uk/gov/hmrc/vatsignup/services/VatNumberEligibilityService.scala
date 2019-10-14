@@ -32,7 +32,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationStatusConnector,
                                             controlListEligibilityService: ControlListEligibilityService
                                            )(implicit ec: ExecutionContext) {
-
   def getMtdStatus(vatNumber: String)(implicit hc: HeaderCarrier, req: Request[_]): Future[MtdState] =
     mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(MTDfBMandated | MTDfBVoluntary) =>

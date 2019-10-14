@@ -26,6 +26,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockVatNumberEligibilityService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
+import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,13 +39,6 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val testAlreadySubscribedResponse = Json.obj("mtdStatus" -> "AlreadySubscribed")
-  val testEligibleResponse = Json.obj("mtdStatus" -> "MigrationInProgress",
-    "eligibilityDetails" -> Json.obj("isMigrated" -> true, "isOverseas" -> false))
-  val testIneligibleResponse = Json.obj("mtdStatus" -> "Ineligible")
-  val testInhibitedResponse = Json.obj("mtdStatus" -> "Inhibited",  "migratableDates" -> Json.toJson(testMigratableDates))
-  val testMigrationInProgressResponse = Json.obj("mtdStatus" -> "MigrationInProgress")
-
 
   "checkVatNumberEligibillity" when {
     "VatNumberEligibility service returns Already Subscribed" should {
@@ -55,7 +49,7 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe testAlreadySubscribedResponse
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> AlreadySubscribedValue)
       }
     }
     "VatNumberElligibity service returns Eligible" should {
@@ -66,7 +60,8 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe testEligibleResponse
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> EligibleValue,
+          EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false))
       }
     }
     "VatNumberElligibility service returns Ineligible" should {
@@ -77,7 +72,7 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe testIneligibleResponse
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> IneligibleValue)
       }
     }
     "VatNumberElligibility service returns Inhibited" should {
@@ -88,7 +83,7 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe testInhibitedResponse
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> InhibitedValue,  MigratableDatesKey -> Json.toJson(testMigratableDates))
       }
     }
     "VatNumberEligibillity service returns MigrationInProgress" should {
@@ -99,7 +94,7 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe testMigrationInProgressResponse
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> MigraitonInProgressValue)
       }
     }
   }
