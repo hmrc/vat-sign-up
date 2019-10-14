@@ -38,7 +38,7 @@ object TaxEnrolmentsStub extends WireMockMethods {
 
   def stubRegisterEnrolment(vatNumber: String, safeId: String)(status: Int): Unit = {
     val registerEnrolmentJsonBody = Json.obj(
-      "serviceName" -> Constants.TaxEnrolments.ServiceName,
+      "serviceName" -> Constants.TaxEnrolments.MtdEnrolmentKey,
       "callback" -> taxEnrolmentsCallbackUrl(vatNumber),
       "etmpId" -> safeId
     )

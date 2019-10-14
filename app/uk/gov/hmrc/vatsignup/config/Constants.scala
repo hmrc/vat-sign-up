@@ -25,7 +25,6 @@ object Constants {
   val PartnershipIrsaEnrolmentKey: String = "IR-SA-PART-ORG"
   val PartnershipIrsaReferenceNumberKey: String = "UTR"
 
-
   object Des {
     val IdTypeKey = "idType"
     val IdValueKey = "idValue"
@@ -34,14 +33,13 @@ object Constants {
     val VrnKey = "VRN"
     val SafeIdKey = "SAFEID"
     val emailKey = "EMAIL"
-
     val RegistrationRequestKey = "registrationRequest"
     val IdentificationKey = "identification"
 
   }
 
   object TaxEnrolments {
-    val ServiceName = "HMRC-MTD-VAT"
+    val MtdEnrolmentKey = "HMRC-MTD-VAT"
   }
 
   object EmailVerification {
