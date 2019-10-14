@@ -27,3 +27,4 @@ POST        /subscription-request/ct-reference-check                            
 
 GET         /subscription-request/vat-number/:vatNumber                              @uk.gov.hmrc.vatsignup.controllers.RetrieveSubscriptionRequestSummaryController.retrieveSubscriptionRequestSummary(vatNumber: String)
 
+POST        /subscription-request/migrated-vat-number                                @uk.gov.hmrc.vatsignup.controllers.StoreMigratedVRNController.storeVatNumber
