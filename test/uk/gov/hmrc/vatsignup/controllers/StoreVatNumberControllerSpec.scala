@@ -57,6 +57,7 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
 
         val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
 
+
         status(res) shouldBe OK
         jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> false, "isDirectDebit" -> false)
       }
