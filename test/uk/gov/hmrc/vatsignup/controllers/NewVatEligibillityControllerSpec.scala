@@ -102,27 +102,5 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         jsonBodyOf(res) shouldBe testMigrationInProgressResponse
       }
     }
-    "the VatNumberEligibillity service cannot find a control list for a VatNumber it" should {
-      "return an Invalid Server Exception" in {
-
-        mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Failure))
-
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
-
-        status(res) shouldBe INTERNAL_SERVER_ERROR
-      }
-    }
-    "the VatNumberEligibillity service cannot find a mandation status" should {
-      "return an Invalid Server Exception" in {
-        mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Failure))
-
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
-
-        status(res) shouldBe INTERNAL_SERVER_ERROR
-      }
-    }
-
   }
 }
