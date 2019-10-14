@@ -71,7 +71,10 @@ object TestConstants {
 
   val testAgentEnrolment: Enrolment = Enrolment(AgentEnrolmentKey).withIdentifier(AgentReferenceNumberKey, testAgentReferenceNumber)
   val testPrincipalEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, testVatNumber)
+
   val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, testVatNumber)
+  val testPrincipalVatEnrolment: Enrolment = Enrolment(VatMtdEnrolmentKey).withIdentifier(VatReferenceKey, testVatNumber)
+
 
   def testPartnershipEnrolment(sautr: String): Enrolment =
     Enrolment(PartnershipIrsaEnrolmentKey).withIdentifier(PartnershipIrsaReferenceNumberKey, sautr)

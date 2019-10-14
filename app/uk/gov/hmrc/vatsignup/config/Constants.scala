@@ -20,6 +20,7 @@ object Constants {
   val AgentEnrolmentKey: String = "HMRC-AS-AGENT"
   val AgentReferenceNumberKey: String = "AgentReferenceNumber"
   val VatDecEnrolmentKey: String = "HMCE-VATDEC-ORG"
+  val VatMtdEnrolmentKey: String = "HMCE-VATMTD-ORG"
   val VatReferenceKey: String = "VATRegNo"
   val HttpCodeKey: String = "CODE"
   val PartnershipIrsaEnrolmentKey: String = "IR-SA-PART-ORG"
