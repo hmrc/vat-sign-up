@@ -21,6 +21,8 @@ import java.util.UUID
 
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.vatsignup.config.Constants.Des._
+import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models._
@@ -28,8 +30,6 @@ import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
-import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
-
 
 object TestConstants {
   val testVatNumber: String = UUID.randomUUID().toString
@@ -71,6 +71,10 @@ object TestConstants {
 
   val testAgentEnrolment: Enrolment = Enrolment(AgentEnrolmentKey).withIdentifier(AgentReferenceNumberKey, testAgentReferenceNumber)
   val testPrincipalEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, testVatNumber)
+
+  val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, testVatNumber)
+  val testPrincipalVatEnrolment: Enrolment = Enrolment(VatMtdEnrolmentKey).withIdentifier(VatReferenceKey, testVatNumber)
+
 
   def testPartnershipEnrolment(sautr: String): Enrolment =
     Enrolment(PartnershipIrsaEnrolmentKey).withIdentifier(PartnershipIrsaReferenceNumberKey, sautr)
