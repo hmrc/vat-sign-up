@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.helpers
 
+import java.time.LocalDate
 import java.util.UUID
 
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.models.Digital
+import uk.gov.hmrc.vatsignup.models.{Digital, MigratableDates}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
 import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
@@ -99,6 +100,10 @@ object IntegrationTestConstants {
       }
     }
   }
+
+  val testMigratableDateEnd: LocalDate = LocalDate.of(2019, 1, 17)
+  val testMigratableDateStart: LocalDate = LocalDate.of(2018, 11, 14)
+  val testMigratableDates: MigratableDates = MigratableDates(Some(testMigratableDateStart), Some(testMigratableDateEnd))
 
   val testCorrespondencePostCode: String = UUID.randomUUID().toString
   val testBasePostCode: String = UUID.randomUUID().toString
