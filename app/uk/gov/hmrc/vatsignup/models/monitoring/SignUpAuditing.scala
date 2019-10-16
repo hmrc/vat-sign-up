@@ -48,4 +48,21 @@ object SignUpAuditing {
     override val auditType: String = signUpAuditType
   }
 
+  case class MigratedSignUpAuditModel(safeId: String,
+                                     vatNumber: String,
+                                     agentReferenceNumber: Option[String],
+                                     isSuccess: Boolean
+                                     ) extends AuditModel {
+
+    override val transactionName: String = signUpTransactionName + "Migrated"
+    override val detail: Map[String, String] = Map(
+      "safeId" -> Some(safeId),
+      "vatNumber" -> Some(vatNumber),
+      "agentReferenceNumber" -> agentReferenceNumber,
+      "isSuccess" -> Some(s"$isSuccess")
+    ).collect { case (key, Some(value)) => key -> value }
+
+    override val auditType: String = signUpAuditType
+  }
+
 }

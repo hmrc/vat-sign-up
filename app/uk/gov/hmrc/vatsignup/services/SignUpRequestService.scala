@@ -35,8 +35,8 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SignUpRequestService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                      emailVerificationConnector: EmailVerificationConnector
-                                    )(implicit ec: ExecutionContext)
-  extends FeatureSwitching {
+                                    )(implicit ec: ExecutionContext) extends FeatureSwitching {
+
   def getSignUpRequest(vatNumber: String, enrolments: Enrolments)(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, SignUpRequest]] = {
     val isDelegated = enrolments.agentReferenceNumber.isDefined
     val hasPartnershipEnrolment = enrolments.partnershipUtr.isDefined

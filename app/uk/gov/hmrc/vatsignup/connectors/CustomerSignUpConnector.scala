@@ -21,7 +21,6 @@ import play.api.libs.json._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.CustomerSignUpHttpParser._
 import uk.gov.hmrc.vatsignup.models.ContactPreference
@@ -30,7 +29,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CustomerSignUpConnector @Inject()(val http: HttpClient,
-                                        val applicationConfig: AppConfig) {
+                                        val applicationConfig: AppConfig
+                                       )(implicit ec: ExecutionContext) {
 
   private def url = applicationConfig.desUrl + "/cross-regime/signup/VATC"
 
