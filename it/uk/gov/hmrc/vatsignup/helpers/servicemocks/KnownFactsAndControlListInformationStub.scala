@@ -49,6 +49,15 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
   }
 
+  def stubGetKnownFactsAndControlListInformationMultipleEntities34(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
+    val body = Json.obj(
+    "postcode" -> businessPostcode,
+    "dateOfReg" -> vatRegistrationDate,
+    "controlListInformation" -> ControlList34.multipleEntities
+    )
+    stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
+    }
+
   def stubIneligibleControlListInformation(vatNumber: String): Unit = {
     val body = Json.obj(
       "postcode" -> testPostCode,

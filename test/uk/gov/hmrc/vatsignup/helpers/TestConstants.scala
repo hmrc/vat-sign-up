@@ -90,8 +90,7 @@ object TestConstants {
 
   val testControlListInformation = ControlListInformation(
     controlList = Set(Stagger1, Company),
-    stagger = Stagger1,
-    businessEntity = Company
+    stagger = Stagger1
   )
 
   val testFourKnownFacts = VatKnownFacts(

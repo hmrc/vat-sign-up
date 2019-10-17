@@ -37,8 +37,7 @@ class ControlListInformationSpec extends UnitSpec with MockEligibilityConfig {
 
   val testControlList: ControlListInformation = ControlListInformation(
     controlList = allEligibilityParameters,
-    stagger = Stagger1,
-    businessEntity = SoleTrader
+    stagger = Stagger1
   )
 
 

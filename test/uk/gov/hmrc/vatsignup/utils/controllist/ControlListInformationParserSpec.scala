@@ -259,13 +259,6 @@ class ControlListInformationParserSpec extends UnitSpec with EitherValues {
         tryParse(ControlList34.valid.replaceFirst("1", "2")) shouldBe Left(InvalidFormat)
       }
     }
-    "fail and return EntityConflict" when {
-      "multiple business entity is defined" in {
-        tryParse(ControlList33.businessEntityConflict) shouldBe Left(EntityConflict)
-
-        tryParse(ControlList34.businessEntityConflict) shouldBe Left(EntityConflict)
-      }
-    }
     "fail and return StaggerConflict" when {
       "multiple stagger is defined" in {
         tryParse(ControlList33.staggerConflict) shouldBe Left(StaggerConflict)
