@@ -33,8 +33,7 @@ object ControlListInformationParser {
       }).toSet
       for {
         staggerType <- getStaggerType(parameterSet)
-        businessEntity <- getBusinessEntity(parameterSet)
-      } yield ControlListInformation(parameterSet, staggerType, businessEntity)
+      } yield ControlListInformation(parameterSet, staggerType)
 
     } else {
       Left(InvalidFormat)
@@ -57,26 +56,9 @@ object ControlListInformationParser {
     }
   }
 
-  private def getBusinessEntity(unsanitisedControlList: Set[ControlListParameter]): Either[EntityConflict.type, BusinessEntity] = {
-    val businessEntities = unsanitisedControlList collect {
-      case businessEntity: BusinessEntity => businessEntity
-    }
-
-    businessEntities.toList match {
-      case singleBusinessEntity :: Nil =>
-        Right(singleBusinessEntity)
-      case _ if businessEntities.equals(Set(Company, Group)) =>
-        Right(Group)
-      case _ =>
-        Left(EntityConflict)
-    }
-  }
-
   sealed trait ControlListParseError
 
   case object InvalidFormat extends ControlListParseError
-
-  case object EntityConflict extends ControlListParseError
 
   case object StaggerConflict extends ControlListParseError
 

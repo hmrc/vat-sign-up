@@ -64,6 +64,22 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
           }
         }
 
+        "the user is eligible and has multiple Business Entities" should {
+          "return OK" in {
+            stubAuth(OK, successfulAuthResponse())
+            stubGetKnownFactsAndControlListInformationMultipleEntities34(testVatNumber, testPostCode, testDateOfRegistration)
+
+            val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+
+            res should have(
+              httpStatus(OK),
+              jsonBodyAs(Json.obj(
+                OverseasKey -> false
+              ))
+            )
+          }
+        }
+
         "the user is overseas" should {
           "return OK" in {
             stubAuth(OK, successfulAuthResponse())
@@ -71,7 +87,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
 
             val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
 
-            res should have (
+            res should have(
               httpStatus(OK),
               jsonBodyAs(Json.obj(
                 OverseasKey -> true

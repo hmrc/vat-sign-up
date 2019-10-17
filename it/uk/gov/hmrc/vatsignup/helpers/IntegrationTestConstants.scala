@@ -58,8 +58,7 @@ object IntegrationTestConstants {
 
   val eligibleModel: ControlListInformation = ControlListInformation(
     controlList = Set(Stagger1, Company),
-    stagger = Stagger1,
-    businessEntity = Company
+    stagger = Stagger1
   )
 
   object ControlList33 {
@@ -84,6 +83,7 @@ object IntegrationTestConstants {
   object ControlList34 {
     val allFalse: String = "1" * CONTROL_INFORMATION34_STRING_LENGTH
     val eligible: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
+    val multipleEntities: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', SOLE_TRADER -> '0')
     val directDebit: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', DIRECT_DEBIT -> '0')
     val overseas: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', OVERSEAS_TRADER -> '0')
     val ineligible: String = setupTestDataCore(allFalse)(ANNUAL_STAGGER -> '0', COMPANY -> '0')

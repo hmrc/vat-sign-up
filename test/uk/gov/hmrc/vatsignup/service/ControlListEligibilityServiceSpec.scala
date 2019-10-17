@@ -56,8 +56,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         "return EligibilitySuccess with the known facts, a migration status of true and an overseas status of true" in {
           val overseasControlListInformation = ControlListInformation(
             controlList = Set(Stagger1, Company, OverseasTrader),
-            stagger = Stagger1,
-            businessEntity = Company
+            stagger = Stagger1
           )
 
           mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(
@@ -141,7 +140,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         mockIneligibleParameters(Set.empty)
         mockDirectDebitStaggerParameters(Map(Stagger1 -> Set(testDateRange)))
 
-        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
           Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)))
@@ -166,7 +165,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         mockDirectDebitStaggerParameters(Map(Stagger1 -> Set.empty))
         mockFilingDateStaggerParameters(Map(Stagger1 -> Set(testDateRange)))
 
-        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
           Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)))
@@ -191,7 +190,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         mockDirectDebitStaggerParameters(Map(MonthlyStagger -> Set.empty))
         mockFilingDateStaggerParameters(Map(MonthlyStagger -> Set(testDateRange)))
 
-        val testControlListInformation = ControlListInformation(Set(DirectDebit, MonthlyStagger, Company), MonthlyStagger, Company)
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, MonthlyStagger, Company), MonthlyStagger)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(
           Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)))
@@ -216,7 +215,7 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         mockDirectDebitStaggerParameters(Map(Stagger1 -> Set(testDateRange)))
         mockFilingDateStaggerParameters(Map(Stagger1 -> Set.empty))
 
-        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1, Company)
+        val testControlListInformation = ControlListInformation(Set(DirectDebit, Stagger1, Company), Stagger1)
 
         mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(
           KnownFactsAndControlListInformation(testTwoKnownFacts, testControlListInformation)
