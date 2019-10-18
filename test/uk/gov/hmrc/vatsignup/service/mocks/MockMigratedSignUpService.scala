@@ -24,7 +24,7 @@ import org.scalatest.mockito.MockitoSugar
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpService
-import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpResponse
+import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpSuccess
 
 import scala.concurrent.Future
 
@@ -38,14 +38,13 @@ trait MockMigratedSignUpService extends MockitoSugar with BeforeAndAfterEach {
     reset(mockMigratedSignUpService)
   }
 
-  def mockSignUp(safeId: String, vatNumber: String, optArn: Option[String], isPartialMigration: Boolean)
-                (response: Future[MigratedSignUpResponse]): Unit =
+  def mockSignUp(safeId: String, vatNumber: String, optArn: Option[String])
+                (response: Future[MigratedSignUpSuccess.type]): Unit =
 
     when(mockMigratedSignUpService.signUp(
       ArgumentMatchers.eq(safeId),
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(optArn),
-      ArgumentMatchers.eq(isPartialMigration)
+      ArgumentMatchers.eq(optArn)
     )(
       ArgumentMatchers.any[HeaderCarrier],
       ArgumentMatchers.any[Request[_]]

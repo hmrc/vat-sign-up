@@ -18,5 +18,4 @@ package uk.gov.hmrc.vatsignup.models
 
 case class MigratedSignUpRequest(vatNumber: String,
                                  businessEntity: BusinessEntity,
-                                 isDelegated: Boolean,
-                                 isMigratable: Boolean)
+                                 isDelegated: Boolean)

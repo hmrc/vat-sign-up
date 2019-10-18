@@ -25,7 +25,6 @@ import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.BusinessEntity
 import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService
-import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService.MigratedRegistrationResponse
 
 import scala.concurrent.Future
 
@@ -40,7 +39,7 @@ trait MockMigratedRegistrationService extends MockitoSugar with BeforeAndAfterEa
   }
 
   def mockRegisterBusinessEntity(vatNumber: String, businessEntity: BusinessEntity, optArn: Option[String])
-                                (response: Future[MigratedRegistrationResponse]): Unit =
+                                (response: Future[String]): Unit =
     when(mockMigratedRegistrationService.registerBusinessEntity(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(businessEntity),

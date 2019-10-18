@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.service
 
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockRegistrationConnector
 import uk.gov.hmrc.vatsignup.models._
@@ -26,7 +26,6 @@ import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.{RegisterWithMultipleIdsErrorResponse, RegisterWithMultipleIdsSuccess}
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
-import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService.RegisterWithMultipleIdsFailure
 import play.api.http.Status._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -63,7 +62,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is LimitedCompany" in {
           mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
@@ -83,7 +82,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is GeneralPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(
@@ -103,7 +102,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is LimitedPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(
@@ -123,7 +122,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is LimitedLiabilityPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(
@@ -143,7 +142,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is ScottishLimitedPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(
@@ -163,7 +162,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is Trust" in {
           mockRegisterBusinessEntity(testVatNumber, Trust)(
@@ -183,7 +182,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is Charity" in {
           mockRegisterBusinessEntity(testVatNumber, Charity)(
@@ -203,7 +202,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is AdministrativeDivision" in {
           mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
@@ -223,7 +222,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is VatGroup" in {
           mockRegisterBusinessEntity(testVatNumber, VatGroup)(
@@ -243,7 +242,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is UnincorporatedAssociation" in {
           mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
@@ -263,7 +262,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is JointVenture" in {
           mockRegisterBusinessEntity(testVatNumber, JointVenture)(
@@ -283,7 +282,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
         "the business type is Overseas" in {
           mockRegisterBusinessEntity(testVatNumber, Overseas)(
@@ -303,7 +302,7 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             isSuccess = true
           ))
 
-          res shouldBe Right(testSafeId)
+          res shouldBe testSafeId
         }
       }
     }
@@ -314,11 +313,13 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = SoleTrader(testNino),
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = SoleTrader(testNino),
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -326,19 +327,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is LimitedCompany" in {
           mockRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = LimitedCompany(testCompanyNumber),
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = LimitedCompany(testCompanyNumber),
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -346,19 +347,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is GeneralPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = GeneralPartnership(Some(testUtr)),
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = GeneralPartnership(Some(testUtr)),
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -366,19 +367,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is LimitedPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = LimitedPartnership(Some(testUtr), testCompanyNumber),
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = LimitedPartnership(Some(testUtr), testCompanyNumber),
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -386,19 +387,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is LimitedLiabilityPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -406,19 +407,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is ScottishLimitedPartnership" in {
           mockRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -426,19 +427,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is Trust" in {
           mockRegisterBusinessEntity(testVatNumber, Trust)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = Trust,
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = Trust,
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -446,19 +447,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is Charity" in {
           mockRegisterBusinessEntity(testVatNumber, Charity)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = Charity,
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = Charity,
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -466,19 +467,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is AdministrativeDivision" in {
           mockRegisterBusinessEntity(testVatNumber, AdministrativeDivision)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = AdministrativeDivision,
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = AdministrativeDivision,
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -486,19 +487,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is VatGroup" in {
           mockRegisterBusinessEntity(testVatNumber, VatGroup)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = VatGroup,
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = VatGroup,
+              optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -506,19 +507,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is UnincorporatedAssociation" in {
           mockRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = UnincorporatedAssociation,
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+                vatNumber = testVatNumber,
+                businessEntity = UnincorporatedAssociation,
+                optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -526,19 +527,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is JointVenture" in {
           mockRegisterBusinessEntity(testVatNumber, JointVenture)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
             vatNumber = testVatNumber,
             businessEntity = JointVenture,
             optArn = None
-          )(hc, req))
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -546,19 +547,19 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
         "the business type is Overseas" in {
           mockRegisterBusinessEntity(testVatNumber, Overseas)(
             Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
           )
 
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = Overseas,
-            optArn = None
-          )(hc, req))
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+                vatNumber = testVatNumber,
+                businessEntity = Overseas,
+                optArn = None
+            )(hc, req))
+          }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
@@ -566,8 +567,6 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
             agentReferenceNumber = None,
             isSuccess = false
           ))
-
-          res shouldBe Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, ""))
         }
       }
     }

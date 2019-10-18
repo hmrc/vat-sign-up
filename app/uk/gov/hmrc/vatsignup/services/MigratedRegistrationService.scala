@@ -18,12 +18,11 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.RegistrationConnector
 import uk.gov.hmrc.vatsignup.models.BusinessEntity
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
-import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService.{MigratedRegistrationResponse, RegisterWithMultipleIdsFailure}
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +33,7 @@ class MigratedRegistrationService @Inject()(registrationConnector: RegistrationC
                                            (implicit ec: ExecutionContext) {
 
   def registerBusinessEntity(vatNumber: String, businessEntity: BusinessEntity, optArn: Option[String])
-                            (implicit hc: HeaderCarrier, request: Request[_]): Future[MigratedRegistrationResponse] =
+                            (implicit hc: HeaderCarrier, request: Request[_]): Future[String] =
 
     registrationConnector.registerBusinessEntity(vatNumber, businessEntity) map {
       case Right(RegisterWithMultipleIdsSuccess(safeId)) =>
@@ -44,7 +43,7 @@ class MigratedRegistrationService @Inject()(registrationConnector: RegistrationC
           agentReferenceNumber = optArn,
           isSuccess = true
         ))
-        Right(safeId)
+        safeId
       case Left(failure) =>
         auditService.audit(RegisterWithMultipleIDsAuditModel(
           vatNumber = vatNumber,
@@ -52,13 +51,9 @@ class MigratedRegistrationService @Inject()(registrationConnector: RegistrationC
           agentReferenceNumber = optArn,
           isSuccess = false
         ))
-        Left(RegisterWithMultipleIdsFailure(failure.status, failure.body))
+        throw new InternalServerException(
+          s"[MigratedRegistrationService] Failed to register business entity for VAT number $vatNumber with reason ${failure.body}"
+        )
     }
 
-}
-
-object MigratedRegistrationService {
-  type MigratedRegistrationResponse = Either[RegisterWithMultipleIdsFailure, String]
-
-  case class RegisterWithMultipleIdsFailure(status: Int, body: String)
 }

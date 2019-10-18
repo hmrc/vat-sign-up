@@ -39,7 +39,7 @@ trait MockMigratedSignUpRequestService extends MockitoSugar with BeforeAndAfterE
   }
 
   def mockGetSignUpRequest(vatNumber: String, enrolments: Enrolments)
-                          (response: Future[Either[SignUpRequestFailure, MigratedSignUpRequest]]): Unit =
+                          (response: Future[MigratedSignUpRequest]): Unit =
     when(mockMigratedSignUpRequestService.getSignUpRequest(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(enrolments)
@@ -47,7 +47,7 @@ trait MockMigratedSignUpRequestService extends MockitoSugar with BeforeAndAfterE
       ArgumentMatchers.any[HeaderCarrier]
     )) thenReturn response
 
-  def mockDeleteSignUpRequest(vatNumber: String)(response: Future[Either[SignUpRequestFailure, SignUpRequestDeleted.type]]): Unit =
+  def mockDeleteSignUpRequest(vatNumber: String)(response: Future[SignUpRequestDeleted.type]): Unit =
     when(mockMigratedSignUpRequestService.deleteSignUpRequest(
       ArgumentMatchers.eq(vatNumber)
     )(

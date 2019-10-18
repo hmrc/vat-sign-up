@@ -16,17 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import cats.data.EitherT
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
-import MigratedSubmissionService._
-import cats.implicits._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService.{SubmissionResponse, SubmissionSuccess}
-
+import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService.SubmissionSuccess
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -38,47 +34,23 @@ class MigratedSubmissionService @Inject()(signUpRequestService: MigratedSignUpRe
                                          (implicit ec: ExecutionContext) {
 
   def submit(vatNumber: String, enrolments: Enrolments)
-            (implicit hc: HeaderCarrier, request: Request[_]): Future[SubmissionResponse] = {
+            (implicit hc: HeaderCarrier, request: Request[_]): Future[SubmissionSuccess.type] = {
 
     val optArn = enrolments.agentReferenceNumber
 
-    val result = for {
-      signUpRequest <- EitherT(signUpRequestService.getSignUpRequest(vatNumber, enrolments)) leftMap {
-        case MigratedSignUpRequestService.DatabaseFailure => DatabaseFailure
-        case _ => InsufficientData
-      }
-      isPartialMigration = !signUpRequest.isMigratable
-      safeId <- EitherT(registrationService.registerBusinessEntity(vatNumber, signUpRequest.businessEntity, optArn))
-        .leftMap (_ => RegistrationFailure)
-      _ <- EitherT(migratedSignUpService.signUp(safeId, vatNumber, optArn, isPartialMigration))
-        .leftMap (_ => SignUpFailure)
-      _ <- EitherT(migratedEnrolmentService.enrolForMtd(vatNumber, safeId))
-        .leftMap (_ => EnrolmentFailure)
-      _ <- EitherT(signUpRequestService.deleteSignUpRequest(vatNumber))
-        .leftMap (_ => DeleteRecordFailure: SubmissionFailure)
+    for {
+      signUpRequest <- signUpRequestService.getSignUpRequest(vatNumber, enrolments)
+      safeId <- registrationService.registerBusinessEntity(vatNumber, signUpRequest.businessEntity, optArn)
+      _ <- migratedSignUpService.signUp(safeId, vatNumber, optArn)
+      _ <- migratedEnrolmentService.enrolForMtd(vatNumber, safeId)
+      _ <- signUpRequestService.deleteSignUpRequest(vatNumber)
     } yield SubmissionSuccess
-
-    result.value
   }
 
 }
 
 object MigratedSubmissionService {
 
-  type SubmissionResponse = Either[SubmissionFailure, SubmissionSuccess.type]
-
-  case object SignUpRequestDeleted
-  case object StoreTemporarySubscriptionDataSuccess
   case object SubmissionSuccess
-
-  sealed trait SubmissionFailure
-  case object InsufficientData extends SubmissionFailure
-  case object DatabaseFailure extends SubmissionFailure
-  case object EmailVerificationFailure extends SubmissionFailure
-  case object EmailVerificationRequired extends SubmissionFailure
-  case object SignUpFailure extends SubmissionFailure
-  case object RegistrationFailure extends SubmissionFailure
-  case object EnrolmentFailure extends SubmissionFailure
-  case object DeleteRecordFailure extends SubmissionFailure
 
 }

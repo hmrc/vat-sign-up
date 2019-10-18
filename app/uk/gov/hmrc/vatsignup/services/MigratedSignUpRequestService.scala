@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import cats.data.EitherT
-import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException, UnprocessableEntityException}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService._
+import MigratedSignUpRequestService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,80 +32,54 @@ class MigratedSignUpRequestService @Inject()(subscriptionRequestRepository: Subs
                                             (implicit ec: ExecutionContext) {
 
   def getSignUpRequest(vatNumber: String, enrolments: Enrolments)
-                      (implicit hc: HeaderCarrier): Future[Either[SignUpRequestFailure, MigratedSignUpRequest]] = {
+                      (implicit hc: HeaderCarrier): Future[MigratedSignUpRequest] = {
 
     val isDelegated = enrolments.agentReferenceNumber.isDefined
 
-    subscriptionRequestRepository.findById(vatNumber) flatMap {
+    subscriptionRequestRepository.findById(vatNumber) map {
       case Some(subscriptionRequest) =>
-        val res = for {
-          businessEntity <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
-          _ <- EitherT.fromEither[Future](checkAuthorisation(businessEntity, isDelegated))
-          isMigratable = subscriptionRequest.isMigratable
-        } yield MigratedSignUpRequest(
-          vatNumber = vatNumber,
-          businessEntity = businessEntity,
-          isDelegated = isDelegated,
-          isMigratable = isMigratable
-        )
-        res.value
+        subscriptionRequest.businessEntity match {
+          case Some(entity) =>
+            MigratedSignUpRequest(
+              vatNumber = vatNumber,
+              businessEntity = entity,
+              isDelegated = isDelegated
+            )
+          case _ =>
+            throw new UnprocessableEntityException(
+              s"[MigratedSignUpRequestService] Subscription request for VAT number $vatNumber did not contain Business Entity"
+            )
+        }
       case None =>
-        Future.successful(Left(SignUpRequestNotFound))
-    } recover {
-      case _ => Left(DatabaseFailure)
+        throw new NotFoundException(
+          s"[MigratedSignUpRequestService] Subscription request not found for VAT number $vatNumber"
+        )
+      case _ =>
+        throw new InternalServerException(
+          s"[MigratedSignUpRequestService] Database failure when retrieving MigratedSignUpRequest for $vatNumber"
+        )
     }
   }
 
   def deleteSignUpRequest(vatNumber: String)
-                         (implicit hc: HeaderCarrier): Future[Either[SignUpRequestFailure, SignUpRequestDeleted.type]] =
+                         (implicit hc: HeaderCarrier): Future[SignUpRequestDeleted.type] =
 
     subscriptionRequestRepository.deleteRecord(vatNumber) map {
-      case _ => Right(SignUpRequestDeleted)
-    } recover {
-      case _ => Left(DeleteRecordFailure)
-    }
-
-  private def checkAuthorisation(businessEntity: BusinessEntity,
-                                 isDelegated: Boolean): Either[SignUpRequestFailure, RequestAuthorised.type] =
-    businessEntity match {
-      case _: LimitedCompany =>
-        Right(RequestAuthorised)
-      case _: SoleTrader =>
-        Right(RequestAuthorised)
-      case _: PartnershipBusinessEntity =>
-        Right(RequestAuthorised)
-      case VatGroup | AdministrativeDivision | UnincorporatedAssociation | Trust | Charity | GovernmentOrganisation | Overseas | JointVenture =>
-        Right(RequestAuthorised)
-      case _: OverseasWithUkEstablishment =>
-        Right(RequestAuthorised)
-      case _: RegisteredSociety =>
-        Right(RequestAuthorised)
-      case _ if isDelegated =>
-        Right(RequestAuthorised)
+      case _: WriteResult =>
+        SignUpRequestDeleted
       case _ =>
-        Left(RequestNotAuthorised)
+        throw new InternalServerException("Database failure: Failed to delete MigratedSignUpRequest")
     }
-
 }
 
 object MigratedSignUpRequestService {
 
   type MigratedSignUpRequestResponse = Either[SignUpRequestFailure, SubscriptionRequest]
-
   case object SignUpRequestDeleted
-
   case object RequestAuthorised
 
   sealed trait SignUpRequestFailure
-
   case object SignUpRequestNotFound extends SignUpRequestFailure
-
-  case object DatabaseFailure extends SignUpRequestFailure
-
   case object InsufficientData extends SignUpRequestFailure
-
-  case object RequestNotAuthorised extends SignUpRequestFailure
-
-  case object DeleteRecordFailure extends SignUpRequestFailure
 
 }

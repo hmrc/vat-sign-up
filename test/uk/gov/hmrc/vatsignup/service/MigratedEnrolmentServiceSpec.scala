@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockTaxEnrolmentsConnector
 import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
 import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService._
-
 import play.api.http.Status._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -44,18 +43,18 @@ class MigratedEnrolmentServiceSpec extends UnitSpec with MockTaxEnrolmentsConnec
 
         val res = await(TestMigratedEnrolmentService.enrolForMtd(testVatNumber, testSafeId))
 
-        res shouldBe Right(EnrolmentSuccess)
+        res shouldBe EnrolmentSuccess
       }
     }
     "when the enrolment fails" should {
-      "return EnrolmentFailure" in {
+      "throw internal server exception" in {
         mockRegisterEnrolment(testVatNumber, testSafeId)(
           Future.successful(Left(FailedTaxEnrolment(BAD_REQUEST)))
         )
 
-        val res = await(TestMigratedEnrolmentService.enrolForMtd(testVatNumber, testSafeId))
-
-        res shouldBe Left(EnrolmentFailure(BAD_REQUEST))
+        intercept[InternalServerException] {
+          await(TestMigratedEnrolmentService.enrolForMtd(testVatNumber, testSafeId))
+        }
       }
     }
   }

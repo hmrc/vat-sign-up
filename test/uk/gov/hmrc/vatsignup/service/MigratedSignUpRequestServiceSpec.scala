@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.service
 
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException, UnprocessableEntityException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -51,8 +51,7 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
   val testMigratedSignUpRequest = MigratedSignUpRequest(
     vatNumber = testVatNumber,
     businessEntity = SoleTrader(testNino),
-    isDelegated = false,
-    isMigratable = true
+    isDelegated = false
   )
 
   val testEnrolments = Enrolments(Set(testPrincipalEnrolment))
@@ -66,7 +65,7 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
 
             val res = await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
 
-            res shouldBe Right(testMigratedSignUpRequest)
+            res shouldBe testMigratedSignUpRequest
           }
         }
       }
@@ -74,9 +73,9 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
         s"return $InsufficientData" in {
           mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest.copy(businessEntity = None))))
 
-          val res = await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
-
-          res shouldBe Left(InsufficientData)
+          intercept[UnprocessableEntityException] {
+            await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
+          }
         }
       }
     }
@@ -84,18 +83,18 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
       s"return $SignUpRequestNotFound" in {
         mockFindById(testVatNumber)(Future.successful(None))
 
-        val res = await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
-
-        res shouldBe Left(SignUpRequestNotFound)
+        intercept[NotFoundException] {
+          await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
+        }
       }
     }
     "the database connection fails" should {
-      s"return $DatabaseFailure" in {
+      "throw an InternalServerException" in {
         mockFindById(testVatNumber)(Future.failed(new InternalServerException("")))
 
-        val res = await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
-
-        res shouldBe Left(DatabaseFailure)
+        intercept[InternalServerException] {
+          await(TestMigratedSignUpRequestService.getSignUpRequest(testVatNumber, testEnrolments))
+        }
       }
     }
   }
@@ -107,16 +106,16 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
 
         val res = await(TestMigratedSignUpRequestService.deleteSignUpRequest(testVatNumber))
 
-        res shouldBe Right(SignUpRequestDeleted)
+        res shouldBe SignUpRequestDeleted
       }
     }
     "the SignUpRequest cannot be deleted" should {
-      "return DeleteRecordFailure" in {
+      "throw an internal server exception" in {
         mockDeleteRecord(testVatNumber)(Future.failed(new InternalServerException("")))
 
-        val res = await(TestMigratedSignUpRequestService.deleteSignUpRequest(testVatNumber))
-
-        res shouldBe Left(DeleteRecordFailure)
+        intercept[InternalServerException] {
+          await(TestMigratedSignUpRequestService.deleteSignUpRequest(testVatNumber))
+        }
       }
     }
   }

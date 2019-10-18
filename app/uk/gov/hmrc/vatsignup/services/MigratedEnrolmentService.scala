@@ -17,10 +17,10 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
-import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.{EnrolmentFailure, EnrolmentSuccess, MigratedEnrolmentResponse}
+import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService. EnrolmentSuccess
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,18 +29,21 @@ class MigratedEnrolmentService @Inject()(taxEnrolmentsConnector: TaxEnrolmentsCo
                                         (implicit ec: ExecutionContext) {
 
   def enrolForMtd(vatNumber: String, safeId: String)
-                 (implicit hc: HeaderCarrier): Future[MigratedEnrolmentResponse] =
+                 (implicit hc: HeaderCarrier): Future[EnrolmentSuccess.type] =
 
     taxEnrolmentsConnector.registerEnrolment(vatNumber, safeId) map {
-      case Right(SuccessfulTaxEnrolment) => Right(EnrolmentSuccess)
-      case Left(failure) => Left(EnrolmentFailure(failure.status))
+      case Right(SuccessfulTaxEnrolment) =>
+        EnrolmentSuccess
+      case Left(failure) =>
+        throw new InternalServerException(
+          s"[MigratedEnrolmentService] Failed to enrol VAT number $vatNumber for MTD VAT with status ${failure.status}"
+        )
     }
 
 }
 
 object MigratedEnrolmentService {
-  type MigratedEnrolmentResponse = Either[EnrolmentFailure, EnrolmentSuccess.type]
 
   case object EnrolmentSuccess
-  case class EnrolmentFailure(status: Int)
+
 }

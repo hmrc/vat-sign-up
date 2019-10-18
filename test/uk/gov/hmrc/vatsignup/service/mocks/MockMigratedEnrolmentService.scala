@@ -23,7 +23,7 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService
-import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.MigratedEnrolmentResponse
+import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.EnrolmentSuccess
 
 import scala.concurrent.Future
 
@@ -38,7 +38,7 @@ trait MockMigratedEnrolmentService extends MockitoSugar with BeforeAndAfterEach 
   }
 
   def mockEnrolForMtd(vatNumber: String, safeId: String)
-                     (response: Future[MigratedEnrolmentResponse]): Unit =
+                     (response: Future[EnrolmentSuccess.type]): Unit =
 
     when(mockMigratedEnrolmentService.enrolForMtd(
       ArgumentMatchers.eq(vatNumber),

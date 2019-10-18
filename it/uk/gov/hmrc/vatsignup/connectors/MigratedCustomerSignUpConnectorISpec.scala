@@ -32,30 +32,24 @@ class MigratedCustomerSignUpConnectorISpec extends ComponentSpecBase {
   "customerSignUp" when {
     "the sign up is successful" should {
       "Return CustomerSignUpResponseSuccess" in {
-        val testIsPartialMigration = true
-
         stubMigratedSignUp(
           testSafeId,
-          testVatNumber,
-          optIsPartialMigration = Some(testIsPartialMigration)
+          testVatNumber
         )(OK)
 
-        val res = await(connector.signUp(testSafeId, testVatNumber, testIsPartialMigration))
+        val res = await(connector.signUp(testSafeId, testVatNumber))
 
         res shouldBe Right(CustomerSignUpResponseSuccess)
       }
     }
     "the sign up is not successful" should {
       "return CustomerSignUpResponseFailure" in {
-        val testIsPartialMigration = true
-
         stubMigratedSignUp(
           testSafeId,
-          testVatNumber,
-          optIsPartialMigration = Some(testIsPartialMigration)
+          testVatNumber
         )(BAD_REQUEST)
 
-        val res = await(connector.signUp(testSafeId, testVatNumber, testIsPartialMigration))
+        val res = await(connector.signUp(testSafeId, testVatNumber))
 
         res shouldBe Left(CustomerSignUpResponseFailure(BAD_REQUEST, ""))
       }

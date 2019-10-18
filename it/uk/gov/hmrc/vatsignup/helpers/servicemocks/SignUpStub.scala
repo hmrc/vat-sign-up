@@ -70,8 +70,7 @@ object SignUpStub extends WireMockMethods {
     ).thenReturn(status = status)
 
   def stubMigratedSignUp[T](safeId: String,
-                            vatNumber: String,
-                            optIsPartialMigration: Option[Boolean]
+                            vatNumber: String
                            )(status: Int): StubMapping =
     when(method = POST, uri = "/cross-regime/signup/VATC",
       body = Json.obj(fields =
@@ -80,12 +79,6 @@ object SignUpStub extends WireMockMethods {
             Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
             Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
           )
-        )
-        .++(
-          optIsPartialMigration match {
-            case Some(isPartialMigration) => Json.obj("isPartialMigration" -> isPartialMigration)
-            case _ => Json.obj()
-          }
         )
       ),
       headers = Map(

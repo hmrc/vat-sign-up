@@ -18,11 +18,12 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.MigratedCustomerSignUpConnector
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.MigratedSignUpAuditModel
 import uk.gov.hmrc.vatsignup.models.CustomerSignUpResponseSuccess
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
+import MigratedSignUpService.MigratedSignUpSuccess
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,20 +32,16 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
                                       auditService: AuditService
                                      )(implicit ec: ExecutionContext) {
 
-  import MigratedSignUpService._
-
   def signUp(safeId: String,
              vatNumber: String,
-             optArn: Option[String],
-             isPartialMigration: Boolean)
+             optArn: Option[String])
             (implicit hc: HeaderCarrier,
              request: Request[_]
-            ): Future[MigratedSignUpResponse] =
+            ): Future[MigratedSignUpSuccess.type] =
 
     signUpConnector.signUp(
       safeId = safeId,
-      vatNumber = vatNumber,
-      isPartialMigration = isPartialMigration
+      vatNumber = vatNumber
     ) map {
       case Right(CustomerSignUpResponseSuccess) => {
         auditService.audit(MigratedSignUpAuditModel(
@@ -53,7 +50,7 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
           agentReferenceNumber = optArn,
           isSuccess = true
         ))
-        Right(MigratedSignUpSuccess)
+        MigratedSignUpSuccess
       }
       case Left(failure) => {
         auditService.audit(MigratedSignUpAuditModel(
@@ -62,15 +59,16 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
           agentReferenceNumber = optArn,
           isSuccess = false
         ))
-        Left(MigratedSignUpFailure(failure.status, failure.response))
+        throw new InternalServerException(
+          s"[MigratedSignUpService] Failed to sign up VAT number $vatNumber with reason: ${failure.response}"
+        )
       }
     }
 
 }
 
 object MigratedSignUpService {
-  type MigratedSignUpResponse = Either[MigratedSignUpFailure, MigratedSignUpSuccess.type]
 
   case object MigratedSignUpSuccess
-  case class MigratedSignUpFailure(status: Int, body: String)
+
 }

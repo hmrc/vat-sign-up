@@ -37,13 +37,11 @@ trait MockMigratedCustomerSignUpConnector extends MockitoSugar with BeforeAndAft
   val mockMigratedCustomerSignUpConnector: MigratedCustomerSignUpConnector = mock[MigratedCustomerSignUpConnector]
 
   def mockSignUpMigrated(safeId: String,
-                         vatNumber: String,
-                         isPartialMigration: Boolean
+                         vatNumber: String
                         )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockMigratedCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(isPartialMigration)
+      ArgumentMatchers.eq(vatNumber)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 

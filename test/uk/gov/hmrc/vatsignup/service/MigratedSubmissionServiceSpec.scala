@@ -18,19 +18,17 @@ package uk.gov.hmrc.vatsignup.service
 
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.testAgentEnrolment
 import uk.gov.hmrc.vatsignup.service.mocks._
-import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.{EnrolmentFailure, EnrolmentSuccess}
+import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.EnrolmentSuccess
 import uk.gov.hmrc.vatsignup.services.{MigratedSignUpRequestService, MigratedSubmissionService}
 import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.{MigratedSignUpRequest, SoleTrader}
-import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.{MigratedSignUpFailure, MigratedSignUpSuccess}
-import play.api.http.Status._
+import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpSuccess
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService.RegisterWithMultipleIdsFailure
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -53,8 +51,7 @@ class MigratedSubmissionServiceSpec extends UnitSpec
   val testSignUpRequest = MigratedSignUpRequest(
     vatNumber = testVatNumber,
     businessEntity = testSoleTrader,
-    isDelegated = true,
-    isMigratable = true
+    isDelegated = true
   )
 
   val enrolments = Enrolments(Set(testAgentEnrolment))
@@ -68,106 +65,101 @@ class MigratedSubmissionServiceSpec extends UnitSpec
           "the MTD enrolment is successfully allocated" when {
             "the sign up request is successfully deleted" should {
               s"return $SubmissionSuccess" in {
-                mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
-                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(Right(testSafeId)))
-                mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber), false)(Future.successful(Right(MigratedSignUpSuccess)))
-                mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(Right(EnrolmentSuccess)))
-                mockDeleteSignUpRequest(testVatNumber)(Future.successful(Right(MigratedSignUpRequestService.SignUpRequestDeleted)))
+                mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
+                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
+                mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
+                mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(EnrolmentSuccess))
+                mockDeleteSignUpRequest(testVatNumber)(Future.successful(MigratedSignUpRequestService.SignUpRequestDeleted))
 
                 val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
 
-                res shouldBe Right(SubmissionSuccess)
+                res shouldBe SubmissionSuccess
               }
             }
             "the sign up request deletion fails" should {
-              "return DeleteRecordFailure" in {
-                mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
-                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(Right(testSafeId)))
-                mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber), false)(Future.successful(Right(MigratedSignUpSuccess)))
-                mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(Right(EnrolmentSuccess)))
-                mockDeleteSignUpRequest(testVatNumber)(Future.successful(Left(MigratedSignUpRequestService.DeleteRecordFailure)))
+              "raise an InternalServerException" in {
+                val exception = new InternalServerException("Database failure: Failed to delete MigratedSignUpRequest")
 
-                val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+                mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
+                mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
+                mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
+                mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(EnrolmentSuccess))
+                mockDeleteSignUpRequest(testVatNumber)(Future.failed(exception))
 
-                res shouldBe Left(MigratedSubmissionService.DeleteRecordFailure)
+                intercept[InternalServerException] {
+                  await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+                }
               }
             }
           }
           "The enrolment fails" should {
-            s"return $EnrolmentFailure" in {
-              mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
-              mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(Right(testSafeId)))
-              mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber),false)(Future.successful(Right(MigratedSignUpSuccess)))
-              mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(Left(EnrolmentFailure(BAD_REQUEST))))
+            "raise an InternalServerException" in {
+              mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
+              mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
+              mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
+              mockEnrolForMtd(testVatNumber, testSafeId)(Future.failed(new InternalServerException("")))
 
-              val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
-
-              res shouldBe Left(MigratedSubmissionService.EnrolmentFailure)
+              intercept[InternalServerException] {
+                await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+              }
             }
           }
         }
         "the sign up fails" should {
           "return SignUpFailure" in {
-            mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
-            mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(Right(testSafeId)))
-            mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber),false)(
-              Future.successful(Left(MigratedSignUpFailure(BAD_REQUEST, "")))
+            mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
+            mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
+            mockSignUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber))(
+              Future.failed(new InternalServerException(""))
             )
 
-            val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
-
-            res shouldBe Left(SignUpFailure)
+            intercept[InternalServerException] {
+              await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+            }
           }
         }
       }
       "the business entity registration fails" should {
-        "return RegistrationFailure" in {
-          mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
+        "raise an InternalServerException" in {
+          mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
           mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(
-            Future.successful(Left(RegisterWithMultipleIdsFailure(BAD_REQUEST, "")))
+            Future.failed(new InternalServerException(""))
           )
 
-          val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
-
-          res shouldBe Left(RegistrationFailure)
+          intercept[InternalServerException] {
+            await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+          }
         }
       }
     }
     "the SignUpRequest retrieval fails" when {
-      s"the response is ${MigratedSignUpRequestService.SignUpRequestNotFound}" should {
-        s"return $InsufficientData" in {
-          mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(MigratedSignUpRequestService.SignUpRequestNotFound)))
+      "the sign up request cannot be found for the vat number" should {
+        "raise a NotFoundException" in {
+          mockGetSignUpRequest(testVatNumber, enrolments)(Future.failed(new NotFoundException("")))
 
-          val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
-
-          res shouldBe Left(InsufficientData)
+          intercept[NotFoundException] {
+            await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+          }
         }
       }
-      s"the response is ${MigratedSignUpRequestService.DatabaseFailure}" should {
-        s"return $DatabaseFailure" in {
-          mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(MigratedSignUpRequestService.DatabaseFailure)))
+      s"the connection to the subscriptionRequestRepository cannot be made" should {
+        "raise an InternalServerException" in {
+          val exception = new InternalServerException("Database failure: Failed to retrieve MigratedSignUpRequest")
 
-          val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+          mockGetSignUpRequest(testVatNumber, enrolments)(Future.failed(exception))
 
-          res shouldBe Left(DatabaseFailure)
+          intercept[InternalServerException] {
+            await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+          }
         }
       }
       s"the response is ${MigratedSignUpRequestService.InsufficientData}" should {
-        s"return $InsufficientData" in {
-          mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(MigratedSignUpRequestService.InsufficientData)))
+        "raise an InternalServerException" in {
+          mockGetSignUpRequest(testVatNumber, enrolments)(Future.failed(new InternalServerException("")))
 
-          val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
-
-          res shouldBe Left(InsufficientData)
-        }
-      }
-      s"the response is ${MigratedSignUpRequestService.RequestNotAuthorised}" should {
-        s"return $InsufficientData" in {
-          mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Left(MigratedSignUpRequestService.RequestNotAuthorised)))
-
-          val res = await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
-
-          res shouldBe Left(InsufficientData)
+          intercept[InternalServerException] {
+            await(TestMigratedSubmissionService.submit(testVatNumber, enrolments))
+          }
         }
       }
     }
