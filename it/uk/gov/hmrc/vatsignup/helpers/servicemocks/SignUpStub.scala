@@ -69,4 +69,23 @@ object SignUpStub extends WireMockMethods {
       )
     ).thenReturn(status = status)
 
+  def stubMigratedSignUp[T](safeId: String,
+                            vatNumber: String
+                           )(status: Int): StubMapping =
+    when(method = POST, uri = "/cross-regime/signup/VATC",
+      body = Json.obj(fields =
+        "signUpRequest" -> Json.obj(fields =
+          "identification" -> Json.arr(
+            Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
+            Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
+          )
+        )
+      ),
+      headers = Map(
+        "Authorization" -> "Bearer dev",
+        "Environment" -> "dev",
+        "Content-Type" -> "application/json"
+      )
+    ) thenReturn (status = status)
+
 }

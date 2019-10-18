@@ -54,15 +54,10 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
                            request: Request[_]): Future[SignUpRequestSubmissionResponse] = {
 
     val optAgentReferenceNumber = enrolments.agentReferenceNumber
-    val email = signUpRequest.signUpEmail map {
-      _.emailAddress
-    }
+    val email = signUpRequest.signUpEmail map (_.emailAddress)
     val transactionEmail = signUpRequest.transactionEmail.emailAddress
-    val isSignUpVerified = signUpRequest.signUpEmail map {
-      _.isVerified
-    }
+    val isSignUpVerified = signUpRequest.signUpEmail map (_.isVerified)
     val isPartialMigration = !signUpRequest.isMigratable
-
     val contactPreference = signUpRequest.contactPreference
 
     val result = for {
@@ -160,9 +155,8 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       }
     })
 
-  private def registerEnrolment(
-                                 vatNumber: String,
-                                 safeId: String
+  private def registerEnrolment(vatNumber: String,
+                                safeId: String
                                )(implicit hc: HeaderCarrier): EitherT[Future, SignUpRequestSubmissionFailure, SuccessfulTaxEnrolment.type] = {
     EitherT(taxEnrolmentsConnector.registerEnrolment(vatNumber, safeId)) leftMap {
       _ => EnrolmentFailure
