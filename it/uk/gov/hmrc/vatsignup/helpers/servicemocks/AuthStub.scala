@@ -22,6 +22,8 @@ import play.api.http.Status._
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L0
+import uk.gov.hmrc.vatsignup.config.Constants.Des.VrnKey
+import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments.MtdEnrolmentKey
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
@@ -71,11 +73,21 @@ object AuthStub extends WireMockMethods {
     )
   )
 
-  val vatDecEnrolment: JsObject = Json.obj(
+  def vatDecEnrolment(vatNumber: String = testVatNumber): JsObject = Json.obj(
     "key" -> VatDecEnrolmentKey,
     "identifiers" -> Json.arr(
       Json.obj(
         "key" -> VatReferenceKey,
+        "value" -> vatNumber
+      )
+    )
+  )
+
+  def vatMtdEnrolment(vatNumber: String = testVatNumber): JsObject = Json.obj(
+    "key" -> MtdEnrolmentKey,
+    "identifiers" -> Json.arr(
+      Json.obj(
+        "key" -> VrnKey,
         "value" -> testVatNumber
       )
     )

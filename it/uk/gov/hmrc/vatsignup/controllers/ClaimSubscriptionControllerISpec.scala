@@ -31,7 +31,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
     "the user has an existing VATDEC enrolment" when {
       "the MTD VAT enrolment is claimed successfully" should {
         "return NO_CONTENT" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubSuccessGetKnownFacts(testVatNumber)
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
           stubAllocateEnrolment(
@@ -51,7 +51,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
       }
       "the enrolment is already allocatedd" should {
         "return Conflict" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubSuccessGetKnownFacts(testVatNumber)
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
 

@@ -24,15 +24,20 @@ import uk.gov.hmrc.vatsignup.config.Constants._
 object EnrolmentUtils {
 
   implicit class EnrolmentUtils(enrolments: Enrolments) {
-    def vatNumber: Option[String] = {
+    def vatNumber: Either[GetVatNumberFailure, String] = {
       val vatDecEnrolment = enrolments getEnrolment VatDecEnrolmentKey flatMap {
         _.getIdentifier(VatReferenceKey)
       }
       val mtdEnrolment = enrolments getEnrolment MtdEnrolmentKey flatMap {
         _.getIdentifier(VrnKey)
       }
-      val result = mtdEnrolment ++ vatDecEnrolment map (_.value)
-      result.headOption
+      (mtdEnrolment, vatDecEnrolment) match {
+        case (Some(mtdEnrol), Some(vatDecEnrol)) if mtdEnrol.value == vatDecEnrol.value => Right(mtdEnrol.value)
+        case (Some(mtdEnrol), Some(vatDecEnrol)) => Left(VatNumberMismatch)
+        case (Some(mtdEnrol), None) => Right(mtdEnrol.value)
+        case (None, Some(vatDecEnrol)) => Right(vatDecEnrol.value)
+        case (None, None) => Left(NoEnrolment)
+      }
     }
 
     val agentReferenceNumber: Option[String] =
@@ -51,10 +56,19 @@ object EnrolmentUtils {
     def isPrincipal: Boolean = agentReferenceNumber.isEmpty
 
     def isDelegated: Boolean = agentReferenceNumber.isDefined
+
   }
+
 
   def mtdVatEnrolmentKey(vatNumber: String): String = s"HMRC-MTD-VAT~VRN~$vatNumber"
 
   def legacyVatEnrolmentKey(vatNumber: String): String = s"HMCE-VATDEC-ORG~VATRegNo~$vatNumber"
 
+  sealed trait GetVatNumberFailure
+
+  case object VatNumberMismatch extends GetVatNumberFailure
+
+  case object NoEnrolment extends GetVatNumberFailure
+
 }
+

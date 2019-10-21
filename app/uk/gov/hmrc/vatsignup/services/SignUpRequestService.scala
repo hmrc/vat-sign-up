@@ -43,10 +43,13 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
       case Some(subscriptionRequest) =>
-        val hasVatEnrolment = enrolments.vatNumber contains subscriptionRequest.vatNumber
+        val hasVatEnrolment = enrolments.vatNumber match {
+          case Right(vrn) if vrn == subscriptionRequest.vatNumber => true
+          case _ => false
+        }
 
         val res: EitherT[Future, GetSignUpRequestFailure, SignUpRequest] = for {
-          businessEntity    <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
+          businessEntity <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
           contactPreference <- EitherT.fromOption[Future](subscriptionRequest.contactPreference, InsufficientData)
           _ <- EitherT.fromEither[Future](checkAuthorisation(
             businessEntity,
@@ -55,8 +58,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
             hasVatEnrolment,
             hasPartnershipEnrolment
           ))
-          optSignUpEmail    <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
-          transactionEmail  <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
+          optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
+          transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable = subscriptionRequest.isMigratable
         } yield SignUpRequest(
           subscriptionRequest.vatNumber,
@@ -163,3 +166,4 @@ object SignUpRequestService {
   case object EmailVerificationFailure extends GetSignUpRequestFailure
 
 }
+

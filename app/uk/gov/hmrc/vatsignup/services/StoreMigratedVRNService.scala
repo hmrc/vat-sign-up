@@ -33,7 +33,7 @@ class StoreMigratedVRNService @Inject()(subscriptionRequestRepository: Subscript
                      enrolments: Enrolments
                     )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] = {
 
-    def upsertVatNumber(vatNumber: String) =
+    def upsertVatNumber(vatNumber: String): Future[Either[StoreMigratedVRNFailure,StoreMigratedVRNSuccess.type]] =
       subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable = true, isDirectDebit = false) map {
         result =>
           if (result.ok) {
@@ -45,9 +45,10 @@ class StoreMigratedVRNService @Inject()(subscriptionRequestRepository: Subscript
       }
 
     enrolments.vatNumber match {
-      case Some(enrolmentVatNumber) if enrolmentVatNumber == vatNumber => upsertVatNumber(vatNumber)
-      case Some(_) => Future.successful(Left(DoesNotMatch))
-      case None => Future.successful(Left(NoVatEnrolment))
+      case Right(vrn) if (vatNumber == vrn) => upsertVatNumber(vrn)
+      case Right(_) => Future.successful(Left(DoesNotMatch))
+      case Left(VatNumberMismatch) => Future.successful(Left(DoesNotMatch))
+      case Left(NoEnrolment) => Future.successful(Left(NoVatEnrolment))
     }
   }
 }

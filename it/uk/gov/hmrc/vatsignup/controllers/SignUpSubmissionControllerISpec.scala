@@ -496,7 +496,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -523,7 +523,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -548,7 +548,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -575,7 +575,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -602,7 +602,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -629,7 +629,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -656,7 +656,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -682,7 +682,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -706,7 +706,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -730,7 +730,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -754,7 +754,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -780,7 +780,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -806,7 +806,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -831,7 +831,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
@@ -857,7 +857,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
           stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)

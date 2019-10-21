@@ -40,19 +40,20 @@ class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
       authorised().retrieve(Retrievals.allEnrolments) {
         enrolments =>
           ((enrolments.vatNumber, req.body) match {
-            case (Some(enrolmentVatNumber), ClaimSubscriptionRequest(_, _, isFromBta)) if enrolmentVatNumber == vatNumber =>
+            case (Right(enrolmentVatNumber), ClaimSubscriptionRequest(_, _, isFromBta)) if enrolmentVatNumber == vatNumber =>
               claimSubscriptionService.claimSubscriptionWithEnrolment(vatNumber, isFromBta)
-            case (None, ClaimSubscriptionRequest(Some(postcode), Some(registrationDate), isFromBta)) =>
+            case (Left(_), ClaimSubscriptionRequest(Some(postcode), Some(registrationDate), isFromBta)) =>
               claimSubscriptionService.claimSubscription(vatNumber, Some(postcode), Some(registrationDate), isFromBta)
             case _ =>
               throw new ForbiddenException("Either matching legacy enrolment or known facts must be provided to claim enrolment.")
           }) map {
             case Right(SubscriptionClaimed) => NoContent
             case Left(KnownFactsMismatch) => Forbidden
-            case Left(VatNumberNotFound|InvalidVatNumber) => BadRequest
-            case Left(KnownFactsFailure|EnrolFailure) => BadGateway
+            case Left(VatNumberNotFound | InvalidVatNumber) => BadRequest
+            case Left(KnownFactsFailure | EnrolFailure) => BadGateway
             case Left(EnrolmentAlreadyAllocated) => Conflict
           }
       }
     }
 }
+
