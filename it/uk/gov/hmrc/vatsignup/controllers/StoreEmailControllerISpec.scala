@@ -51,7 +51,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers wi
           }
           "the user is on the principal journey" should {
             "return OK with the verification state" in {
-              stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+              stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
 
               await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
               stubVerifyEmail(testEmail, principalContinueUrl)(CREATED)
@@ -67,7 +67,7 @@ class StoreEmailControllerISpec extends ComponentSpecBase with CustomMatchers wi
         }
         "the email has already been verified" should {
           "return OK with the verification state as true" in {
-            stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+            stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
 
             await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
             stubVerifyEmail(testEmail, principalContinueUrl)(CONFLICT)

@@ -55,7 +55,7 @@ class StoreEmailWithRequestIdControllerISpec extends ComponentSpecBase with Cust
       }
       "the user is on the principal journey" should {
         "return OK with the verification state" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubVerifyEmail(testEmail, principalContinueUrl)(CREATED)
 
           val res = post(s"/sign-up-request/request-id/$testToken/email")(Json.obj("email" -> testEmail))
@@ -69,7 +69,7 @@ class StoreEmailWithRequestIdControllerISpec extends ComponentSpecBase with Cust
     }
     "the email has already been verified" should {
       "return OK with the verification state as true" in {
-        stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+        stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
         stubVerifyEmail(testEmail, principalContinueUrl)(CONFLICT)
 
         val res = post(s"/sign-up-request/request-id/$testToken/email")(Json.obj("email" -> testEmail))

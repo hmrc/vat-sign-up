@@ -73,14 +73,14 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       eligibilitySuccess.isOverseas,
       eligibilitySuccess.isDirectDebit
     )
-    }.value
+  }.value
 
   private def checkUserAuthority(vatNumber: String,
                                  enrolments: Enrolments,
                                  vatKnownFacts: Option[VatKnownFacts]
                                 )(implicit request: Request[_], hc: HeaderCarrier): EitherT[Future, StoreVatNumberFailure, Any] = {
     EitherT((enrolments.vatNumber, enrolments.agentReferenceNumber) match {
-      case (Some(vatNumberFromEnrolment), _) =>
+      case (Right(vatNumberFromEnrolment), _) =>
         if (vatNumber == vatNumberFromEnrolment) Future.successful(Right(UserHasMatchingEnrolment))
         else Future.successful(Left(DoesNotMatchEnrolment))
       case (_, None) if vatKnownFacts.isDefined =>
@@ -203,3 +203,4 @@ object StoreVatNumberService {
   case object VatMigrationInProgress extends StoreVatNumberFailure
 
 }
+

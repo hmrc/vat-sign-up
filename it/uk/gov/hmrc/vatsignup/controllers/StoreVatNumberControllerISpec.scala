@@ -106,7 +106,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
     "the user is a principal user" when {
       "the user has a HMCE-VAT enrolment" should {
         "return OK when the vat number has been stored successfully" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
@@ -122,7 +122,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         }
 
         "claim the enrolment when the user is already subscribed" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
           stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
           stubSuccessGetKnownFacts(testVatNumber)
@@ -135,7 +135,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         }
 
         "return FORBIDDEN when vat number does not match the one in enrolment" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
 
           val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> UUID.randomUUID().toString))
 
@@ -146,7 +146,7 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         }
 
         "return BAD REQUEST when the user's VAT migration is in progress" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
 
           val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))

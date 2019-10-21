@@ -18,13 +18,16 @@ package uk.gov.hmrc.vatsignup.service
 
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
-import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.Constants.Des.VrnKey
+import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments.MtdEnrolmentKey
+import uk.gov.hmrc.vatsignup.config.Constants.{VatDecEnrolmentKey, VatReferenceKey}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService.{DoesNotMatch, NoVatEnrolment, StoreMigratedVRNSuccess, UpsertMigratedVRNFailure}
+import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService.{DoesNotMatch, StoreMigratedVRNSuccess, UpsertMigratedVRNFailure}
 import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -41,48 +44,113 @@ class StoreMigratedVRNServiceSpec
   val successfulWriteResult: UpdateWriteResult = UpdateWriteResult(ok = true, 0, 0, Seq(), Seq(), None, None, None)
   val failedWriteResult: UpdateWriteResult = UpdateWriteResult(ok = false, 0, 0, Seq(), Seq(), None, None, None)
 
-  val vatEnrolment = Enrolments(Set(testPrincipalMtdEnrolment))
-  val freshUser = Enrolments(Set.empty)
-
   ".storeVatNumber" when {
     "the provided VRN matches the enrolment VRN" should {
+      "store the vat number" when {
+        "both enrolment VRNs match the request VRN and the upsert is successful" in {
+          val vatNumber = testVatNumber
+          val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, vatNumber)
+          val testPrincipalDecEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment, testPrincipalDecEnrolment))
 
-      "return a StoreMigratedVRNSuccess when the VRN is stored successfully" in {
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(successfulWriteResult))
 
-        mockUpsertVatNumber(
-          testVatNumber, isMigratable = true,
-          isDirectDebit = false)(response = Future.successful(successfulWriteResult))
-
-        await(TestStoreMigratedVRNService.storeVatNumber(
-          testVatNumber, vatEnrolment)) shouldBe Right(StoreMigratedVRNSuccess)
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Right(StoreMigratedVRNSuccess)
+        }
       }
 
-      "return an UpsertMigratedVRNFailure when the VRN is not stored successfully" in {
+      "store the vat number" when {
+        "legacy enrolment VRN matches the request VRN and the upsert is successful" in {
+          val vatNumber = testVatNumber
+          val testPrincipalDecEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalDecEnrolment))
 
-        mockUpsertVatNumber(
-          testVatNumber, isMigratable = true, isDirectDebit = false)(response = Future.successful(failedWriteResult)
-        )
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(successfulWriteResult))
 
-        await(TestStoreMigratedVRNService.storeVatNumber(
-          testVatNumber, vatEnrolment)) shouldBe Left(UpsertMigratedVRNFailure)
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Right(StoreMigratedVRNSuccess)
+        }
+      }
+
+      "store the vat number" when {
+        "mtd enrolment VRN matches the request VRN and the upsert is successful" in {
+          val vatNumber = testVatNumber
+          val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment))
+
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(successfulWriteResult))
+
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Right(StoreMigratedVRNSuccess)
+        }
+      }
+
+      "does not store the vat number" when {
+        "when mtd enrolment VRN match the request VRN and the upsert is successful" in {
+          val vatNumber = testVatNumber
+          val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment))
+
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(successfulWriteResult))
+
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Right(StoreMigratedVRNSuccess)
+        }
+      }
+
+      "not store the vat number" when {
+        "when mtd enrolment VRN match the request VRN however the upsert is fail" in {
+          val vatNumber = testVatNumber
+          val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment))
+
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(failedWriteResult))
+
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Left(UpsertMigratedVRNFailure)
+        }
       }
     }
 
-    "the provided VRN does not match the enrolment VRN" should {
-      "return a StoreMigratedVRNFailure" in {
+    "the enrolment VRNs are mismatch" should {
+      "not store the vat number" when {
+        "legacy VRN mismatches mtd VRN and it returns Left(DoesNotMatch)" in {
+          val vatNumber = testVatNumber
+          val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, vatNumber ++ "1")
+          val testPrincipalDecEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment, testPrincipalDecEnrolment))
 
-        await(TestStoreMigratedVRNService.storeVatNumber(
-          testVatNumber + 1, vatEnrolment)) shouldBe Left(DoesNotMatch)
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(successfulWriteResult))
+
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Left(DoesNotMatch)
+        }
       }
     }
 
-    "the user does not have a Vat enrolment" should {
-      "return a NoVatEnrolment" in {
+    "there is no enrolment VRN matches provided VRN" should {
+      "not store the vat number" when {
+        "it returns Left(NoVatEnrolment)" in {
+          val vatNumber = testVatNumber
+          val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, vatNumber ++ "1")
+          val testPrincipalDecEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, vatNumber)
+          val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment, testPrincipalDecEnrolment))
 
-        await(TestStoreMigratedVRNService.storeVatNumber(
-          testVatNumber, freshUser)) shouldBe Left(NoVatEnrolment)
+          mockUpsertVatNumber(
+            testVatNumber, isMigratable = true,
+            isDirectDebit = false)(response = Future.successful(successfulWriteResult))
+
+          await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments)) shouldBe Left(DoesNotMatch)
+        }
       }
     }
-
   }
 }
+

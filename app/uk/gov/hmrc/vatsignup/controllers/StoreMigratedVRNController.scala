@@ -51,5 +51,4 @@ class StoreMigratedVRNController @Inject()(val authConnector: AuthConnector,
         }
     }
   }
-
 }

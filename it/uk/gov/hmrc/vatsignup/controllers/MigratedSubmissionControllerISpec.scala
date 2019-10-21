@@ -523,7 +523,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubMigratedSignUp(
@@ -553,7 +553,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
@@ -581,7 +581,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
@@ -611,7 +611,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
           stubMigratedSignUp(
@@ -641,7 +641,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
           stubMigratedSignUp(
@@ -671,7 +671,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubMigratedSignUp(
@@ -701,7 +701,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubMigratedSignUp(
@@ -730,7 +730,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
           stubMigratedSignUp(
@@ -757,7 +757,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
@@ -784,7 +784,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
@@ -811,7 +811,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
@@ -840,7 +840,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
           stubMigratedSignUp(
@@ -869,7 +869,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
           stubMigratedSignUp(
@@ -897,7 +897,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(testSafeId)
           stubMigratedSignUp(
@@ -926,7 +926,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             contactPreference = Some(testContactPreference)
           )
 
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment))
+          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubGetEmailVerified(testEmail)
           stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
           stubMigratedSignUp(

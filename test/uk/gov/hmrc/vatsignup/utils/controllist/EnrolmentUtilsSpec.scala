@@ -17,38 +17,67 @@
 package uk.gov.hmrc.vatsignup.utils.controllist
 
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testPrincipalEnrolment, testPrincipalMtdEnrolment, testVatNumber}
-import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils.EnrolmentUtils
+import uk.gov.hmrc.vatsignup.config.Constants.Des.VrnKey
+import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments.MtdEnrolmentKey
+import uk.gov.hmrc.vatsignup.config.Constants.{VatDecEnrolmentKey, VatReferenceKey}
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils.{EnrolmentUtils, NoEnrolment, VatNumberMismatch}
 
 
 class EnrolmentUtilsSpec extends UnitSpec with GuiceOneAppPerSuite {
 
-  val principalDecUser = Enrolments(Set(testPrincipalEnrolment))
-  val principalMtdUser = Enrolments(Set(testPrincipalMtdEnrolment))
-  val noEnrolmentUser = Enrolments(Set())
-
+  val testVRN = "222222227"
+  val testPrincipalDecEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, testVRN)
+  val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, testVRN)
+  val testPrincipalMtdEnrolment2: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, testVRN ++ "1")
+  val testPrincipalDecUser = Enrolments(Set(testPrincipalDecEnrolment))
+  val testPrincipalMtdUser = Enrolments(Set(testPrincipalMtdEnrolment))
 
   ".vatNumber" when {
-    "the user has a legacy Vat enrolment" should {
-      "return Some(vatNumber) from the legacy VAT enrolment" in {
-        EnrolmentUtils(principalDecUser).vatNumber shouldBe Some(testVatNumber)
 
+    "the user has both a legacy Vat enrolment and an mtd Vat enrolment" when {
+      "legacy Vat number equals to mtd Vat number" should {
+        "return Vat number from the mtd VAT enrolment" in {
+
+          val principalMtdDecMatchUser = Enrolments(Set(testPrincipalMtdEnrolment, testPrincipalDecEnrolment))
+
+          EnrolmentUtils(principalMtdDecMatchUser).vatNumber shouldBe Right(testVRN)
+        }
+      }
+    }
+
+    "the user has both a legacy Vat enrolment and an mtd Vat enrolment" when {
+      "legacy Vat number does not equal to mtd Vat number" should {
+        "return VatNumberMismatch" in {
+          val principalMtdDecMismatchUser = Enrolments(Set(testPrincipalMtdEnrolment2, testPrincipalDecEnrolment))
+
+          EnrolmentUtils(principalMtdDecMismatchUser).vatNumber shouldBe Left(VatNumberMismatch)
+        }
+      }
+    }
+
+    "the user has a legacy Vat enrolment" should {
+      "return Vat number from the legacy VAT enrolment" in {
+        EnrolmentUtils(testPrincipalDecUser).vatNumber shouldBe Right(testVRN)
       }
     }
 
     "the user has an mtd Vat enrolment" should {
-      "return Some( vatNumber) from the MTD VAT enrolment" in {
-        EnrolmentUtils(principalMtdUser).vatNumber shouldBe Some(testVatNumber)
+      "return Vat number from the MTD VAT enrolment" in {
+        EnrolmentUtils(testPrincipalMtdUser).vatNumber shouldBe Right(testVRN)
       }
     }
+
     "the user has no enrolment" should {
-      "return None" in {
-        EnrolmentUtils(noEnrolmentUser).vatNumber shouldBe None
+      "return NoEnrolment" in {
+        val noEnrolmentUser = Enrolments(Set())
+
+        EnrolmentUtils(noEnrolmentUser).vatNumber shouldBe Left(NoEnrolment)
       }
     }
   }
-
 }
+
+
 
