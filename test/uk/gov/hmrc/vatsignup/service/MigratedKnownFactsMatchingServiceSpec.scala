@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.time.Month
 
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService

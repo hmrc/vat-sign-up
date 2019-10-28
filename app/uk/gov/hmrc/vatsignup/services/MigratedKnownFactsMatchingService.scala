@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 
