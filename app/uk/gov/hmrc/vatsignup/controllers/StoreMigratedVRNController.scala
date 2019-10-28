@@ -41,7 +41,8 @@ class StoreMigratedVRNController @Inject()(val authConnector: AuthConnector,
           enrolments =>
             storeMigratedVRNService.storeVatNumber(
               vatNumber = storeVatNumberRequest.vatNumber,
-              enrolments = enrolments
+              enrolments = enrolments,
+              optKnownFacts = storeVatNumberRequest.vatKnownFacts
             ) map {
               case Right(StoreMigratedVRNSuccess) => Ok
               case Left(NoVatEnrolment) => Forbidden
