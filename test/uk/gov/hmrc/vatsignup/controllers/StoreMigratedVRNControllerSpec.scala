@@ -20,17 +20,18 @@ import java.util.UUID
 
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testPrincipalMtdEnrolment, testVatNumber}
 import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
 import play.api.http.Status._
+import uk.gov.hmrc.vatsignup.config.Constants.Des.VrnKey
+import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments.MtdEnrolmentKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreMigratedVRNService
 import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
 
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector with MockStoreMigratedVRNService {
@@ -40,56 +41,45 @@ class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector wit
     mockStoreMigratedVRNService
   )
 
-
   val enrolments = Enrolments(Set(testPrincipalMtdEnrolment))
 
   val request = FakeRequest() withBody StoreVatNumberRequest(testVatNumber, None)
 
-
   "the VAT number has been stored correctly" should {
-
-
     "return Ok" in {
-      mockAuthRetrieveAgentEnrolment()
-      mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreMigratedVRNSuccess)))
+      mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
+      mockStoreVatNumber(testVatNumber, enrolments, None)(Future.successful(Right(StoreMigratedVRNSuccess)))
 
-      val res: Result = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+      val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
       status(res) shouldBe OK
     }
   }
-
   "the VAT number has not been stored correctly" should {
-
-
     "return FORBIDDEN if the user has no enrolment" in {
+      mockAuthRetrieveEnrolments()
+      mockStoreVatNumber(testVatNumber, Enrolments(Set.empty))(Future.successful(Left(NoVatEnrolment)))
 
-      mockAuthRetrieveAgentEnrolment()
-      mockStoreVatNumber(testVatNumber, Enrolments(Set()))(Future.successful(Left(NoVatEnrolment)))
-
-      val res: Result = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+      val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
       status(res) shouldBe FORBIDDEN
     }
-
     "return FORBIDDEN if the user VRN does not match the enrolment" in {
-      val request = FakeRequest() withBody StoreVatNumberRequest(UUID.randomUUID().toString, None)
+      val vrn = UUID.randomUUID().toString
+      val request = FakeRequest() withBody StoreVatNumberRequest(vrn, None)
 
-      mockAuthRetrieveAgentEnrolment()
-      mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(DoesNotMatch)))
+      mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
+      mockStoreVatNumber(vrn, enrolments, None)(Future.successful(Left(DoesNotMatch)))
 
-      val res: Result = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+      val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
       status(res) shouldBe FORBIDDEN
     }
-
     "return INTERNAL SERVER ERROR" in {
-      val request = FakeRequest() withBody StoreVatNumberRequest(UUID.randomUUID().toString, None)
+      mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
+      mockStoreVatNumber(testVatNumber, enrolments, None)(Future.successful(Left(UpsertMigratedVRNFailure)))
 
-      mockAuthRetrieveAgentEnrolment()
-      mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(UpsertMigratedVRNFailure)))
-
-      val res: Result = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+      val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
       status(res) shouldBe INTERNAL_SERVER_ERROR
     }

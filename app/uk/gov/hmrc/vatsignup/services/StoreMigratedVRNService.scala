@@ -20,35 +20,49 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService.{StoreMigratedVRNFailure, _}
+import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StoreMigratedVRNService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(implicit ec: ExecutionContext) {
+class StoreMigratedVRNService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
+                                        migratedKnownFactsMatchingService: MigratedKnownFactsMatchingService
+                                       )(implicit ec: ExecutionContext) {
 
   def storeVatNumber(vatNumber: String,
-                     enrolments: Enrolments
-                    )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] = {
+                     enrolments: Enrolments,
+                     optKnownFacts: Option[VatKnownFacts] = None)
+                    (implicit hc: HeaderCarrier,
+                     request: Request[_]
+                    ): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] = {
 
-    def upsertVatNumber(vatNumber: String): Future[Either[StoreMigratedVRNFailure,StoreMigratedVRNSuccess.type]] =
+    def upsertVatNumber(vatNumber: String): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] =
       subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable = true, isDirectDebit = false) map {
-        result =>
-          if (result.ok) {
-            Right(StoreMigratedVRNSuccess)
-          }
-          else {
-            Left(UpsertMigratedVRNFailure)
-          }
+        case result if result.ok => Right(StoreMigratedVRNSuccess)
+        case _ => Left(UpsertMigratedVRNFailure)
       }
 
-    enrolments.vatNumber match {
-      case Right(vrn) if (vatNumber == vrn) => upsertVatNumber(vrn)
-      case Right(_) => Future.successful(Left(DoesNotMatch))
-      case Left(VatNumberMismatch) => Future.successful(Left(DoesNotMatch))
-      case Left(NoEnrolment) => Future.successful(Left(NoVatEnrolment))
+    optKnownFacts match {
+      case Some(knownFacts) =>
+        migratedKnownFactsMatchingService.checkKnownFactsMatch(vatNumber, knownFacts).flatMap { knownFactsMatch =>
+          if (knownFactsMatch) upsertVatNumber(vatNumber)
+          else Future.successful(Left(DoesNotMatch))
+        }
+
+      case _ =>
+        enrolments.vatNumber match {
+          case Right(vrn) if (vatNumber == vrn) =>
+            upsertVatNumber(vrn)
+          case Right(_) =>
+            Future.successful(Left(DoesNotMatch))
+          case Left(VatNumberMismatch) =>
+            Future.successful(Left(DoesNotMatch))
+          case Left(NoEnrolment) =>
+            Future.successful(Left(NoVatEnrolment))
+        }
     }
   }
 }

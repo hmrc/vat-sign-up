@@ -20,36 +20,28 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import org.scalatest.mockito.MockitoSugar
-import play.api.mvc.Request
-import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
-import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
-import uk.gov.hmrc.vatsignup.services._
+import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService
 
 import scala.concurrent.Future
 
-trait MockStoreMigratedVRNService extends MockitoSugar with BeforeAndAfterEach {
-  self: Suite =>
+trait MockMigratedKnownFactsMatchingService extends MockitoSugar with BeforeAndAfterEach {
+  this: Suite =>
 
-  val mockStoreMigratedVRNService = mock[StoreMigratedVRNService]
+  val mockMigratedKnownFactsMatchingService = mock[MigratedKnownFactsMatchingService]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockStoreMigratedVRNService)
+    reset(mockMigratedKnownFactsMatchingService)
   }
 
-  def mockStoreVatNumber(vatNumber: String,
-                         enrolments: Enrolments = Enrolments(Set.empty),
-                         optKnownFacts: Option[VatKnownFacts] = None
-                        )(response: Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]]): Unit =
-   when(mockStoreMigratedVRNService.storeVatNumber(
-     ArgumentMatchers.eq(vatNumber),
-     ArgumentMatchers.eq(enrolments),
-     ArgumentMatchers.eq(optKnownFacts)
-   )(
-     ArgumentMatchers.any[HeaderCarrier],
-     ArgumentMatchers.any[Request[_]]
-   )) thenReturn response
+  def mockCheckKnownFactsMatch(vatNumber: String, knownFacts: VatKnownFacts)(response: Future[Boolean]): Unit =
+    when(mockMigratedKnownFactsMatchingService.checkKnownFactsMatch(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(knownFacts)
+    )(
+      ArgumentMatchers.any[HeaderCarrier]
+    )) thenReturn response
 
 }
