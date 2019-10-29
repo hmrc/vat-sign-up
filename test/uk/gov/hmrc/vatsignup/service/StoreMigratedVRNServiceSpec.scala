@@ -28,19 +28,21 @@ import uk.gov.hmrc.vatsignup.config.Constants.{VatDecEnrolmentKey, VatReferenceK
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.service.mocks.MockMigratedKnownFactsMatchingService
-import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService.{DoesNotMatch, NoVatEnrolment, StoreMigratedVRNSuccess, UpsertMigratedVRNFailure}
+import uk.gov.hmrc.vatsignup.service.mocks.{MockAgentClientRelationshipService, MockMigratedKnownFactsMatchingService}
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{RelationshipCheckError, RelationshipCheckNotFound, RelationshipCheckSuccess}
+import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
 import uk.gov.hmrc.vatsignup.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreMigratedVRNServiceSpec
-  extends UnitSpec with MockSubscriptionRequestRepository with MockMigratedKnownFactsMatchingService {
+  extends UnitSpec with MockSubscriptionRequestRepository with MockMigratedKnownFactsMatchingService with MockAgentClientRelationshipService {
 
   object TestStoreMigratedVRNService extends StoreMigratedVRNService(
     mockSubscriptionRequestRepository,
-    mockMigratedKnownFactsMatchingService
+    mockMigratedKnownFactsMatchingService,
+    mockAgentClientRelationshipService
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(FakeRequest().headers)
@@ -55,12 +57,50 @@ class StoreMigratedVRNServiceSpec
   val testEnrolmentLegacy = Enrolments(Set(testPrincipalDecEnrolment))
   val testEnrolmentMtd = Enrolments(Set(testPrincipalMtdEnrolment))
   val testEnrolmentLegacyAndMtd = Enrolments(Set(testPrincipalMtdEnrolment, testPrincipalDecEnrolment))
+  val testEnrolmentAgent = Enrolments(Set(testAgentEnrolment))
   val testEnrolmentEmpty = Enrolments(Set.empty)
 
   val test2KnownFacts = VatKnownFacts(Some(testPostCode), testDateOfRegistration, None, None)
 
   "storeVatNumber" when {
-    "the user has an enrolment" should {
+    "the user has an agent enrolment" should {
+      "store the vat number" when {
+        "the agent client relationship check passes" in {
+          mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(successfulWriteResult))
+          mockCheckAgentClientRelationship(
+            vatNumber = testVatNumber,
+            agentReferenceNumber = testAgentReferenceNumber
+          )(Future.successful(Right(RelationshipCheckSuccess)))
+
+          val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, testEnrolmentAgent))
+
+          res shouldBe Right(StoreMigratedVRNSuccess)
+        }
+      }
+      "not store the vat number" when {
+        "the agent client relationship check returns not found" in {
+          mockCheckAgentClientRelationship(
+            vatNumber = testVatNumber,
+            agentReferenceNumber = testAgentReferenceNumber
+          )(Future.successful(Left(RelationshipCheckNotFound)))
+
+          val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, testEnrolmentAgent))
+
+          res shouldBe Left(AgentClientRelationshipNotFound)
+        }
+        "the agent client relationship check fails" in {
+          mockCheckAgentClientRelationship(
+            vatNumber = testVatNumber,
+            agentReferenceNumber = testAgentReferenceNumber
+          )(Future.successful(Left(RelationshipCheckError)))
+
+          val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, testEnrolmentAgent))
+
+          res shouldBe Left(AgentClientRelationshipFailure)
+        }
+      }
+    }
+    "the user has a vat enrolment" should {
       "store the vat number" when {
         "both enrolment VRNs match the request VRN and the upsert is successful" in {
           mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(successfulWriteResult))
@@ -91,13 +131,13 @@ class StoreMigratedVRNServiceSpec
           }
         }
         "legacy VRN mismatches mtd VRN" should {
-          "return Left(DoesNotMatch)" in {
+          "return Left(VatNumberDoesNotMatch)" in {
             val testPrincipalMtdEnrolment: Enrolment = Enrolment(MtdEnrolmentKey).withIdentifier(VrnKey, testVatNumber + "1")
             val vatEnrolments = Enrolments(Set(testPrincipalMtdEnrolment, testPrincipalDecEnrolment))
             mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(successfulWriteResult))
 
             val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments))
-            res shouldBe Left(DoesNotMatch)
+            res shouldBe Left(VatNumberDoesNotMatch)
           }
         }
         "there is no enrolment VRN matches provided VRN" should {
@@ -107,6 +147,15 @@ class StoreMigratedVRNServiceSpec
 
             val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, vatEnrolments))
             res shouldBe Left(NoVatEnrolment)
+          }
+        }
+        "provided VRN does not match the enrolment VRN" should {
+          "return Left(VatNumberDoesNotMatch)" in {
+            val vatEnrolments = Enrolments(Set(testPrincipalDecEnrolment))
+            mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(successfulWriteResult))
+
+            val res = await(TestStoreMigratedVRNService.storeVatNumber("123456782", vatEnrolments))
+            res shouldBe Left(VatNumberDoesNotMatch)
           }
         }
       }
@@ -122,32 +171,32 @@ class StoreMigratedVRNServiceSpec
         }
       }
       "the post code doesn't match the entered known facts" should {
-        "return StoreMigratedVRNSuccess" in {
+        "return KnownFactsMismatch" in {
           val mismatchedKnownFacts = VatKnownFacts(Some("1234"), testDateOfRegistration, None, None)
           mockCheckKnownFactsMatch(testVatNumber, mismatchedKnownFacts)(Future.successful(false))
           mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(successfulWriteResult))
 
           val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, testEnrolmentEmpty, Some(mismatchedKnownFacts)))
-          res shouldBe Left(DoesNotMatch)
+          res shouldBe Left(KnownFactsMismatch)
         }
       }
       "the registration date doesn't match the entered known facts" should {
-        "return StoreMigratedVRNSuccess" in {
+        "return KnownFactsMismatch" in {
           val mismatchedKnownFacts = VatKnownFacts(Some(testPostCode), "1234", None, None)
           mockCheckKnownFactsMatch(testVatNumber, mismatchedKnownFacts)(Future.successful(false))
           mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(successfulWriteResult))
 
           val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, testEnrolmentEmpty, Some(mismatchedKnownFacts)))
-          res shouldBe Left(DoesNotMatch)
+          res shouldBe Left(KnownFactsMismatch)
         }
       }
       "the known facts match, but the upsert fails" should {
-        "return StoreMigratedVRNSuccess" in {
+        "return KnownFactsMismatch" in {
           mockCheckKnownFactsMatch(testVatNumber, test2KnownFacts)(Future.successful(false))
           mockUpsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)(Future.successful(failedWriteResult))
 
           val res = await(TestStoreMigratedVRNService.storeVatNumber(testVatNumber, testEnrolmentEmpty, Some(test2KnownFacts)))
-          res shouldBe Left(DoesNotMatch)
+          res shouldBe Left(KnownFactsMismatch)
         }
       }
     }
