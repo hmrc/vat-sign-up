@@ -16,12 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import cats.data.EitherT
+import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
+import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService._
 import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
@@ -29,7 +32,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreMigratedVRNService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
-                                        migratedKnownFactsMatchingService: MigratedKnownFactsMatchingService
+                                        migratedKnownFactsMatchingService: MigratedKnownFactsMatchingService,
+                                        agentClientRelationshipService: AgentClientRelationshipService
                                        )(implicit ec: ExecutionContext) {
 
   def storeVatNumber(vatNumber: String,
@@ -37,46 +41,79 @@ class StoreMigratedVRNService @Inject()(subscriptionRequestRepository: Subscript
                      optKnownFacts: Option[VatKnownFacts] = None)
                     (implicit hc: HeaderCarrier,
                      request: Request[_]
-                    ): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] = {
-
-    def upsertVatNumber(vatNumber: String): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] =
-      subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable = true, isDirectDebit = false) map {
-        case result if result.ok => Right(StoreMigratedVRNSuccess)
-        case _ => Left(UpsertMigratedVRNFailure)
+                    ): Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]] =
+    (for {
+      _ <- optKnownFacts match {
+        case Some(knownFacts) => EitherT(checkKnownFacts(knownFacts, vatNumber))
+        case _ => EitherT(checkUserAuthority(enrolments, vatNumber))
       }
+      _ <- EitherT(upsertVatNumber(vatNumber))
+    } yield StoreMigratedVRNSuccess).value
 
-    optKnownFacts match {
-      case Some(knownFacts) =>
-        migratedKnownFactsMatchingService.checkKnownFactsMatch(vatNumber, knownFacts).flatMap { knownFactsMatch =>
-          if (knownFactsMatch) upsertVatNumber(vatNumber)
-          else Future.successful(Left(DoesNotMatch))
-        }
 
-      case _ =>
-        enrolments.vatNumber match {
-          case Right(vrn) if (vatNumber == vrn) =>
-            upsertVatNumber(vrn)
-          case Right(_) =>
-            Future.successful(Left(DoesNotMatch))
-          case Left(VatNumberMismatch) =>
-            Future.successful(Left(DoesNotMatch))
-          case Left(NoEnrolment) =>
-            Future.successful(Left(NoVatEnrolment))
-        }
+  private def checkKnownFacts(knownFacts: VatKnownFacts,
+                              vatNumber: String)(implicit hc: HeaderCarrier): Future[Either[StoreMigratedVRNFailure, KnownFactsSuccess.type]] =
+    migratedKnownFactsMatchingService.checkKnownFactsMatch(vatNumber, knownFacts).map { knownFactsMatch =>
+      if (knownFactsMatch) Right(KnownFactsSuccess)
+      else Left(KnownFactsMismatch)
     }
-  }
+
+
+  private def upsertVatNumber(vatNumber: String): Future[Either[StoreMigratedVRNFailure, UpsertVatNumberSuccess.type]] =
+    subscriptionRequestRepository.upsertVatNumber(vatNumber, isMigratable = true, isDirectDebit = false).map {
+      case result if result.ok => Right(UpsertVatNumberSuccess)
+      case _ => Left(UpsertMigratedVRNFailure)
+    }
+
+  private def checkUserAuthority(enrolments: Enrolments,
+                                 vatNumber: String
+                                )(implicit hc: HeaderCarrier,
+                                  request: Request[_]): Future[Either[StoreMigratedVRNFailure, CheckUserAuthoritySuccess.type]] =
+    (enrolments.vatNumber, enrolments.agentReferenceNumber) match {
+      case (_, Some(agentReferenceNumber)) =>
+        agentClientRelationshipService.checkAgentClientRelationship(vatNumber, agentReferenceNumber).map {
+          case Right(RelationshipCheckSuccess) =>
+            Right(CheckUserAuthoritySuccess)
+          case Left(RelationshipCheckNotFound) =>
+            Left(AgentClientRelationshipNotFound)
+          case Left(RelationshipCheckError) =>
+            Left(AgentClientRelationshipFailure)
+        }
+      case (Right(vrn), _) =>
+        if (vatNumber == vrn)
+          Future.successful(Right(CheckUserAuthoritySuccess))
+        else
+          Future.successful(Left(VatNumberDoesNotMatch))
+      case (Left(VatNumberMismatch), _) =>
+        Future.successful(Left(VatNumberDoesNotMatch))
+      case (Left(NoEnrolment), _) =>
+        Future.successful(Left(NoVatEnrolment))
+    }
+
 }
 
 object StoreMigratedVRNService {
 
+  case object UpsertVatNumberSuccess
+
+  case object KnownFactsSuccess
+
+  case object CheckUserAuthoritySuccess
+
   case object StoreMigratedVRNSuccess
 
-  trait StoreMigratedVRNFailure
+  sealed trait StoreMigratedVRNFailure
 
-  case object DoesNotMatch extends StoreMigratedVRNFailure
+  case object KnownFactsMismatch extends StoreMigratedVRNFailure
+
+  case object VatNumberDoesNotMatch extends StoreMigratedVRNFailure
 
   case object NoVatEnrolment extends StoreMigratedVRNFailure
 
   case object UpsertMigratedVRNFailure extends StoreMigratedVRNFailure
+
+  case object AgentClientRelationshipNotFound extends StoreMigratedVRNFailure
+
+  case object AgentClientRelationshipFailure extends StoreMigratedVRNFailure
 
 }

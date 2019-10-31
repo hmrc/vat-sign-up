@@ -18,18 +18,23 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import java.util.UUID
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import play.api.http.Status._
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
+import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
+import uk.gov.hmrc.vatsignup.controllers.StoreMigratedVRNController._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
-import play.api.http.Status._
-import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreMigratedVRNService
 import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector with MockStoreMigratedVRNService {
 
@@ -39,10 +44,14 @@ class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector wit
   )
 
   val enrolments = Enrolments(Set(testPrincipalMtdEnrolment))
+  val agentEnrolments = Enrolments(Set(testAgentEnrolment))
 
   val request = FakeRequest() withBody StoreVatNumberRequest(testVatNumber, None)
 
   val requestWithKF = FakeRequest() withBody StoreVatNumberRequest(testVatNumber, Some(testTwoKnownFacts))
+
+  implicit private val system: ActorSystem = ActorSystem()
+  implicit private val materializer: ActorMaterializer = ActorMaterializer()
 
   "Store VAT number" when {
     "no known facts are provided" when {
@@ -64,17 +73,19 @@ class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector wit
           val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
           status(res) shouldBe FORBIDDEN
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> VatEnrolmentMissingCode)
         }
         "return FORBIDDEN if the user VRN does not match the enrolment" in {
           val vrn = UUID.randomUUID().toString
           val request = FakeRequest() withBody StoreVatNumberRequest(vrn, None)
 
           mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
-          mockStoreVatNumber(vrn, enrolments, None)(Future.successful(Left(DoesNotMatch)))
+          mockStoreVatNumber(vrn, enrolments, None)(Future.successful(Left(VatNumberDoesNotMatch)))
 
           val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
           status(res) shouldBe FORBIDDEN
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> VatNumberMismatchCode)
         }
         "return INTERNAL SERVER ERROR" in {
           mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
@@ -83,6 +94,7 @@ class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector wit
           val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> StoreVrnFailure)
         }
       }
     }
@@ -106,17 +118,19 @@ class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector wit
           val res = await(TestStoreMigratedVRNController.storeVatNumber()(requestWithKF))
 
           status(res) shouldBe FORBIDDEN
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> VatEnrolmentMissingCode)
         }
         "return FORBIDDEN if the user VRN does not match the enrolment" in {
           val vrn = UUID.randomUUID().toString
           val request = FakeRequest() withBody StoreVatNumberRequest(vrn, Some(testTwoKnownFacts))
 
           mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
-          mockStoreVatNumber(vrn, enrolments, Some(testTwoKnownFacts))(Future.successful(Left(DoesNotMatch)))
+          mockStoreVatNumber(vrn, enrolments, Some(testTwoKnownFacts))(Future.successful(Left(VatNumberDoesNotMatch)))
 
           val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
 
           status(res) shouldBe FORBIDDEN
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> VatNumberMismatchCode)
         }
         "return INTERNAL SERVER ERROR" in {
           mockAuthRetrieveEnrolments(testPrincipalMtdEnrolment)
@@ -125,9 +139,41 @@ class StoreMigratedVRNControllerSpec extends UnitSpec with MockAuthConnector wit
           val res = await(TestStoreMigratedVRNController.storeVatNumber()(requestWithKF))
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> StoreVrnFailure)
+        }
+      }
+    }
+    "agent enrolment is probvided" when {
+      "the VAT number has been stored correctly" should {
+        "return Ok" in {
+          mockAuthRetrieveEnrolments(testAgentEnrolment)
+          mockStoreVatNumber(testVatNumber, agentEnrolments)(Future.successful(Right(StoreMigratedVRNSuccess)))
+
+          val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+
+          status(res) shouldBe OK
+        }
+      }
+      "the VAT number has not been stored correctly" should {
+        "return FORBIDDEN if the agent does not have matching client relationship" in {
+          mockAuthRetrieveEnrolments(testAgentEnrolment)
+          mockStoreVatNumber(testVatNumber, agentEnrolments)(Future.successful(Left(AgentClientRelationshipNotFound)))
+
+          val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+
+          status(res) shouldBe FORBIDDEN
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> NoRelationshipCode)
+        }
+        "return INTERNAL SERVER ERROR" in {
+          mockAuthRetrieveEnrolments(testAgentEnrolment)
+          mockStoreVatNumber(testVatNumber, agentEnrolments)(Future.successful(Left(AgentClientRelationshipFailure)))
+
+          val res = await(TestStoreMigratedVRNController.storeVatNumber()(request))
+
+          status(res) shouldBe INTERNAL_SERVER_ERROR
+          jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> RelationshipCheckFailure)
         }
       }
     }
   }
-
 }

@@ -15,13 +15,16 @@
  */
 
 package uk.gov.hmrc.vatsignup.controllers
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
-import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
+import uk.gov.hmrc.vatsignup.controllers.StoreMigratedVRNController._
+import uk.gov.hmrc.vatsignup.models.StoreVatNumberRequest
 import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService
 import uk.gov.hmrc.vatsignup.services.StoreMigratedVRNService._
 
@@ -45,11 +48,23 @@ class StoreMigratedVRNController @Inject()(val authConnector: AuthConnector,
               optKnownFacts = storeVatNumberRequest.vatKnownFacts
             ) map {
               case Right(StoreMigratedVRNSuccess) => Ok
-              case Left(NoVatEnrolment) => Forbidden
-              case Left(DoesNotMatch) => Forbidden
-              case _ => InternalServerError
+              case Left(NoVatEnrolment) => Forbidden(Json.obj(HttpCodeKey -> VatEnrolmentMissingCode))
+              case Left(VatNumberDoesNotMatch) => Forbidden(Json.obj(HttpCodeKey -> VatNumberMismatchCode))
+              case Left(KnownFactsMismatch) => Forbidden(Json.obj(HttpCodeKey -> KnownFactsMismatchCode))
+              case Left(AgentClientRelationshipNotFound) => Forbidden(Json.obj(HttpCodeKey -> NoRelationshipCode))
+              case Left(AgentClientRelationshipFailure) => InternalServerError(Json.obj(HttpCodeKey -> RelationshipCheckFailure))
+              case Left(UpsertMigratedVRNFailure) => InternalServerError(Json.obj(HttpCodeKey -> StoreVrnFailure))
             }
         }
     }
   }
+}
+
+object StoreMigratedVRNController {
+  val VatEnrolmentMissingCode = "NO_VAT_ENROLMENT"
+  val NoRelationshipCode = "RELATIONSHIP_NOT_FOUND"
+  val KnownFactsMismatchCode = "KNOWN_FACTS_MISMATCH"
+  val VatNumberMismatchCode = "VAT_NUMBER_MISMATCH"
+  val RelationshipCheckFailure = "RELATIONSHIP_CHECK_FAILURE"
+  val StoreVrnFailure = "STORE_VRN_FAILURE"
 }
