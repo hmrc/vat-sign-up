@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
-import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.MigratedCustomerSignUpConnector
 import uk.gov.hmrc.vatsignup.httpparsers.CustomerSignUpHttpParser.CustomerSignUpResponse
@@ -37,11 +37,13 @@ trait MockMigratedCustomerSignUpConnector extends MockitoSugar with BeforeAndAft
   val mockMigratedCustomerSignUpConnector: MigratedCustomerSignUpConnector = mock[MigratedCustomerSignUpConnector]
 
   def mockSignUpMigrated(safeId: String,
-                         vatNumber: String
+                         vatNumber: String,
+                         isMigratable: Boolean
                         )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockMigratedCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),
-      ArgumentMatchers.eq(vatNumber)
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(isMigratable)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 

@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import play.api.http.Status._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockMigratedCustomerSignUpConnector
+import uk.gov.hmrc.vatsignup.helpers.TestConstants._
+import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.MigratedSignUpAuditModel
+import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseFailure, CustomerSignUpResponseSuccess}
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpService
-import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseFailure, CustomerSignUpResponseSuccess}
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpSuccess
-import play.api.http.Status._
-import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.MigratedSignUpAuditModel
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -44,11 +44,11 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
     "the user is the principal" when {
       "there is a successful response from DES" should {
         "return MigratedSignUpSuccess" in {
-          mockSignUpMigrated(testSafeId, testVatNumber)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
             Right(CustomerSignUpResponseSuccess)
           )
 
-          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, None))
+          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, None))
 
           verifyAudit(MigratedSignUpAuditModel(
             safeId = testSafeId,
@@ -62,12 +62,12 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       }
       "there is a failure response from DES" should {
         "return MigratedSignUpFailure with the DES status code" in {
-          mockSignUpMigrated(testSafeId, testVatNumber)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
             Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason"))
           )
 
           intercept[InternalServerException] {
-            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, None))
+            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, None))
           }
 
           verifyAudit(MigratedSignUpAuditModel(
@@ -82,11 +82,11 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
     "the user is an agent" when {
       "there is a successful response from DES" should {
         "return MigratedSignUpSuccess" in {
-          mockSignUpMigrated(testSafeId, testVatNumber)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
             Right(CustomerSignUpResponseSuccess)
           )
 
-          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber)))
+          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber)))
 
           verifyAudit(MigratedSignUpAuditModel(
             safeId = testSafeId,
@@ -100,12 +100,12 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       }
       "there is a failure response from DES" should {
         "return MigratedSignUpFailure with the DES status code" in {
-          mockSignUpMigrated(testSafeId, testVatNumber)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
             Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason"))
           )
 
           intercept[InternalServerException] {
-            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, Some(testAgentReferenceNumber)))
+            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber)))
           }
 
           verifyAudit(MigratedSignUpAuditModel(

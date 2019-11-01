@@ -20,10 +20,10 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.MigratedCustomerSignUpConnector
-import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.MigratedSignUpAuditModel
 import uk.gov.hmrc.vatsignup.models.CustomerSignUpResponseSuccess
+import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.MigratedSignUpAuditModel
+import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpSuccess
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
-import MigratedSignUpService.MigratedSignUpSuccess
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,6 +34,7 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
 
   def signUp(safeId: String,
              vatNumber: String,
+             isMigratable: Boolean,
              optArn: Option[String])
             (implicit hc: HeaderCarrier,
              request: Request[_]
@@ -41,7 +42,8 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
 
     signUpConnector.signUp(
       safeId = safeId,
-      vatNumber = vatNumber
+      vatNumber = vatNumber,
+      isMigratable = isMigratable
     ) map {
       case Right(CustomerSignUpResponseSuccess) => {
         auditService.audit(MigratedSignUpAuditModel(

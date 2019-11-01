@@ -41,7 +41,8 @@ class MigratedSubmissionService @Inject()(signUpRequestService: MigratedSignUpRe
     for {
       signUpRequest <- signUpRequestService.getSignUpRequest(vatNumber, enrolments)
       safeId <- registrationService.registerBusinessEntity(vatNumber, signUpRequest.businessEntity, optArn)
-      _ <- migratedSignUpService.signUp(safeId, vatNumber, optArn)
+      isMigratable = signUpRequest.isMigratable
+      _ <- migratedSignUpService.signUp(safeId, vatNumber, isMigratable, optArn)
       _ <- migratedEnrolmentService.enrolForMtd(vatNumber, safeId)
       _ <- signUpRequestService.deleteSignUpRequest(vatNumber)
     } yield SubmissionSuccess

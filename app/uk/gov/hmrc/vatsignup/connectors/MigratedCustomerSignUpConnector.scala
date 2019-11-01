@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.connectors
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsObject, Json, Writes}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.Constants.Des.{IdTypeKey, IdValueKey, SafeIdKey, VrnKey}
@@ -35,7 +35,8 @@ class MigratedCustomerSignUpConnector @Inject()(http: HttpClient,
   private val url = appConfig.desUrl + "/cross-regime/signup/VATC"
 
   def signUp(safeId: String,
-             vatNumber: String
+             vatNumber: String,
+             isMigratable: Boolean
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
 
     val headerCarrier = hc.withExtraHeaders(appConfig.desEnvironmentHeader)
@@ -43,7 +44,7 @@ class MigratedCustomerSignUpConnector @Inject()(http: HttpClient,
 
     http.POST[JsObject, CustomerSignUpResponse](
       url = url,
-      body = buildRequest(safeId, vatNumber)
+      body = buildRequest(safeId, vatNumber, isMigratable)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[CustomerSignUpResponse]],
@@ -52,12 +53,13 @@ class MigratedCustomerSignUpConnector @Inject()(http: HttpClient,
     )
   }
 
-  private def buildRequest(safeId: String, vatNumber: String): JsObject =
+  private def buildRequest(safeId: String, vatNumber: String, isMigratable: Boolean): JsObject =
     Json.obj("signUpRequest" -> Json.obj(
       "identification" -> Json.arr(
         Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
         Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
-      )
+      ),
+      "isPartialMigration" -> isMigratable
     ))
 
 }

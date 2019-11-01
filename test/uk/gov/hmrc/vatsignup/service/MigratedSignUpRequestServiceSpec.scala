@@ -20,10 +20,10 @@ import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException, UnprocessableEntityException}
 import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService
-import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -51,7 +51,8 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
   val testMigratedSignUpRequest = MigratedSignUpRequest(
     vatNumber = testVatNumber,
     businessEntity = SoleTrader(testNino),
-    isDelegated = false
+    isDelegated = false,
+    isMigratable = true
   )
 
   val testEnrolments = Enrolments(Set(testPrincipalEnrolment))
