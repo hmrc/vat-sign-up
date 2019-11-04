@@ -34,7 +34,7 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
 
   def signUp(safeId: String,
              vatNumber: String,
-             isMigratable: Boolean,
+             isPartialMigration: Boolean,
              optArn: Option[String])
             (implicit hc: HeaderCarrier,
              request: Request[_]
@@ -43,7 +43,7 @@ class MigratedSignUpService @Inject()(signUpConnector: MigratedCustomerSignUpCon
     signUpConnector.signUp(
       safeId = safeId,
       vatNumber = vatNumber,
-      isMigratable = isMigratable
+      isPartialMigration = isPartialMigration
     ) map {
       case Right(CustomerSignUpResponseSuccess) => {
         auditService.audit(MigratedSignUpAuditModel(

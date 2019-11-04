@@ -52,7 +52,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -84,7 +84,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -114,7 +114,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -145,7 +145,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
@@ -172,7 +172,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -201,7 +201,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -230,7 +230,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -259,7 +259,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -287,7 +287,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -315,7 +315,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -343,7 +343,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -371,7 +371,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -399,7 +399,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -427,7 +427,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -455,7 +455,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -483,7 +483,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -512,7 +512,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
         stubMigratedSignUp(
           testSafeId,
           testVatNumber,
-          isMigratable = true
+          isPartialMigration = false
         )(OK)
         stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -546,7 +546,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -577,7 +577,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -606,7 +606,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -637,7 +637,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -668,7 +668,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -699,7 +699,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -730,7 +730,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -760,7 +760,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -788,7 +788,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -816,7 +816,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -844,7 +844,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -874,7 +874,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -904,7 +904,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -933,7 +933,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -963,7 +963,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubMigratedSignUp(
             testSafeId,
             testVatNumber,
-            isMigratable = true
+            isPartialMigration = false
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 

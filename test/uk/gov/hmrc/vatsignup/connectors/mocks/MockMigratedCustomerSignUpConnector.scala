@@ -38,12 +38,12 @@ trait MockMigratedCustomerSignUpConnector extends MockitoSugar with BeforeAndAft
 
   def mockSignUpMigrated(safeId: String,
                          vatNumber: String,
-                         isMigratable: Boolean
+                         isPartialMigration: Boolean
                         )(response: Future[CustomerSignUpResponse]): Unit = {
     when(mockMigratedCustomerSignUpConnector.signUp(
       ArgumentMatchers.eq(safeId),
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(isMigratable)
+      ArgumentMatchers.eq(isPartialMigration)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
