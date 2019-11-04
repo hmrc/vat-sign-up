@@ -40,32 +40,9 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFacts
 
   private val testControlListInfo = ControlListInformation(Set.empty, Stagger1)
   private val test2KnownFacts = VatKnownFacts(Some(testPostCode), testDateOfRegistration, None, None)
-  private val test4KnownFacts = VatKnownFacts(Some(testPostCode), testDateOfRegistration, Some(Month.MARCH), Some(testLastNetDue))
 
   "checkKnownFacts" when {
     "DES returns a response" when {
-      "4 known facts are returned" when {
-        "the returned known facts match the entered known facts" should {
-          "return true" in {
-            val apiResponse = KnownFactsAndControlListInformation(test4KnownFacts, testControlListInfo)
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
-
-            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test4KnownFacts))
-
-            res shouldBe true
-          }
-        }
-        "the returned known facts don't match the entered known facts" should {
-          "return false" in {
-            val apiResponse = KnownFactsAndControlListInformation(test4KnownFacts, testControlListInfo)
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
-
-            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test4KnownFacts.copy(businessPostcode = Some("1234"))))
-
-            res shouldBe false
-          }
-        }
-      }
       "2 known facts are returned" when {
         "the returned known facts match the entered known facts" should {
           "return true" in {
@@ -73,6 +50,16 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFacts
             mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
 
             val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test2KnownFacts))
+
+            res shouldBe true
+          }
+        }
+        "the returned known facts match the entered known facts after lowercasing them and removing spacing" should {
+          "return true" in {
+            val apiResponse = KnownFactsAndControlListInformation(test2KnownFacts, testControlListInfo)
+            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
+
+            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test2KnownFacts.copy(businessPostcode = Some("zz111zz"))))
 
             res shouldBe true
           }
