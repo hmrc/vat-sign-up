@@ -30,7 +30,8 @@ class MigratedKnownFactsMatchingService @Inject()(knownFactsConnector: KnownFact
   def checkKnownFactsMatch(vatNumber: String, enteredKnownFacts: VatKnownFacts)(implicit hc: HeaderCarrier): Future[Boolean] =
     knownFactsConnector.getKnownFactsAndControlListInformation(vatNumber) map {
       case Right(response) =>
-        enteredKnownFacts.businessPostcode == response.vatKnownFacts.businessPostcode &&
+        (enteredKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase) ==
+          response.vatKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase)) &&
         enteredKnownFacts.vatRegistrationDate == response.vatKnownFacts.vatRegistrationDate
       case Left(_) => false
     }
