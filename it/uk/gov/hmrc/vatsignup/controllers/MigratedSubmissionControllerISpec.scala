@@ -51,7 +51,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -82,7 +83,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -111,7 +113,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -141,7 +144,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
@@ -167,7 +171,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -195,7 +200,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -223,7 +229,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -251,7 +258,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -278,7 +286,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -305,7 +314,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -332,7 +342,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -359,7 +370,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -386,7 +398,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -413,7 +426,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -440,7 +454,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, Overseas)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -467,7 +482,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -495,7 +511,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
         stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
         stubMigratedSignUp(
           testSafeId,
-          testVatNumber
+          testVatNumber,
+          isMigratable = true
         )(OK)
         stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -528,7 +545,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -558,7 +576,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -586,7 +605,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedCompany(testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -616,7 +636,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -646,7 +667,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -676,7 +698,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -706,7 +729,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -735,7 +759,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -762,7 +787,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -789,7 +815,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -816,7 +843,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, ScottishLimitedPartnership(Some(testUtr), testCompanyNumber))(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -845,7 +873,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, VatGroup)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -874,7 +903,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, Trust)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -902,7 +932,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, UnincorporatedAssociation)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
@@ -931,7 +962,8 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
           stubMigratedSignUp(
             testSafeId,
-            testVatNumber
+            testVatNumber,
+            isMigratable = true
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 

@@ -22,7 +22,7 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException, UnprocessableEntityException}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import MigratedSignUpRequestService._
+import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,7 +43,8 @@ class MigratedSignUpRequestService @Inject()(subscriptionRequestRepository: Subs
             MigratedSignUpRequest(
               vatNumber = vatNumber,
               businessEntity = entity,
-              isDelegated = isDelegated
+              isDelegated = isDelegated,
+              isMigratable = subscriptionRequest.isMigratable
             )
           case _ =>
             throw new UnprocessableEntityException(
@@ -75,11 +76,15 @@ class MigratedSignUpRequestService @Inject()(subscriptionRequestRepository: Subs
 object MigratedSignUpRequestService {
 
   type MigratedSignUpRequestResponse = Either[SignUpRequestFailure, SubscriptionRequest]
+
   case object SignUpRequestDeleted
+
   case object RequestAuthorised
 
   sealed trait SignUpRequestFailure
+
   case object SignUpRequestNotFound extends SignUpRequestFailure
+
   case object InsufficientData extends SignUpRequestFailure
 
 }

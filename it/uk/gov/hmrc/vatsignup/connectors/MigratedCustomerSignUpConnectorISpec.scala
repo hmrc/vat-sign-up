@@ -34,10 +34,11 @@ class MigratedCustomerSignUpConnectorISpec extends ComponentSpecBase {
       "Return CustomerSignUpResponseSuccess" in {
         stubMigratedSignUp(
           testSafeId,
-          testVatNumber
+          testVatNumber,
+          isMigratable = true
         )(OK)
 
-        val res = await(connector.signUp(testSafeId, testVatNumber))
+        val res = await(connector.signUp(testSafeId, testVatNumber, isMigratable = true))
 
         res shouldBe Right(CustomerSignUpResponseSuccess)
       }
@@ -46,10 +47,11 @@ class MigratedCustomerSignUpConnectorISpec extends ComponentSpecBase {
       "return CustomerSignUpResponseFailure" in {
         stubMigratedSignUp(
           testSafeId,
-          testVatNumber
+          testVatNumber,
+          isMigratable = true
         )(BAD_REQUEST)
 
-        val res = await(connector.signUp(testSafeId, testVatNumber))
+        val res = await(connector.signUp(testSafeId, testVatNumber,  isMigratable = true))
 
         res shouldBe Left(CustomerSignUpResponseFailure(BAD_REQUEST, ""))
       }

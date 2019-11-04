@@ -38,12 +38,16 @@ trait MockMigratedSignUpService extends MockitoSugar with BeforeAndAfterEach {
     reset(mockMigratedSignUpService)
   }
 
-  def mockSignUp(safeId: String, vatNumber: String, optArn: Option[String])
+  def mockSignUp(safeId: String,
+                 vatNumber: String,
+                 isMigratable: Boolean,
+                 optArn: Option[String])
                 (response: Future[MigratedSignUpSuccess.type]): Unit =
 
     when(mockMigratedSignUpService.signUp(
       ArgumentMatchers.eq(safeId),
       ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(isMigratable),
       ArgumentMatchers.eq(optArn)
     )(
       ArgumentMatchers.any[HeaderCarrier],
