@@ -36,7 +36,7 @@ class MigratedCustomerSignUpConnector @Inject()(http: HttpClient,
 
   def signUp(safeId: String,
              vatNumber: String,
-             isMigratable: Boolean
+             isPartialMigration: Boolean
             )(implicit hc: HeaderCarrier): Future[CustomerSignUpResponse] = {
 
     val headerCarrier = hc.withExtraHeaders(appConfig.desEnvironmentHeader)
@@ -44,7 +44,7 @@ class MigratedCustomerSignUpConnector @Inject()(http: HttpClient,
 
     http.POST[JsObject, CustomerSignUpResponse](
       url = url,
-      body = buildRequest(safeId, vatNumber, isMigratable)
+      body = buildRequest(safeId, vatNumber, isPartialMigration)
     )(
       implicitly[Writes[JsObject]],
       implicitly[HttpReads[CustomerSignUpResponse]],
@@ -53,13 +53,13 @@ class MigratedCustomerSignUpConnector @Inject()(http: HttpClient,
     )
   }
 
-  private def buildRequest(safeId: String, vatNumber: String, isMigratable: Boolean): JsObject =
+  private def buildRequest(safeId: String, vatNumber: String, isPartialMigration: Boolean): JsObject =
     Json.obj("signUpRequest" -> Json.obj(
       "identification" -> Json.arr(
         Json.obj(IdTypeKey -> SafeIdKey, IdValueKey -> safeId),
         Json.obj(IdTypeKey -> VrnKey, IdValueKey -> vatNumber)
       ),
-      "isPartialMigration" -> isMigratable
+      "isPartialMigration" -> isPartialMigration
     ))
 
 }

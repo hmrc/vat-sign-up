@@ -68,7 +68,7 @@ class MigratedSubmissionServiceSpec extends UnitSpec
               s"return $SubmissionSuccess" in {
                 mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
                 mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
-                mockSignUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
+                mockSignUp(testSafeId, testVatNumber, isPartialMigration = false, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
                 mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(EnrolmentSuccess))
                 mockDeleteSignUpRequest(testVatNumber)(Future.successful(MigratedSignUpRequestService.SignUpRequestDeleted))
 
@@ -83,7 +83,7 @@ class MigratedSubmissionServiceSpec extends UnitSpec
 
                 mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
                 mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
-                mockSignUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
+                mockSignUp(testSafeId, testVatNumber, isPartialMigration = false, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
                 mockEnrolForMtd(testVatNumber, testSafeId)(Future.successful(EnrolmentSuccess))
                 mockDeleteSignUpRequest(testVatNumber)(Future.failed(exception))
 
@@ -97,7 +97,7 @@ class MigratedSubmissionServiceSpec extends UnitSpec
             "raise an InternalServerException" in {
               mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
               mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
-              mockSignUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
+              mockSignUp(testSafeId, testVatNumber, isPartialMigration = false, Some(testAgentReferenceNumber))(Future.successful(MigratedSignUpSuccess))
               mockEnrolForMtd(testVatNumber, testSafeId)(Future.failed(new InternalServerException("")))
 
               intercept[InternalServerException] {
@@ -110,7 +110,7 @@ class MigratedSubmissionServiceSpec extends UnitSpec
           "return SignUpFailure" in {
             mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(testSignUpRequest))
             mockRegisterBusinessEntity(testVatNumber, SoleTrader(testNino), Some(testAgentReferenceNumber))(Future.successful(testSafeId))
-            mockSignUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber))(
+            mockSignUp(testSafeId, testVatNumber, isPartialMigration = false, Some(testAgentReferenceNumber))(
               Future.failed(new InternalServerException(""))
             )
 

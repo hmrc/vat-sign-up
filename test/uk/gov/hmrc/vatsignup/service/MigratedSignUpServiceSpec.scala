@@ -44,11 +44,11 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
     "the user is the principal" when {
       "there is a successful response from DES" should {
         "return MigratedSignUpSuccess" in {
-          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
             Right(CustomerSignUpResponseSuccess)
           )
 
-          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, None))
+          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isPartialMigration = true, None))
 
           verifyAudit(MigratedSignUpAuditModel(
             safeId = testSafeId,
@@ -62,12 +62,12 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       }
       "there is a failure response from DES" should {
         "return MigratedSignUpFailure with the DES status code" in {
-          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
             Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason"))
           )
 
           intercept[InternalServerException] {
-            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, None))
+            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isPartialMigration = true, None))
           }
 
           verifyAudit(MigratedSignUpAuditModel(
@@ -82,11 +82,11 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
     "the user is an agent" when {
       "there is a successful response from DES" should {
         "return MigratedSignUpSuccess" in {
-          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
             Right(CustomerSignUpResponseSuccess)
           )
 
-          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber)))
+          val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isPartialMigration = true, Some(testAgentReferenceNumber)))
 
           verifyAudit(MigratedSignUpAuditModel(
             safeId = testSafeId,
@@ -100,12 +100,12 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       }
       "there is a failure response from DES" should {
         "return MigratedSignUpFailure with the DES status code" in {
-          mockSignUpMigrated(testSafeId, testVatNumber, isMigratable = true)(
+          mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
             Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason"))
           )
 
           intercept[InternalServerException] {
-            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isMigratable = true, Some(testAgentReferenceNumber)))
+            await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isPartialMigration = true, Some(testAgentReferenceNumber)))
           }
 
           verifyAudit(MigratedSignUpAuditModel(
