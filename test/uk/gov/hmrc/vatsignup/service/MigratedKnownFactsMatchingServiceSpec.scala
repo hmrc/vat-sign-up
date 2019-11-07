@@ -16,38 +16,35 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import java.time.Month
-
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInformationConnector
-import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService
+import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsInvalidVatNumber
-import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, Stagger1}
-import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.{KnownFacts, VatNumberNotFound}
+import uk.gov.hmrc.vatsignup.models.VatKnownFacts
+import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFactsAndControlListInformationConnector {
+class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFactsConnector {
 
   object TestMigratedKnownFactsMatchingService extends MigratedKnownFactsMatchingService(
-    mockKnownFactsAndControlListInformationConnector
+    mockKnownFactsConnector
   )
 
-  implicit val hc = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  private val testControlListInfo = ControlListInformation(Set.empty, Stagger1)
   private val test2KnownFacts = VatKnownFacts(Some(testPostCode), testDateOfRegistration, None, None)
+  private val testRetrievedKnownFacts = KnownFacts(testPostCode, testDateOfRegistration)
+
 
   "checkKnownFacts" when {
     "DES returns a response" when {
       "2 known facts are returned" when {
         "the returned known facts match the entered known facts" should {
           "return true" in {
-            val apiResponse = KnownFactsAndControlListInformation(test2KnownFacts, testControlListInfo)
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
+            mockGetKnownFacts(testVatNumber)(Future.successful(Right(testRetrievedKnownFacts)))
 
             val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test2KnownFacts))
 
@@ -56,8 +53,7 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFacts
         }
         "the returned known facts match the entered known facts after lowercasing them and removing spacing" should {
           "return true" in {
-            val apiResponse = KnownFactsAndControlListInformation(test2KnownFacts, testControlListInfo)
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
+            mockGetKnownFacts(testVatNumber)(Future.successful(Right(testRetrievedKnownFacts)))
 
             val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test2KnownFacts.copy(businessPostcode = Some("zz111zz"))))
 
@@ -66,8 +62,7 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFacts
         }
         "the returned known facts don't match the entered known facts" should {
           "return false" in {
-            val apiResponse = KnownFactsAndControlListInformation(test2KnownFacts, testControlListInfo)
-            mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Right(apiResponse)))
+            mockGetKnownFacts(testVatNumber)(Future.successful(Right(testRetrievedKnownFacts)))
 
             val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test2KnownFacts.copy(businessPostcode = Some("1234"))))
 
@@ -77,7 +72,7 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockKnownFacts
       }
       "DES returns no known facts for the VAT number" should {
         "return false" in {
-          mockGetKnownFactsAndControlListInformation(testVatNumber)(Future.successful(Left(KnownFactsInvalidVatNumber)))
+          mockGetKnownFacts(testVatNumber)(Future.successful(Left(VatNumberNotFound)))
 
           val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(testVatNumber, test2KnownFacts))
 

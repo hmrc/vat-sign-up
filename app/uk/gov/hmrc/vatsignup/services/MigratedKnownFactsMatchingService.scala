@@ -18,21 +18,21 @@ package uk.gov.hmrc.vatsignup.services
 
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
+import uk.gov.hmrc.vatsignup.connectors.KnownFactsConnector
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class MigratedKnownFactsMatchingService @Inject()(knownFactsConnector: KnownFactsAndControlListInformationConnector
+class MigratedKnownFactsMatchingService @Inject()(knownFactsConnector: KnownFactsConnector
                                                  )(implicit ec: ExecutionContext) {
 
   def checkKnownFactsMatch(vatNumber: String, enteredKnownFacts: VatKnownFacts)(implicit hc: HeaderCarrier): Future[Boolean] =
-    knownFactsConnector.getKnownFactsAndControlListInformation(vatNumber) map {
-      case Right(response) =>
-        (enteredKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase) ==
-          response.vatKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase)) &&
-        enteredKnownFacts.vatRegistrationDate == response.vatKnownFacts.vatRegistrationDate
+    knownFactsConnector.getKnownFacts(vatNumber).map {
+      case Right(responseKnownFacts) =>
+        enteredKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase)
+          .contains(responseKnownFacts.businessPostcode.filterNot(_.isWhitespace).toLowerCase) &&
+        enteredKnownFacts.vatRegistrationDate == responseKnownFacts.vatRegistrationDate
       case Left(_) => false
     }
 

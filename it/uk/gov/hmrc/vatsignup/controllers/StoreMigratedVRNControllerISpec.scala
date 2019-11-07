@@ -8,7 +8,7 @@ import uk.gov.hmrc.vatsignup.controllers.StoreMigratedVRNController._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestSubmissionRequestRepository}
 
 class StoreMigratedVRNControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
@@ -27,26 +27,13 @@ class StoreMigratedVRNControllerISpec extends ComponentSpecBase with CustomMatch
       "known facts are provided" when {
         "a vat number has been stored" in {
           stubAuth(OK, successfulAuthResponse())
-          stubGetKnownFactsAndControlListInformation34(testVatNumber, testBasePostCode, testDateOfRegistration)
-
-          val res = post("/subscription-request/migrated-vat-number")(Json.obj(
-            "vatNumber" -> testVatNumber,
-            "postCode" -> testBasePostCode,
-            "registrationDate" -> testDateOfRegistration
-          ))
-          res should have(httpStatus(OK))
-        }
-
-        "a vat number with matching known facts has been stored" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
-          stubGetKnownFactsAndControlListInformation34(testVatNumber, testPostCode, testDateOfRegistration)
+          stubSuccessGetKnownFacts(testVatNumber)
 
           val res = post("/subscription-request/migrated-vat-number")(Json.obj(
             "vatNumber" -> testVatNumber,
             "registrationDate" -> testDateOfRegistration,
-            "postCode" -> testPostCode)
-          )
-
+            "postCode" -> testPostCode
+          ))
           res should have(httpStatus(OK))
         }
       }
@@ -108,12 +95,12 @@ class StoreMigratedVRNControllerISpec extends ComponentSpecBase with CustomMatch
         "known facts are provided" when {
           "known facts do not match" in {
             stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
-            stubGetKnownFactsAndControlListInformation34(testVatNumber, "", testDateOfRegistration)
+            stubSuccessGetKnownFacts(testVatNumber)
 
             val res = post("/subscription-request/migrated-vat-number")(Json.obj(
               "vatNumber" -> testVatNumber,
               "registrationDate" -> testDateOfRegistration,
-              "postCode" -> testPostCode)
+              "postCode" -> "A11 11A")
             )
 
             res should have(
