@@ -19,10 +19,10 @@ package uk.gov.hmrc.vatsignup.services
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
-import uk.gov.hmrc.vatsignup.connectors.MandationStatusConnector
+import uk.gov.hmrc.vatsignup.connectors.{MandationStatusConnector, VatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
-import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, MigratableDates, NonDigital, NonMTDfB}
+import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, MigratableDates, NonDigital, NonMTDfB, VatCustomerDetails}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
 
@@ -30,19 +30,21 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationStatusConnector,
-                                            controlListEligibilityService: ControlListEligibilityService
+                                            controlListEligibilityService: ControlListEligibilityService,
+                                            vatCustomerDetailsConnector: VatCustomerDetailsConnector
                                            )(implicit ec: ExecutionContext) {
   def getMtdStatus(vatNumber: String)(implicit hc: HeaderCarrier, req: Request[_]): Future[MtdState] =
     mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(MTDfBMandated | MTDfBVoluntary) =>
         Future.successful(AlreadySubscribed)
       case Right(NonMTDfB | NonDigital) =>
-        Future.successful(
-          Eligible(
-            migrated = true,
-            overseas = false //TODO Update when overseas story is played for opt-in
-          )
-        )
+        vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber) map {
+          case Right(VatCustomerDetails(_, isOverseas)) =>
+            Eligible(
+              migrated = true,
+              overseas = isOverseas
+            )
+        }
       case Left(VatNumberNotFound) =>
         controlListEligibilityService.getEligibilityStatus(vatNumber) map {
           case Right(eligibilitySuccess: EligibilitySuccess) =>
