@@ -36,6 +36,16 @@ class StoreMigratedVRNControllerISpec extends ComponentSpecBase with CustomMatch
           ))
           res should have(httpStatus(OK))
         }
+        "an overseas vat number has been stored" in {
+          stubAuth(OK, successfulAuthResponse())
+          stubSuccessGetKnownFactsOverseas(testVatNumber)
+
+          val res = post("/subscription-request/migrated-vat-number")(Json.obj(
+            "vatNumber" -> testVatNumber,
+            "registrationDate" -> testDateOfRegistration
+          ))
+          res should have(httpStatus(OK))
+        }
       }
 
       "agent enrolment is provided" when {
