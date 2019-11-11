@@ -21,10 +21,11 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.connectors.mocks.MockMandationStatusConnector
+import uk.gov.hmrc.vatsignup.connectors.mocks.{MockMandationStatusConnector, MockVatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{GetMandationStatusHttpFailure, VatNumberNotFound}
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber, KnownFactsAndControlListFailure}
@@ -35,11 +36,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class VatNumberEligibilityServiceSpec extends UnitSpec
-  with MockMandationStatusConnector with MockControlListEligibilityService {
+  with MockMandationStatusConnector with MockControlListEligibilityService with MockVatCustomerDetailsConnector {
 
   object TestVatNumberEligibilityService extends VatNumberEligibilityService(
     mockMandationStatusConnector,
-    mockControlListEligibilityService
+    mockControlListEligibilityService,
+    mockVatCustomerDetailsConnector
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -64,16 +66,34 @@ class VatNumberEligibilityServiceSpec extends UnitSpec
         }
       }
       "the user is not already subscribed" when {
-        "the user is non-MTD" should {
-          s"return $Eligible" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+        "the user is non-MTD" when {
+          "the user is overseas" should {
+            s"return $Eligible with the overseas flag set to true" in {
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+              mockGetVatCustomerDetails(testVatNumber)(
+                Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = true)))
+              )
 
-            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false) //TODO Update when overseas story is played
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = true)
+            }
+          }
+          "the user is not overseas" should {
+            s"return $Eligible with the overseas flag set to true" in {
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+              mockGetVatCustomerDetails(testVatNumber)(
+                Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+              )
+
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
+            }
           }
         }
         "the user is non-digital" should {
           s"return $Eligible" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
+            mockGetVatCustomerDetails(testVatNumber)(
+              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+            )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
           }

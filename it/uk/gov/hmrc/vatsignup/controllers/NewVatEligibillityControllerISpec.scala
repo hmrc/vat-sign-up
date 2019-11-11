@@ -13,6 +13,8 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInform
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestSubmissionRequestRepository}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
@@ -42,6 +44,7 @@ class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMat
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubEligibleControlListInformation(testVatNumber)
+        stubSuccessGetKnownFacts(testVatNumber)
 
         val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
 
@@ -49,6 +52,23 @@ class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMat
           httpStatus(OK),
           jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
             EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false)))
+        )
+      }
+    }
+
+    "return OK with a JSON body" when {
+      "called with a mtdState of Eligible and the user is overseas" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+        stubEligibleControlListInformation(testVatNumber)
+        stubSuccessGetKnownFactsOverseas(testVatNumber)
+
+        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true)))
         )
       }
     }
