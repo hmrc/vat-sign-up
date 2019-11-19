@@ -59,10 +59,6 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
     when(mockSubscriptionRequestRepository.upsertTransactionEmail(ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(email)))
       .thenReturn(response)
 
-  def mockUpsertIdentityVerified(vatNumber: String)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertIdentityVerified(ArgumentMatchers.eq(vatNumber)))
-      .thenReturn(response)
-
   def mockDeleteRecord(vatNumber: String)(response: Future[WriteResult]): Unit =
     when(mockSubscriptionRequestRepository.deleteRecord(ArgumentMatchers.eq(vatNumber)))
       .thenReturn(response)
@@ -81,9 +77,4 @@ trait MockSubscriptionRequestRepository extends MockitoSugar with BeforeAndAfter
       ArgumentMatchers.eq(businessEntity)
     )) thenReturn response
 
-  def mockUpsertNinoSource(vatNumber: String, ninoSource: NinoSource)(response: Future[UpdateWriteResult]): Unit =
-    when(mockSubscriptionRequestRepository.upsertNinoSource(
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(ninoSource)
-    )) thenReturn response
 }

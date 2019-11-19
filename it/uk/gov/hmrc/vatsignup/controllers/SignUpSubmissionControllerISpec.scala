@@ -48,7 +48,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             email = Some(testEmail),
             isMigratable = testIsMigratable,
             isDirectDebit = false,
@@ -82,7 +81,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             transactionEmail = Some(testEmail),
             email = None,
             isMigratable = true,
@@ -101,58 +99,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             optIsPartialMigration = Some(false),
             contactPreference = Paper
           )(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
-
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
-
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
-
-        s"return $NO_CONTENT for individual sign up when ninoSource is IRSA" in {
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(IRSA),
-            email = Some(testEmail),
-            isMigratable = testIsMigratable,
-            isDirectDebit = false,
-            contactPreference = Some(testContactPreference)
-          )
-
-          stubAuth(OK, successfulAuthResponse(agentEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
-
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/vat-number/$testVatNumber/submit")(Json.obj()))
-
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
-
-        s"return $NO_CONTENT for individual sign up when ninoSource is Auth Profile" in {
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(AuthProfile),
-            email = Some(testEmail),
-            isMigratable = testIsMigratable,
-            isDirectDebit = false,
-            contactPreference = Some(testContactPreference)
-          )
-
-          stubAuth(OK, successfulAuthResponse(agentEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
-          stubSignUp(testSafeId, testVatNumber, Some(testEmail), emailVerified = Some(true), optIsPartialMigration = Some(!testIsMigratable),contactPreference = testContactPreference)(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
@@ -488,9 +434,7 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = testIsMigratable,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
@@ -774,7 +718,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(VatGroup),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = testIsMigratable,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
@@ -800,7 +743,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(Trust),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = testIsMigratable,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
@@ -851,7 +793,6 @@ class SignUpSubmissionControllerISpec extends ComponentSpecBase with CustomMatch
             vatNumber = testVatNumber,
             businessEntity = Some(JointVenture),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = testIsMigratable,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)

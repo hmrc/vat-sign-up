@@ -93,9 +93,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
             vatNumber = testVatNumber,
             ctReference = Some(testCtReference),
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            identityVerified = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -197,34 +195,6 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
     }
   }
 
-  "upsertIdentityVerified" should {
-    "throw NoSuchElementException where the vat number doesn't exist" in {
-      val res = for {
-        _ <- repo.upsertIdentityVerified(testVatNumber)
-        model <- repo.findById(testVatNumber)
-      } yield model
-
-      intercept[NoSuchElementException] {
-        await(res)
-      }
-    }
-
-    "update the subscription request with IdentityVerified" in {
-      val res = for {
-        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
-        _ <- repo.upsertIdentityVerified(testVatNumber)
-        model <- repo.findById(testVatNumber)
-      } yield model
-
-      await(res) should contain(SubscriptionRequest(
-        vatNumber = testVatNumber,
-        identityVerified = true,
-        isDirectDebit = false,
-        contactPreference = None
-      ))
-    }
-  }
-
   "upsertBusinessEntity" should {
     s"store a $SoleTrader" in {
       val res = for {
@@ -236,7 +206,6 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       await(res) shouldBe Some(SubscriptionRequest(
         vatNumber = testVatNumber,
         isMigratable = true,
-        ninoSource = Some(UserEntered),
         businessEntity = Some(SoleTrader(testNino)),
         isDirectDebit = false,
         contactPreference = None

@@ -38,11 +38,9 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
   val testSubscriptionRequest = SubscriptionRequest(
     vatNumber = testVatNumber,
     ctReference = None,
-    ninoSource = Some(AuthProfile),
     businessEntity = Some(SoleTrader(testNino)),
     email = None,
     transactionEmail = None,
-    identityVerified = true,
     isMigratable = true,
     isDirectDebit = false,
     contactPreference = None
