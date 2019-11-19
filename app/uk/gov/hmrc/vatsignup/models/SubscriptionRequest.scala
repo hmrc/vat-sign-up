@@ -20,15 +20,12 @@ import java.time.Instant
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.vatsignup.models.BusinessEntity.BusinessEntityFormat
-import uk.gov.hmrc.vatsignup.models.NinoSource._
 
 case class SubscriptionRequest(vatNumber: String,
                                ctReference: Option[String] = None,
-                               ninoSource: Option[NinoSource] = None,
                                businessEntity: Option[BusinessEntity] = None,
                                email: Option[String] = None,
                                transactionEmail: Option[String] = None,
-                               identityVerified: Boolean = false,
                                isMigratable: Boolean = true,
                                isDirectDebit: Boolean,
                                contactPreference: Option[ContactPreference]
@@ -43,12 +40,10 @@ object SubscriptionRequest {
   val companyNumberKey = "companyNumber"
   val ctReferenceKey = "ctReference"
   val ninoKey = "nino"
-  val ninoSourceKey = "ninoSource"
   val entityTypeKey = "entityType"
   val partnershipUtrKey = "sautr"
   val emailKey = "email"
   val transactionEmailKey = "transactionEmail"
-  val identityVerifiedKey = "identityVerified"
   val creationTimestampKey = "creationTimestamp"
   val isMigratableKey = "isMigratable"
   val isDirectDebitKey = "isDirectDebit"
@@ -62,27 +57,17 @@ object SubscriptionRequest {
         ctReference <- (json \ ctReferenceKey).validateOpt[String]
         //Need to manually recover as validateOpt does not return None in the case of the fields not being set
         businessEntity <- json.validateOpt[BusinessEntity] recover { case _ => None }
-        ninoSource <- (json \ ninoSourceKey).validateOpt[NinoSource] map { ninoSource =>
-          (businessEntity, ninoSource) match {
-            case (Some(SoleTrader(_)), None) => Some(UserEntered)
-            case (Some(SoleTrader(_)), Some(source)) => Some(source)
-            case _ => None
-          }
-        }
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
-        identityVerified <- (json \ identityVerifiedKey).validate[Boolean]
         isMigratable <- (json \ isMigratableKey).validate[Boolean]
         isDirectDebit <- (json \ isDirectDebitKey).validate[Boolean]
         contactPreference <- (json \ contactPreferenceKey).validateOpt[ContactPreference]
       } yield SubscriptionRequest(
         vatNumber = vatNumber,
         ctReference = ctReference,
-        ninoSource = ninoSource,
         businessEntity = businessEntity,
         email = email,
         transactionEmail = transactionEmail,
-        identityVerified = identityVerified,
         isMigratable = isMigratable,
         isDirectDebit = isDirectDebit,
         contactPreference = contactPreference
@@ -90,10 +75,8 @@ object SubscriptionRequest {
     subscriptionRequest =>
       Json.obj(
         idKey -> subscriptionRequest.vatNumber,
-        ninoSourceKey -> subscriptionRequest.ninoSource,
         emailKey -> subscriptionRequest.email,
         transactionEmailKey -> subscriptionRequest.transactionEmail,
-        identityVerifiedKey -> subscriptionRequest.identityVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli),
         isMigratableKey -> subscriptionRequest.isMigratable,
         isDirectDebitKey -> subscriptionRequest.isDirectDebit,

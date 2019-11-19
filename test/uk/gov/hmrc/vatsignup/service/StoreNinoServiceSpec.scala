@@ -65,27 +65,24 @@ class StoreNinoServiceSpec
     "return StoreNinoSuccess" when {
       "nino source is Auth Profile" in {
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
-        mockUpsertNinoSource(testVatNumber, AuthProfile)(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testNino, AuthProfile)
+        val res = TestStoreNinoService.storeNino(testVatNumber, testNino)
 
         await(res) shouldBe Right(StoreNinoSuccess)
       }
 
       "nino source is IRSA" in {
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
-        mockUpsertNinoSource(testVatNumber, IRSA)(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testNino, IRSA)
+        val res = TestStoreNinoService.storeNino(testVatNumber, testNino)
 
         await(res) shouldBe Right(StoreNinoSuccess)
       }
 
       "nino source is User Entered" in {
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.successful(mock[UpdateWriteResult]))
-        mockUpsertNinoSource(testVatNumber, UserEntered)(Future.successful(mock[UpdateWriteResult]))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testNino, UserEntered)
+        val res = TestStoreNinoService.storeNino(testVatNumber, testNino)
 
         await(res) shouldBe Right(StoreNinoSuccess)
       }
@@ -95,7 +92,7 @@ class StoreNinoServiceSpec
       "vat number is not found in mongo" in {
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new NoSuchElementException))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testNino, AuthProfile)
+        val res = TestStoreNinoService.storeNino(testVatNumber, testNino)
         await(res) shouldBe Left(NinoDatabaseFailureNoVATNumber)
       }
     }
@@ -103,7 +100,7 @@ class StoreNinoServiceSpec
       "calls to mongo fail" in {
         mockUpsertBusinessEntity(testVatNumber, SoleTrader(testNino))(Future.failed(new Exception))
 
-        val res = TestStoreNinoService.storeNino(testVatNumber, testNino, AuthProfile)
+        val res = TestStoreNinoService.storeNino(testVatNumber, testNino)
         await(res) shouldBe Left(NinoDatabaseFailure)
       }
     }

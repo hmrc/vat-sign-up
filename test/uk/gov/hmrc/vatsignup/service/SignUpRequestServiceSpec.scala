@@ -262,7 +262,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                     SubscriptionRequest(
                       vatNumber = testVatNumber,
                       businessEntity = Some(SoleTrader(testNino)),
-                      ninoSource = Some(IRSA),
                       email = Some(testEmail),
                       isMigratable = testIsMigratable,
                       isDirectDebit = false,

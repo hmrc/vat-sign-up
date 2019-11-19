@@ -22,8 +22,6 @@ import play.api.mvc.Action
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import uk.gov.hmrc.vatsignup.models.BusinessEntity.NinoKey
-import uk.gov.hmrc.vatsignup.models.NinoSource
-import uk.gov.hmrc.vatsignup.models.NinoSource.ninoSourceFrontEndKey
 import uk.gov.hmrc.vatsignup.services.StoreNinoService
 import uk.gov.hmrc.vatsignup.services.StoreNinoService.{NinoDatabaseFailure, NinoDatabaseFailureNoVATNumber, StoreNinoSuccess}
 
@@ -36,9 +34,9 @@ class StoreNinoController @Inject()(val authConnector: AuthConnector, storeNinoS
   def storeNino(vatNumber: String): Action[JsValue] =
     Action.async(parse.json) { implicit req =>
       authorised() {
-        ((req.body \ NinoKey).validate[String], (req.body \ ninoSourceFrontEndKey).validate[NinoSource]) match {
-          case (JsSuccess(nino, _), JsSuccess(ninoSource, _)) =>
-            storeNinoService.storeNino(vatNumber, nino, ninoSource) map {
+        (req.body \ NinoKey).validate[String] match {
+          case JsSuccess(nino, _) =>
+            storeNinoService.storeNino(vatNumber, nino) map {
               case Right(StoreNinoSuccess) => NoContent
               case Left(NinoDatabaseFailureNoVATNumber) => NotFound
               case Left(NinoDatabaseFailure) => InternalServerError

@@ -24,8 +24,8 @@ import play.api.libs.json.{JsObject, Json, OFormat}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.models.ExplicitEntityType.{GeneralPartnership, LimitedPartnership}
+import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest
 import uk.gov.hmrc.vatsignup.models.UnconfirmedSubscriptionRequest.credentialIdKey
-import uk.gov.hmrc.vatsignup.models.{UnconfirmedSubscriptionRequest, UserEntered}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -122,11 +122,9 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
             companyNumber = Some(testCompanyNumber),
             ctReference = Some(testCtReference),
             nino = Some(testNino),
-            ninoSource = Some(UserEntered),
             partnershipEntity = Some(GeneralPartnership),
             partnershipUtr = Some(testUtr),
-            email = Some(testEmail),
-            identityVerified = Some(true)
+            email = Some(testEmail)
           )
         )
         _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
@@ -169,7 +167,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
     "delete the nino if it already exists" in {
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
+        _ <- repo.upsertNino(testRequestId, testNino)
         withNino <- repo.findById(testRequestId)
         _ <- repo.upsertPartnership(testRequestId, testUtr, GeneralPartnership)
         withoutNino <- repo.findById(testRequestId)
@@ -180,12 +178,10 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
       withNino should contain(
         testUnconfirmedSubscriptionRequest.copy(
           nino = Some(testNino),
-          ninoSource = Some(UserEntered),
           partnershipEntity = None,
-          partnershipUtr = None,
-          identityVerified = Some(false)
+          partnershipUtr = None
         ))
-      withoutNino should contain(testUnconfirmedSubscriptionRequest.copy(identityVerified = Some(false)))
+      withoutNino should contain(testUnconfirmedSubscriptionRequest)
     }
 
     "delete the company number if it already exists" in {
@@ -256,7 +252,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
     "delete the nino if it already exists" in {
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
+        _ <- repo.upsertNino(testRequestId, testNino)
         withNino <- repo.findById(testRequestId)
         _ <- repo.upsertPartnershipLimited(testRequestId, testUtr, testCompanyNumber, LimitedPartnership)
         withoutNino <- repo.findById(testRequestId)
@@ -266,13 +262,11 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
 
       withNino should contain(testSubscriptionRequest.copy(
         nino = Some(testNino),
-        ninoSource = Some(UserEntered),
         partnershipEntity = None,
         partnershipUtr = None,
-        companyNumber = None,
-        identityVerified = Some(false)
+        companyNumber = None
       ))
-      withoutNino should contain(testSubscriptionRequest.copy(identityVerified = Some(false)))
+      withoutNino should contain(testSubscriptionRequest)
     }
 
     "replace an existing stored partnership record" in {
@@ -452,14 +446,12 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
   "upsertNino" should {
     val testUnconfirmedSubscriptionRequest = UnconfirmedSubscriptionRequest(
       requestId = testRequestId,
-      nino = Some(testNino),
-      ninoSource = Some(UserEntered),
-      identityVerified = Some(false)
+      nino = Some(testNino)
     )
 
     "throw NoSuchElementException where the request id doesn't exist" in {
       val res = for {
-        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
+        _ <- repo.upsertNino(testRequestId, testNino)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -471,7 +463,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
     "insert the unconfirmed subscription request where there isn't one" in {
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
+        _ <- repo.upsertNino(testRequestId, testNino)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -482,7 +474,7 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
         _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
-        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
+        _ <- repo.upsertNino(testRequestId, testNino)
         model <- repo.findById(testRequestId)
       } yield model
 
@@ -491,76 +483,15 @@ class UnconfirmedSubscriptionRequestRepositoryISpec extends UnitSpec with GuiceO
       )
     }
 
-    "set identity verification to false" in {
-      val res = for {
-        _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertIdentityVerified(testRequestId)
-        identityVerified <- repo.findById(testRequestId)
-        _ <- repo.upsertNino(testRequestId, testNino, UserEntered)
-        identityNotVerified <- repo.findById(testRequestId)
-      } yield (identityVerified, identityNotVerified)
-
-      val (identityVerified, identityNotVerified) = await(res)
-
-      identityVerified should contain(testUnconfirmedSubscriptionRequest.copy(
-        identityVerified = Some(true)
-      ))
-      identityNotVerified should contain(testUnconfirmedSubscriptionRequest)
-    }
-
-
     "replace an existing stored nino" in {
       val newNino = UUID.randomUUID().toString
       val res = for {
         _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertNino(testRequestId, newNino, UserEntered)
+        _ <- repo.upsertNino(testRequestId, newNino)
         model <- repo.findById(testRequestId)
       } yield model
 
       await(res) should contain(testUnconfirmedSubscriptionRequest.copy(nino = Some(newNino)))
-    }
-  }
-
-  "upsertIdentityVerified" should {
-    val testUnconfirmedSubscriptionRequest = UnconfirmedSubscriptionRequest(
-      requestId = testRequestId,
-      identityVerified = Some(false)
-    )
-
-    "throw NoSuchElementException where the request id doesn't exist" in {
-      val res = for {
-        _ <- repo.upsertIdentityVerified(testRequestId)
-        model <- repo.findById(testRequestId)
-      } yield model
-
-      intercept[NoSuchElementException] {
-        await(res)
-      }
-    }
-
-    "insert the unconfirmed subscription request where there isn't one" in {
-      val res = for {
-        _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertIdentityVerified(testRequestId)
-        model <- repo.findById(testRequestId)
-      } yield model
-
-      await(res) should contain(testUnconfirmedSubscriptionRequest.copy(identityVerified = Some(true)))
-    }
-
-    "update the unconfirmed subscription request with IdentityVerified" in {
-      val res = for {
-        _ <- repo.insert(testUnconfirmedSubscriptionRequest)
-        _ <- repo.upsertVatNumber(testRequestId, testVatNumber, isMigratable = true)
-        _ <- repo.upsertIdentityVerified(testRequestId)
-        model <- repo.findById(testRequestId)
-      } yield model
-
-      await(res) should contain(testUnconfirmedSubscriptionRequest.copy(
-        vatNumber = Some(testVatNumber),
-        identityVerified = Some(true),
-        isMigratable = Some(true)
-      ))
     }
   }
 

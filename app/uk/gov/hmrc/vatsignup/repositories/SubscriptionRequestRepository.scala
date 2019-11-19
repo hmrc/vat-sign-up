@@ -28,9 +28,8 @@ import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.models.ContactPreference.contactPreferenceFormat
-import uk.gov.hmrc.vatsignup.models.NinoSource._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
-import uk.gov.hmrc.vatsignup.models.{BusinessEntity, ContactPreference, NinoSource, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.{BusinessEntity, ContactPreference, SubscriptionRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -78,25 +77,6 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
 
   def upsertTransactionEmail(vatNumber: String, transactionEmail: String): Future[UpdateWriteResult] =
     upsert(vatNumber, transactionEmailKey, transactionEmail)
-
-  def upsertNinoSource(vatNumber: String, ninoSource: NinoSource): Future[UpdateWriteResult] =
-    collection.update(
-      selector = Json.obj(idKey -> vatNumber),
-      update = Json.obj("$set" -> Json.obj(
-        ninoSourceKey -> ninoSource,
-        identityVerifiedKey -> false
-      )),
-      upsert = false
-    ).filter(_.n == 1)
-
-  def upsertIdentityVerified(vatNumber: String): Future[UpdateWriteResult] =
-    collection.update(
-      selector = Json.obj(idKey -> vatNumber),
-      update = Json.obj("$set" -> Json.obj(
-        identityVerifiedKey -> true
-      )),
-      upsert = false
-    ).filter(_.n == 1)
 
   def upsertContactPreference(vatNumber: String, contactPreference: ContactPreference): Future[WriteResult] =
     collection.update(

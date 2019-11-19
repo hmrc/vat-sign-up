@@ -39,7 +39,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             email = Some(testEmail),
             isMigratable = true,
             isDirectDebit = false,
@@ -70,7 +69,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             transactionEmail = Some(testEmail),
             email = None,
             isMigratable = true,
@@ -88,65 +86,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           )(OK)
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
-
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
-
-        s"return $NO_CONTENT for individual sign up when ninoSource is IRSA" in {
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(IRSA),
-            email = Some(testEmail),
-            isMigratable = true,
-            isDirectDebit = false,
-            contactPreference = Some(testContactPreference)
-          )
-
-          stubAuth(OK, successfulAuthResponse(agentEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
-          stubMigratedSignUp(
-            testSafeId,
-            testVatNumber,
-            isPartialMigration = false
-          )(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
-
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
-
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
-
-        s"return $NO_CONTENT for individual sign up when ninoSource is Auth Profile" in {
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(AuthProfile),
-            email = Some(testEmail),
-            isMigratable = true,
-            isDirectDebit = false,
-            contactPreference = Some(testContactPreference)
-          )
-
-          stubAuth(OK, successfulAuthResponse(agentEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, SoleTrader(testNino))(testSafeId)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
-          stubMigratedSignUp(
-            testSafeId,
-            testVatNumber,
-            isPartialMigration = false
-          )(OK)
           await(submissionRequestRepo.insert(testSubscriptionRequest))
           val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
 
@@ -532,9 +471,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           val testSubscriptionRequest = SubscriptionRequest(
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
-            ninoSource = Some(UserEntered),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
@@ -862,7 +799,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(VatGroup),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
@@ -892,7 +828,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(Trust),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
@@ -951,7 +886,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(JointVenture),
             email = Some(testEmail),
-            identityVerified = true,
             isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)

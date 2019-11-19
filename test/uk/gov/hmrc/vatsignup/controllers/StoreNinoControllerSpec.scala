@@ -24,7 +24,6 @@ import play.mvc.Http.Status._
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.IRSA
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreNinoService
 import uk.gov.hmrc.vatsignup.services.StoreNinoService.{NinoDatabaseFailure, NinoDatabaseFailureNoVATNumber, StoreNinoSuccess}
 
@@ -35,14 +34,14 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
 
   object TestStoreNinoController extends StoreNinoController(mockAuthConnector, mockStoreNinoService)
 
-  val testJson = Json.obj("nino" -> testNino, "ninoSource" -> IRSA)
+  val testJson = Json.obj("nino" -> testNino)
   val testReq = FakeRequest("PUT", "/").withBody(testJson)
 
   "storeNinoWithoutMatching" should {
     "return OK" when {
       "Nino has been stored" in {
         mockAuthorise()()
-        mockStoreNino(testVatNumber, testNino, IRSA)(Future.successful(Right(StoreNinoSuccess)))
+        mockStoreNino(testVatNumber, testNino)(Future.successful(Right(StoreNinoSuccess)))
 
         val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(testReq))
         status(res) shouldBe NO_CONTENT
@@ -51,7 +50,7 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
     "return NotFound" when {
       "Vat number not found in Mongo" in {
         mockAuthorise()()
-        mockStoreNino(testVatNumber, testNino, IRSA)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
+        mockStoreNino(testVatNumber, testNino)(Future.successful(Left(NinoDatabaseFailureNoVATNumber)))
 
         val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(testReq))
         status(res) shouldBe NOT_FOUND
@@ -60,7 +59,7 @@ class StoreNinoControllerSpec extends UnitSpec with MockAuthConnector with MockS
     "return Internal Server Error" when {
       "Mongo fails" in {
         mockAuthorise()()
-        mockStoreNino(testVatNumber, testNino, IRSA)(Future.successful(Left(NinoDatabaseFailure)))
+        mockStoreNino(testVatNumber, testNino)(Future.successful(Left(NinoDatabaseFailure)))
 
         val res: Result = await(TestStoreNinoController.storeNino(testVatNumber)(testReq))
         status(res) shouldBe INTERNAL_SERVER_ERROR
