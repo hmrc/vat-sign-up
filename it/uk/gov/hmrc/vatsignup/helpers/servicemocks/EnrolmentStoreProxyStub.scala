@@ -37,6 +37,11 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
       .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey, testCredentialId, testCredentialId2, testCredentialId3))
   }
 
+  def stubGetUserId(vatNumber: String)(status: Int): StubMapping = {
+    when(method = GET, uri = s"$enrolmentStoreProxyUri/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/users\\?type=principal")
+      .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey, testCredentialId))
+  }
+
   def stubGetAllocatedMtdVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
     when(method = GET, uri = s"$enrolmentStoreProxyUri/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups\\?type=principal")
       .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey, testGroupId))
