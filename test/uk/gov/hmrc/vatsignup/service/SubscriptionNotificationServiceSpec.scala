@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vatsignup.service
 
 import play.api.http.Status.BAD_REQUEST
+import play.api.test.FakeRequest
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -27,11 +28,13 @@ import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.models.SubscriptionState.{AuthRefreshed, Failure, Success}
+import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.{MockAutoClaimEnrolmentService, MockCheckEnrolmentAllocationService}
 import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService._
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 import uk.gov.hmrc.vatsignup.services.{AutoClaimEnrolmentService, SubscriptionNotificationService}
+import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -41,17 +44,20 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
   with MockEmailConnector
   with MockAutoClaimEnrolmentService
   with MockCheckEnrolmentAllocationService
-  with MockConfig {
+  with MockConfig
+  with MockAuditService{
 
   object TestSubscriptionNotificationService extends SubscriptionNotificationService(
     mockEmailRequestRepository,
     mockEmailConnector,
     mockAutoClaimEnrolmentService,
     mockCheckEnrolmentAllocationService,
-    mockConfig
+    mockConfig,
+    mockAuditService
   )
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
+  private implicit val request = FakeRequest("POST", "testUrl")
 
   "sendEmailNotification" when {
     "the email request exists in the database" when {
@@ -207,6 +213,11 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
                 res shouldBe Right(AutoEnroledAndSubscribed)
+                verifyAudit(AutoClaimEnrolementAuditingModel(
+                  testVatNumber,
+                  isSuccess = true,
+                  isAgent = true
+                ))
               }
             }
             "the e-mail request fails" should {
@@ -216,7 +227,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
                 mockAutoClaimEnrolment(testVatNumber)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
 
-                mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+                mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(status = BAD_REQUEST, body = ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
                 res shouldBe Left(EmailServiceFailure)
@@ -235,6 +246,12 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
               res shouldBe Right(NotAutoEnroledButSubscribed)
+              verifyAudit(AutoClaimEnrolementAuditingModel(
+                testVatNumber,
+                isSuccess = false,
+                isAgent = true,
+                autoClaimEnrolementFailureMessage = Some(AutoClaimEnrolmentService.NoUsersFound.toString)
+              ))
             }
           }
         }
