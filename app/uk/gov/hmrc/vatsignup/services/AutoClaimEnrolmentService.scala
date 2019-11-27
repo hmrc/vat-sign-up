@@ -41,9 +41,9 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService,
                                           usersGroupsSearchConnector: UsersGroupsSearchConnector,
                                           auditService: AuditService
-                                         )(implicit ec: ExecutionContext,request: Request[_]) {
+                                         )(implicit ec: ExecutionContext) {
 
-  def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
+  def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier,request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
     for {
       legacyVatGroupId <- getLegacyEnrolmentAllocation(vatNumber)
       legacyVatUserIds <- getLegacyEnrolmentUserIDs(vatNumber)
