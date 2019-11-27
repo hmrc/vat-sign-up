@@ -38,7 +38,8 @@ trait MockAutoClaimEnrolmentService extends BeforeAndAfterEach with MockitoSugar
 
   def mockAutoClaimEnrolment(vatNumber: String)(response: Future[AutoClaimEnrolmentResponse]): Unit = {
     when(mockAutoClaimEnrolmentService.autoClaimEnrolment(
-      ArgumentMatchers.eq(vatNumber)
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq("triggerpoint")
     )(ArgumentMatchers.any[HeaderCarrier])
     ) thenReturn response
   }

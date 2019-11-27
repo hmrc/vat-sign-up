@@ -52,8 +52,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
     mockEmailConnector,
     mockAutoClaimEnrolmentService,
     mockCheckEnrolmentAllocationService,
-    mockConfig,
-    mockAuditService
+    mockConfig
   )
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
