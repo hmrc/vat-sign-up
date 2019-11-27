@@ -40,6 +40,31 @@ You will need [sbt](http://www.scala-sbt.org/)
 5) **Go to the homepage:**
 
    http://localhost:9566/vat-through-software/sign-up/
+   
+### Bulk Migration API
+
+#### Route
+ 
+`/vat-sign-up/migration-notification/vat-number/:vatNumber`
+
+where `:vatNumber` is a VRN (that has been migrated) that the calling service must provide as shown in the example below.
+
+e.g `/vat-sign-up/migration-notification/vat-number/123456789`
+
+#### Request Method and Body
+
+HTTP Methods Supported: POST
+
+Request Body: An empty json object
+
+#### Responses
+
+The API returns only two status codes with no response body as the failures are not recoverable.
+
+|Status Code | Reason
+|------------| -----------------
+| ```204```  | Successfully assigned the MTD-VAT enrolment to all users that have the VAT-DEC enrolment for the supplied VRN.
+| ```500```  | Failed to assign the enrolment / downstream service failures
 
 ### License
 
