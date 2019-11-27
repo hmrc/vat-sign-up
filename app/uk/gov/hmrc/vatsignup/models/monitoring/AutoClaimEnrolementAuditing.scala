@@ -20,15 +20,15 @@ import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object AutoClaimEnrolementAuditing {
 
-
   val AutoClaimEnrolementTransactionName = "MTDVATAutoEnrolment"
   val AutoClaimEnrolementAuditType = "mtdVatAutoEnrolment"
 
   case class AutoClaimEnrolementAuditingModel(vatNumber: String,
                                               triggerPoint: String,
                                               isSuccess: Boolean,
-                                              groupId: Option[String],
-                                              userIds: Option[Set[String]],
+                                              call: Option[String] = None,
+                                              groupId: Option[String] = None,
+                                              userIds: Set[String] = Set.empty,
                                               failureInformation: Option[String] = None
                                              ) extends AuditModel {
 
@@ -39,8 +39,9 @@ object AutoClaimEnrolementAuditing {
       "triggerPoint" -> triggerPoint,
       "isSuccess" -> isSuccess.toString,
       "groupId" -> groupId.getOrElse(""),
-      "userIds" -> userIds.getOrElse(Set.empty).mkString(", "),
-      "failure" -> failureInformation.getOrElse("")
+      "userIds" -> userIds.mkString(", "),
+      "failedCall" -> call.getOrElse(""),
+      "reason" -> failureInformation.getOrElse("")
     ).filter { case (_, value) => value.nonEmpty }
 
     override val auditType: String = AutoClaimEnrolementAuditType

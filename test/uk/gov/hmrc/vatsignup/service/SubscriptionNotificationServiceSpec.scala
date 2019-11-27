@@ -43,8 +43,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
   with MockEmailConnector
   with MockAutoClaimEnrolmentService
   with MockCheckEnrolmentAllocationService
-  with MockConfig
-  with MockAuditService{
+  with MockConfig {
 
   object TestSubscriptionNotificationService extends SubscriptionNotificationService(
     mockEmailRequestRepository,

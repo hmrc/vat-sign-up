@@ -31,7 +31,7 @@ class BulkMigrationAutoClaimEnrolmentController @Inject()(autoClaimEnrolmentServ
 
   def autoClaimEnrolment(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>
-      autoClaimEnrolmentService.autoClaimEnrolment(vatNumber,"Bulk Migration").map {
+      autoClaimEnrolmentService.autoClaimEnrolment(vatNumber, bulkMigration).map {
         case Right(EnrolmentAssigned) => NoContent
         case Left(EnrolmentNotAllocated) | Left(NoUsersFound) => NoContent
         case reason => throw new InternalServerException(s"Unexpected failure when trying to automatically claim an enrolment due to $reason")

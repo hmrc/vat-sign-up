@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.services
 
+import cats.Functor
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
@@ -45,25 +46,62 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                           auditService: AuditService
                                          )(implicit ec: ExecutionContext) {
 
-  def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier,request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
+  def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier, request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
     for {
       legacyVatGroupId <- getLegacyEnrolmentAllocation(vatNumber)
+        .logLeft(vatNumber, triggerPoint, call = getLegacyEnrolmentAllocationCall)
       legacyVatUserIds <- getLegacyEnrolmentUserIDs(vatNumber)
+        .logLeft(vatNumber, triggerPoint, call = getLegacyEnrolmentUserIDsCall, Some(legacyVatGroupId))
       adminUserId <- EitherT(getAdminUserId(legacyVatGroupId, legacyVatUserIds))
+        .logLeft(vatNumber, triggerPoint, call = getAdminUserIdCall, Some(legacyVatGroupId), legacyVatUserIds)
       knownFacts <- getKnownFacts(vatNumber)
+        .logLeft(vatNumber, triggerPoint, call = getKnownFactsCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
+        .logLeft(vatNumber, triggerPoint, call = upsertEnrolmentAllocationCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, legacyVatGroupId, adminUserId)
+        .logLeft(vatNumber, triggerPoint, call = allocateEnrolmentWithoutKnownFactsCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
-      _ = auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, triggerPoint, isSuccess = true, Some(legacyVatGroupId), Some(legacyVatUserIds) ))
-      _ = Logger.info(Json.obj("callBack" -> "AutoClaimEnrolmentService",
-                                       "vatNumber" -> vatNumber,
-                                       "triggerPoint" -> triggerPoint,
-                                       "isSuccess" -> true.toString,
-                                       "groupIdFound" -> true.toString,
-                                       "userIds" -> legacyVatUserIds.size
-                                    ).toString())
+        .logLeft(vatNumber, triggerPoint, call = assignEnrolmentToUserCall, Some(legacyVatGroupId), legacyVatUserIds)
+      _ = auditService.audit(
+        AutoClaimEnrolementAuditingModel(
+          vatNumber,
+          triggerPoint,
+          isSuccess = true,
+          groupId = Some(legacyVatGroupId),
+          userIds = legacyVatUserIds
+        )
+      )
+      _ = Logger.info(
+        Json.obj("callBack" -> autoClaimEnrolmentService,
+          "vatNumber" -> vatNumber,
+          "triggerPoint" -> triggerPoint,
+          "isSuccess" -> true,
+          "groupIdFound" -> true,
+          "userIds" -> legacyVatUserIds.size
+        ).toString()
+      )
     } yield EnrolmentAssigned
-  }.value
+    }.value
+
+  implicit class LeftWithLogging[F[_], A, B](value: EitherT[F, A, B]) {
+    def logLeft(vatNumber: String, triggerPoint: String, call: String, groupId: Option[String] = None, userIds: Set[String] = Set.empty)
+               (implicit F: Functor[F], hc: HeaderCarrier, request: Request[_]): EitherT[F, A, B] = {
+      value.leftMap { error =>
+        auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, triggerPoint, isSuccess = false, Some(call), groupId, userIds, Some(error.toString)))
+        Logger.error(
+          Json.obj("callBack" -> autoClaimEnrolmentService,
+            "vatNumber" -> vatNumber,
+            "triggerPoint" -> triggerPoint,
+            "isSuccess" -> false,
+            "call" -> call,
+            "groupIdFound" -> groupId.isDefined,
+            "userIds" -> userIds.size
+          ).toString()
+        )
+        error
+      }
+    }
+  }
 
   private def getLegacyEnrolmentAllocation(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] = {
     EitherT(checkEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(vatNumber)) transform {
@@ -154,6 +192,19 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
 }
 
 object AutoClaimEnrolmentService {
+
+  val getLegacyEnrolmentAllocationCall: String = "getLegacyEnrolmentAllocation"
+  val getLegacyEnrolmentUserIDsCall: String = "getLegacyEnrolmentUserIDs"
+  val getAdminUserIdCall: String = "getAdminUserId"
+  val getKnownFactsCall: String = "getKnownFacts"
+  val upsertEnrolmentAllocationCall: String = "upsertEnrolmentAllocation"
+  val allocateEnrolmentWithoutKnownFactsCall: String = "allocateEnrolmentWithoutKnownFacts"
+  val assignEnrolmentToUserCall: String = "assignEnrolmentToUser"
+
+  val autoClaimEnrolmentService: String = "AutoClaimEnrolmentService"
+
+  val agentLedSignUp: String = "Agent sign-up"
+  val bulkMigration: String = "Bulk Migration"
 
   type AutoClaimEnrolmentResponse = Either[AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess]
 
