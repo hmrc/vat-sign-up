@@ -19,6 +19,8 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
+import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Admin
 import uk.gov.hmrc.http.HeaderCarrier
@@ -53,6 +55,13 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, legacyVatGroupId, adminUserId)
       _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
       _ = auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, triggerPoint, isSuccess = true, Some(legacyVatGroupId), Some(legacyVatUserIds) ))
+      _ = Logger.info(Json.obj("callBack" -> "AutoClaimEnrolmentService",
+                                       "vatNumber" -> vatNumber,
+                                       "triggerPoint" -> triggerPoint,
+                                       "isSuccess" -> true.toString,
+                                       "groupIdFound" -> true.toString,
+                                       "userIds" -> legacyVatUserIds.size
+                                    ).toString())
     } yield EnrolmentAssigned
   }.value
 
