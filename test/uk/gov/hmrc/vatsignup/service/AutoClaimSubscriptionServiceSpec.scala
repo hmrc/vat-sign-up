@@ -26,6 +26,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.{UsersFound, UsersGroupsSearchConnectionFailure}
 import uk.gov.hmrc.vatsignup.httpparsers._
+import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import uk.gov.hmrc.vatsignup.service.mocks.{MockAssignEnrolmentToUserService, MockCheckEnrolmentAllocationService}
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
@@ -89,9 +90,17 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                     Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
                   )
 
-                  val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+                  val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
                   res shouldBe Right(AutoClaimEnrolmentService.EnrolmentAssigned)
+
+                  verifyAudit(AutoClaimEnrolementAuditingModel(
+                        testVatNumber,
+                        "Agent sign-up",
+                        isSuccess = true,
+                        groupId = Some(testGroupId),
+                        userIds = Some(testSetCredentialIds)
+                      ))
                 }
               }
               "assign the new user IDs fails" when {
@@ -114,7 +123,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                     Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed))
                   )
 
-                  val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+                  val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
                   res shouldBe Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailure)
                 }
@@ -137,7 +146,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(testErrorMsg)))
                 )
 
-                val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+                val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
                 res shouldBe Left(AutoClaimEnrolmentService.EnrolFailure(testErrorMsg))
               }
@@ -157,7 +166,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                 Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
               )
 
-              val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+              val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
               res shouldBe Left(AutoClaimEnrolmentService.UpsertEnrolmentFailure(testErrorMsg))
             }
@@ -174,7 +183,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             )
             mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
 
-            val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+            val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
             res shouldBe Left(InvalidVatNumber)
           }
@@ -188,7 +197,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             )
             mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
 
-            val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+            val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
             res shouldBe Left(VatNumberNotFound)
           }
@@ -204,7 +213,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             Future.successful(Right(UsersFound(Map(testCredentialId -> Assistant))))
           )
 
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
           res shouldBe Left(NoAdminUsers)
         }
@@ -219,7 +228,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             Future.successful(Left(UsersGroupsSearchConnectionFailure(INTERNAL_SERVER_ERROR)))
           )
 
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
           res shouldBe Left(UsersGroupsSearchFailure)
         }
@@ -247,7 +256,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             )))
           )
 
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
           res shouldBe Left(NoAdminUsers)
         }
@@ -259,7 +268,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           )
           mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(Set()))))
 
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
           res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
         }
@@ -271,7 +280,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           )
           mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.NoUsersFound)))
 
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
           res shouldBe Left(NoUsersFound)
         }
@@ -283,7 +292,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           )
           mockGetUserIds(testVatNumber)(Future.successful(Left(QueryUsersHttpParser.EnrolmentStoreProxyConnectionFailure(BAD_REQUEST))))
 
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
           res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
         }
@@ -295,7 +304,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
         )
 
-        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
         res shouldBe Left(EnrolmentNotAllocated)
       }
@@ -306,7 +315,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
         )
 
-        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"trigger point"))
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber,"Agent sign-up"))
 
         res shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
 

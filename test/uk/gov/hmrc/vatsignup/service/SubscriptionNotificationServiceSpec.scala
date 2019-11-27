@@ -28,7 +28,6 @@ import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.models.SubscriptionState.{AuthRefreshed, Failure, Success}
-import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockEmailRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.{MockAutoClaimEnrolmentService, MockCheckEnrolmentAllocationService}
 import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService._
@@ -57,6 +56,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
   private implicit val request = FakeRequest("POST", "testUrl")
+  val agentTriggerPoint = "Agent sign-up"
 
   "sendEmailNotification" when {
     "the email request exists in the database" when {
@@ -206,19 +206,12 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-                mockAutoClaimEnrolment(testVatNumber)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
+                mockAutoClaimEnrolment(testVatNumber,agentTriggerPoint)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
                 mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
 
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
                 res shouldBe Right(AutoEnroledAndSubscribed)
-                verifyAudit(AutoClaimEnrolementAuditingModel(
-                  testVatNumber,
-                  "Agent sign-up",
-                  isSuccess = true,
-                  groupId = Some(" "),
-                  userIds = Some(Set("a","b"))
-                ))
               }
             }
             "the e-mail request fails" should {
@@ -226,7 +219,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
                 enable(AutoClaimEnrolment)
 
                 mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
-                mockAutoClaimEnrolment(testVatNumber)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
+                mockAutoClaimEnrolment(testVatNumber,agentTriggerPoint)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
 
                 mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(status = BAD_REQUEST, body = ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
@@ -241,18 +234,12 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
               mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-              mockAutoClaimEnrolment(testVatNumber)(Future.successful(Left(AutoClaimEnrolmentService.NoUsersFound)))
+              mockAutoClaimEnrolment(testVatNumber,agentTriggerPoint)(Future.successful(Left(AutoClaimEnrolmentService.NoUsersFound)))
               mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
               res shouldBe Right(NotAutoEnroledButSubscribed)
-//              verifyAudit(AutoClaimEnrolementAuditingModel(
-//                testVatNumber,
-//                isSuccess = false,
-//                isAgent = true,
-//                autoClaimEnrolementFailureMessage = Some(AutoClaimEnrolmentService.NoUsersFound.toString)
-//              ))
             }
           }
         }

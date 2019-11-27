@@ -41,7 +41,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService,
                                           usersGroupsSearchConnector: UsersGroupsSearchConnector,
                                           auditService: AuditService
-                                         )(implicit ec: ExecutionContext,request:  Request[_]) {
+                                         )(implicit ec: ExecutionContext,request: Request[_]) {
 
   def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
     for {
