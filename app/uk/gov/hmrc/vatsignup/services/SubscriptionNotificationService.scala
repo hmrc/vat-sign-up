@@ -28,11 +28,10 @@ import uk.gov.hmrc.vatsignup.config.featureswitch.{AutoClaimEnrolment, FeatureSw
 import uk.gov.hmrc.vatsignup.connectors.EmailConnector
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
-import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
-import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
+
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -41,8 +40,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                                                 emailConnector: EmailConnector,
                                                 autoClaimEnrolmentService: AutoClaimEnrolmentService,
                                                 checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
-                                                appConfig: AppConfig,
-                                                auditService: AuditService
+                                                appConfig: AppConfig
                                                )(implicit ec: ExecutionContext)
   extends FeatureSwitching {
   def sendEmailNotification(vatNumber: String,
@@ -65,12 +63,10 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
 
   private def autoEnrolment(vatNumber: String)
                            (implicit hc: HeaderCarrier,request:  Request[_]): Future[Either[NotificationFailure, NotificationSuccess]] = {
-    autoClaimEnrolmentService.autoClaimEnrolment(vatNumber) map {
+    autoClaimEnrolmentService.autoClaimEnrolment(vatNumber,"Agent sign-up") map {
       case Right(_) =>
-        auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, isSuccess = true, isAgent = true))
         Right(AutoClaimEnrol)
       case Left(error) =>
-        auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, isSuccess = false, isAgent = true, Some(error.toString)))
         Left(AutoClaimEnrolmentFailure)
     }
   }

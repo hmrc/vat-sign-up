@@ -19,13 +19,16 @@ package uk.gov.hmrc.vatsignup.services
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
+import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Admin
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, UsersGroupsSearchConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UsersFound
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
+import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
+import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,10 +39,11 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                                           enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                           checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService,
-                                          usersGroupsSearchConnector: UsersGroupsSearchConnector
-                                         )(implicit ec: ExecutionContext) {
+                                          usersGroupsSearchConnector: UsersGroupsSearchConnector,
+                                          auditService: AuditService
+                                         )(implicit ec: ExecutionContext,request:  Request[_]) {
 
-  def autoClaimEnrolment(vatNumber: String)(implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
+  def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier): Future[AutoClaimEnrolmentResponse] = {
     for {
       legacyVatGroupId <- getLegacyEnrolmentAllocation(vatNumber)
       legacyVatUserIds <- getLegacyEnrolmentUserIDs(vatNumber)
@@ -48,6 +52,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
       _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, legacyVatGroupId, adminUserId)
       _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
+      _ = auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, triggerPoint, isSuccess = true, Some(legacyVatGroupId), Some(legacyVatUserIds) ))
     } yield EnrolmentAssigned
   }.value
 

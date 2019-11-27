@@ -25,18 +25,22 @@ object AutoClaimEnrolementAuditing {
   val AutoClaimEnrolementAuditType = "mtdVatAutoEnrolment"
 
   case class AutoClaimEnrolementAuditingModel(vatNumber: String,
-                                         isSuccess: Boolean,
-                                         isAgent: Boolean,
-                                         autoClaimEnrolementFailureMessage: Option[String] = None
-                                        ) extends AuditModel {
+                                              triggerPoint: String,
+                                              isSuccess: Boolean,
+                                              groupId: Option[String],
+                                              userIds: Option[Set[String]],
+                                              failureInformation: Option[String] = None
+                                             ) extends AuditModel {
 
     override val transactionName: String = AutoClaimEnrolementTransactionName
 
     override val detail: Map[String, String] = Map(
       "vatNumber" -> vatNumber,
+      "triggerPoint" -> triggerPoint,
       "isSuccess" -> isSuccess.toString,
-      "isAgent" -> isAgent.toString,
-      "autoClaimEnrolementFailureMessage" -> autoClaimEnrolementFailureMessage.getOrElse("")
+      "groupId" -> groupId.getOrElse(""),
+      "userIds" -> userIds.getOrElse(Set.empty).mkString(", "),
+      "failure" -> failureInformation.getOrElse("")
     ).filter { case (_, value) => value.nonEmpty }
 
     override val auditType: String = AutoClaimEnrolementAuditType
