@@ -20,6 +20,7 @@ import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
+import play.api.mvc.Request
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
@@ -29,6 +30,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionState}
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
+import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService.agentLedSignUp
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,7 +45,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
   extends FeatureSwitching {
   def sendEmailNotification(vatNumber: String,
                             subscriptionState: SubscriptionState
-                           )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+                           )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[NotificationFailure, NotificationSuccess]] = {
     (for {
       emailRequest <- getEmailRequest(vatNumber)
       notificationResult <- EitherT(sendEmail(emailRequest.email, vatNumber, subscriptionState, emailRequest.isDelegated))
@@ -60,11 +62,11 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
 
 
   private def autoEnrolment(vatNumber: String)
-                           (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
-    autoClaimEnrolmentService.autoClaimEnrolment(vatNumber) map {
+                           (implicit hc: HeaderCarrier, request: Request[_]): Future[Either[NotificationFailure, NotificationSuccess]] = {
+    autoClaimEnrolmentService.autoClaimEnrolment(vatNumber, agentLedSignUp) map {
       case Right(_) =>
         Right(AutoClaimEnrol)
-      case Left(_) =>
+      case Left(error) =>
         Left(AutoClaimEnrolmentFailure)
     }
   }
@@ -101,7 +103,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
                         vatNumber: String,
                         subscriptionState: SubscriptionState,
                         isDelegated: Boolean
-                       )(implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
+                       )(implicit hc: HeaderCarrier, request: Request[_]): Future[Either[NotificationFailure, NotificationSuccess]] = {
     if (isDelegated) {
       if (isEnabled(AutoClaimEnrolment)) {
         sendEmailDelegated(emailAddress, vatNumber, subscriptionState).flatMap {
