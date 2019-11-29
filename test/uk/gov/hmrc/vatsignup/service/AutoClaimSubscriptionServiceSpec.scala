@@ -105,6 +105,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
               }
               "assign the new user IDs fails" when {
                 "return Failure" in {
+                  val testSetCredentialIds = Set(testCredentialId, testCredentialId2, testCredentialId3)
                   mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
                     Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                   )
@@ -120,12 +121,12 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                     Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
                   )
                   mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
-                    Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed))
+                    Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed(Set(testCredentialId3))))
                   )
 
                   val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
-                  res shouldBe Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailure)
+                  res shouldBe Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)))
 
                   verifyAudit(AutoClaimEnrolementAuditingModel(
                     testVatNumber,
@@ -134,7 +135,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                     call = Some(assignEnrolmentToUserCall),
                     groupId = Some(testGroupId),
                     userIds = testSetCredentialIds,
-                    failureInformation = Some(AutoClaimEnrolmentService.EnrolmentAssignmentFailure.toString)
+                    failureInformation = Some(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)).toString)
                   ))
                 }
               }
@@ -158,7 +159,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
 
                 val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
-                res shouldBe Left(AutoClaimEnrolmentService.EnrolFailure(testErrorMsg))
+                res shouldBe Left(AutoClaimEnrolmentService.EnrolAdminIdFailure(testCredentialId, testErrorMsg))
 
                 verifyAudit(AutoClaimEnrolementAuditingModel(
                   testVatNumber,
@@ -167,7 +168,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   call = Some(allocateEnrolmentWithoutKnownFactsCall),
                   groupId = Some(testGroupId),
                   userIds = testSetCredentialIds,
-                  failureInformation = Some(AutoClaimEnrolmentService.EnrolFailure(testErrorMsg).toString)
+                  failureInformation = Some(AutoClaimEnrolmentService.EnrolAdminIdFailure(testCredentialId, testErrorMsg).toString)
                 ))
               }
             }

@@ -32,13 +32,22 @@ class AssignEnrolmentToUserService @Inject()(enrolmentStoreProxyConnector: Enrol
                      )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[EnrolmentAssignmentResponse] = {
 
     Future.sequence(
-      userIds map {
-        userId =>
-          enrolmentStoreProxyConnector.assignEnrolment(userId, vatNumber)
+      userIds.toSeq.map { userId =>
+        enrolmentStoreProxyConnector.assignEnrolment(userId, vatNumber)
       }
-    ) map {
-      userIds =>
-        if (userIds.forall(_.isRight)) Right(EnrolmentAssignedToUsers) else Left(EnrolmentAssignmentFailed)
+    ).map { userIdResponses =>
+      if (userIdResponses.forall(_.isRight)) Right(EnrolmentAssignedToUsers)
+      else {
+        Left(EnrolmentAssignmentFailed(
+          userIds.zip(
+            userIdResponses.map { res =>
+              res.isLeft
+            }
+          ).collect { case (userId, true) =>
+            userId
+          }
+        ))
+      }
     }
 
   }
@@ -47,10 +56,10 @@ class AssignEnrolmentToUserService @Inject()(enrolmentStoreProxyConnector: Enrol
 
 object AssignEnrolmentToUserService {
 
-  type EnrolmentAssignmentResponse = Either[EnrolmentAssignmentFailed.type, EnrolmentAssignedToUsers.type]
+  type EnrolmentAssignmentResponse = Either[EnrolmentAssignmentFailed, EnrolmentAssignedToUsers.type]
 
   case object EnrolmentAssignedToUsers
 
-  case object EnrolmentAssignmentFailed
+  case class EnrolmentAssignmentFailed(failedIds: Set[String])
 
 }
