@@ -47,7 +47,7 @@ class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreP
       }
     }
 
-    "Return a Left(EnrolmentAssignmentFailed" when {
+    "Return a Left(EnrolmentAssignmentFailed)" when {
       "Tax Enrolments returns that it failed to assign some of the enrolments" in {
 
         val testUserIdSet = Set("123456", "asdfgh", "qwerty", "zxcvbn")
@@ -59,7 +59,7 @@ class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreP
 
         val res = TestAssignEnrolmentToUserService.assignEnrolment(testUserIdSet, testVatNumber)
 
-        await(res) shouldBe Left(EnrolmentAssignmentFailed)
+        await(res) shouldBe Left(EnrolmentAssignmentFailed(Set("qwerty", "zxcvbn")))
       }
     }
   }

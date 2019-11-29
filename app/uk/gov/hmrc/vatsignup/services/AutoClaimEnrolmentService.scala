@@ -83,11 +83,22 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     } yield EnrolmentAssigned
     }.value
 
-  implicit class LeftWithLogging[F[_], A, B](value: EitherT[F, A, B]) {
-    def logLeft(vatNumber: String, triggerPoint: String, call: String, groupId: Option[String] = None, userIds: Set[String] = Set.empty)
-               (implicit F: Functor[F], hc: HeaderCarrier, request: Request[_]): EitherT[F, A, B] = {
+  private implicit class LeftWithLogging[F[_], A, B](value: EitherT[F, A, B]) {
+    def logLeft(vatNumber: String,
+                triggerPoint: String,
+                call: String, groupId: Option[String] = None,
+                userIds: Set[String] = Set.empty
+               )(implicit F: Functor[F], hc: HeaderCarrier, request: Request[_]): EitherT[F, A, B] = {
       value.leftMap { error =>
-        auditService.audit(AutoClaimEnrolementAuditingModel(vatNumber, triggerPoint, isSuccess = false, Some(call), groupId, userIds, Some(error.toString)))
+        auditService.audit(AutoClaimEnrolementAuditingModel(
+          vatNumber = vatNumber,
+          triggerPoint = triggerPoint,
+          isSuccess = false,
+          call = Some(call),
+          groupId = groupId,
+          userIds = userIds,
+          failureInformation = Some(error.toString)
+        ))
         Logger.error(
           Json.obj("callBack" -> autoClaimEnrolmentService,
             "vatNumber" -> vatNumber,
@@ -172,7 +183,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       case Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess) =>
         Right(AutoClaimEnrolmentService.EnrolSuccess)
       case Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(message)) =>
-        Left(AutoClaimEnrolmentService.EnrolFailure(message))
+        Left(AutoClaimEnrolmentService.EnrolAdminIdFailure(credentialId, message))
     }
   }
 
@@ -184,8 +195,8 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     )) transform {
       case Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers) =>
         Right(AutoClaimEnrolmentService.EnrolmentAssigned)
-      case Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed) =>
-        Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailure)
+      case Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed(failedIds)) =>
+        Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(failedIds))
     }
   }
 
@@ -224,7 +235,7 @@ object AutoClaimEnrolmentService {
 
   case object NoUsersFound extends AutoClaimEnrolmentFailure
 
-  case class EnrolFailure(message: String) extends AutoClaimEnrolmentFailure
+  case class EnrolAdminIdFailure(adminId: String, message: String) extends AutoClaimEnrolmentFailure
 
   case object EnrolmentNotAllocated extends AutoClaimEnrolmentFailure
 
@@ -240,7 +251,7 @@ object AutoClaimEnrolmentService {
 
   case class UpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentFailure
 
-  case object EnrolmentAssignmentFailure extends AutoClaimEnrolmentFailure
+  case class EnrolmentAssignmentFailureForIds(failedIds: Set[String]) extends AutoClaimEnrolmentFailure
 
   case object UsersGroupsSearchFailure extends AutoClaimEnrolmentFailure
 
