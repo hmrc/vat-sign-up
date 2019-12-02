@@ -32,6 +32,19 @@ trait CustomMatchers {
         )
     }
 
+  def httpHeader(expectedValue: (String, String)): HavePropertyMatcher[WSResponse, (String, String)] =
+    new HavePropertyMatcher[WSResponse, (String, String)] {
+      val (headerKey, headerValue) = expectedValue
+
+      override def apply(response: WSResponse): HavePropertyMatchResult[(String, String)] =
+        HavePropertyMatchResult(
+          response.header(headerKey).contains(headerValue),
+          "httpHeader",
+          expectedValue,
+          headerKey -> response.header(headerKey).getOrElse("[undefined]")
+        )
+    }
+
   def jsonBodyAs[T](expectedValue: T)(implicit reads: Reads[T]): HavePropertyMatcher[WSResponse, T] =
     new HavePropertyMatcher[WSResponse, T] {
     def apply(response: WSResponse) =

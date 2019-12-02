@@ -20,22 +20,26 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
+import uk.gov.hmrc.vatsignup.utils.AuthUtils._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class BulkMigrationAutoClaimEnrolmentController @Inject()(autoClaimEnrolmentService: AutoClaimEnrolmentService)
+class BulkMigrationAutoClaimEnrolmentController @Inject()(autoClaimEnrolmentService: AutoClaimEnrolmentService,
+                                                          appConfig: AppConfig)
                                                          (implicit ec: ExecutionContext) extends BaseController {
-
   def autoClaimEnrolment(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>
-      autoClaimEnrolmentService.autoClaimEnrolment(vatNumber, bulkMigration).map {
-        case Right(EnrolmentAssigned) => NoContent
-        case Left(EnrolmentNotAllocated) | Left(NoUsersFound) => NoContent
-        case reason => throw new InternalServerException(s"Unexpected failure when trying to automatically claim an enrolment due to $reason")
-      }
+      if (getBasicAuth(request).contains(appConfig.expectedAuth)) {
+        autoClaimEnrolmentService.autoClaimEnrolment(vatNumber, bulkMigration).map {
+          case Right(EnrolmentAssigned) => NoContent
+          case Left(EnrolmentNotAllocated) | Left(NoUsersFound) => NoContent
+          case reason => throw new InternalServerException(s"Unexpected failure when trying to automatically claim an enrolment due to $reason")
+        }
+      } else Future.successful(Unauthorized.withHeaders(WWW_AUTHENTICATE -> s"""Basic realm="${appConfig.authRealm}""""))
   }
 
 }

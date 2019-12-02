@@ -19,11 +19,13 @@ package uk.gov.hmrc.vatsignup.helpers
 import java.time.LocalDate
 import java.util.UUID
 
+import play.api.test.Helpers.AUTHORIZATION
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.models.{Digital, MigratableDates}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
 import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
+import uk.gov.hmrc.vatsignup.utils.AuthUtils
 
 object IntegrationTestConstants {
   val testVatNumber: String = UUID.randomUUID().toString
@@ -110,4 +112,5 @@ object IntegrationTestConstants {
   val testCommsPostCode: String = UUID.randomUUID().toString
   val testTraderPostCode: String = UUID.randomUUID().toString
 
+  val basicAuthHeader: (String, String) = AUTHORIZATION -> s"Basic ${AuthUtils.encodeToBase64("username:password")}"
 }

@@ -48,7 +48,10 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
     "microservice.services.base.host" -> mockHost,
     "microservice.services.base.port" -> mockPort,
     "microservice.services.agent-client-relationships.url" -> mockUrl,
-    "microservice.services.des.url" -> mockUrl
+    "microservice.services.des.url" -> mockUrl,
+    "basicAuthentication.username" -> "username",
+    "basicAuthentication.password" -> "password",
+    "basicAuthentication.realm" -> "realm"
   ) ++ mockedServices(
     "auth",
     "tax-enrolments",
@@ -92,12 +95,10 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
     )
   }
 
-  def post[T](uri: String)(body: T)(implicit writes: Writes[T]): WSResponse = {
+  def post[T](uri: String)(body: T, additionalHeaders: (String, String)*)(implicit writes: Writes[T]): WSResponse = {
     await(
       buildClient(uri)
-        .withHeaders(
-          "Content-Type" -> "application/json"
-        )
+        .withHeaders(additionalHeaders :+ "Content-Type" -> "application/json":_*)
         .post(writes.writes(body).toString())
     )
   }

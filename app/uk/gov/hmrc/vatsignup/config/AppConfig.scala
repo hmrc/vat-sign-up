@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.config
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.Mode.Mode
 import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
@@ -25,6 +24,7 @@ import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.models.DateRange
 import uk.gov.hmrc.vatsignup.models.controllist._
+import uk.gov.hmrc.vatsignup.utils.BasicAuthentication
 
 @Singleton
 class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: Environment) extends ServicesConfig with FeatureSwitching {
@@ -159,5 +159,14 @@ class AppConfig @Inject()(val runModeConfiguration: Configuration, environment: 
   def loadFilingDateConfig: Map[Stagger, Set[DateRange]] = loadDatesConfig("filing-config")
 
   def loadDirectDebitConfig: Map[Stagger, Set[DateRange]] = loadDatesConfig("dd-config")
+
+  def expectedAuth: BasicAuthentication = {
+    val username = loadConfig("basicAuthentication.username")
+    val password = loadConfig("basicAuthentication.password")
+
+    BasicAuthentication(username, password)
+  }
+
+  def authRealm: String = loadConfig("basicAuthentication.realm")
 
 }
