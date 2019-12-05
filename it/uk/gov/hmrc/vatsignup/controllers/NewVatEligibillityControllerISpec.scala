@@ -8,15 +8,11 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse}
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.stubGetMandationStatus
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{stubGetMandationStatus, _}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestSubmissionRequestRepository}
 import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub._
-import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.ControlListInformationVatNumberNotFound
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
 class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
@@ -111,6 +107,20 @@ class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMat
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(MtdStatusKey -> MigrationInProgressValue))
+        )
+      }
+    }
+    "return OK with a JSON body" when {
+      "called with an mtdState of Deregistered" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+        stubDeregisteredVatNumber(testVatNumber)
+
+        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> DeregisteredValue))
         )
       }
     }

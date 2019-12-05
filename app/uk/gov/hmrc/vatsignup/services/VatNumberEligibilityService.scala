@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.{MandationStatusConnector, VatCustomerDetailsConnector}
-import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
+import uk.gov.hmrc.vatsignup.httpparsers.{GetMandationStatusHttpParser, VatCustomerDetailsHttpParser}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
@@ -38,6 +38,8 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
         Future.successful(AlreadySubscribed)
       case Right(NonMTDfB | NonDigital) =>
         vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber) map {
+          case Left(VatCustomerDetailsHttpParser.Deregistered) =>
+            Deregistered
           case Right(VatCustomerDetails(_, isOverseas)) =>
             Eligible(
               migrated = true,
@@ -82,5 +84,7 @@ object VatNumberEligibilityService {
   case object MigrationInProgress extends MtdState
 
   case object VatNumberNotFound extends MtdState
+
+  case object Deregistered extends MtdState
 
 }

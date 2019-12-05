@@ -23,10 +23,10 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
+import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockVatNumberEligibilityService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
-import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -83,7 +83,7 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> InhibitedValue,  MigratableDatesKey -> Json.toJson(testMigratableDates))
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> InhibitedValue, MigratableDatesKey -> Json.toJson(testMigratableDates))
       }
     }
     "VatNumberEligibillity service returns MigrationInProgress" should {
@@ -95,6 +95,17 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
 
         status(res) shouldBe OK
         jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> MigrationInProgressValue)
+      }
+    }
+    "VatNumberEligibillity service returns Deregistered" should {
+      "return OK with mtdStatus of Deregistered" in {
+        mockAuthorise()(Future.successful(Unit))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(Deregistered))
+
+        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+
+        status(res) shouldBe OK
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> DeregisteredValue)
       }
     }
     "VatNumberEligibility service returns VatNumberNotFound" should {

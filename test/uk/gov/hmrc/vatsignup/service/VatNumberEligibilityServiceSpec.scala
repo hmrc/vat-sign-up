@@ -23,14 +23,14 @@ import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockMandationStatusConnector, MockVatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{GetMandationStatusHttpFailure, VatNumberNotFound}
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
+import uk.gov.hmrc.vatsignup.httpparsers.{GetMandationStatusHttpParser, VatCustomerDetailsHttpParser}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber, KnownFactsAndControlListFailure}
-import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, VatNumberEligibilityService}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
+import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, VatNumberEligibilityService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -85,6 +85,16 @@ class VatNumberEligibilityServiceSpec extends UnitSpec
               )
 
               await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
+            }
+          }
+          "the user is deregistered" should {
+            s"return $Deregistered" in {
+              mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
+              mockGetVatCustomerDetails(testVatNumber)(
+                Future.successful(Left(VatCustomerDetailsHttpParser.Deregistered))
+              )
+
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Deregistered
             }
           }
         }

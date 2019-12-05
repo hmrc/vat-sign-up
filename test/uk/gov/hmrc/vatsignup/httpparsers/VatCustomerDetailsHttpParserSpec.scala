@@ -33,7 +33,21 @@ class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
 
   "VatCustomerDetails#read" when {
     "the http status is OK" when {
-      s"the json is valid" should {
+      s"the json contains deregistered" should {
+        "return Deregistered" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "deregistered" -> true
+              )
+            )
+          )
+
+          read(testMethod, testUrl, testResponse) shouldBe Left(Deregistered)
+        }
+      }
+      s"the json does not contain deregistered and is valid" should {
         "return Known facts" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
@@ -56,7 +70,7 @@ class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
         }
       }
 
-      s"the json is invalid" should {
+      s"the json does not contain deregistered and is invalid" should {
         "return InvalidKnownFacts" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
