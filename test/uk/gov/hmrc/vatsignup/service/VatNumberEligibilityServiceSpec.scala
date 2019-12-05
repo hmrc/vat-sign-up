@@ -29,7 +29,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber, KnownFactsAndControlListFailure}
-import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService
+import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, VatNumberEligibilityService}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -151,6 +151,14 @@ class VatNumberEligibilityServiceSpec extends UnitSpec
           mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(IneligibleVatNumber(MigratableDates.empty))))
 
           await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Ineligible
+        }
+      }
+      "the vat number is not found" should {
+        s"return $VatNumberNotFound" in {
+          mockGetMandationStatus(testVatNumber)(Future.successful(Left(VatNumberNotFound)))
+          mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.VatNumberNotFound)))
+
+          await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe VatNumberEligibilityService.VatNumberNotFound
         }
       }
       "the user's eligibility cannot be determined" should {

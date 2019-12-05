@@ -16,6 +16,7 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
+import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.ControlListInformationVatNumberNotFound
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
 class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
@@ -109,19 +110,20 @@ class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMat
 
         res should have(
           httpStatus(OK),
-          jsonBodyAs(Json.obj(MtdStatusKey -> MigraitonInProgressValue))
+          jsonBodyAs(Json.obj(MtdStatusKey -> MigrationInProgressValue))
         )
       }
     }
-    "return Internal Server Error" when {
-      "called unable to retrieve the control list" in {
+    "return NOT_FOUND" when {
+      "called with an mtdState of VatNumberNotFound" in {
         stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubFailureControlListVatNumberNotFound(testVatNumber)
 
         val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
 
         res should have(
-          httpStatus(INTERNAL_SERVER_ERROR)
+          httpStatus(NOT_FOUND)
         )
       }
     }
