@@ -21,8 +21,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.{MandationStatusConnector, VatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser
-import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.VatNumberNotFound
-import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, MigratableDates, NonDigital, NonMTDfB, VatCustomerDetails}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
 
@@ -45,7 +44,7 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
               overseas = isOverseas
             )
         }
-      case Left(VatNumberNotFound) =>
+      case Left(GetMandationStatusHttpParser.VatNumberNotFound) =>
         controlListEligibilityService.getEligibilityStatus(vatNumber) map {
           case Right(eligibilitySuccess: EligibilitySuccess) =>
             Eligible(
@@ -56,6 +55,8 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
             Ineligible
           case Left(IneligibleVatNumber(migratableDates)) =>
             Inhibited(migratableDates)
+          case Left(ControlListEligibilityService.VatNumberNotFound) =>
+            VatNumberNotFound
           case Left(error) =>
             throw new InternalServerException(s"Could not retrieve control list: $error")
         }
@@ -79,5 +80,7 @@ object VatNumberEligibilityService {
   case class Inhibited(migratableDates: MigratableDates) extends MtdState
 
   case object MigrationInProgress extends MtdState
+
+  case object VatNumberNotFound extends MtdState
 
 }

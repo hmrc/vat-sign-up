@@ -94,7 +94,17 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> MigraitonInProgressValue)
+        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> MigrationInProgressValue)
+      }
+    }
+    "VatNumberEligibility service returns VatNumberNotFound" should {
+      "return NotFound" in {
+        mockAuthorise()(Future.successful(Unit))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(VatNumberNotFound))
+
+        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+
+        status(res) shouldBe NOT_FOUND
       }
     }
   }

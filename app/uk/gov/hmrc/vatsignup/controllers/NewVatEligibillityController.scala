@@ -45,7 +45,8 @@ class NewVatEligibillityController @Inject()(val authConnector: AuthConnector,
                 IsOverseasKey -> isOverseas)))
           case Ineligible => Ok(Json.obj(MtdStatusKey -> IneligibleValue))
           case Inhibited(migratableDates) => Ok(Json.obj(MtdStatusKey -> InhibitedValue, MigratableDatesKey -> Json.toJson(migratableDates)))
-          case MigrationInProgress => Ok(Json.obj(MtdStatusKey -> MigraitonInProgressValue))
+          case MigrationInProgress => Ok(Json.obj(MtdStatusKey -> MigrationInProgressValue))
+          case VatNumberNotFound => NotFound
         }
       }
 
@@ -64,6 +65,6 @@ object NewVatEligibillityController {
   val IneligibleValue = "Ineligible"
   val InhibitedValue = "Inhibited"
   val MigratableDatesKey = "migratableDates"
-  val MigraitonInProgressValue = "MigrationInProgress"
+  val MigrationInProgressValue = "MigrationInProgress"
 
 }
