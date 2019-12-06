@@ -60,7 +60,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
     testCredentialId3 -> Admin
   )
 
-  "auto claim enrolment" should {
+  "auto claim enrolment" when {
     "legacy group ID is returned" when {
       "legacy user IDs are returned" when {
         "the known facts connector is successful" when {
@@ -135,7 +135,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                     call = Some(assignEnrolmentToUserCall),
                     groupId = Some(testGroupId),
                     userIds = testSetCredentialIds,
-                    failureInformation = Some(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)).toString)
+                    auditInformation = Some(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)).toString)
                   ))
                 }
               }
@@ -168,7 +168,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                   call = Some(allocateEnrolmentWithoutKnownFactsCall),
                   groupId = Some(testGroupId),
                   userIds = testSetCredentialIds,
-                  failureInformation = Some(AutoClaimEnrolmentService.EnrolAdminIdFailure(testCredentialId, testErrorMsg).toString)
+                  auditInformation = Some(AutoClaimEnrolmentService.EnrolAdminIdFailure(testCredentialId, testErrorMsg).toString)
                 ))
               }
             }
@@ -198,7 +198,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
                 call = Some(upsertEnrolmentAllocationCall),
                 groupId = Some(testGroupId),
                 userIds = testSetCredentialIds,
-                failureInformation = Some(AutoClaimEnrolmentService.UpsertEnrolmentFailure(testErrorMsg).toString)
+                auditInformation = Some(AutoClaimEnrolmentService.UpsertEnrolmentFailure(testErrorMsg).toString)
               ))
             }
           }
@@ -225,7 +225,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
               call = Some(getKnownFactsCall),
               groupId = Some(testGroupId),
               userIds = testSetCredentialIds,
-              failureInformation = Some(AutoClaimEnrolmentService.InvalidVatNumber.toString)
+              auditInformation = Some(AutoClaimEnrolmentService.InvalidVatNumber.toString)
             ))
           }
           "returns VatNumberNotFound" in {
@@ -249,7 +249,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
               call = Some(getKnownFactsCall),
               groupId = Some(testGroupId),
               userIds = testSetCredentialIds,
-              failureInformation = Some(AutoClaimEnrolmentService.VatNumberNotFound.toString)
+              auditInformation = Some(AutoClaimEnrolmentService.VatNumberNotFound.toString)
             ))
           }
         }
@@ -275,7 +275,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             call = Some(getAdminUserIdCall),
             groupId = Some(testGroupId),
             userIds = testSetCredentialIds,
-            failureInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
+            auditInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
           ))
         }
       }
@@ -300,7 +300,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             call = Some(getAdminUserIdCall),
             groupId = Some(testGroupId),
             userIds = testSetCredentialIds,
-            failureInformation = Some(AutoClaimEnrolmentService.UsersGroupsSearchFailure.toString)
+            auditInformation = Some(AutoClaimEnrolmentService.UsersGroupsSearchFailure.toString)
           ))
         }
       }
@@ -338,12 +338,12 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             call = Some(getAdminUserIdCall),
             groupId = Some(testGroupId),
             userIds = testSetCredentialIds,
-            failureInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
+            auditInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
           ))
         }
       }
-      "legacy user IDS don't exist and the set is empty" when {
-        "returns NoUsersFound" in {
+      "legacy user IDS are found but no userIds are returned" should {
+        "return a ConnectionFailure" in {
           mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
             Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
           )
@@ -359,7 +359,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             isSuccess = false,
             call = Some(getLegacyEnrolmentUserIDsCall),
             groupId = Some(testGroupId),
-            failureInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
+            auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
           ))
         }
       }
@@ -377,10 +377,10 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           verifyAudit(AutoClaimEnrolementAuditingModel(
             testVatNumber,
             agentLedSignUp,
-            isSuccess = false,
+            isSuccess = true,
             call = Some(getLegacyEnrolmentUserIDsCall),
             groupId = Some(testGroupId),
-            failureInformation = Some(AutoClaimEnrolmentService.NoUsersFound.toString)
+            auditInformation = Some(AutoClaimEnrolmentService.NoUsersFound.toString)
           ))
         }
       }
@@ -401,7 +401,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
             isSuccess = false,
             call = Some(getLegacyEnrolmentUserIDsCall),
             groupId = Some(testGroupId),
-            failureInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
+            auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
           ))
         }
       }
@@ -419,9 +419,9 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
         verifyAudit(AutoClaimEnrolementAuditingModel(
           testVatNumber,
           agentLedSignUp,
-          isSuccess = false,
+          isSuccess = true,
           call = Some(getLegacyEnrolmentAllocationCall),
-          failureInformation = Some(AutoClaimEnrolmentService.EnrolmentNotAllocated.toString)
+          auditInformation = Some(AutoClaimEnrolmentService.EnrolmentNotAllocated.toString)
         ))
       }
     }
@@ -440,7 +440,7 @@ class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConne
           agentLedSignUp,
           isSuccess = false,
           call = Some(getLegacyEnrolmentAllocationCall),
-          failureInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyFailure(BAD_REQUEST).toString)
+          auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyFailure(BAD_REQUEST).toString)
         ))
       }
     }

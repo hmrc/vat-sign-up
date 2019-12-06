@@ -29,7 +29,7 @@ object AutoClaimEnrolementAuditing {
                                               call: Option[String] = None,
                                               groupId: Option[String] = None,
                                               userIds: Set[String] = Set.empty,
-                                              failureInformation: Option[String] = None
+                                              auditInformation: Option[String] = None
                                              ) extends AuditModel {
 
     override val transactionName: String = AutoClaimEnrolementTransactionName
@@ -41,7 +41,7 @@ object AutoClaimEnrolementAuditing {
       "groupId" -> groupId.getOrElse(""),
       "userIds" -> userIds.mkString(", "),
       "failedCall" -> call.getOrElse(""),
-      "reason" -> failureInformation.getOrElse("")
+      "reason" -> auditInformation.getOrElse("")
     ).filter { case (_, value) => value.nonEmpty }
 
     override val auditType: String = AutoClaimEnrolementAuditType

@@ -62,24 +62,8 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
         .logLeft(vatNumber, triggerPoint, call = allocateEnrolmentWithoutKnownFactsCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
         .logLeft(vatNumber, triggerPoint, call = assignEnrolmentToUserCall, Some(legacyVatGroupId), legacyVatUserIds)
-      _ = auditService.audit(
-        AutoClaimEnrolementAuditingModel(
-          vatNumber,
-          triggerPoint,
-          isSuccess = true,
-          groupId = Some(legacyVatGroupId),
-          userIds = legacyVatUserIds
-        )
-      )
-      _ = Logger.info(
-        Json.obj("callBack" -> autoClaimEnrolmentService,
-          "vatNumber" -> vatNumber,
-          "triggerPoint" -> triggerPoint,
-          "isSuccess" -> true,
-          "groupIdFound" -> true,
-          "userIds" -> legacyVatUserIds.size
-        ).toString()
-      )
+      _ = audit(vatNumber, triggerPoint, isSuccess = true, None, Some(legacyVatGroupId), legacyVatUserIds, None)
+      _ = log(autoClaimEnrolmentService, vatNumber, triggerPoint, isSuccess = true, None, groupIdFound = true, legacyVatUserIds.size)
     } yield EnrolmentAssigned
     }.value
 
@@ -90,27 +74,48 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
                 userIds: Set[String] = Set.empty
                )(implicit F: Functor[F], hc: HeaderCarrier, request: Request[_]): EitherT[F, A, B] = {
       value.leftMap { error =>
-        auditService.audit(AutoClaimEnrolementAuditingModel(
-          vatNumber = vatNumber,
-          triggerPoint = triggerPoint,
-          isSuccess = false,
-          call = Some(call),
-          groupId = groupId,
-          userIds = userIds,
-          failureInformation = Some(error.toString)
-        ))
-        Logger.error(
-          Json.obj("callBack" -> autoClaimEnrolmentService,
-            "vatNumber" -> vatNumber,
-            "triggerPoint" -> triggerPoint,
-            "isSuccess" -> false,
-            "call" -> call,
-            "groupIdFound" -> groupId.isDefined,
-            "userIds" -> userIds.size
-          ).toString()
-        )
+        val isSuccess = if (error == EnrolmentNotAllocated || error == NoUsersFound) true else false
+        audit(vatNumber, triggerPoint, isSuccess, Some(call), groupId, userIds, Some(error.toString))
+        log(autoClaimEnrolmentService, vatNumber, triggerPoint, isSuccess, Some(call), groupId.isDefined, userIds.size)
         error
       }
+    }
+  }
+
+  private def audit(vatNumber: String, triggerPoint: String,
+                        isSuccess: Boolean, call: Option[String],
+                        groupId: Option[String], userIds: Set[String],
+                        auditInformation: Option[String])(implicit headerCarrier: HeaderCarrier,request: Request[_]): Unit = {
+
+    auditService.audit(AutoClaimEnrolementAuditingModel(
+      vatNumber,
+      triggerPoint,
+      isSuccess,
+      call,
+      groupId,
+      userIds,
+      auditInformation
+    ))
+  }
+
+  private def log(serviceName: String, vatNumber: String,
+                        triggerPoint: String, isSuccess: Boolean,
+                        call: Option[String], groupIdFound: Boolean,
+                        numberOfIDs: Int): Unit = {
+
+    val logString = Json.obj("callBack" -> autoClaimEnrolmentService,
+      "vatNumber" -> vatNumber,
+      "triggerPoint" -> triggerPoint,
+      "isSuccess" -> isSuccess,
+      "call" -> call,
+      "groupIdFound" -> groupIdFound,
+      "numberOfIds" -> numberOfIDs
+    ).toString()
+
+    if (isSuccess) {
+      Logger.info(logString)
+    } else {
+      Logger.error(logString)
     }
   }
 
