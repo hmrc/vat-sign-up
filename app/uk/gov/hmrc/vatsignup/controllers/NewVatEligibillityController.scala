@@ -21,9 +21,9 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
-import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 
 import scala.concurrent.ExecutionContext
 
@@ -42,10 +42,13 @@ class NewVatEligibillityController @Inject()(val authConnector: AuthConnector,
               MtdStatusKey -> EligibleValue,
               EligiblityDetailsKey -> Json.obj(
                 IsMigratedKey -> isMigrated,
-                IsOverseasKey -> isOverseas)))
+                IsOverseasKey -> isOverseas
+              )
+            ))
           case Ineligible => Ok(Json.obj(MtdStatusKey -> IneligibleValue))
           case Inhibited(migratableDates) => Ok(Json.obj(MtdStatusKey -> InhibitedValue, MigratableDatesKey -> Json.toJson(migratableDates)))
           case MigrationInProgress => Ok(Json.obj(MtdStatusKey -> MigrationInProgressValue))
+          case Deregistered => Ok(Json.obj(MtdStatusKey -> DeregisteredValue))
           case VatNumberNotFound => NotFound
         }
       }
@@ -66,5 +69,6 @@ object NewVatEligibillityController {
   val InhibitedValue = "Inhibited"
   val MigratableDatesKey = "migratableDates"
   val MigrationInProgressValue = "MigrationInProgress"
+  val DeregisteredValue = "Deregistered"
 
 }

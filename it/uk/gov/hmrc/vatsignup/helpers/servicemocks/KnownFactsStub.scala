@@ -29,6 +29,9 @@ object KnownFactsStub extends WireMockMethods {
       body = body
     )
 
+  def stubDeregisteredVatNumber(vatNumber: String): StubMapping =
+    stubGetKnownFacts(vatNumber)(OK, Some(Json.obj("deregistered" -> true)))
+
   def stubSuccessGetKnownFacts(vatNumber: String): StubMapping =
     stubGetKnownFacts(vatNumber)(OK, Some(successResponseBody(isOverseas = false)))
 

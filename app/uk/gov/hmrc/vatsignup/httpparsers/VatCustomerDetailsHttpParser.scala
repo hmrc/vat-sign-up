@@ -33,23 +33,30 @@ object VatCustomerDetailsHttpParser {
 
   val isOverseasKey = "isOverseas"
 
+  val deregisteredUserKey = "deregistered"
+
   implicit object VatCustomerDetailsHttpReads extends HttpReads[VatCustomerDetailsHttpParserResponse] {
     def read(method: String, url: String, response: HttpResponse): VatCustomerDetailsHttpParserResponse = {
       response.status match {
         case OK =>
-          (for {
-            businessPostcode <- (response.json \ postCodeKey).validate[String]
-            vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
-            isOverseas <- (response.json \ isOverseasKey).validate[Boolean]
-          } yield VatCustomerDetails(KnownFacts(businessPostcode, vatRegistrationDate), isOverseas)) match {
-            case JsSuccess(customerDetails, _) =>
-              Right(customerDetails)
-            case _ =>
-              Left(InvalidKnownFacts(
-                status = response.status,
-                body = invalidJsonResponseMessage
-              ))
-           }
+          (response.json \ deregisteredUserKey).validateOpt[Boolean] match {
+            case JsSuccess(Some(true), _) =>
+              Left(Deregistered)
+            case JsSuccess(_, _) =>
+              (for {
+                businessPostcode <- (response.json \ postCodeKey).validate[String]
+                vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
+                isOverseas <- (response.json \ isOverseasKey).validate[Boolean]
+              } yield VatCustomerDetails(KnownFacts(businessPostcode, vatRegistrationDate), isOverseas)) match {
+                case JsSuccess(customerDetails, _) =>
+                  Right(customerDetails)
+                case _ =>
+                  Left(InvalidKnownFacts(
+                    status = response.status,
+                    body = invalidJsonResponseMessage
+                  ))
+              }
+          }
         case BAD_REQUEST =>
           Left(InvalidVatNumber)
         case NOT_FOUND =>
@@ -70,5 +77,7 @@ object VatCustomerDetailsHttpParser {
   case object InvalidVatNumber extends VatCustomerDetailsFailure
 
   case object VatNumberNotFound extends VatCustomerDetailsFailure
+
+  case object Deregistered extends VatCustomerDetailsFailure
 
 }
