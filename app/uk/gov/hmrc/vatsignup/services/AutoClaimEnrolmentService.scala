@@ -68,8 +68,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
     }.value
 
   private implicit class LeftWithLogging[F[_], A, B](value: EitherT[F, A, B]) {
-    def logLeft(vatNumber: String,
-                triggerPoint: String,
+    def logLeft(vatNumber: String, triggerPoint: String,
                 call: String, groupId: Option[String] = None,
                 userIds: Set[String] = Set.empty
                )(implicit F: Functor[F], hc: HeaderCarrier, request: Request[_]): EitherT[F, A, B] = {
@@ -83,9 +82,9 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   }
 
   private def audit(vatNumber: String, triggerPoint: String,
-                        isSuccess: Boolean, call: Option[String],
-                        groupId: Option[String], userIds: Set[String],
-                        auditInformation: Option[String])(implicit headerCarrier: HeaderCarrier,request: Request[_]): Unit = {
+                    isSuccess: Boolean, call: Option[String],
+                    groupId: Option[String], userIds: Set[String],
+                    auditInformation: Option[String])(implicit headerCarrier: HeaderCarrier, request: Request[_]): Unit = {
 
     auditService.audit(AutoClaimEnrolementAuditingModel(
       vatNumber,
@@ -99,11 +98,12 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   }
 
   private def log(serviceName: String, vatNumber: String,
-                        triggerPoint: String, isSuccess: Boolean,
-                        call: Option[String], groupIdFound: Boolean,
-                        numberOfIDs: Int): Unit = {
+                  triggerPoint: String, isSuccess: Boolean,
+                  call: Option[String], groupIdFound: Boolean,
+                  numberOfIDs: Int): Unit = {
 
-    val logString = Json.obj("callBack" -> autoClaimEnrolmentService,
+    val logString = Json.obj(
+      "callBack" -> autoClaimEnrolmentService,
       "vatNumber" -> vatNumber,
       "triggerPoint" -> triggerPoint,
       "isSuccess" -> isSuccess,
