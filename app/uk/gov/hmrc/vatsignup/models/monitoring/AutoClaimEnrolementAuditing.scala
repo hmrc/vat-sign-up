@@ -40,7 +40,7 @@ object AutoClaimEnrolementAuditing {
       "isSuccess" -> isSuccess.toString,
       "groupId" -> groupId.getOrElse(""),
       "userIds" -> userIds.mkString(", "),
-      "failedCall" -> call.getOrElse(""),
+      "call" -> call.getOrElse(""),
       "reason" -> auditInformation.getOrElse("")
     ).filter { case (_, value) => value.nonEmpty }
 
