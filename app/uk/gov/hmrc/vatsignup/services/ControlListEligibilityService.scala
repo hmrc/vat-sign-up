@@ -25,7 +25,7 @@ import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.KnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
-import uk.gov.hmrc.vatsignup.models.controllist.{ControlListInformation, DirectDebit, OverseasTrader, Stagger}
+import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.models.monitoring.ControlListAuditing.ControlListAuditModel
 import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, MigratableDates, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
@@ -64,14 +64,24 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
   private def getKnownFactsAndControlListInformation(vatNumber: String
                                                     )(implicit hc: HeaderCarrier,
                                                       request: Request[_]): EitherT[Future, EligibilityFailure, KnownFactsAndControlListInformation] =
-    EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) leftMap {
-      errorReason =>
+    EitherT(knownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(vatNumber)) transform {
+      case Right(KnownFactsAndControlListInformation(_, controlList)) if controlList.controlList.contains(DeRegOrDeath) =>
+        auditService.audit(ControlListAuditModel(
+          vatNumber = vatNumber,
+          isSuccess = false,
+          failureReasons = Seq(DeRegOrDeath.errorMessage)
+        ))
+
+        Left(Deregistered)
+      case Right(success) =>
+        Right(success)
+      case Left(errorReason) =>
         auditService.audit(ControlListAuditModel.fromFailure(vatNumber, errorReason))
 
         errorReason match {
-          case KnownFactsInvalidVatNumber => InvalidVatNumber
-          case ControlListInformationVatNumberNotFound => VatNumberNotFound
-          case _ => KnownFactsAndControlListFailure
+          case KnownFactsInvalidVatNumber => Left(InvalidVatNumber)
+          case ControlListInformationVatNumberNotFound => Left(VatNumberNotFound)
+          case _ => Left(KnownFactsAndControlListFailure)
         }
     }
 
@@ -107,6 +117,8 @@ object ControlListEligibilityService {
                                 isDirectDebit: Boolean)
 
   sealed trait EligibilityFailure
+
+  case object Deregistered extends EligibilityFailure
 
   case object InvalidVatNumber extends EligibilityFailure
 

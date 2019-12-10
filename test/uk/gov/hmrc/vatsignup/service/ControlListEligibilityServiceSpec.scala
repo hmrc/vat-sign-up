@@ -255,6 +255,17 @@ class ControlListEligibilityServiceSpec extends UnitSpec
         verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(ControlListAuditing.vatNumberNotFound)))
       }
     }
+    "the control list returns that the user is deregistered or dead" should {
+      "return Deregistered" in {
+        mockGetKnownFactsAndControlListInformation(testVatNumber)(
+          Future.successful(Right(KnownFactsAndControlListInformation(testTwoKnownFacts, ControlListInformation(Set(DeRegOrDeath, Stagger1, Company), Stagger1))))
+        )
+
+        val res = await(TestControlListEligibilityService.getEligibilityStatus(testVatNumber))
+        res shouldBe Left(Deregistered)
+        verifyAudit(ControlListAuditModel(testVatNumber, isSuccess = false, failureReasons = Seq(DeRegOrDeath.errorMessage)))
+      }
+    }
     "the control list returns any other error" should {
       "return KnownFactsAndControlListFailure" in {
         mockGetKnownFactsAndControlListInformation(testVatNumber)(

@@ -15,7 +15,7 @@ import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestSub
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
-class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
+class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
   val testDate: LocalDate = LocalDate.of(2018, 10, 18)
 
   override lazy val currentDateProvider: CurrentDateProvider = new CurrentDateProvider() {
@@ -115,6 +115,20 @@ class NewVatEligibillityControllerISpec extends ComponentSpecBase with CustomMat
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubDeregisteredVatNumber(testVatNumber)
+
+        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> DeregisteredValue))
+        )
+      }
+    }
+    s"return OK with a JSON body of $DeregisteredValue" when {
+      "the user is not migrated and is deregistered" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
+        stubDeregisteredControlListInformation(testVatNumber)
 
         val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
 

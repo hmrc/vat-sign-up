@@ -89,6 +89,7 @@ object IntegrationTestConstants {
     val directDebit: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', DIRECT_DEBIT -> '0')
     val overseas: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', OVERSEAS_TRADER -> '0')
     val ineligible: String = setupTestDataCore(allFalse)(ANNUAL_STAGGER -> '0', COMPANY -> '0')
+    val deregistered: String = setupTestDataCore(allFalse)(ANNUAL_STAGGER -> '0', COMPANY -> '0', DEREG_OR_DEATH -> '0')
 
     def setupTestData(amendments: (Int, Character)*): String = setupTestDataCore(eligible)(amendments: _*)
 
