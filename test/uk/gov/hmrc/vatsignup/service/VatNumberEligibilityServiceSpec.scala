@@ -163,6 +163,14 @@ class VatNumberEligibilityServiceSpec extends UnitSpec
           await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Ineligible
         }
       }
+      "the user is deregistered" should {
+        s"return $Deregistered" in {
+          mockGetMandationStatus(testVatNumber)(Future.successful(Left(VatNumberNotFound)))
+          mockGetEligibilityStatus(testVatNumber)(Future.successful(Left(ControlListEligibilityService.Deregistered)))
+
+          await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Deregistered
+        }
+      }
       "the vat number is not found" should {
         s"return $VatNumberNotFound" in {
           mockGetMandationStatus(testVatNumber)(Future.successful(Left(VatNumberNotFound)))

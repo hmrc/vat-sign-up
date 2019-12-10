@@ -57,6 +57,8 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
             Ineligible
           case Left(IneligibleVatNumber(migratableDates)) =>
             Inhibited(migratableDates)
+          case Left(ControlListEligibilityService.Deregistered) =>
+            Deregistered
           case Left(ControlListEligibilityService.VatNumberNotFound) =>
             VatNumberNotFound
           case Left(error) =>
