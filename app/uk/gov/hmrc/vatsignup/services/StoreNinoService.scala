@@ -19,15 +19,13 @@ package uk.gov.hmrc.vatsignup.services
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.AuthenticatorConnector
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
-                                 authenticatorConnector: AuthenticatorConnector
+class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository
                                 )(implicit ec: ExecutionContext) {
 
   import StoreNinoService._
