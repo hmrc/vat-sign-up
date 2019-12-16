@@ -26,10 +26,7 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthenticatorConnector
-import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.monitoring.UserMatchingAuditing.UserMatchingAuditModel
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
@@ -40,12 +37,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreNinoServiceSpec
-  extends UnitSpec with MockAuthenticatorConnector with MockSubscriptionRequestRepository with MockAuditService with EitherValues {
+  extends UnitSpec with MockSubscriptionRequestRepository with MockAuditService with EitherValues {
 
 
   object TestStoreNinoService extends StoreNinoService(
-    mockSubscriptionRequestRepository,
-    mockAuthenticatorConnector
+    mockSubscriptionRequestRepository
   )
 
   val agentUser = Enrolments(Set(testAgentEnrolment))
