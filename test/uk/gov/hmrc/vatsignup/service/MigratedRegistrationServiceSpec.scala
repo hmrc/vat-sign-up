@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import play.api.http.Status._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockRegistrationConnector
-import uk.gov.hmrc.vatsignup.models._
-import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
-import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.{RegisterWithMultipleIdsErrorResponse, RegisterWithMultipleIdsSuccess}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
-import play.api.http.Status._
+import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
+import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -264,26 +264,6 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
 
           res shouldBe testSafeId
         }
-        "the business type is JointVenture" in {
-          mockRegisterBusinessEntity(testVatNumber, JointVenture)(
-            Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
-          )
-
-          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = JointVenture,
-            optArn = None
-          )(hc, req))
-
-          verifyAudit(RegisterWithMultipleIDsAuditModel(
-            vatNumber = testVatNumber,
-            businessEntity = JointVenture,
-            agentReferenceNumber = None,
-            isSuccess = true
-          ))
-
-          res shouldBe testSafeId
-        }
         "the business type is Overseas" in {
           mockRegisterBusinessEntity(testVatNumber, Overseas)(
             Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
@@ -515,35 +495,15 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
 
           intercept[InternalServerException] {
             await(TestMigratedRegistrationService.registerBusinessEntity(
-                vatNumber = testVatNumber,
-                businessEntity = UnincorporatedAssociation,
-                optArn = None
+              vatNumber = testVatNumber,
+              businessEntity = UnincorporatedAssociation,
+              optArn = None
             )(hc, req))
           }
 
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             businessEntity = UnincorporatedAssociation,
-            agentReferenceNumber = None,
-            isSuccess = false
-          ))
-        }
-        "the business type is JointVenture" in {
-          mockRegisterBusinessEntity(testVatNumber, JointVenture)(
-            Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
-          )
-
-          intercept[InternalServerException] {
-            await(TestMigratedRegistrationService.registerBusinessEntity(
-            vatNumber = testVatNumber,
-            businessEntity = JointVenture,
-            optArn = None
-            )(hc, req))
-          }
-
-          verifyAudit(RegisterWithMultipleIDsAuditModel(
-            vatNumber = testVatNumber,
-            businessEntity = JointVenture,
             agentReferenceNumber = None,
             isSuccess = false
           ))
@@ -555,9 +515,9 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
 
           intercept[InternalServerException] {
             await(TestMigratedRegistrationService.registerBusinessEntity(
-                vatNumber = testVatNumber,
-                businessEntity = Overseas,
-                optArn = None
+              vatNumber = testVatNumber,
+              businessEntity = Overseas,
+              optArn = None
             )(hc, req))
           }
 

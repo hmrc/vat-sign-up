@@ -48,13 +48,6 @@ object RegistrationStub extends WireMockMethods {
       )
     )
 
-  private def registerJointVentureJsonBody(vatNumber: String): JsObject =
-    Json.obj(
-      "ordinaryPartnership" -> Json.obj(
-        "vrn" -> vatNumber
-      )
-    )
-
   private def registerLimitedPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
     Json.obj(
       "limitedPartnership" -> (
@@ -178,8 +171,6 @@ object RegistrationStub extends WireMockMethods {
           registerCompanyJsonBody(vatNumber, companyNumber)
         case GeneralPartnership(sautr) =>
           registerGeneralPartnershipJsonBody(vatNumber, sautr)
-        case JointVenture =>
-          registerJointVentureJsonBody(vatNumber)
         case LimitedPartnership(sautr, companyNumber) =>
           registerLimitedPartnershipJsonBody(vatNumber, sautr, companyNumber)
         case LimitedLiabilityPartnership(sautr, companyNumber) =>
