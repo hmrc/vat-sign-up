@@ -24,7 +24,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.{Digital, LimitedCompany, PartialSignUpRequest, SubscriptionRequestSummary}
+import uk.gov.hmrc.vatsignup.models.{Digital, LimitedCompany, SubscriptionRequestSummary}
 import uk.gov.hmrc.vatsignup.service.mocks.MockRetrieveSubscriptionRequestSummaryService
 import uk.gov.hmrc.vatsignup.services.RetrieveSubscriptionRequestSummaryService.{IncompleteSubscriptionRequest, NoSubscriptionRequestFound}
 
