@@ -406,34 +406,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             emptyBody
           )
         }
-        s"return $NO_CONTENT for $JointVenture sign up" in {
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(JointVenture),
-            email = Some(testEmail),
-            isMigratable = true,
-            isDirectDebit = false,
-            contactPreference = Some(testContactPreference)
-          )
-
-          stubAuth(OK, successfulAuthResponse(agentEnrolment))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
-          stubMigratedSignUp(
-            testSafeId,
-            testVatNumber,
-            isPartialMigration = false
-          )(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
-
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
-
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
       }
       "transaction email should not be sent to sign up" in {
         val testSubscriptionRequest = SubscriptionRequest(
@@ -880,36 +852,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             emptyBody
           )
         }
-        s"return $NO_CONTENT for $JointVenture sign up" in {
-
-          val testSubscriptionRequest = SubscriptionRequest(
-            vatNumber = testVatNumber,
-            businessEntity = Some(JointVenture),
-            email = Some(testEmail),
-            isMigratable = true,
-            isDirectDebit = false,
-            contactPreference = Some(testContactPreference)
-          )
-
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
-          stubGetEmailVerified(testEmail)
-          stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
-          stubMigratedSignUp(
-            testSafeId,
-            testVatNumber,
-            isPartialMigration = false
-          )(OK)
-          stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
-
-          await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
-
-          res should have(
-            httpStatus(NO_CONTENT),
-            emptyBody
-          )
-        }
-
       }
     }
   }

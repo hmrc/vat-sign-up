@@ -58,99 +58,99 @@ class SignUpRequestServiceSpec extends UnitSpec
           "there is a stored sign up email address" when {
             "the sign up email address is verified" when {
               "there is not a transaction e-mail address" should {
-                  "there is a contact preference stored in the database" should {
-                    s"return a successful $SignUpRequest" in {
+                "there is a contact preference stored in the database" should {
+                  s"return a successful $SignUpRequest" in {
 
-                      val testSubscriptionRequest =
-                        SubscriptionRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = Some(LimitedCompany(testCompanyNumber)),
-                          ctReference = Some(testCtReference),
-                          email = Some(testEmail),
-                          isMigratable = testIsMigratable,
-                          isDirectDebit = false,
-                          contactPreference = Some(Paper)
-                        )
-
-                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                      await(res) shouldBe Right(
-                        SignUpRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = LimitedCompany(testCompanyNumber),
-                          signUpEmail = Some(verifiedEmail),
-                          transactionEmail = verifiedEmail,
-                          isDelegated = false,
-                          isMigratable = testIsMigratable,
-                          contactPreference = Paper
-                        )
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                        ctReference = Some(testCtReference),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable,
+                        isDirectDebit = false,
+                        contactPreference = Some(Paper)
                       )
-                    }
-                  }
-                  s"there is a $Paper contact preference stored in the database and no sign up e-mail" should {
-                    s"return a successful $SignUpRequest" in {
 
-                      val testSubscriptionRequest =
-                        SubscriptionRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = Some(LimitedCompany(testCompanyNumber)),
-                          ctReference = Some(testCtReference),
-                          transactionEmail = Some(testEmail),
-                          email = None,
-                          isMigratable = testIsMigratable,
-                          isDirectDebit = false,
-                          contactPreference = Some(Paper)
-                        )
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                      await(res) shouldBe Right(
-                        SignUpRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = LimitedCompany(testCompanyNumber),
-                          signUpEmail = None,
-                          transactionEmail = verifiedEmail,
-                          isDelegated = false,
-                          isMigratable = testIsMigratable,
-                          contactPreference = Paper
-                        )
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedCompany(testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Paper
                       )
-                    }
+                    )
                   }
-                  s"there is $None for contact preference stored in the database" should {
-                    s"return a Left $InsufficientData" in {
+                }
+                s"there is a $Paper contact preference stored in the database and no sign up e-mail" should {
+                  s"return a successful $SignUpRequest" in {
 
-                      val testSubscriptionRequest =
-                        SubscriptionRequest(
-                          vatNumber = testVatNumber,
-                          businessEntity = Some(LimitedCompany(testCompanyNumber)),
-                          ctReference = Some(testCtReference),
-                          email = Some(testEmail),
-                          isMigratable = testIsMigratable,
-                          isDirectDebit = false,
-                          contactPreference = None
-                        )
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                        ctReference = Some(testCtReference),
+                        transactionEmail = Some(testEmail),
+                        email = None,
+                        isMigratable = testIsMigratable,
+                        isDirectDebit = false,
+                        contactPreference = Some(Paper)
+                      )
 
-                      mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                      mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-                      val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
 
-                      val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-                      await(res) shouldBe Left(InsufficientData)
-                    }
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedCompany(testCompanyNumber),
+                        signUpEmail = None,
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Paper
+                      )
+                    )
                   }
+                }
+                s"there is $None for contact preference stored in the database" should {
+                  s"return a Left $InsufficientData" in {
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                        ctReference = Some(testCtReference),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable,
+                        isDirectDebit = false,
+                        contactPreference = None
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Left(InsufficientData)
+                  }
+                }
               }
             }
             "the sign up email address is not verified" should {
@@ -256,37 +256,37 @@ class SignUpRequestServiceSpec extends UnitSpec
         "there is a stored sign up email address" when {
           "the sign up email address is verified" when {
             "there is not a transaction e-mail address" when {
-                s"return a successful $SignUpRequest" in {
+              s"return a successful $SignUpRequest" in {
 
-                  val testSubscriptionRequest =
-                    SubscriptionRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = Some(SoleTrader(testNino)),
-                      email = Some(testEmail),
-                      isMigratable = testIsMigratable,
-                      isDirectDebit = false,
-                      contactPreference = Some(testContactPreference)
-                    )
-
-                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                  await(res) shouldBe Right(
-                    SignUpRequest(
-                      vatNumber = testVatNumber,
-                      businessEntity = SoleTrader(testNino),
-                      signUpEmail = Some(verifiedEmail),
-                      transactionEmail = verifiedEmail,
-                      isDelegated = false,
-                      isMigratable = testIsMigratable,
-                      contactPreference = testContactPreference
-                    )
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = Some(SoleTrader(testNino)),
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable,
+                    isDirectDebit = false,
+                    contactPreference = Some(testContactPreference)
                   )
-                }
+
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = SoleTrader(testNino),
+                    signUpEmail = Some(verifiedEmail),
+                    transactionEmail = verifiedEmail,
+                    isDelegated = false,
+                    isMigratable = testIsMigratable,
+                    contactPreference = testContactPreference
+                  )
+                )
+              }
             }
           }
         }
@@ -295,12 +295,50 @@ class SignUpRequestServiceSpec extends UnitSpec
         "the user has a partnership enrolment" when {
           "the sign up email address is verified" when {
             "there is not a transaction e-mail address" when {
+              s"return a successful $SignUpRequest" in {
+
+                val testSubscriptionRequest =
+                  SubscriptionRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = Some(GeneralPartnership(Some(testUtr))),
+                    email = Some(testEmail),
+                    isMigratable = testIsMigratable,
+                    isDirectDebit = false,
+                    contactPreference = Some(testContactPreference)
+                  )
+
+                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                await(res) shouldBe Right(
+                  SignUpRequest(
+                    vatNumber = testVatNumber,
+                    businessEntity = GeneralPartnership(Some(testUtr)),
+                    signUpEmail = Some(verifiedEmail),
+                    transactionEmail = verifiedEmail,
+                    isDelegated = false,
+                    isMigratable = testIsMigratable,
+                    contactPreference = testContactPreference
+                  )
+                )
+              }
+            }
+          }
+        }
+        s"the user is a $LimitedPartnership" when {
+          "the user has a partnership enrolment" when {
+            "the sign up email address is verified" when {
+              "there is not a transaction e-mail address" when {
                 s"return a successful $SignUpRequest" in {
 
                   val testSubscriptionRequest =
                     SubscriptionRequest(
                       vatNumber = testVatNumber,
-                      businessEntity = Some(GeneralPartnership(Some(testUtr))),
+                      businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
                       email = Some(testEmail),
                       isMigratable = testIsMigratable,
                       isDirectDebit = false,
@@ -317,7 +355,7 @@ class SignUpRequestServiceSpec extends UnitSpec
                   await(res) shouldBe Right(
                     SignUpRequest(
                       vatNumber = testVatNumber,
-                      businessEntity = GeneralPartnership(Some(testUtr)),
+                      businessEntity = LimitedPartnership(Some(testUtr), testCompanyNumber),
                       signUpEmail = Some(verifiedEmail),
                       transactionEmail = verifiedEmail,
                       isDelegated = false,
@@ -326,44 +364,6 @@ class SignUpRequestServiceSpec extends UnitSpec
                     )
                   )
                 }
-            }
-          }
-        }
-        s"the user is a $LimitedPartnership" when {
-          "the user has a partnership enrolment" when {
-            "the sign up email address is verified" when {
-              "there is not a transaction e-mail address" when {
-                  s"return a successful $SignUpRequest" in {
-
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false,
-                        contactPreference = Some(testContactPreference)
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
-
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = LimitedPartnership(Some(testUtr), testCompanyNumber),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = testContactPreference
-                      )
-                    )
-                  }
               }
             }
           }
@@ -372,37 +372,37 @@ class SignUpRequestServiceSpec extends UnitSpec
           "the user has a partnership enrolment" when {
             "the sign up email address is verified" when {
               "there is not a transaction e-mail address" when {
-                  s"return a successful $SignUpRequest" in {
+                s"return a successful $SignUpRequest" in {
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false,
-                        contactPreference = Some(testContactPreference)
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
-
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = testContactPreference
-                      )
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable,
+                      isDirectDebit = false,
+                      contactPreference = Some(testContactPreference)
                     )
-                  }
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = testContactPreference
+                    )
+                  )
+                }
               }
             }
           }
@@ -411,37 +411,37 @@ class SignUpRequestServiceSpec extends UnitSpec
           "the user has a partnership enrolment" when {
             "the sign up email address is verified" when {
               "there is not a transaction e-mail address" when {
-                  s"return a successful $SignUpRequest" in {
+                s"return a successful $SignUpRequest" in {
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false,
-                        contactPreference = Some(testContactPreference)
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
-
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = testContactPreference
-                      )
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable,
+                      isDirectDebit = false,
+                      contactPreference = Some(testContactPreference)
                     )
-                  }
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testPartnershipEnrolment)))
+
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = testContactPreference
+                    )
+                  )
+                }
               }
             }
           }
@@ -450,36 +450,36 @@ class SignUpRequestServiceSpec extends UnitSpec
           "the sign up email address is verified" when {
             "the user does not have a partnership enrolment" when {
               "there is not a transaction e-mail address" when {
-                  s"return a successful $SignUpRequest" in {
+                s"return a successful $SignUpRequest" in {
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false,
-                        contactPreference = Some(testContactPreference)
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = testContactPreference
-                      )
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable,
+                      isDirectDebit = false,
+                      contactPreference = Some(testContactPreference)
                     )
-                  }
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = ScottishLimitedPartnership(Some(testUtr), testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = testContactPreference
+                    )
+                  )
+                }
               }
             }
           }
@@ -488,36 +488,36 @@ class SignUpRequestServiceSpec extends UnitSpec
           "the sign up email address is verified" when {
             "the user does not have a partnership enrolment" when {
               "there is not a transaction e-mail address" when {
-                  s"return a successful $SignUpRequest" in {
+                s"return a successful $SignUpRequest" in {
 
-                    val testSubscriptionRequest =
-                      SubscriptionRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
-                        email = Some(testEmail),
-                        isMigratable = testIsMigratable,
-                        isDirectDebit = false,
-                        contactPreference = Some(testContactPreference)
-                      )
-
-                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                    await(res) shouldBe Right(
-                      SignUpRequest(
-                        vatNumber = testVatNumber,
-                        businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
-                        signUpEmail = Some(verifiedEmail),
-                        transactionEmail = verifiedEmail,
-                        isDelegated = false,
-                        isMigratable = testIsMigratable,
-                        contactPreference = testContactPreference
-                      )
+                  val testSubscriptionRequest =
+                    SubscriptionRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
+                      email = Some(testEmail),
+                      isMigratable = testIsMigratable,
+                      isDirectDebit = false,
+                      contactPreference = Some(testContactPreference)
                     )
-                  }
+
+                  mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                  mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                  val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+                  val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                  await(res) shouldBe Right(
+                    SignUpRequest(
+                      vatNumber = testVatNumber,
+                      businessEntity = LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber),
+                      signUpEmail = Some(verifiedEmail),
+                      transactionEmail = verifiedEmail,
+                      isDelegated = false,
+                      isMigratable = testIsMigratable,
+                      contactPreference = testContactPreference
+                    )
+                  )
+                }
               }
             }
           }
@@ -544,37 +544,37 @@ class SignUpRequestServiceSpec extends UnitSpec
 
       s"the user is a $VatGroup" when {
         "sign up email is verified" when {
-            s"return a successful $SignUpRequest" in {
+          s"return a successful $SignUpRequest" in {
 
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(VatGroup),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false,
-                  contactPreference = Some(testContactPreference)
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Right(
-                SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = VatGroup,
-                  signUpEmail = Some(verifiedEmail),
-                  transactionEmail = verifiedEmail,
-                  isDelegated = false,
-                  isMigratable = testIsMigratable,
-                  contactPreference = testContactPreference
-                )
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(VatGroup),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable,
+                isDirectDebit = false,
+                contactPreference = Some(testContactPreference)
               )
-            }
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = VatGroup,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = testContactPreference
+              )
+            )
+          }
           "sign up email is not verified" should {
             s"return a $EmailVerificationRequired" in {
 
@@ -601,37 +601,37 @@ class SignUpRequestServiceSpec extends UnitSpec
 
       s"the user is a $RegisteredSociety" when {
         "sign up email is verified" when {
-            s"return a successful $SignUpRequest" in {
+          s"return a successful $SignUpRequest" in {
 
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(RegisteredSociety(testCompanyNumber)),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false,
-                  contactPreference = Some(testContactPreference)
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Right(
-                SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = RegisteredSociety(testCompanyNumber),
-                  signUpEmail = Some(verifiedEmail),
-                  transactionEmail = verifiedEmail,
-                  isDelegated = false,
-                  isMigratable = testIsMigratable,
-                  contactPreference = testContactPreference
-                )
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable,
+                isDirectDebit = false,
+                contactPreference = Some(testContactPreference)
               )
-            }
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = RegisteredSociety(testCompanyNumber),
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = testContactPreference
+              )
+            )
+          }
           "sign up email is not verified" should {
             s"return a $EmailVerificationRequired" in {
 
@@ -657,37 +657,37 @@ class SignUpRequestServiceSpec extends UnitSpec
       }
       s"the user is a $Charity" when {
         "sign up email is verified" when {
-            s"return a successful $SignUpRequest" in {
+          s"return a successful $SignUpRequest" in {
 
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(Charity),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false,
-                  contactPreference = Some(testContactPreference)
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Right(
-                SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Charity,
-                  signUpEmail = Some(verifiedEmail),
-                  transactionEmail = verifiedEmail,
-                  isDelegated = false,
-                  isMigratable = testIsMigratable,
-                  contactPreference = testContactPreference
-                )
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(Charity),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable,
+                isDirectDebit = false,
+                contactPreference = Some(testContactPreference)
               )
-            }
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Charity,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = testContactPreference
+              )
+            )
+          }
           "sign up email is not verified" should {
             s"return a $EmailVerificationRequired" in {
 
@@ -714,37 +714,37 @@ class SignUpRequestServiceSpec extends UnitSpec
 
       s"the user is a $GovernmentOrganisation" when {
         "sign up email is verified" when {
-            s"return a successful $SignUpRequest" in {
+          s"return a successful $SignUpRequest" in {
 
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(GovernmentOrganisation),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false,
-                  contactPreference = Some(testContactPreference)
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Right(
-                SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = GovernmentOrganisation,
-                  signUpEmail = Some(verifiedEmail),
-                  transactionEmail = verifiedEmail,
-                  isDelegated = false,
-                  isMigratable = testIsMigratable,
-                  contactPreference = testContactPreference
-                )
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(GovernmentOrganisation),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable,
+                isDirectDebit = false,
+                contactPreference = Some(testContactPreference)
               )
-            }
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = GovernmentOrganisation,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = testContactPreference
+              )
+            )
+          }
           "sign up email is not verified" should {
             s"return a $EmailVerificationRequired" in {
 
@@ -768,134 +768,76 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
       }
-
-      s"the user is a $JointVenture" when {
-        "sign up email is verified" when {
-            s"return a successful $SignUpRequest" in {
-
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(JointVenture),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false,
-                  contactPreference = Some(testContactPreference)
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Right(
-                SignUpRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = JointVenture,
-                  signUpEmail = Some(verifiedEmail),
-                  transactionEmail = verifiedEmail,
-                  isDelegated = false,
-                  isMigratable = testIsMigratable,
-                  contactPreference = testContactPreference
-                )
-              )
-            }
-          "sign up email is not verified" should {
-            s"return a $EmailVerificationRequired" in {
-
-              val testSubscriptionRequest =
-                SubscriptionRequest(
-                  vatNumber = testVatNumber,
-                  businessEntity = Some(VatGroup),
-                  email = Some(testEmail),
-                  isMigratable = testIsMigratable,
-                  isDirectDebit = false,
-                  contactPreference = Some(testContactPreference)
-                )
-
-              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
-
-              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
-
-              await(res) shouldBe Left(EmailVerificationRequired)
-            }
-          }
-        }
-      }
-
     }
 
     s"the request is delegated && $SoleTrader" when {
       "there is a stored NINO" when {
         "there is an unverified sign up e-mail" when {
+          s"return a successful $SignUpRequest" in {
+
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(SoleTrader(testNino)),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable,
+                isDirectDebit = false,
+                contactPreference = Some(testContactPreference)
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+            val unverifiedEmail = EmailAddress(testEmail, isVerified = false)
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = SoleTrader(testNino),
+                signUpEmail = Some(unverifiedEmail),
+                transactionEmail = unverifiedEmail,
+                isDelegated = true,
+                isMigratable = testIsMigratable,
+                contactPreference = testContactPreference
+              )
+            )
+          }
+        }
+        "there is not a sign up e-mail" when {
+          "there is a verified transaction e-mail" when {
             s"return a successful $SignUpRequest" in {
 
               val testSubscriptionRequest =
                 SubscriptionRequest(
                   vatNumber = testVatNumber,
                   businessEntity = Some(SoleTrader(testNino)),
-                  email = Some(testEmail),
+                  transactionEmail = Some(testEmail),
                   isMigratable = testIsMigratable,
                   isDirectDebit = false,
                   contactPreference = Some(testContactPreference)
                 )
 
               mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
               val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
 
-              val unverifiedEmail = EmailAddress(testEmail, isVerified = false)
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
               await(res) shouldBe Right(
                 SignUpRequest(
                   vatNumber = testVatNumber,
                   businessEntity = SoleTrader(testNino),
-                  signUpEmail = Some(unverifiedEmail),
-                  transactionEmail = unverifiedEmail,
+                  signUpEmail = None,
+                  transactionEmail = verifiedEmail,
                   isDelegated = true,
                   isMigratable = testIsMigratable,
                   contactPreference = testContactPreference
                 )
               )
             }
-        }
-        "there is not a sign up e-mail" when {
-          "there is a verified transaction e-mail" when {
-              s"return a successful $SignUpRequest" in {
-
-                val testSubscriptionRequest =
-                  SubscriptionRequest(
-                    vatNumber = testVatNumber,
-                    businessEntity = Some(SoleTrader(testNino)),
-                    transactionEmail = Some(testEmail),
-                    isMigratable = testIsMigratable,
-                    isDirectDebit = false,
-                    contactPreference = Some(testContactPreference)
-                  )
-
-                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                await(res) shouldBe Right(
-                  SignUpRequest(
-                    vatNumber = testVatNumber,
-                    businessEntity = SoleTrader(testNino),
-                    signUpEmail = None,
-                    transactionEmail = verifiedEmail,
-                    isDelegated = true,
-                    isMigratable = testIsMigratable,
-                    contactPreference = testContactPreference
-                  )
-                )
-              }
           }
           "there is an unverified transaction e-mail" should {
             s"return $EmailVerificationRequired" in {
@@ -938,279 +880,244 @@ class SignUpRequestServiceSpec extends UnitSpec
 
         s"The request is a $LimitedCompany" when {
           "there is a verified transaction e-mail" when {
-              s"return a successful $SignUpRequest" in {
+            s"return a successful $SignUpRequest" in {
 
-                val testSubscriptionRequest =
-                  SubscriptionRequest(
-                    vatNumber = testVatNumber,
-                    businessEntity = Some(LimitedCompany(testCompanyNumber)),
-                    email = Some(testEmail),
-                    isMigratable = testIsMigratable,
-                    isDirectDebit = false,
-                    contactPreference = Some(testContactPreference)
-                  )
-
-                mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-                mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-                val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-                val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-                await(res) shouldBe Right(
-                  SignUpRequest(
-                    vatNumber = testVatNumber,
-                    businessEntity = LimitedCompany(testCompanyNumber),
-                    signUpEmail = Some(verifiedEmail),
-                    transactionEmail = verifiedEmail,
-                    isDelegated = true,
-                    isMigratable = testIsMigratable,
-                    contactPreference = testContactPreference
-                  )
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable,
+                  isDirectDebit = false,
+                  contactPreference = Some(testContactPreference)
                 )
-              }
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+              val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+              await(res) shouldBe Right(
+                SignUpRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = LimitedCompany(testCompanyNumber),
+                  signUpEmail = Some(verifiedEmail),
+                  transactionEmail = verifiedEmail,
+                  isDelegated = true,
+                  isMigratable = testIsMigratable,
+                  contactPreference = testContactPreference
+                )
+              )
+            }
           }
         }
       }
 
       s"the user is a $VatGroup" when {
-          s"return a successful $SignUpRequest" in {
+        s"return a successful $SignUpRequest" in {
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(VatGroup),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = VatGroup,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(VatGroup),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
             )
-          }
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = VatGroup,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
+            )
+          )
+        }
       }
 
       s"the user is a $Division" when {
-          s"return a successful $SignUpRequest" in {
+        s"return a successful $SignUpRequest" in {
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(AdministrativeDivision),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = AdministrativeDivision,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(AdministrativeDivision),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
             )
-          }
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = AdministrativeDivision,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
+            )
+          )
+        }
       }
 
       s"the user is a $UnincorporatedAssociation" should {
-          s"return a successful $SignUpRequest" in {
+        s"return a successful $SignUpRequest" in {
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(UnincorporatedAssociation),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = UnincorporatedAssociation,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(UnincorporatedAssociation),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
             )
-          }
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = UnincorporatedAssociation,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
+            )
+          )
+        }
       }
 
       s"the user is a $RegisteredSociety" should {
-          s"return a successful $SignUpRequest" in {
+        s"return a successful $SignUpRequest" in {
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(RegisteredSociety(testCompanyNumber)),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = RegisteredSociety(testCompanyNumber),
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(RegisteredSociety(testCompanyNumber)),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
             )
-          }
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = RegisteredSociety(testCompanyNumber),
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
+            )
+          )
+        }
       }
 
       s"the user is a $Charity" should {
-          s"return a successful $SignUpRequest" in {
+        s"return a successful $SignUpRequest" in {
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(Charity),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Charity,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(Charity),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
             )
-          }
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Charity,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
+            )
+          )
+        }
       }
 
       s"the user is a $GovernmentOrganisation" should {
-          s"return a successful $SignUpRequest" in {
+        s"return a successful $SignUpRequest" in {
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(GovernmentOrganisation),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
-
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
-
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = GovernmentOrganisation,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(GovernmentOrganisation),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
             )
-          }
-      }
 
-      s"the user is a $JointVenture" when {
-          s"return a successful $SignUpRequest" in {
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
 
-            val testSubscriptionRequest =
-              SubscriptionRequest(
-                vatNumber = testVatNumber,
-                businessEntity = Some(JointVenture),
-                email = Some(testEmail),
-                isMigratable = testIsMigratable,
-                isDirectDebit = false,
-                contactPreference = Some(testContactPreference)
-              )
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
 
-            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
-            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
 
-            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
-
-            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
-
-            await(res) shouldBe Right(
-              SignUpRequest(
-                vatNumber = testVatNumber,
-                businessEntity = JointVenture,
-                signUpEmail = Some(verifiedEmail),
-                transactionEmail = verifiedEmail,
-                isDelegated = true,
-                isMigratable = testIsMigratable,
-                contactPreference = testContactPreference
-              )
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = GovernmentOrganisation,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
             )
-          }
+          )
+        }
       }
-
     }
   }
 }

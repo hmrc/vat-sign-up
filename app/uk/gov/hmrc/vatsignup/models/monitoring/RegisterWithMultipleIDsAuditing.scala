@@ -166,15 +166,6 @@ object RegisterWithMultipleIDsAuditing {
             agentReferenceNumber = agentReferenceNumber,
             isSuccess = isSuccess
           )
-        case JointVenture =>
-          RegisterWithMultipleIDsAuditModel(
-            vatNumber = vatNumber,
-            sautr = None,
-            companyNumber = None,
-            businessEntity = GeneralPartnershipKey,
-            agentReferenceNumber = agentReferenceNumber,
-            isSuccess = isSuccess
-          )
         case RegisteredSociety(companyNumber) =>
           RegisterWithMultipleIDsAuditModel(
             vatNumber = vatNumber,
