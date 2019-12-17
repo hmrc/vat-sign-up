@@ -27,7 +27,7 @@ import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest.EmailAddress
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.SignUpRequestService.{RequestAuthorised, _}
+import uk.gov.hmrc.vatsignup.services.SignUpRequestService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,25 +39,12 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
 
   def getSignUpRequest(vatNumber: String, enrolments: Enrolments)(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, SignUpRequest]] = {
     val isDelegated = enrolments.agentReferenceNumber.isDefined
-    val hasPartnershipEnrolment = enrolments.partnershipUtr.isDefined
 
     subscriptionRequestRepository.findById(vatNumber) flatMap {
       case Some(subscriptionRequest) =>
-        val hasVatEnrolment = enrolments.vatNumber match {
-          case Right(vrn) if vrn == subscriptionRequest.vatNumber => true
-          case _ => false
-        }
-
         val res: EitherT[Future, GetSignUpRequestFailure, SignUpRequest] = for {
           businessEntity <- EitherT.fromOption[Future](subscriptionRequest.businessEntity, InsufficientData)
           contactPreference <- EitherT.fromOption[Future](subscriptionRequest.contactPreference, InsufficientData)
-          _ <- EitherT.fromEither[Future](checkAuthorisation(
-            businessEntity,
-            subscriptionRequest,
-            isDelegated,
-            hasVatEnrolment,
-            hasPartnershipEnrolment
-          ))
           optSignUpEmail <- EitherT(getSignUpEmail(subscriptionRequest, isDelegated))
           transactionEmail <- EitherT(getTransactionEmail(subscriptionRequest, optSignUpEmail))
           isMigratable = subscriptionRequest.isMigratable
@@ -77,30 +64,6 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
       case _ => Left(DatabaseFailure)
     }
   }
-
-  private def checkAuthorisation(businessEntity: BusinessEntity,
-                                 subscriptionRequest: SubscriptionRequest,
-                                 isDelegated: Boolean,
-                                 hasVatEnrolment: Boolean,
-                                 hasPartnershipEnrolment: Boolean): Either[GetSignUpRequestFailure, RequestAuthorised.type] =
-    businessEntity match {
-      case _: LimitedCompany =>
-        Right(RequestAuthorised)
-      case _: SoleTrader =>
-        Right(RequestAuthorised)
-      case _: PartnershipBusinessEntity =>
-        Right(RequestAuthorised)
-      case VatGroup | AdministrativeDivision | UnincorporatedAssociation | Trust | Charity | GovernmentOrganisation | Overseas =>
-        Right(RequestAuthorised)
-      case _: OverseasWithUkEstablishment =>
-        Right(RequestAuthorised)
-      case _: RegisteredSociety =>
-        Right(RequestAuthorised)
-      case _ if isDelegated =>
-        Right(RequestAuthorised)
-      case _ =>
-        Left(RequestNotAuthorised)
-    }
 
   private def getSignUpEmail(subscriptionRequest: SubscriptionRequest,
                              isDelegated: Boolean)(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, Option[EmailAddress]]] = {
@@ -166,4 +129,3 @@ object SignUpRequestService {
   case object EmailVerificationFailure extends GetSignUpRequestFailure
 
 }
-
