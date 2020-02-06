@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.CREATED
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object AssignEnrolmentToUserHttpParser {

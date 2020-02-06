@@ -29,4 +29,5 @@ object KnownFactsDateFormatter {
       taxEnrolmentsFormat format parsedDate
     }
   }
+
 }

@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.models
 
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.JsString
-import uk.gov.hmrc.play.test.UnitSpec
 
 
-class MandationStatusSpec extends UnitSpec {
+class MandationStatusSpec extends WordSpec with Matchers {
 
   "desReader" should {
 

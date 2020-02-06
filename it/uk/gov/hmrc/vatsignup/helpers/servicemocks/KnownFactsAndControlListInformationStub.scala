@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,12 +51,12 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
 
   def stubGetKnownFactsAndControlListInformationMultipleEntities34(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
     val body = Json.obj(
-    "postcode" -> businessPostcode,
-    "dateOfReg" -> vatRegistrationDate,
-    "controlListInformation" -> ControlList34.multipleEntities
+      "postcode" -> businessPostcode,
+      "dateOfReg" -> vatRegistrationDate,
+      "controlListInformation" -> ControlList34.multipleEntities
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
-    }
+  }
 
   def stubIneligibleControlListInformation(vatNumber: String): Unit = {
     val body = Json.obj(

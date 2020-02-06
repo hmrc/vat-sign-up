@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,13 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import org.scalatest.BeforeAndAfterEach
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{mandationStatusBody, stubGetMandationStatus}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
-import uk.gov.hmrc.vatsignup.models.MTDfBVoluntary
 
 class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeAndAfterEach with CustomMatchers {
 
@@ -37,7 +35,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             stubAuth(OK, successfulAuthResponse())
             stubGetKnownFactsAndControlListInformation33(testVatNumber, testPostCode, testDateOfRegistration)
 
-            val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+            val res = get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility")
 
             res should have(
               httpStatus(OK)
@@ -53,7 +51,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             stubAuth(OK, successfulAuthResponse())
             stubGetKnownFactsAndControlListInformation34(testVatNumber, testPostCode, testDateOfRegistration)
 
-            val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+            val res = get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility")
 
             res should have(
               httpStatus(OK),
@@ -69,7 +67,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             stubAuth(OK, successfulAuthResponse())
             stubGetKnownFactsAndControlListInformationMultipleEntities34(testVatNumber, testPostCode, testDateOfRegistration)
 
-            val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+            val res = get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility")
 
             res should have(
               httpStatus(OK),
@@ -85,7 +83,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
             stubAuth(OK, successfulAuthResponse())
             stubOverseasControlListInformation(testVatNumber)
 
-            val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+            val res = get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility")
 
             res should have(
               httpStatus(OK),
@@ -103,7 +101,7 @@ class VatNumberEligibilityControllerISpec extends ComponentSpecBase with BeforeA
           stubAuth(OK, successfulAuthResponse())
           stubIneligibleControlListInformation(testVatNumber)
 
-          val res = await(get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility"))
+          val res = get(s"/subscription-request/vat-number/$testVatNumber/mtdfb-eligibility")
 
           res should have(
             httpStatus(BAD_REQUEST)

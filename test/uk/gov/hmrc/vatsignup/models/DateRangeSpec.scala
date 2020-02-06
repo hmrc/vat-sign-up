@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.models
 
 import java.time.LocalDate
 
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{Matchers, WordSpec}
 
 
-class DateRangeSpec extends UnitSpec {
+class DateRangeSpec extends WordSpec with Matchers {
 
   "contains" should {
 

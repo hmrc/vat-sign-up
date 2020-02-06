@@ -19,12 +19,12 @@ package uk.gov.hmrc.vatsignup.service.mocks
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.MigratedSignUpRequest
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService
-import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService.{SignUpRequestDeleted, SignUpRequestFailure}
+import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService.SignUpRequestDeleted
 
 import scala.concurrent.Future
 

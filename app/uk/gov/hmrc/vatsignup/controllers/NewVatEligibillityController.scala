@@ -18,9 +18,9 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
@@ -29,8 +29,9 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class NewVatEligibillityController @Inject()(val authConnector: AuthConnector,
-                                             vatNumberEligibilityService: VatNumberEligibilityService)
-                                            (implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                             vatNumberEligibilityService: VatNumberEligibilityService,
+                                             cc: ControllerComponents
+                                            )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def checkVatNumberEligibillity(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>

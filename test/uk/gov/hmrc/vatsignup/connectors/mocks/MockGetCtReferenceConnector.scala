@@ -17,13 +17,12 @@
 package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.reset
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito.{reset, _}
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.GetCtReferenceConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.GetCtReferenceResponse
-import org.mockito.Mockito._
-import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 

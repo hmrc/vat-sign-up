@@ -18,9 +18,9 @@ package uk.gov.hmrc.vatsignup.models
 
 import java.time.Month
 
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{Matchers, WordSpec}
 
-class VatKnownFactsSpec extends UnitSpec {
+class VatKnownFactsSpec extends WordSpec with Matchers {
   "fromMMM" should {
     "convert FEB to FEBRUARY" in {
       VatKnownFacts.fromMMM("FEB") shouldBe Month.FEBRUARY

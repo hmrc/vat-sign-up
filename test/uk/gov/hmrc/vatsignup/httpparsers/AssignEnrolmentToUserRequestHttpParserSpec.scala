@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserHttpReads.read
+import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser._
 
-class AssignEnrolmentToUserRequestHttpParserSpec extends UnitSpec with EitherValues {
+class AssignEnrolmentToUserRequestHttpParserSpec extends WordSpec with Matchers {
   "AssignEnrolmentToUserHttpReads#read" when {
     "the response status is OK" should {
       "return an EnrolmentAssigned" in {
@@ -31,17 +30,17 @@ class AssignEnrolmentToUserRequestHttpParserSpec extends UnitSpec with EitherVal
           responseStatus = CREATED
         )
 
-        read("", "", httpResponse).right.value shouldBe EnrolmentAssigned
+        read("", "", httpResponse) shouldBe Right(EnrolmentAssigned)
       }
     }
 
     "the response status is anything else" should {
       "return an InvalidJsonResponse" in {
         val httpResponse = HttpResponse(
-            responseStatus = INTERNAL_SERVER_ERROR
+          responseStatus = INTERNAL_SERVER_ERROR
         )
 
-        read("", "", httpResponse).left.value shouldBe EnrolmentAssignmentFailure(INTERNAL_SERVER_ERROR, httpResponse.body)
+        read("", "", httpResponse) shouldBe Left(EnrolmentAssignmentFailure(INTERNAL_SERVER_ERROR, httpResponse.body))
       }
     }
 

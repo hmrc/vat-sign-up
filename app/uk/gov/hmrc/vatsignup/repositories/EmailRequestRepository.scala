@@ -17,24 +17,25 @@
 package uk.gov.hmrc.vatsignup.repositories
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json.{Format, JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
+import reactivemongo.api.commands.UpdateWriteResult
 import reactivemongo.api.indexes.IndexType.Ascending
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.BSONDocument
+import reactivemongo.play.json.JSONSerializationPack.Writer
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.models.EmailRequest
 import uk.gov.hmrc.vatsignup.models.EmailRequest.{creationTimestampKey, idKey}
-import reactivemongo.play.json.JSONSerializationPack.Writer
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class EmailRequestRepository @Inject()(mongo: ReactiveMongoComponent,
-                                       appConfig: AppConfig)(implicit ec: ExecutionContext)
+                                       appConfig: AppConfig
+                                      )(implicit ec: ExecutionContext)
   extends ReactiveRepository[EmailRequest, String](
     "emailRequestRepository",
     mongo.mongoConnector.db,

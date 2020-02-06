@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockTaxEnrolmentsConnector
-import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
+import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService
 import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService._
-import play.api.http.Status._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedEnrolmentServiceSpec extends UnitSpec with MockTaxEnrolmentsConnector {
+class MigratedEnrolmentServiceSpec extends WordSpec with Matchers with MockTaxEnrolmentsConnector {
 
   object TestMigratedEnrolmentService extends MigratedEnrolmentService(mockTaxEnrolmentsConnector)
 

@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.SuccessfulTaxEnrolment
-import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService. EnrolmentSuccess
+import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.EnrolmentSuccess
 
 import scala.concurrent.{ExecutionContext, Future}
 

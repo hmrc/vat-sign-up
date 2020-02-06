@@ -18,15 +18,15 @@ package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.PartnershipKnownFactsConnector
 import uk.gov.hmrc.vatsignup.httpparsers.GetPartnershipKnownFactsHttpParser.GetPartnershipKnownFactsResponse
 
 import scala.concurrent.Future
 
-trait MockPartnershipKnownFactsConnector extends BeforeAndAfterEach with MockitoSugar {
+trait MockGetPartnershipKnownFactsConnector extends BeforeAndAfterEach with MockitoSugar {
   this: Suite =>
   val mockPartnershipKnownFactsConnector: PartnershipKnownFactsConnector = mock[PartnershipKnownFactsConnector]
 

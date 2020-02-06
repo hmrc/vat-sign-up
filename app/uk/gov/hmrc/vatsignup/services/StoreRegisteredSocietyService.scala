@@ -51,7 +51,7 @@ class StoreRegisteredSocietyService @Inject()(subscriptionRequestRepository: Sub
           _ <- EitherT(upsertBE(vatNumber, companyNumber))
           _ <- EitherT(upsertCT(vatNumber, ctutr))
         } yield StoreRegisteredSocietySuccess
-      }.value
+        }.value
     }
 
   private def upsertBE(vatNumber: String,

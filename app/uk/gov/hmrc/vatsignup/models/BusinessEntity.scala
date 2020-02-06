@@ -66,6 +66,8 @@ case object GovernmentOrganisation extends BusinessEntity
 
 case object Overseas extends BusinessEntity
 
+case object JointVenture extends BusinessEntity
+
 case class OverseasWithUkEstablishment(companyNumber: String) extends BusinessEntity
 
 object BusinessEntity {
@@ -73,6 +75,7 @@ object BusinessEntity {
   val LimitedCompanyKey = "limitedCompany"
   val SoleTraderKey = "soleTrader"
   val GeneralPartnershipKey = "generalPartnership"
+  val JointVentureKey = "jointVenture"
   val LimitedPartnershipKey = "limitedPartnership"
   val LimitedLiabilityPartnershipKey = "limitedLiabilityPartnershipKey"
   val ScottishLimitedPartnershipKey = "scottishLimitedPartnershipKey"
@@ -103,30 +106,34 @@ object BusinessEntity {
           NinoKey -> nino
         )
       case GeneralPartnership(sautr) => (
-          Json.obj(
-            EntityTypeKey -> GeneralPartnershipKey
-          )
+        Json.obj(
+          EntityTypeKey -> GeneralPartnershipKey
+        )
           + (SautrKey -> sautr)
         )
+      case JointVenture =>
+        Json.obj(
+          EntityTypeKey -> JointVentureKey
+        )
       case LimitedPartnership(sautr, companyNumber) => (
-          Json.obj(
-            EntityTypeKey -> LimitedPartnershipKey,
-            CompanyNumberKey -> companyNumber
-          )
+        Json.obj(
+          EntityTypeKey -> LimitedPartnershipKey,
+          CompanyNumberKey -> companyNumber
+        )
           + (SautrKey -> sautr)
         )
       case LimitedLiabilityPartnership(sautr, companyNumber) => (
-          Json.obj(
-            EntityTypeKey -> LimitedLiabilityPartnershipKey,
-            CompanyNumberKey -> companyNumber
-          )
+        Json.obj(
+          EntityTypeKey -> LimitedLiabilityPartnershipKey,
+          CompanyNumberKey -> companyNumber
+        )
           + (SautrKey -> sautr)
         )
       case ScottishLimitedPartnership(sautr, companyNumber) => (
-          Json.obj(
-            EntityTypeKey -> ScottishLimitedPartnershipKey,
-            CompanyNumberKey -> companyNumber
-          )
+        Json.obj(
+          EntityTypeKey -> ScottishLimitedPartnershipKey,
+          CompanyNumberKey -> companyNumber
+        )
           + (SautrKey -> sautr)
         )
       case VatGroup =>
@@ -185,6 +192,8 @@ object BusinessEntity {
             for {
               sautr <- (json \ SautrKey).validateOpt[String]
             } yield GeneralPartnership(sautr)
+          case JointVentureKey =>
+            JsSuccess(JointVenture)
           case LimitedPartnershipKey =>
             for {
               companyNumber <- (json \ CompanyNumberKey).validate[String]

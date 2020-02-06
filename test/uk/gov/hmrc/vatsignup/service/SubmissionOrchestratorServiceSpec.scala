@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import org.scalatest.EitherValues
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.SignUpRequest
 import uk.gov.hmrc.vatsignup.repositories.mocks.{MockEmailRequestRepository, MockSubscriptionRequestRepository}
@@ -33,7 +33,7 @@ import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
+class SubmissionOrchestratorServiceSpec extends WordSpec with Matchers with EitherValues
   with MockSubscriptionRequestRepository with MockEmailRequestRepository with MockSubmissionService with MockSignUpRequestService {
 
   object TestSubmissionOrchestrationService extends SubmissionOrchestrationService(
@@ -66,8 +66,8 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
 
               mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
               mockSubmitSignUpRequestSuccessful(testSignUpRequest, enrolments)
-              mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
-              mockDeleteRecord(testVatNumber)(mock[WriteResult])
+              mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(Future.successful(mock[UpdateWriteResult]))
+              mockDeleteRecord(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubmissionOrchestrationService.submitSignUpRequest(testVatNumber, enrolments))
 
@@ -79,7 +79,7 @@ class SubmissionOrchestratorServiceSpec extends UnitSpec with EitherValues
 
               mockGetSignUpRequest(testVatNumber, enrolments)(Future.successful(Right(testSignUpRequest)))
               mockSubmitSignUpRequestSuccessful(testSignUpRequest, enrolments)
-              mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(mock[UpdateWriteResult])
+              mockUpsertEmailAfterSubscription(testVatNumber, testEmail, isDelegated = true)(Future.successful(mock[UpdateWriteResult]))
               mockDeleteRecord(testVatNumber)(Future.failed(new Exception))
 
               val res = await(TestSubmissionOrchestrationService.submitSignUpRequest(testVatNumber, enrolments))

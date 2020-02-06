@@ -17,16 +17,16 @@
 package uk.gov.hmrc.vatsignup.services
 
 import java.util.NoSuchElementException
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
+import uk.gov.hmrc.vatsignup.config.Constants.AgentEnrolmentKey
 import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.CreateEmailVerificationRequestHttpParser.{EmailAlreadyVerified, EmailVerificationRequestSent}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StoreEmailService._
-import uk.gov.hmrc.vatsignup.config.Constants.AgentEnrolmentKey
 
 import scala.concurrent.{ExecutionContext, Future}
 

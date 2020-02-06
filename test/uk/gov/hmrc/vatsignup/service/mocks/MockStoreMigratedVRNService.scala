@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.service.mocks
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
@@ -43,13 +43,13 @@ trait MockStoreMigratedVRNService extends MockitoSugar with BeforeAndAfterEach {
                          enrolments: Enrolments = Enrolments(Set.empty),
                          optKnownFacts: Option[VatKnownFacts] = None
                         )(response: Future[Either[StoreMigratedVRNFailure, StoreMigratedVRNSuccess.type]]): Unit =
-   when(mockStoreMigratedVRNService.storeVatNumber(
-     ArgumentMatchers.eq(vatNumber),
-     ArgumentMatchers.eq(enrolments),
-     ArgumentMatchers.eq(optKnownFacts)
-   )(
-     ArgumentMatchers.any[HeaderCarrier],
-     ArgumentMatchers.any[Request[_]]
-   )) thenReturn response
+    when(mockStoreMigratedVRNService.storeVatNumber(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(enrolments),
+      ArgumentMatchers.eq(optKnownFacts)
+    )(
+      ArgumentMatchers.any[HeaderCarrier],
+      ArgumentMatchers.any[Request[_]]
+    )) thenReturn response
 
 }

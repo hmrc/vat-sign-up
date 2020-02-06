@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
-import play.api.http.Status._
 import play.api.libs.json.{JsObject, Json}
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.utils.JsonUtils._
 
@@ -44,7 +44,14 @@ object RegistrationStub extends WireMockMethods {
     Json.obj(
       "ordinaryPartnership" -> (
         Json.obj("vrn" -> vatNumber)
-        + ("sautr" -> sautr)
+          + ("sautr" -> sautr)
+        )
+    )
+
+  private def registerJointVentureJsonBody(vatNumber: String): JsObject =
+    Json.obj(
+      "ordinaryPartnership" -> Json.obj(
+        "vrn" -> vatNumber
       )
     )
 
@@ -55,8 +62,8 @@ object RegistrationStub extends WireMockMethods {
           "vrn" -> vatNumber,
           "crn" -> companyNumber
         )
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerLimitedLiabilityPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
@@ -66,8 +73,8 @@ object RegistrationStub extends WireMockMethods {
           "vrn" -> vatNumber,
           "crn" -> companyNumber
         )
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerScottishLimitedPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
@@ -77,8 +84,8 @@ object RegistrationStub extends WireMockMethods {
           "vrn" -> vatNumber,
           "crn" -> companyNumber
         )
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerVatGroupJsonBody(vatNumber: String): JsObject =
@@ -94,6 +101,7 @@ object RegistrationStub extends WireMockMethods {
         "vrn" -> vatNumber
       )
     )
+
   private def registerUnincorporatedAssociationJsonBody(vatNumber: String): JsObject =
     Json.obj(
       "unincorporatedAssociation" -> Json.obj(
@@ -129,12 +137,14 @@ object RegistrationStub extends WireMockMethods {
         "vrn" -> vatNumber
       )
     )
+
   private def registerOverseasJsonBody(vatNumber: String): JsObject =
     Json.obj(
       "nonUKCompanyNoUKEstablishment" -> Json.obj(
         "vrn" -> vatNumber
       )
     )
+
   private def registerOverseasWithUkEstablishmentJsonBody(vatNumber: String, companyNumber: String): JsObject =
     Json.obj(
       "nonUKCompanyWithUKEstablishment" -> Json.obj(
@@ -171,6 +181,8 @@ object RegistrationStub extends WireMockMethods {
           registerCompanyJsonBody(vatNumber, companyNumber)
         case GeneralPartnership(sautr) =>
           registerGeneralPartnershipJsonBody(vatNumber, sautr)
+        case JointVenture =>
+          registerJointVentureJsonBody(vatNumber)
         case LimitedPartnership(sautr, companyNumber) =>
           registerLimitedPartnershipJsonBody(vatNumber, sautr, companyNumber)
         case LimitedLiabilityPartnership(sautr, companyNumber) =>

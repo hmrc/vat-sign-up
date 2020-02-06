@@ -26,13 +26,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class StoreVatGroupService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(
-                                     implicit ec: ExecutionContext
-                                    ) {
+class StoreVatGroupService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)
+                                    (implicit ec: ExecutionContext) {
 
-  def storeVatGroup(vatNumber: String)(
-                    implicit hc: HeaderCarrier
-                   ): Future[Either[StoreVatGroupFailure, StoreVatGroupSuccess.type]] = {
+  def storeVatGroup(vatNumber: String)
+                   (implicit hc: HeaderCarrier): Future[Either[StoreVatGroupFailure, StoreVatGroupSuccess.type]] = {
 
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, VatGroup) map {
       _ => Right(StoreVatGroupSuccess)

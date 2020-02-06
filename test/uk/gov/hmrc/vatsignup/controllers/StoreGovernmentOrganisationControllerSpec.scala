@@ -18,11 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
-import play.api.mvc.Result
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreGovernmentOrganisationService
@@ -31,14 +30,18 @@ import uk.gov.hmrc.vatsignup.services.StoreGovernmentOrganisationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreGovernmentOrganisationControllerSpec extends UnitSpec with MockAuthConnector with MockStoreGovernmentOrganisationService {
+class StoreGovernmentOrganisationControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockStoreGovernmentOrganisationService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreGovernmentOrganisationController extends StoreGovernmentOrganisationController(
     mockAuthConnector,
-    mockStoreGovernmentOrganisationService
+    mockStoreGovernmentOrganisationService,
+    stubControllerComponents()
   )
 
 
@@ -48,10 +51,9 @@ class StoreGovernmentOrganisationControllerSpec extends UnitSpec with MockAuthCo
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreGovernmentOrganisation(testVatNumber)(Future.successful(Right(StoreGovernmentOrganisationSuccess)))
 
-        val result: Result = await(TestStoreGovernmentOrganisationController.storeGovernmentOrganisation(testVatNumber)(FakeRequest()))
+        val result = TestStoreGovernmentOrganisationController.storeGovernmentOrganisation(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NO_CONTENT
-
       }
     }
     "fails with VatGroupDatabaseFailureNoVATNumber" should {
@@ -59,10 +61,9 @@ class StoreGovernmentOrganisationControllerSpec extends UnitSpec with MockAuthCo
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreGovernmentOrganisation(testVatNumber)(Future.successful(Left(GovernmentOrganisationDatabaseFailureNoVATNumber)))
 
-        val result: Result = await(TestStoreGovernmentOrganisationController.storeGovernmentOrganisation(testVatNumber)(FakeRequest()))
+        val result = TestStoreGovernmentOrganisationController.storeGovernmentOrganisation(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NOT_FOUND
-
       }
     }
     "fails with VatGroupDatabaseFailure" should {
@@ -70,10 +71,9 @@ class StoreGovernmentOrganisationControllerSpec extends UnitSpec with MockAuthCo
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreGovernmentOrganisation(testVatNumber)(Future.successful(Left(GovernmentOrganisationDatabaseFailure)))
 
-        val result: Result = await(TestStoreGovernmentOrganisationController.storeGovernmentOrganisation(testVatNumber)(FakeRequest()))
+        val result = TestStoreGovernmentOrganisationController.storeGovernmentOrganisation(testVatNumber)(FakeRequest())
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
-
       }
     }
   }

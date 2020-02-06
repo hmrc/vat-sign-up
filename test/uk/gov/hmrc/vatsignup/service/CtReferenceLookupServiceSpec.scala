@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockGetCtReferenceConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser
@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.services.CtReferenceLookupService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class CtReferenceLookupServiceSpec extends UnitSpec
+class CtReferenceLookupServiceSpec extends WordSpec with Matchers
   with MockGetCtReferenceConnector {
 
   object TestCtReferenceLookupService extends CtReferenceLookupService(mockGetCtReferenceConnector)

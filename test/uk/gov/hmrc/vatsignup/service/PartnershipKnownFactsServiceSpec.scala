@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status.BAD_REQUEST
+import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.connectors.mocks.MockPartnershipKnownFactsConnector
+import uk.gov.hmrc.vatsignup.connectors.mocks.MockGetPartnershipKnownFactsConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetPartnershipKnownFactsHttpParser.{PartnershipKnownFactsNotFound, UnexpectedGetPartnershipKnownFactsFailure}
 import uk.gov.hmrc.vatsignup.models.PartnershipKnownFacts
@@ -33,7 +33,7 @@ import uk.gov.hmrc.vatsignup.services.PartnershipKnownFactsService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class PartnershipKnownFactsServiceSpec extends UnitSpec with MockPartnershipKnownFactsConnector with MockAuditService {
+class PartnershipKnownFactsServiceSpec extends WordSpec with Matchers with MockGetPartnershipKnownFactsConnector with MockAuditService {
 
   object TestPartnershipKnownFactsService extends PartnershipKnownFactsService(
     mockPartnershipKnownFactsConnector,

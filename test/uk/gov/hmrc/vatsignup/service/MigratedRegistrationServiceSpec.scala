@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockRegistrationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.{RegisterWithMultipleIdsErrorResponse, RegisterWithMultipleIdsSuccess}
@@ -31,7 +31,7 @@ import uk.gov.hmrc.vatsignup.services.MigratedRegistrationService
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConnector with MockAuditService {
+class MigratedRegistrationServiceSpec extends WordSpec with Matchers with MockRegistrationConnector with MockAuditService {
 
   object TestMigratedRegistrationService extends MigratedRegistrationService(
     mockEntityTypeRegistrationConnector,
@@ -258,6 +258,26 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             businessEntity = UnincorporatedAssociation,
+            agentReferenceNumber = None,
+            isSuccess = true
+          ))
+
+          res shouldBe testSafeId
+        }
+        "the business type is JointVenture" in {
+          mockRegisterBusinessEntity(testVatNumber, JointVenture)(
+            Future.successful(Right(RegisterWithMultipleIdsSuccess(testSafeId)))
+          )
+
+          val res = await(TestMigratedRegistrationService.registerBusinessEntity(
+            vatNumber = testVatNumber,
+            businessEntity = JointVenture,
+            optArn = None
+          )(hc, req))
+
+          verifyAudit(RegisterWithMultipleIDsAuditModel(
+            vatNumber = testVatNumber,
+            businessEntity = JointVenture,
             agentReferenceNumber = None,
             isSuccess = true
           ))
@@ -504,6 +524,26 @@ class MigratedRegistrationServiceSpec extends UnitSpec with MockRegistrationConn
           verifyAudit(RegisterWithMultipleIDsAuditModel(
             vatNumber = testVatNumber,
             businessEntity = UnincorporatedAssociation,
+            agentReferenceNumber = None,
+            isSuccess = false
+          ))
+        }
+        "the business type is JointVenture" in {
+          mockRegisterBusinessEntity(testVatNumber, JointVenture)(
+            Future.successful(Left(RegisterWithMultipleIdsErrorResponse(BAD_REQUEST, "")))
+          )
+
+          intercept[InternalServerException] {
+            await(TestMigratedRegistrationService.registerBusinessEntity(
+              vatNumber = testVatNumber,
+              businessEntity = JointVenture,
+              optArn = None
+            )(hc, req))
+          }
+
+          verifyAudit(RegisterWithMultipleIDsAuditModel(
+            vatNumber = testVatNumber,
+            businessEntity = JointVenture,
             agentReferenceNumber = None,
             isSuccess = false
           ))

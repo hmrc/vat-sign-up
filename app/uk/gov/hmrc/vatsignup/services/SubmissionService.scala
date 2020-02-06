@@ -70,15 +70,15 @@ class SubmissionService @Inject()(subscriptionRequestRepository: SubscriptionReq
       failure =>
         val apiFailure: JsValue = failure match {
           case SignUpFailure(status, body) => Json.obj(
-              "api" -> "Sign Up",
-              "status" -> status,
-              "body" -> body
-            )
+            "api" -> "Sign Up",
+            "status" -> status,
+            "body" -> body
+          )
           case RegistrationFailure(status, body) => Json.obj(
-              "api" -> "Register",
-              "status" -> status,
-              "body" -> body
-            )
+            "api" -> "Register",
+            "status" -> status,
+            "body" -> body
+          )
           case _ => JsString("other")
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
+import play.api.test.Helpers._
 import org.scalatest.EitherValues
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
@@ -36,6 +37,18 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
           stubRegisterBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr)))(testSafeId)
 
           val res = await(registrationConnector.registerBusinessEntity(testVatNumber, GeneralPartnership(Some(testUtr))))
+
+          res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+        }
+      }
+    }
+
+    "the business entity is a joint venture" when {
+      "DES returns a successful response" should {
+        "return a RegistrationSuccess with the SAFE ID" in {
+          stubRegisterBusinessEntity(testVatNumber, JointVenture)(testSafeId)
+
+          val res = await(registrationConnector.registerBusinessEntity(testVatNumber, JointVenture))
 
           res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
         }

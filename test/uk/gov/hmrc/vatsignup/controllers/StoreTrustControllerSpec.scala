@@ -17,12 +17,11 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
-import play.api.test.FakeRequest
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
-import play.api.mvc.Result
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreTrustService
@@ -31,14 +30,18 @@ import uk.gov.hmrc.vatsignup.services.StoreTrustService.{StoreTrustSuccess, Trus
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreTrustControllerSpec extends UnitSpec with MockAuthConnector with MockStoreTrustService {
+class StoreTrustControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockStoreTrustService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreTrustController extends StoreTrustController(
     mockAuthConnector,
-    mockStoreTrustService
+    mockStoreTrustService,
+    stubControllerComponents()
   )
 
 
@@ -48,10 +51,9 @@ class StoreTrustControllerSpec extends UnitSpec with MockAuthConnector with Mock
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreTrust(testVatNumber)(Future.successful(Right(StoreTrustSuccess)))
 
-        val result: Result = await(TestStoreTrustController.storeTrust(testVatNumber)(FakeRequest()))
+        val result = TestStoreTrustController.storeTrust(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NO_CONTENT
-
       }
     }
     "fails with TrustDatabaseFailureNoVATNumber" should {
@@ -59,10 +61,9 @@ class StoreTrustControllerSpec extends UnitSpec with MockAuthConnector with Mock
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreTrust(testVatNumber)(Future.successful(Left(TrustDatabaseFailureNoVATNumber)))
 
-        val result: Result = await(TestStoreTrustController.storeTrust(testVatNumber)(FakeRequest()))
+        val result = TestStoreTrustController.storeTrust(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NOT_FOUND
-
       }
     }
     "fails with TrustDatabaseFailure" should {
@@ -70,10 +71,9 @@ class StoreTrustControllerSpec extends UnitSpec with MockAuthConnector with Mock
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreTrust(testVatNumber)(Future.successful(Left(TrustDatabaseFailure)))
 
-        val result: Result = await(TestStoreTrustController.storeTrust(testVatNumber)(FakeRequest()))
+        val result = TestStoreTrustController.storeTrust(testVatNumber)(FakeRequest())
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
-
       }
     }
   }

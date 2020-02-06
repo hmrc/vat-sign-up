@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import java.util.UUID
 
 import play.api.test.Helpers.AUTHORIZATION
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.models.{Digital, MigratableDates}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
+import uk.gov.hmrc.vatsignup.models.{Digital, MigratableDates}
 import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
 import uk.gov.hmrc.vatsignup.utils.AuthUtils
 
@@ -43,6 +43,7 @@ object IntegrationTestConstants {
   val testCredentialId: String = UUID.randomUUID().toString
   val testCredentialId2: String = UUID.randomUUID().toString
   val testCredentialId3: String = UUID.randomUUID().toString
+  val testRequestId: String = UUID.randomUUID().toString
   val testNonUKCompanyWithUKEstablishmentCompanyNumberFC = "FC123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberSF = "SF123321"
   val testNonUKCompanyWithUKEstablishmentCompanyNumberNF = "NF123321"

@@ -16,18 +16,17 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser.VatCustomerDetailsHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser._
 import uk.gov.hmrc.vatsignup.models.VatCustomerDetails
 
-class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
+class VatCustomerDetailsHttpParserSpec extends WordSpec with Matchers {
   val testMethod = "GET"
   val testUrl = "/"
 
@@ -81,10 +80,10 @@ class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
             )
           )
 
-          read(testMethod, testUrl, testResponse).left.value shouldBe InvalidKnownFacts(
+          read(testMethod, testUrl, testResponse) shouldBe Left(InvalidKnownFacts(
             status = OK,
             body = invalidJsonResponseMessage
-          )
+          ))
         }
       }
     }
@@ -93,7 +92,7 @@ class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
       "return InvalidVatNumber" in {
         val testResponse = HttpResponse(BAD_REQUEST)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe InvalidVatNumber
+        read(testMethod, testUrl, testResponse) shouldBe Left(InvalidVatNumber)
       }
     }
 
@@ -101,7 +100,7 @@ class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
       "return VatNumberNotFound" in {
         val testResponse = HttpResponse(NOT_FOUND)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe VatNumberNotFound
+        read(testMethod, testUrl, testResponse) shouldBe Left(VatNumberNotFound)
       }
     }
 
@@ -109,10 +108,10 @@ class VatCustomerDetailsHttpParserSpec extends UnitSpec with EitherValues {
       "return InvalidKnownFacts" in {
         val testResponse = HttpResponse(INTERNAL_SERVER_ERROR)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe InvalidKnownFacts(
+        read(testMethod, testUrl, testResponse) shouldBe Left(InvalidKnownFacts(
           status = testResponse.status,
           body = testResponse.body
-        )
+        ))
       }
     }
   }

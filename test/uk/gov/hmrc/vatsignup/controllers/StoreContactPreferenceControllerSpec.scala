@@ -18,14 +18,11 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
-import play.api.libs.json.Json
-import play.api.mvc.Result
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
-import uk.gov.hmrc.vatsignup.controllers.StoreContactPreferenceController._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.{Digital, Paper}
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreContactPreferenceService
@@ -34,14 +31,18 @@ import uk.gov.hmrc.vatsignup.services.StoreContactPreferenceService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreContactPreferenceControllerSpec extends UnitSpec with MockAuthConnector with MockStoreContactPreferenceService {
+class StoreContactPreferenceControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockStoreContactPreferenceService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreContactPreferenceController extends StoreContactPreferenceController(
     mockAuthConnector,
-    mockStoreContactPreferenceService
+    mockStoreContactPreferenceService,
+    stubControllerComponents()
   )
 
 
@@ -51,12 +52,11 @@ class StoreContactPreferenceControllerSpec extends UnitSpec with MockAuthConnect
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreContactPreference(testVatNumber, Paper)(Future.successful(Right(ContactPreferenceStored)))
 
-        val result: Result = await(TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
+        val result = TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
           FakeRequest().withBody(Paper)
-        ))
+        )
 
         status(result) shouldBe NO_CONTENT
-
       }
     }
     "is successful for Digital" should {
@@ -64,12 +64,11 @@ class StoreContactPreferenceControllerSpec extends UnitSpec with MockAuthConnect
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreContactPreference(testVatNumber, Digital)(Future.successful(Right(ContactPreferenceStored)))
 
-        val result: Result = await(TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
+        val result = TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
           FakeRequest().withBody(Digital)
-        ))
+        )
 
         status(result) shouldBe NO_CONTENT
-
       }
     }
     "fails with ContactPreferenceDatabaseFailureNoVATNumber" should {
@@ -77,12 +76,11 @@ class StoreContactPreferenceControllerSpec extends UnitSpec with MockAuthConnect
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreContactPreference(testVatNumber, Paper)(Future.successful(Left(ContactPreferenceNoVatFound)))
 
-        val result: Result = await(TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
+        val result = TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
           FakeRequest().withBody(Paper)
-        ))
+        )
 
         status(result) shouldBe NOT_FOUND
-
       }
     }
     "fails with ContactPreferenceDatabaseFailure" should {
@@ -90,12 +88,11 @@ class StoreContactPreferenceControllerSpec extends UnitSpec with MockAuthConnect
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreContactPreference(testVatNumber, Paper)(Future.successful(Left(ContactPreferenceDatabaseFailure)))
 
-        val result: Result = await(TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
+        val result = TestStoreContactPreferenceController.storeContactPreference(testVatNumber)(
           FakeRequest().withBody(Paper)
-        ))
+        )
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
-
       }
     }
   }

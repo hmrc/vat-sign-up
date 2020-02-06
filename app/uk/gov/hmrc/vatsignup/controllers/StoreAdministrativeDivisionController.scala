@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.services.StoreAdministrativeDivisionService
 import uk.gov.hmrc.vatsignup.services.StoreAdministrativeDivisionService._
 
@@ -27,8 +27,9 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreAdministrativeDivisionController @Inject()(val authConnector: AuthConnector,
-                                                      storeAdministrativeDivisionService: StoreAdministrativeDivisionService
-                                                     )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                                      storeAdministrativeDivisionService: StoreAdministrativeDivisionService,
+                                                      cc: ControllerComponents
+                                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def storeAdministrativeDivision(vatNumber: String): Action[AnyContent] = Action.async {
     implicit req =>

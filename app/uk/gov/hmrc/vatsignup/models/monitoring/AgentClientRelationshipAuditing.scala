@@ -31,4 +31,5 @@ object AgentClientRelationshipAuditing {
     )
     override val auditType: String = agentClientRelationshipAuditType
   }
+
 }

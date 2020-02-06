@@ -26,7 +26,7 @@ object CtReferenceMatchAuditing {
                                         userCtReference: String,
                                         storedCtReference: String,
                                         isMatch: Boolean
-                                  ) extends AuditModel {
+                                       ) extends AuditModel {
     override val transactionName: String = controlListTransactionName
     override val detail: Map[String, String] = Map(
       "companyNumber" -> companyNumber,

@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetPartnershipKnownFactsHttpParser._
 import uk.gov.hmrc.vatsignup.models.PartnershipKnownFacts
 
-class GetPartnershipKnownFactsHttpParserSpec extends UnitSpec with EitherValues {
+class GetPartnershipKnownFactsHttpParserSpec extends WordSpec with Matchers {
   "GetIdentityVerificationOutcome#read" when {
     def read(httpResponse: HttpResponse): GetPartnershipKnownFactsResponse = GetPartnershipKnownFactsHttpReads.read("GET", "", httpResponse)
 

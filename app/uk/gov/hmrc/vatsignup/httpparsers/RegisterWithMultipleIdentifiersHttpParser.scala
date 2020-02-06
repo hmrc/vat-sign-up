@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.OK
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.config.Constants.Des._

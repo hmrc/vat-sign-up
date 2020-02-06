@@ -16,17 +16,18 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.{Digital, LimitedCompany, SubscriptionRequest, SubscriptionRequestSummary}
+import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.RetrieveSubscriptionRequestSummaryService
 import uk.gov.hmrc.vatsignup.services.RetrieveSubscriptionRequestSummaryService.{IncompleteSubscriptionRequest, NoSubscriptionRequestFound}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RetrieveSubscriptionRequestSummaryServiceSpec extends UnitSpec
+class RetrieveSubscriptionRequestSummaryServiceSpec extends WordSpec with Matchers
   with MockSubscriptionRequestRepository {
 
   object TestRetrieveSubscriptionRequestSummaryService extends RetrieveSubscriptionRequestSummaryService(mockSubscriptionRequestRepository)

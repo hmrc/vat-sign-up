@@ -12,12 +12,11 @@ lazy val root = (project in file("."))
 scalaSettings
 publishingSettings
 defaultSettings()
+dependencyOverrides += "com.typesafe.akka" %% "akka-actor" % "2.5.23" // TODO Remove once akka version is updated in HMRC libraries
 
 libraryDependencies ++= AppDependencies.appDependencies
 retrieveManaged := true
 evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false)
-
-routesGenerator := StaticRoutesGenerator
 
 Keys.fork in Test := true
 javaOptions in Test += "-Dlogger.resource=logback-test.xml"

@@ -49,9 +49,9 @@ object SignUpAuditing {
   }
 
   case class MigratedSignUpAuditModel(safeId: String,
-                                     vatNumber: String,
-                                     agentReferenceNumber: Option[String],
-                                     isSuccess: Boolean
+                                      vatNumber: String,
+                                      agentReferenceNumber: Option[String],
+                                      isSuccess: Boolean
                                      ) extends AuditModel {
 
     override val transactionName: String = signUpTransactionName + "Migrated"

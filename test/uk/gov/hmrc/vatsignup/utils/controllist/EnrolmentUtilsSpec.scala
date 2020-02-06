@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.vatsignup.utils.controllist
 
+import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants.Des.VrnKey
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments.MtdEnrolmentKey
 import uk.gov.hmrc.vatsignup.config.Constants.{VatDecEnrolmentKey, VatReferenceKey}
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils.{EnrolmentUtils, NoEnrolment, VatNumberMismatch}
 
 
-class EnrolmentUtilsSpec extends UnitSpec with GuiceOneAppPerSuite {
+class EnrolmentUtilsSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
 
   val testVRN = "222222227"
   val testPrincipalDecEnrolment: Enrolment = Enrolment(VatDecEnrolmentKey).withIdentifier(VatReferenceKey, testVRN)

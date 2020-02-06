@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.OK
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import uk.gov.hmrc.vatsignup.models._
 

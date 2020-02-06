@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException, UnprocessableEntityException}
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -29,7 +30,7 @@ import uk.gov.hmrc.vatsignup.services.MigratedSignUpRequestService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionRequestRepository {
+class MigratedSignUpRequestServiceSpec extends WordSpec with Matchers with MockSubscriptionRequestRepository {
 
   object TestMigratedSignUpRequestService extends MigratedSignUpRequestService(mockSubscriptionRequestRepository)
 
@@ -41,7 +42,6 @@ class MigratedSignUpRequestServiceSpec extends UnitSpec with MockSubscriptionReq
     businessEntity = Some(SoleTrader(testNino)),
     email = None,
     transactionEmail = None,
-    isMigratable = true,
     isDirectDebit = false,
     contactPreference = None
   )

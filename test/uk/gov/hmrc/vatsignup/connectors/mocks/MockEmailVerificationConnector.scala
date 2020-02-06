@@ -17,11 +17,11 @@
 package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
-import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
 import org.mockito.Mockito._
+import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.connectors.EmailVerificationConnector
 import uk.gov.hmrc.vatsignup.httpparsers.CreateEmailVerificationRequestHttpParser.CreateEmailVerificationRequestResponse
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.GetEmailVerificationStateResponse
 

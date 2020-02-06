@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.utils
 import play.api.libs.json.{JsObject, Writes}
 
 object JsonUtils {
+
   implicit class JsObjectUtils(jsObject: JsObject) {
     def +[A](field: (String, Option[A]))(implicit writes: Writes[A]): JsObject = {
       field match {
@@ -27,4 +28,5 @@ object JsonUtils {
       }
     }
   }
+
 }

@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class CheckEnrolmentAllocationService @Inject()(enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector)
                                                (implicit ec: ExecutionContext) {
   private def getGroupIdForEnrolment(enrolmentKey: String)
-                            (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
+                                    (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
     enrolmentStoreProxyConnector.getAllocatedEnrolments(enrolmentKey) map {
       case Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated) => Right(EnrolmentNotAllocated)
       case Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(groupId)) => Left(EnrolmentAlreadyAllocated(groupId))
@@ -38,14 +38,14 @@ class CheckEnrolmentAllocationService @Inject()(enrolmentStoreProxyConnector: En
   }
 
   def getGroupIdForMtdVatEnrolment(vatNumber: String)
-                                        (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
+                                  (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
     val enrolmentKey = mtdVatEnrolmentKey(vatNumber)
 
     getGroupIdForEnrolment(enrolmentKey)
   }
 
   def getGroupIdForLegacyVatEnrolment(vatNumber: String)
-                                  (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
+                                     (implicit hc: HeaderCarrier): Future[CheckEnrolmentAllocationResponse] = {
     val enrolmentKey = legacyVatEnrolmentKey(vatNumber)
 
     getGroupIdForEnrolment(enrolmentKey)
@@ -62,4 +62,5 @@ object CheckEnrolmentAllocationService {
   case class EnrolmentAlreadyAllocated(groupId: String) extends CheckEnrolmentAllocationFailure
 
   case class UnexpectedEnrolmentStoreProxyFailure(status: Int) extends CheckEnrolmentAllocationFailure
+
 }

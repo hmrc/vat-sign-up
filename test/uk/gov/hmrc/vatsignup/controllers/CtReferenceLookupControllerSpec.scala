@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
-import play.api.libs.json.{JsObject, JsValue, Json}
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAuthConnector, MockGetCtReferenceConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockCheckCtReferenceExistsService
@@ -29,10 +28,14 @@ import uk.gov.hmrc.vatsignup.services.CtReferenceLookupService.{CheckCtReference
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class CtReferenceLookupControllerSpec
-  extends UnitSpec with MockAuthConnector with MockCheckCtReferenceExistsService with MockGetCtReferenceConnector {
+class CtReferenceLookupControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockCheckCtReferenceExistsService
+  with MockGetCtReferenceConnector {
 
-  object TestCtReferenceLookupController extends CtReferenceLookupController(mockAuthConnector, mockCheckCtReferenceExistsService)
+  object TestCtReferenceLookupController
+    extends CtReferenceLookupController(mockAuthConnector, mockCheckCtReferenceExistsService, stubControllerComponents())
 
   "checkCtReference" when {
 
@@ -43,7 +46,7 @@ class CtReferenceLookupControllerSpec
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockCheckCtReferenceExists(testCompanyNumber)(Future.successful(Right(CtReferenceIsFound)))
 
-        val res = await(TestCtReferenceLookupController.checkCtReferenceExists(request))
+        val res = TestCtReferenceLookupController.checkCtReferenceExists(request)
 
         status(res) shouldBe OK
       }

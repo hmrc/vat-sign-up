@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import org.scalatest.BeforeAndAfterEach
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetCtReferenceStub._
@@ -32,7 +32,7 @@ class CtReferenceLookupControllerISpec extends ComponentSpecBase with BeforeAndA
         stubAuth(OK, successfulAuthResponse())
         stubGetCtReference(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
 
-        val res = await(post("/subscription-request/ct-reference-check")(Json.obj("companyNumber" -> testCompanyNumber)))
+        val res = post("/subscription-request/ct-reference-check")(Json.obj("companyNumber" -> testCompanyNumber))
 
         res should have(
           httpStatus(OK)
@@ -45,7 +45,7 @@ class CtReferenceLookupControllerISpec extends ComponentSpecBase with BeforeAndA
         stubAuth(OK, successfulAuthResponse())
         stubGetCtReference(testCompanyNumber)(status = NOT_FOUND)
 
-        val res = await(post("/subscription-request/ct-reference-check")(Json.obj("companyNumber" -> testCompanyNumber)))
+        val res = post("/subscription-request/ct-reference-check")(Json.obj("companyNumber" -> testCompanyNumber))
 
         res should have(
           httpStatus(NOT_FOUND)
@@ -58,7 +58,7 @@ class CtReferenceLookupControllerISpec extends ComponentSpecBase with BeforeAndA
         stubAuth(OK, successfulAuthResponse())
         stubGetCtReference(testCompanyNumber)(status = BAD_REQUEST)
 
-        val res = await(post("/subscription-request/ct-reference-check")(Json.obj("companyNumber" -> testCompanyNumber)))
+        val res = post("/subscription-request/ct-reference-check")(Json.obj("companyNumber" -> testCompanyNumber))
 
         res should have(
           httpStatus(INTERNAL_SERVER_ERROR)

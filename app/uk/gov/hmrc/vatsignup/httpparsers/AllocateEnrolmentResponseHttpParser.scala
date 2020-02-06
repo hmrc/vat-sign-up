@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.CREATED
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object AllocateEnrolmentResponseHttpParser {
-  type AllocateEnrolmentResponse = Either[EnrolFailure, EnrolSuccess.type ]
+  type AllocateEnrolmentResponse = Either[EnrolFailure, EnrolSuccess.type]
 
   implicit object AllocateEnrolmentResponseHttpReads extends HttpReads[AllocateEnrolmentResponse] {
     override def read(method: String, url: String, response: HttpResponse): AllocateEnrolmentResponse =
@@ -33,4 +33,5 @@ object AllocateEnrolmentResponseHttpParser {
   case object EnrolSuccess
 
   case class EnrolFailure(message: String)
+
 }

@@ -24,7 +24,7 @@ object TaxEnrolmentsCallbackAuditing {
 
   case class TaxEnrolmentsCallbackAuditModel(vatNumber: String,
                                              taxEnrolmentsCallback: String
-                                 ) extends AuditModel {
+                                            ) extends AuditModel {
     override val transactionName: String = taxEnrolmentsCallbackTransactionName
     override val detail: Map[String, String] = Map(
       "vatNumber" -> vatNumber,
@@ -33,4 +33,5 @@ object TaxEnrolmentsCallbackAuditing {
 
     override val auditType: String = taxEnrolmentsCallbackAuditType
   }
+
 }

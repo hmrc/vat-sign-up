@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.CredentialRoleReads._
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UserReads.{credentialRoleKey, userIdKey}
-
 
 
 object UsersGroupsSearchStub extends WireMockMethods {

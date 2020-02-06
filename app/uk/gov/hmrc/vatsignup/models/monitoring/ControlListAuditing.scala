@@ -80,6 +80,7 @@ object ControlListAuditing {
     def directDebitMigrationRestriction(vatNumber: String): ControlListAuditModel = {
       ControlListAuditModel(vatNumber, isSuccess = false, failureReasons = Seq(directDebitMigrationRestrictionMessage))
     }
+
     def filingDateMigrationRestriction(vatNumber: String): ControlListAuditModel = {
       ControlListAuditModel(vatNumber, isSuccess = false, failureReasons = Seq(filingDateMigrationRestrictionMessage))
     }

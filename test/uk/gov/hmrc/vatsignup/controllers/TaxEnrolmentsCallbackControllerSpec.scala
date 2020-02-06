@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.testVatNumber
 import uk.gov.hmrc.vatsignup.models.SubscriptionState._
 import uk.gov.hmrc.vatsignup.models.monitoring.TaxEnrolmentsCallbackAuditing.TaxEnrolmentsCallbackAuditModel
@@ -30,10 +30,13 @@ import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscriptionNotificationService with MockAuditService {
+class TaxEnrolmentsCallbackControllerSpec extends WordSpec
+  with Matchers
+  with MockSubscriptionNotificationService
+  with MockAuditService {
 
   object TestTaxEnrolmentsCallbackController
-    extends TaxEnrolmentsCallbackController(mockSubscriptionNotificationService, mockAuditService)
+    extends TaxEnrolmentsCallbackController(mockSubscriptionNotificationService, mockAuditService, stubControllerComponents())
 
   def testRequest(subscriptionState: String): FakeRequest[JsValue] =
     FakeRequest().withBody(Json.obj(TestTaxEnrolmentsCallbackController.stateKey -> subscriptionState))
@@ -45,7 +48,7 @@ class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscription
 
         val request = testRequest(Success.jsonName)
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+        val res = TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request)
 
         status(res) shouldBe NO_CONTENT
         verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
@@ -57,7 +60,7 @@ class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscription
 
         val request = testRequest(Success.jsonName)
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+        val res = TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request)
 
         status(res) shouldBe PRECONDITION_FAILED
         verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
@@ -71,11 +74,10 @@ class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscription
 
         val request = testRequest(Failure.jsonName)
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+        val res = TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request)
 
         status(res) shouldBe BAD_GATEWAY
         verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))
-
       }
     }
 
@@ -85,7 +87,7 @@ class TaxEnrolmentsCallbackControllerSpec extends UnitSpec with MockSubscription
 
         val request = testRequest(Failure.jsonName)
 
-        val res = await(TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request))
+        val res = TestTaxEnrolmentsCallbackController.taxEnrolmentsCallback(testVatNumber)(request)
 
         status(res) shouldBe NO_CONTENT
         verifyAudit(TaxEnrolmentsCallbackAuditModel(testVatNumber, request.body.toString()))

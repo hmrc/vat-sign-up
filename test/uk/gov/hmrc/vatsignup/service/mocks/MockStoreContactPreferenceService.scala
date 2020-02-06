@@ -18,9 +18,8 @@ package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import uk.gov.hmrc.http.HeaderCarrier
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.vatsignup.models.ContactPreference
 import uk.gov.hmrc.vatsignup.services.StoreContactPreferenceService
 import uk.gov.hmrc.vatsignup.services.StoreContactPreferenceService._

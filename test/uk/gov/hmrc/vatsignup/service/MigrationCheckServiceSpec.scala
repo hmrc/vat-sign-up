@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.time.LocalDate
 
+import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.controllist._
@@ -36,7 +36,7 @@ import uk.gov.hmrc.vatsignup.utils.controllist.mocks.MockCurrentDateProvider
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-class MigrationCheckServiceSpec extends UnitSpec
+class MigrationCheckServiceSpec extends WordSpec with Matchers
   with MockCurrentDateProvider with MockEligibilityConfig with MockAuditService {
 
   case object TestMigrationCheckService extends MigrationCheckService(

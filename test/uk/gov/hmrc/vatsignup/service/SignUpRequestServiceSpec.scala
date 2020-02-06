@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import org.scalatest.{Matchers, WordSpec}
 import play.api.http.Status
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -35,7 +36,7 @@ import uk.gov.hmrc.vatsignup.services.SignUpRequestService.{EmailVerificationFai
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SignUpRequestServiceSpec extends UnitSpec
+class SignUpRequestServiceSpec extends WordSpec with Matchers
   with MockSubscriptionRequestRepository with MockEmailVerificationConnector with FeatureSwitching {
 
   override def beforeEach(): Unit = {
@@ -768,6 +769,64 @@ class SignUpRequestServiceSpec extends UnitSpec
           }
         }
       }
+
+      s"the user is a $JointVenture" when {
+        "sign up email is verified" when {
+          s"return a successful $SignUpRequest" in {
+
+            val testSubscriptionRequest =
+              SubscriptionRequest(
+                vatNumber = testVatNumber,
+                businessEntity = Some(JointVenture),
+                email = Some(testEmail),
+                isMigratable = testIsMigratable,
+                isDirectDebit = false,
+                contactPreference = Some(testContactPreference)
+              )
+
+            mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+            mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+            val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+            val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+            await(res) shouldBe Right(
+              SignUpRequest(
+                vatNumber = testVatNumber,
+                businessEntity = JointVenture,
+                signUpEmail = Some(verifiedEmail),
+                transactionEmail = verifiedEmail,
+                isDelegated = false,
+                isMigratable = testIsMigratable,
+                contactPreference = testContactPreference
+              )
+            )
+          }
+          "sign up email is not verified" should {
+            s"return a $EmailVerificationRequired" in {
+
+              val testSubscriptionRequest =
+                SubscriptionRequest(
+                  vatNumber = testVatNumber,
+                  businessEntity = Some(VatGroup),
+                  email = Some(testEmail),
+                  isMigratable = testIsMigratable,
+                  isDirectDebit = false,
+                  contactPreference = Some(testContactPreference)
+                )
+
+              mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+              mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailNotVerified)))
+
+              val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+              await(res) shouldBe Left(EmailVerificationRequired)
+            }
+          }
+        }
+      }
+
     }
 
     s"the request is delegated && $SoleTrader" when {
@@ -1118,6 +1177,41 @@ class SignUpRequestServiceSpec extends UnitSpec
           )
         }
       }
+
+      s"the user is a $JointVenture" when {
+        s"return a successful $SignUpRequest" in {
+
+          val testSubscriptionRequest =
+            SubscriptionRequest(
+              vatNumber = testVatNumber,
+              businessEntity = Some(JointVenture),
+              email = Some(testEmail),
+              isMigratable = testIsMigratable,
+              isDirectDebit = false,
+              contactPreference = Some(testContactPreference)
+            )
+
+          mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+          mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+          val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+          val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set(testAgentEnrolment)))
+
+          await(res) shouldBe Right(
+            SignUpRequest(
+              vatNumber = testVatNumber,
+              businessEntity = JointVenture,
+              signUpEmail = Some(verifiedEmail),
+              transactionEmail = verifiedEmail,
+              isDelegated = true,
+              isMigratable = testIsMigratable,
+              contactPreference = testContactPreference
+            )
+          )
+        }
+      }
+
     }
   }
 }

@@ -25,8 +25,7 @@ import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository
-                                )(implicit ec: ExecutionContext) {
+class StoreNinoService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(implicit ec: ExecutionContext) {
 
   import StoreNinoService._
 

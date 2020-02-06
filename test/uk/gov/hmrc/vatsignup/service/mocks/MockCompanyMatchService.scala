@@ -17,12 +17,12 @@
 package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
-import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.vatsignup.services.CompanyMatchService
 import org.mockito.Mockito._
+import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.vatsignup.services.CompanyMatchService
 import uk.gov.hmrc.vatsignup.services.CompanyMatchService.CheckCompanyMatchResponse
 
 import scala.concurrent.Future

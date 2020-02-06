@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpFailure
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpReads.read
 import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}
 
-class GetMandationStatusHttpParserSpec extends UnitSpec with EitherValues {
+class GetMandationStatusHttpParserSpec extends WordSpec with Matchers {
   val testMethod = "GET"
   val testUrl = "/"
 
@@ -33,37 +32,37 @@ class GetMandationStatusHttpParserSpec extends UnitSpec with EitherValues {
     "the http status is OK" when {
       s"the json is $MTDfBMandated.toString" should {
         "return MTDfBMandated" in {
-            val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfBMandated.Name)))
+          val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfBMandated.Name)))
 
-            read(testMethod, testUrl, testResponse).right.value shouldBe MTDfBMandated
+          read(testMethod, testUrl, testResponse) shouldBe Right(MTDfBMandated)
         }
       }
       s"the json is $MTDfBVoluntary.toString" should {
         "return MTDfBMandated" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfBVoluntary.Name)))
 
-          read(testMethod, testUrl, testResponse).right.value shouldBe MTDfBVoluntary
+          read(testMethod, testUrl, testResponse) shouldBe Right(MTDfBVoluntary)
         }
       }
       s"the json is $NonMTDfB.toString" should {
         "return MTDfBMandated" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> NonMTDfB.Name)))
 
-          read(testMethod, testUrl, testResponse).right.value shouldBe NonMTDfB
+          read(testMethod, testUrl, testResponse) shouldBe Right(NonMTDfB)
         }
       }
       s"the json is $NonDigital.toString" should {
         "return MTDfBMandated" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> NonDigital.Name)))
 
-          read(testMethod, testUrl, testResponse).right.value shouldBe NonDigital
+          read(testMethod, testUrl, testResponse) shouldBe Right(NonDigital)
         }
       }
       s"the json is invalid" should {
         "return GetMandationStatusHttpFailure" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> "invalid")))
 
-          read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpFailure(testResponse.status, testResponse.body)
+          read(testMethod, testUrl, testResponse) shouldBe Left(GetMandationStatusHttpFailure(testResponse.status, testResponse.body))
         }
       }
     }
@@ -71,14 +70,14 @@ class GetMandationStatusHttpParserSpec extends UnitSpec with EitherValues {
       "return VatNumberNotFound" in {
         val testResponse = HttpResponse(NOT_FOUND)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpParser.VatNumberNotFound
+        read(testMethod, testUrl, testResponse) shouldBe Left(GetMandationStatusHttpParser.VatNumberNotFound)
       }
     }
     "the http status is Precondition Failed" should {
       "return MigrationInProgress" in {
         val testResponse = HttpResponse(PRECONDITION_FAILED)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpParser.MigrationInProgress
+        read(testMethod, testUrl, testResponse) shouldBe Left(GetMandationStatusHttpParser.MigrationInProgress)
       }
     }
 
@@ -86,7 +85,7 @@ class GetMandationStatusHttpParserSpec extends UnitSpec with EitherValues {
       "return GetMandationStatusHttpFailure" in {
         val testResponse = HttpResponse(BAD_REQUEST)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpFailure(testResponse.status, testResponse.body)
+        read(testMethod, testUrl, testResponse) shouldBe Left(GetMandationStatusHttpFailure(testResponse.status, testResponse.body))
       }
     }
   }

@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.service.mocks
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService
@@ -37,11 +37,11 @@ trait MockAutoClaimEnrolmentService extends BeforeAndAfterEach with MockitoSugar
 
   val mockAutoClaimEnrolmentService: AutoClaimEnrolmentService = mock[AutoClaimEnrolmentService]
 
-  def mockAutoClaimEnrolment(vatNumber: String,triggerPoint: String)(response: Future[AutoClaimEnrolmentResponse]): Unit = {
+  def mockAutoClaimEnrolment(vatNumber: String, triggerPoint: String)(response: Future[AutoClaimEnrolmentResponse]): Unit = {
     when(mockAutoClaimEnrolmentService.autoClaimEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(triggerPoint)
-    )(ArgumentMatchers.any[HeaderCarrier],ArgumentMatchers.any[Request[_]])
+    )(ArgumentMatchers.any[HeaderCarrier], ArgumentMatchers.any[Request[_]])
     ) thenReturn response
   }
 }

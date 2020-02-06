@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.httpparsers.CreateEmailVerificationRequestHttpParser.CreateEmailVerificationRequestHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.CreateEmailVerificationRequestHttpParser._
 
-class CreateEmailVerificationRequestHttpParserSpec extends UnitSpec with EitherValues {
+class CreateEmailVerificationRequestHttpParserSpec extends WordSpec with Matchers {
   "GetEmailVerifiedHttpReads#read" when {
     "the response status is OK" should {
       "return a RegistrationSuccess with the returned SAFE ID" in {
@@ -31,7 +30,7 @@ class CreateEmailVerificationRequestHttpParserSpec extends UnitSpec with EitherV
           responseStatus = CREATED
         )
 
-        read("", "", httpResponse).right.value shouldBe EmailVerificationRequestSent
+        read("", "", httpResponse) shouldBe Right(EmailVerificationRequestSent)
       }
     }
 
@@ -41,17 +40,17 @@ class CreateEmailVerificationRequestHttpParserSpec extends UnitSpec with EitherV
           responseStatus = CONFLICT
         )
 
-        read("", "", httpResponse).right.value shouldBe EmailAlreadyVerified
+        read("", "", httpResponse) shouldBe Right(EmailAlreadyVerified)
       }
     }
 
     "the response status is INTERNAL_SERVER_ERROR" should {
       "return an InvalidJsonResponse" in {
         val httpResponse = HttpResponse(
-            responseStatus = INTERNAL_SERVER_ERROR
+          responseStatus = INTERNAL_SERVER_ERROR
         )
 
-        read("", "", httpResponse).left.value shouldBe EmailVerificationRequestFailure(INTERNAL_SERVER_ERROR, httpResponse.body)
+        read("", "", httpResponse) shouldBe Left(EmailVerificationRequestFailure(INTERNAL_SERVER_ERROR, httpResponse.body))
       }
     }
 

@@ -17,16 +17,17 @@
 package uk.gov.hmrc.vatsignup.testonly.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json._
-import play.api.mvc.Action
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.models.DateRange
 import uk.gov.hmrc.vatsignup.models.controllist.Stagger
 
 @Singleton
-class DDEndDateConfigController @Inject()(eligibilityConfig: EligibilityConfig) extends BaseController {
+class DDEndDateConfigController @Inject()(eligibilityConfig: EligibilityConfig,
+                                          cc: ControllerComponents
+                                         ) extends BackendController(cc) {
 
   import DDEndDateConfigController._
 

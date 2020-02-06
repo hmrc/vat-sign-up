@@ -15,15 +15,16 @@
  */
 
 package uk.gov.hmrc.vatsignup.service.mocks.monitoring
-import org.mockito.ArgumentMatchers
-import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
-import play.api.mvc.Request
 
-import scala.concurrent.ExecutionContext
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito._
+import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.monitoring.{AuditModel, AuditService}
+
+import scala.concurrent.ExecutionContext
 
 trait MockAuditService extends MockitoSugar with BeforeAndAfterEach {
   self: Suite =>

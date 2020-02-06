@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ trait WireMockMethods {
   }
 
   def verify(method: HTTPMethod, uri: String): Unit = verifyInternal(method, uri, None)
+
   def verify[T](method: HTTPMethod, uri: String, body: T)(implicit writes: Writes[T]): Unit = {
     val stringBody = writes.writes(body).toString()
     verifyInternal(method, uri, Some(stringBody))

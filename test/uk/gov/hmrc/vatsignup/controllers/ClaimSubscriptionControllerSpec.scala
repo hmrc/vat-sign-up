@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
@@ -31,10 +31,13 @@ import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ClaimSubscriptionControllerSpec extends UnitSpec with MockAuthConnector with MockClaimSubscriptionService {
+class ClaimSubscriptionControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockClaimSubscriptionService {
 
   object TestClaimSubscriptionController
-    extends ClaimSubscriptionController(mockAuthConnector, mockClaimSubscriptionService)
+    extends ClaimSubscriptionController(mockAuthConnector, mockClaimSubscriptionService, stubControllerComponents())
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()

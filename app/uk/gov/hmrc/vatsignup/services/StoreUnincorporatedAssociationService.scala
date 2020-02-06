@@ -27,12 +27,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StoreUnincorporatedAssociationService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(
-                                                      implicit ec: ExecutionContext
-                                                     ) {
+  implicit ec: ExecutionContext
+) {
 
   def storeUnincorporatedAssociation(vatNumber: String)(
-                                     implicit hc: HeaderCarrier
-                                    ): Future[Either[StoreUnincorporatedAssociationFailure, StoreUnincorporatedAssociationSuccess.type]] = {
+    implicit hc: HeaderCarrier
+  ): Future[Either[StoreUnincorporatedAssociationFailure, StoreUnincorporatedAssociationSuccess.type]] = {
 
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, UnincorporatedAssociation) map {
       _ => Right(StoreUnincorporatedAssociationSuccess)

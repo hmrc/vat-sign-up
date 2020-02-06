@@ -42,7 +42,7 @@ object VatKnownFacts {
 
   def fromDisplayName(monthString: String): Month = {
     val temporalAccessor = DateTimeFormatter
-        .ofPattern("MMMM")
+      .ofPattern("MMMM")
       .withLocale(Locale.ENGLISH)
       .parse(monthString)
 

@@ -17,10 +17,9 @@
 package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.reset
+import org.mockito.Mockito.{reset, _}
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.BusinessEntity

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
@@ -40,7 +40,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(Paper)
           )
@@ -56,7 +55,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -71,7 +70,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(SoleTrader(testNino)),
             transactionEmail = Some(testEmail),
             email = None,
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(Paper)
           )
@@ -87,7 +85,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -100,7 +98,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -116,7 +113,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -129,7 +126,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -145,7 +141,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -158,7 +154,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -174,7 +169,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -187,7 +182,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -203,7 +197,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -215,7 +209,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(GeneralPartnership(Some(testUtr))),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -231,7 +224,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -243,7 +236,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -259,7 +251,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -271,7 +263,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -287,7 +278,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -299,7 +290,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -315,7 +305,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -327,7 +317,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(VatGroup),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -343,7 +332,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -355,7 +344,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(Trust),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -371,7 +359,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -383,7 +371,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(Overseas),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -399,7 +386,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -412,7 +399,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           vatNumber = testVatNumber,
           businessEntity = Some(LimitedCompany(testCompanyNumber)),
           transactionEmail = Some(testEmail),
-          isMigratable = true,
           isDirectDebit = false,
           contactPreference = Some(testContactPreference)
         )
@@ -428,7 +414,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
         stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
         await(submissionRequestRepo.insert(testSubscriptionRequest))
-        val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+        val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
         res should have(
           httpStatus(NO_CONTENT),
@@ -444,7 +430,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(SoleTrader(testNino)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -460,7 +445,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -475,7 +460,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -491,7 +475,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -504,7 +488,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(LimitedCompany(testCompanyNumber)),
             ctReference = None,
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -520,7 +503,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -535,7 +518,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberFC)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -551,7 +533,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -566,7 +548,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberSF)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -582,7 +563,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -597,7 +578,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             ctReference = Some(testCtReference),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -613,7 +593,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -628,7 +608,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             businessEntity = Some(OverseasWithUkEstablishment(testNonUKCompanyWithUKEstablishmentCompanyNumberNF)),
             ctReference = None,
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -644,7 +623,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -658,7 +637,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(GeneralPartnership(Some(testUtr))),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -674,7 +652,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -686,7 +664,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -702,7 +679,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -714,7 +691,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(LimitedLiabilityPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -730,7 +706,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -742,7 +718,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(ScottishLimitedPartnership(Some(testUtr), testCompanyNumber)),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -758,7 +733,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -771,7 +746,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(VatGroup),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -787,7 +761,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -800,7 +774,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(Trust),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -816,7 +789,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -829,7 +802,6 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
             vatNumber = testVatNumber,
             businessEntity = Some(UnincorporatedAssociation),
             email = Some(testEmail),
-            isMigratable = true,
             isDirectDebit = false,
             contactPreference = Some(testContactPreference)
           )
@@ -845,7 +817,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),

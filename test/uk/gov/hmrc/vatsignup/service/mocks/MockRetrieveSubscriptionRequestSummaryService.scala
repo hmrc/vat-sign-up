@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.vatsignup.services.RetrieveSubscriptionRequestSummaryService
 import uk.gov.hmrc.vatsignup.services.RetrieveSubscriptionRequestSummaryService._
 
@@ -36,7 +36,7 @@ trait MockRetrieveSubscriptionRequestSummaryService extends MockitoSugar with Be
   val mockRetrieveSubscriptionRequestSummaryService: RetrieveSubscriptionRequestSummaryService = mock[RetrieveSubscriptionRequestSummaryService]
 
   def mockRetrieveSubscriptionRequestSummary(vatNumber: String
-                          )(response: Future[RetrieveSubscriptionRequestSummaryResponse]): Unit = {
+                                            )(response: Future[RetrieveSubscriptionRequestSummaryResponse]): Unit = {
     when(mockRetrieveSubscriptionRequestSummaryService.retrieveSubscriptionRequestSummary(
       ArgumentMatchers.eq(vatNumber)
     )) thenReturn response

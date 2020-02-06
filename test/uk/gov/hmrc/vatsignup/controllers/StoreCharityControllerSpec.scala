@@ -18,29 +18,31 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
-import play.api.mvc.Result
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreCharityService
-import uk.gov.hmrc.vatsignup.services.StoreCharityService.{StoreCharitySuccess, CharityDatabaseFailure, CharityDatabaseFailureNoVATNumber}
+import uk.gov.hmrc.vatsignup.services.StoreCharityService.{CharityDatabaseFailure, CharityDatabaseFailureNoVATNumber, StoreCharitySuccess}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreCharityControllerSpec extends UnitSpec with MockAuthConnector with MockStoreCharityService {
+class StoreCharityControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockStoreCharityService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreCharityController extends StoreCharityController(
     mockAuthConnector,
-    mockStoreCharityService
+    mockStoreCharityService,
+    stubControllerComponents()
   )
-
 
   "storeCharity" when {
     "is successful" should {
@@ -48,10 +50,9 @@ class StoreCharityControllerSpec extends UnitSpec with MockAuthConnector with Mo
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreCharity(testVatNumber)(Future.successful(Right(StoreCharitySuccess)))
 
-        val result: Result = await(TestStoreCharityController.storeCharity(testVatNumber)(FakeRequest()))
+        val result = TestStoreCharityController.storeCharity(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NO_CONTENT
-
       }
     }
     "fails with CharityDatabaseFailureNoVATNumber" should {
@@ -59,10 +60,9 @@ class StoreCharityControllerSpec extends UnitSpec with MockAuthConnector with Mo
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreCharity(testVatNumber)(Future.successful(Left(CharityDatabaseFailureNoVATNumber)))
 
-        val result: Result = await(TestStoreCharityController.storeCharity(testVatNumber)(FakeRequest()))
+        val result = TestStoreCharityController.storeCharity(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NOT_FOUND
-
       }
     }
     "fails with CharityDatabaseFailure" should {
@@ -70,10 +70,9 @@ class StoreCharityControllerSpec extends UnitSpec with MockAuthConnector with Mo
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreCharity(testVatNumber)(Future.successful(Left(CharityDatabaseFailure)))
 
-        val result: Result = await(TestStoreCharityController.storeCharity(testVatNumber)(FakeRequest()))
+        val result = TestStoreCharityController.storeCharity(testVatNumber)(FakeRequest())
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
-
       }
     }
   }

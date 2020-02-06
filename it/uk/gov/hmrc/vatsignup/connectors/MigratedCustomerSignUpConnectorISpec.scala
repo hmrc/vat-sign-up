@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
@@ -51,7 +51,7 @@ class MigratedCustomerSignUpConnectorISpec extends ComponentSpecBase {
           isPartialMigration = false
         )(BAD_REQUEST)
 
-        val res = await(connector.signUp(testSafeId, testVatNumber,  isPartialMigration = false))
+        val res = await(connector.signUp(testSafeId, testVatNumber, isPartialMigration = false))
 
         res shouldBe Left(CustomerSignUpResponseFailure(BAD_REQUEST, ""))
       }

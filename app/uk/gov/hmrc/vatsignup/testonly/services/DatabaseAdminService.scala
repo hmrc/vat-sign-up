@@ -18,8 +18,7 @@
 
 package uk.gov.hmrc.vatsignup.testonly.services
 
-import javax.inject.{Inject,Singleton}
-
+import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 
 import scala.concurrent.{ExecutionContext, Future}

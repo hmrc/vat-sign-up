@@ -17,13 +17,13 @@
 package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
+import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.ClaimSubscriptionResponse
-import org.mockito.Mockito._
-import play.api.mvc.Request
 
 import scala.concurrent.Future
 
@@ -34,7 +34,7 @@ trait MockClaimSubscriptionService extends BeforeAndAfterEach with MockitoSugar 
 
   def mockClaimSubscription(vatNumber: String,
                             businessPostcode: Option[String],
-                            vatRegistrationDate:Option[String],
+                            vatRegistrationDate: Option[String],
                             isFromBta: Boolean)(response: Future[ClaimSubscriptionResponse]): Unit =
     when(mockClaimSubscriptionService.claimSubscription(
       ArgumentMatchers.eq(vatNumber),
@@ -47,7 +47,7 @@ trait MockClaimSubscriptionService extends BeforeAndAfterEach with MockitoSugar 
     )) thenReturn response
 
   def mockClaimSubscriptionWithEnrolment(vatNumber: String,
-                            isFromBta: Boolean)(response: Future[ClaimSubscriptionResponse]): Unit =
+                                         isFromBta: Boolean)(response: Future[ClaimSubscriptionResponse]): Unit =
     when(mockClaimSubscriptionService.claimSubscriptionWithEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(isFromBta)

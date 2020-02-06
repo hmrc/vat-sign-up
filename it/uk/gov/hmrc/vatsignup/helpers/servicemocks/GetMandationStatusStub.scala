@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.libs.json.{JsObject, JsValue, Json}
-import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, MandationStatus}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.MandationStatusKey
+import uk.gov.hmrc.vatsignup.models.MandationStatus
 
 object GetMandationStatusStub extends WireMockMethods {
   def stubGetMandationStatus(vatNumber: String)(status: Int, body: JsValue = Json.obj()): StubMapping =

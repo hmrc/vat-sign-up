@@ -16,24 +16,24 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException}
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.helpers.TestConstants.testAgentEnrolment
+import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testAgentEnrolment, _}
+import uk.gov.hmrc.vatsignup.models.{MigratedSignUpRequest, SoleTrader}
+import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.service.mocks._
 import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.EnrolmentSuccess
-import uk.gov.hmrc.vatsignup.services.{MigratedSignUpRequestService, MigratedSubmissionService}
-import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService._
-import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.{MigratedSignUpRequest, SoleTrader}
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpSuccess
-import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
+import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService._
+import uk.gov.hmrc.vatsignup.services.{MigratedSignUpRequestService, MigratedSubmissionService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedSubmissionServiceSpec extends UnitSpec
+class MigratedSubmissionServiceSpec extends WordSpec with Matchers
   with MockMigratedSignUpRequestService
   with MockMigratedRegistrationService
   with MockMigratedSignUpService

@@ -17,15 +17,14 @@
 package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.reset
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito.{reset, _}
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.models.SubscriptionState
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
-import org.mockito.Mockito._
-import play.api.mvc.Request
-import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{NotificationFailure, NotificationSent, NotificationSuccess}
+import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService.{NotificationFailure, NotificationSuccess}
 
 import scala.concurrent.Future
 

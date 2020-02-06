@@ -18,12 +18,11 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status.{PRECONDITION_FAILED, UNPROCESSABLE_ENTITY, _}
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
-import play.api.mvc.Result
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.Constants.HttpCodeKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -35,10 +34,13 @@ import uk.gov.hmrc.vatsignup.services.StoreVatNumberService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with MockStoreVatNumberService {
+class StoreVatNumberControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockStoreVatNumberService {
 
   object TestStoreVatNumberController
-    extends StoreVatNumberController(mockAuthConnector, mockStoreVatNumberService)
+    extends StoreVatNumberController(mockAuthConnector, mockStoreVatNumberService, stubControllerComponents())
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -55,10 +57,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = false, isDirectDebit = false))))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> false, "isDirectDebit" -> false)
+        contentAsJson(res) shouldBe Json.obj("isOverseas" -> false, "isDirectDebit" -> false)
       }
     }
     "the VAT number has been stored correctly and is overseas and is direct debit" should {
@@ -66,10 +68,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Right(StoreVatNumberSuccess(isOverseas = true, isDirectDebit = true))))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj("isOverseas" -> true, "isDirectDebit" -> true)
+        contentAsJson(res) shouldBe Json.obj("isOverseas" -> true, "isDirectDebit" -> true)
       }
     }
 
@@ -78,7 +80,7 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(VatNumberDatabaseFailure)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe INTERNAL_SERVER_ERROR
       }
@@ -89,10 +91,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(DoesNotMatchEnrolment)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe FORBIDDEN
-        jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment")
+        contentAsJson(res) shouldBe Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment")
       }
     }
 
@@ -101,10 +103,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(InsufficientEnrolments)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe FORBIDDEN
-        jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> "InsufficientEnrolments")
+        contentAsJson(res) shouldBe Json.obj(HttpCodeKey -> "InsufficientEnrolments")
       }
     }
 
@@ -113,10 +115,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(RelationshipNotFound)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe FORBIDDEN
-        jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> AgentClientRelationshipsHttpParser.NoRelationshipCode)
+        contentAsJson(res) shouldBe Json.obj(HttpCodeKey -> AgentClientRelationshipsHttpParser.NoRelationshipCode)
       }
     }
 
@@ -125,10 +127,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(KnownFactsMismatch)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe FORBIDDEN
-        jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> "KNOWN_FACTS_MISMATCH")
+        contentAsJson(res) shouldBe Json.obj(HttpCodeKey -> "KNOWN_FACTS_MISMATCH")
       }
     }
 
@@ -137,10 +139,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible(MigratableDates.empty))))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe UNPROCESSABLE_ENTITY
-        jsonBodyOf(res) shouldBe Json.obj()
+        contentAsJson(res) shouldBe Json.obj()
       }
     }
 
@@ -149,10 +151,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(Ineligible(testMigratableDates))))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe UNPROCESSABLE_ENTITY
-        jsonBodyOf(res) shouldBe Json.toJson(testMigratableDates)
+        contentAsJson(res) shouldBe Json.toJson(testMigratableDates)
       }
     }
 
@@ -161,7 +163,7 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(VatNotFound)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe PRECONDITION_FAILED
       }
@@ -172,7 +174,7 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(VatInvalid)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe PRECONDITION_FAILED
       }
@@ -183,10 +185,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(VatMigrationInProgress)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe BAD_REQUEST
-        jsonBodyOf(res) shouldBe Json.obj(HttpCodeKey -> "VatMigrationInProgress")
+        contentAsJson(res) shouldBe Json.obj(HttpCodeKey -> "VatMigrationInProgress")
       }
     }
 
@@ -195,11 +197,10 @@ class StoreVatNumberControllerSpec extends UnitSpec with MockAuthConnector with 
         mockAuthRetrieveAgentEnrolment()
         mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(AgentServicesConnectionFailure)))
 
-        val res: Result = await(TestStoreVatNumberController.storeVatNumber()(request))
+        val res = TestStoreVatNumberController.storeVatNumber()(request)
 
         status(res) shouldBe BAD_GATEWAY
       }
     }
   }
-
 }

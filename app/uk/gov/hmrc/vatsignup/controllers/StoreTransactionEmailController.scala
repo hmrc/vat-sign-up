@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsPath, Json}
-import play.api.mvc.Action
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest.transactionEmailKey
 import uk.gov.hmrc.vatsignup.services.StoreEmailService.{EmailDatabaseFailure, EmailDatabaseFailureNoVATNumber, EmailVerificationFailure, StoreEmailSuccess}
@@ -31,25 +31,26 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreTransactionEmailController @Inject()(val authConnector: AuthConnector,
-                                                storeEmailService: StoreEmailService
+                                                storeEmailService: StoreEmailService,
+                                                cc: ControllerComponents
                                                )(implicit ec: ExecutionContext)
-  extends BaseController with AuthorisedFunctions {
+  extends BackendController(cc) with AuthorisedFunctions {
 
   def storeTransactionEmail(vatNumber: String): Action[String] =
     Action.async(parse.json((JsPath \ transactionEmailKey).read[String])) {
       implicit req =>
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-          val transactionEmail = req.body
-          storeEmailService.storeTransactionEmail(vatNumber, transactionEmail, enrolments) map {
-            case Right(StoreEmailSuccess(emailVerified)) =>
-              Ok(Json.obj(
-                EmailVerifiedKey -> emailVerified
-              ))
-            case Left(EmailDatabaseFailureNoVATNumber) => NotFound
-            case Left(EmailDatabaseFailure) => InternalServerError
-            case Left(EmailVerificationFailure) => BadGateway
-          }
+            val transactionEmail = req.body
+            storeEmailService.storeTransactionEmail(vatNumber, transactionEmail, enrolments) map {
+              case Right(StoreEmailSuccess(emailVerified)) =>
+                Ok(Json.obj(
+                  EmailVerifiedKey -> emailVerified
+                ))
+              case Left(EmailDatabaseFailureNoVATNumber) => NotFound
+              case Left(EmailDatabaseFailure) => InternalServerError
+              case Left(EmailVerificationFailure) => BadGateway
+            }
 
         }
     }

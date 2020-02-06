@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,14 +47,14 @@ trait CustomMatchers {
 
   def jsonBodyAs[T](expectedValue: T)(implicit reads: Reads[T]): HavePropertyMatcher[WSResponse, T] =
     new HavePropertyMatcher[WSResponse, T] {
-    def apply(response: WSResponse) =
-      HavePropertyMatchResult(
-        response.json.as[T] == expectedValue,
-        "jsonBodyAs",
-        expectedValue,
-        response.json.as[T]
-      )
-  }
+      def apply(response: WSResponse) =
+        HavePropertyMatchResult(
+          response.json.as[T] == expectedValue,
+          "jsonBodyAs",
+          expectedValue,
+          response.json.as[T]
+        )
+    }
 
   val emptyBody: HavePropertyMatcher[WSResponse, String] =
     new HavePropertyMatcher[WSResponse, String] {

@@ -17,11 +17,10 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService
 import uk.gov.hmrc.vatsignup.services.SubmissionOrchestrationService._
 
@@ -29,9 +28,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class SignUpSubmissionController @Inject()(val authConnector: AuthConnector,
-                                           submissionOrchestrationService: SubmissionOrchestrationService)
-                                          (implicit ec: ExecutionContext)
-  extends BaseController with AuthorisedFunctions {
+                                           submissionOrchestrationService: SubmissionOrchestrationService,
+                                           cc: ControllerComponents
+                                          )(implicit ec: ExecutionContext)
+  extends BackendController(cc) with AuthorisedFunctions {
 
   def submitSignUpRequest(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>

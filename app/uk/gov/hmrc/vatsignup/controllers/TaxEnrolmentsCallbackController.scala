@@ -19,8 +19,8 @@ package uk.gov.hmrc.vatsignup.controllers
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.JsValue
-import play.api.mvc.Action
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.models.SubscriptionState
 import uk.gov.hmrc.vatsignup.models.monitoring.TaxEnrolmentsCallbackAuditing.TaxEnrolmentsCallbackAuditModel
 import uk.gov.hmrc.vatsignup.services.SubscriptionNotificationService
@@ -31,9 +31,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class TaxEnrolmentsCallbackController @Inject()(subscriptionNotificationService: SubscriptionNotificationService,
-                                                auditService: AuditService
+                                                auditService: AuditService,
+                                                cc: ControllerComponents
                                                )(implicit ec: ExecutionContext)
-  extends BaseController {
+  extends BackendController(cc) {
 
   val stateKey = "state"
 

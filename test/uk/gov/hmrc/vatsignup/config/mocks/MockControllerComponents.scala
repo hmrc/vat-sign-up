@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vatsignup.models
+package uk.gov.hmrc.vatsignup.config.mocks
 
-import play.api.libs.json.{Json, OFormat}
+import org.scalatest.TestSuite
+import org.scalatest.mockito.MockitoSugar
+import play.api.mvc.ControllerComponents
 
-case class ClaimSubscriptionRequest(postCode: Option[String] = None,
-                                    registrationDate: Option[String] = None,
-                                    isFromBta: Boolean)
+trait MockControllerComponents extends MockitoSugar {
+  self: TestSuite =>
 
-object ClaimSubscriptionRequest {
-  implicit val format: OFormat[ClaimSubscriptionRequest] = Json.format[ClaimSubscriptionRequest]
+  lazy val mockControllerComponents: ControllerComponents = mock[ControllerComponents]
+
 }
-
-

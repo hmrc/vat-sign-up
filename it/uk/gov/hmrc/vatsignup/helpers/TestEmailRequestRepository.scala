@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.helpers
 
+import play.api.test.Helpers._
 import org.scalatest.BeforeAndAfterEach
 import uk.gov.hmrc.vatsignup.repositories.EmailRequestRepository
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait TestEmailRequestRepository extends BeforeAndAfterEach {

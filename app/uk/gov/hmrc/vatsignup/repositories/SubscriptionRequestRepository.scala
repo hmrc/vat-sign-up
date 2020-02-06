@@ -35,7 +35,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
-                                              appConfig: AppConfig)(implicit val ec: ExecutionContext)
+                                              appConfig: AppConfig
+                                             )(implicit val ec: ExecutionContext)
   extends ReactiveRepository[SubscriptionRequest, String](
     "subscriptionRequestRepository",
     mongo.mongoConnector.db,

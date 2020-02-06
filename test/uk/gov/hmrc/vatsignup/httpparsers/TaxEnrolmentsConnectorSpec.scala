@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
+import org.scalatest.{Matchers, WordSpec}
 import play.api.http.Status.{BAD_REQUEST, NO_CONTENT}
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
 
-class TaxEnrolmentsConnectorSpec extends UnitSpec {
+class TaxEnrolmentsConnectorSpec extends WordSpec with Matchers {
   val testHttpVerb = "PUT"
   val testUri = "/"
 

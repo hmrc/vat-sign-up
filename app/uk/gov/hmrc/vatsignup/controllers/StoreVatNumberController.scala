@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Result}
+import play.api.mvc.{Action, ControllerComponents, Result}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.config.Constants.ControlList._
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.controllers.StoreVatNumberController._
@@ -34,9 +34,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
-                                         storeVatNumberService: StoreVatNumberService
+                                         storeVatNumberService: StoreVatNumberService,
+                                         cc: ControllerComponents
                                         )(implicit ec: ExecutionContext)
-  extends BaseController with AuthorisedFunctions {
+  extends BackendController(cc) with AuthorisedFunctions {
 
   def storeVatNumber: Action[StoreVatNumberRequest] =
     Action.async(parse.json[StoreVatNumberRequest]) {

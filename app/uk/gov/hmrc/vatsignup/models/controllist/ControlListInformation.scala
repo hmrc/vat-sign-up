@@ -19,8 +19,8 @@ package uk.gov.hmrc.vatsignup.models.controllist
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 
 
-case class ControlListInformation(controlList: Set[ControlListParameter],
-                                  stagger: Stagger) {
+case class ControlListInformation(controlList: Set[ControlListParameter], stagger: Stagger) {
+
   import ControlListInformation._
 
   def validate(config: EligibilityConfig): Result = {

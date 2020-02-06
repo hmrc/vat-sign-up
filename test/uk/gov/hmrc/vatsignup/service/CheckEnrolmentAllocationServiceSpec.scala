@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser
@@ -30,7 +30,7 @@ import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class CheckEnrolmentAllocationServiceSpec extends UnitSpec
+class CheckEnrolmentAllocationServiceSpec extends WordSpec with Matchers
   with MockEnrolmentStoreProxyConnector {
 
   object TestCheckEnrolmentAllocationService extends CheckEnrolmentAllocationService(

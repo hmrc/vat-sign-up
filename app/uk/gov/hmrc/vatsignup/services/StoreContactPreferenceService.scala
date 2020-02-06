@@ -37,6 +37,7 @@ class StoreContactPreferenceService @Inject()(subscriptionRequestRepository: Sub
 }
 
 object StoreContactPreferenceService {
+
   case object ContactPreferenceStored
 
   sealed trait StoreContactPreferenceFailure
@@ -44,4 +45,5 @@ object StoreContactPreferenceService {
   case object ContactPreferenceDatabaseFailure extends StoreContactPreferenceFailure
 
   case object ContactPreferenceNoVatFound extends StoreContactPreferenceFailure
+
 }

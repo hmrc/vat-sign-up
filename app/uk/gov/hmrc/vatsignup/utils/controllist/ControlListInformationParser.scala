@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.utils.controllist
 
-import uk.gov.hmrc.vatsignup.models.controllist._
 import cats.implicits._
+import uk.gov.hmrc.vatsignup.models.controllist._
 
 object ControlListInformationParser {
 

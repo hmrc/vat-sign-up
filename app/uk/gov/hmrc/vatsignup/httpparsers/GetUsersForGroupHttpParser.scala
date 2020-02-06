@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.NON_AUTHORITATIVE_INFORMATION
 import play.api.libs.json._
 import reactivemongo.play.json.ValidationError
-import uk.gov.hmrc.auth.core.{CredentialRole, Admin, Assistant}
+import uk.gov.hmrc.auth.core.{Admin, Assistant, CredentialRole}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 object GetUsersForGroupHttpParser {
@@ -33,7 +33,7 @@ object GetUsersForGroupHttpParser {
     val AssistantKey = "Assistant"
 
     override def reads(json: JsValue): JsResult[CredentialRole] =
-      json.validate[String].collect(ValidationError(Seq("Invalid credential role"), Nil)){
+      json.validate[String].collect(ValidationError(Seq("Invalid credential role"), Nil)) {
         case AdminKey => Admin
         case AssistantKey => Assistant
       }

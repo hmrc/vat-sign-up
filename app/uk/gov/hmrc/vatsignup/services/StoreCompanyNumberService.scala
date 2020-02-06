@@ -63,7 +63,7 @@ class StoreCompanyNumberService @Inject()(subscriptionRequestRepository: Subscri
 
       _ <- EitherT(upsertCtReference(vatNumber, ctReference))
     } yield StoreCompanyNumberSuccess
-  }.value
+    }.value
 
   private def upsertLimitedCompany(vatNumber: String, companyNumber: String): Future[StoreCompanyResponse[StoreCompanyNumberSuccess.type]] =
     subscriptionRequestRepository.upsertBusinessEntity(vatNumber, LimitedCompany(companyNumber)) map {

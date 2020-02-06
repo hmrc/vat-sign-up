@@ -18,9 +18,9 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsResult, JsValue, Json, Reads}
-import play.api.mvc.Action
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.config.Constants._
 import uk.gov.hmrc.vatsignup.controllers.StoreRegisteredSocietyController._
 import uk.gov.hmrc.vatsignup.models.SubscriptionRequest._
@@ -31,8 +31,9 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreRegisteredSocietyController @Inject()(val authConnector: AuthConnector,
-                                                 storeRegisteredSocietyService: StoreRegisteredSocietyService
-                                                )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                                 storeRegisteredSocietyService: StoreRegisteredSocietyService,
+                                                 cc: ControllerComponents
+                                                )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def storeRegisteredSociety(vatNumber: String): Action[(String, Option[String])] =
     Action.async(parse.json(StoreRegisteredSocietyReads)) { implicit req =>
@@ -62,4 +63,5 @@ object StoreRegisteredSocietyController {
       ctReference <- (json \ ctReferenceKey).validateOpt[String]
     } yield (companyNumber, ctReference)
   }
+
 }

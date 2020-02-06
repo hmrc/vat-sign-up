@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status.{BAD_REQUEST, OK}
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.httpparsers.CustomerSignUpHttpParser.CustomerSignUpHttpReads
 import uk.gov.hmrc.vatsignup.models.{CustomerSignUpResponseFailure, CustomerSignUpResponseSuccess}
 
-class CustomerSignUpHttpParserSpec extends UnitSpec {
+class CustomerSignUpHttpParserSpec extends WordSpec with Matchers {
   val testHttpVerb = "POST"
   val testUri = "/"
 

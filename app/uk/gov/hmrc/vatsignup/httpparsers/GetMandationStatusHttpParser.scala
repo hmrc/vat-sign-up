@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.{NOT_FOUND, OK, PRECONDITION_FAILED}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import uk.gov.hmrc.vatsignup.models._
 
@@ -30,11 +30,11 @@ object GetMandationStatusHttpParser {
       response.status match {
         case OK =>
           (response.json \ MandationStatusKey).asOpt[String] collect {
-          case MTDfBMandated.Name => MTDfBMandated
-          case MTDfBVoluntary.Name => MTDfBVoluntary
-          case NonMTDfB.Name => NonMTDfB
-          case NonDigital.Name => NonDigital
-        } toRight GetMandationStatusHttpFailure(OK, response.body)
+            case MTDfBMandated.Name => MTDfBMandated
+            case MTDfBVoluntary.Name => MTDfBVoluntary
+            case NonMTDfB.Name => NonMTDfB
+            case NonDigital.Name => NonDigital
+          } toRight GetMandationStatusHttpFailure(OK, response.body)
         case PRECONDITION_FAILED =>
           Left(MigrationInProgress)
         case NOT_FOUND =>
@@ -45,8 +45,11 @@ object GetMandationStatusHttpParser {
   }
 
   sealed trait GetMandationStatusFailure
+
   case object VatNumberNotFound extends GetMandationStatusFailure
+
   case object MigrationInProgress extends GetMandationStatusFailure
+
   case class GetMandationStatusHttpFailure(status: Int, body: String) extends GetMandationStatusFailure
 
 }

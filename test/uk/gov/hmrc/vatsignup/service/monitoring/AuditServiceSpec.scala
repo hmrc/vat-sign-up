@@ -18,20 +18,18 @@ package uk.gov.hmrc.vatsignup.service.monitoring
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-
-import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.vatsignup.services.monitoring.{AuditModel, AuditService}
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AuditServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+class AuditServiceSpec extends WordSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
   val mockAuditConnector = mock[AuditConnector]
   val mockConfiguration = mock[Configuration]
   val testAppName = "app"
@@ -42,7 +40,7 @@ class AuditServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEac
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val request = FakeRequest("POST", "testUrl")
 
-  val testAuditModel = new AuditModel{
+  val testAuditModel = new AuditModel {
     override val auditType = "testAuditType"
     override val transactionName = "testTransactionName"
     override val detail = Map[String, String]()

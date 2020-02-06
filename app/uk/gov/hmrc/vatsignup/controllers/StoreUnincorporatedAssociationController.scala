@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.services.StoreUnincorporatedAssociationService
 import uk.gov.hmrc.vatsignup.services.StoreUnincorporatedAssociationService.UnincorporatedAssociationDatabaseFailureNoVATNumber
 
@@ -27,19 +27,19 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreUnincorporatedAssociationController @Inject()(val authConnector: AuthConnector,
-                                                         storeUnincorporatedAssociationService: StoreUnincorporatedAssociationService
-                                                        )(
-                                                         implicit ec: ExecutionContext
-                                                        ) extends BaseController with AuthorisedFunctions {
+                                                         storeUnincorporatedAssociationService: StoreUnincorporatedAssociationService,
+                                                         cc: ControllerComponents
+                                                        )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
-  def storeUnincorporatedAssociation(vatNumber: String): Action[AnyContent] =  Action.async {
-    implicit req => authorised() {
-      storeUnincorporatedAssociationService.storeUnincorporatedAssociation(vatNumber) map {
-        case Right(_) => NoContent
-        case Left(UnincorporatedAssociationDatabaseFailureNoVATNumber) => NotFound
-        case Left(_) => InternalServerError
+  def storeUnincorporatedAssociation(vatNumber: String): Action[AnyContent] = Action.async {
+    implicit req =>
+      authorised() {
+        storeUnincorporatedAssociationService.storeUnincorporatedAssociation(vatNumber) map {
+          case Right(_) => NoContent
+          case Left(UnincorporatedAssociationDatabaseFailureNoVATNumber) => NotFound
+          case Left(_) => InternalServerError
+        }
       }
-    }
   }
 
 }

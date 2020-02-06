@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import java.text.SimpleDateFormat
-
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}
@@ -63,7 +61,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       _ <- upsertAndAllocateEnrolment(vatNumber, knownFacts, isFromBta)
     } yield SubscriptionClaimed
 
-  }.value
+    }.value
 
   def claimSubscriptionWithEnrolment(vatNumber: String,
                                      isFromBta: Boolean
@@ -75,7 +73,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       knownFacts <- getKnownFacts(vatNumber)
       _ <- upsertAndAllocateEnrolment(vatNumber, knownFacts, isFromBta)
     } yield SubscriptionClaimed
-  }.value
+    }.value
 
   private def checkKnownFactsMatch(optBusinessPostcode: Option[String],
                                    optVatRegistrationDate: Option[String],

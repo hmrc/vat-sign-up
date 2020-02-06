@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import uk.gov.hmrc.play.test.UnitSpec
-import SendEmailHttpParser.SendEmailHttpReads.read
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.SendEmailHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.SendEmailHttpParser.{EmailQueued, SendEmailFailure}
 
-class SendEmailHttpParserSpec extends UnitSpec {
+class SendEmailHttpParserSpec extends WordSpec with Matchers {
   val testHttpVerb = "POST"
   val testUri = "/"
 

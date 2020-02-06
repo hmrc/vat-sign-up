@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ object WiremockHelper extends Eventually with IntegrationPatience {
     verify(postRequest)
   }
 
-    def verifyGet(uri: String): Unit = {
+  def verifyGet(uri: String): Unit = {
     verify(getRequestedFor(urlEqualTo(uri)))
   }
 
@@ -87,7 +87,9 @@ object WiremockHelper extends Eventually with IntegrationPatience {
 }
 
 trait WiremockHelper {
+
   import WiremockHelper._
+
   lazy val wmConfig = wireMockConfig().port(wiremockPort)
   lazy val wireMockServer = new WireMockServer(wmConfig)
 

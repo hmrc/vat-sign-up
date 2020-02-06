@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,29 @@
 package uk.gov.hmrc.vatsignup.helpers
 
 import helpers.WiremockHelper
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest._
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.{Application, Environment, Mode}
-import play.api.libs.json.Writes
-import play.api.libs.ws.{WSClient, WSResponse}
-import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Writes
+import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import play.api.{Application, Environment, Mode}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
-trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with WiremockHelper
-  with BeforeAndAfterAll with BeforeAndAfterEach with FeatureSwitching {
-  lazy val ws = app.injector.instanceOf[WSClient]
+import scala.concurrent.Future
+import scala.reflect.ClassTag
+
+trait ComponentSpecBase extends WordSpec with Matchers with GuiceOneServerPerSuite with WiremockHelper
+  with BeforeAndAfterAll with BeforeAndAfterEach with FeatureSwitching with DefaultAwaitTimeout with FutureAwaits with OptionValues {
+
+  lazy val ws: WSClient = app.injector.instanceOf[WSClient]
 
   lazy val currentDateProvider = new CurrentDateProvider()
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
-    .in(Environment.simple(mode = Mode.Dev))
+    .in(Environment.simple(mode = Mode.Test))
     .bindings(bind[CurrentDateProvider].toInstance(currentDateProvider))
     .configure(config)
     .build
@@ -80,8 +84,8 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    resetWiremock()
     FeatureSwitch.switches foreach disable
+    resetWiremock()
   }
 
   override def afterAll(): Unit = {
@@ -98,7 +102,7 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
   def post[T](uri: String)(body: T, additionalHeaders: (String, String)*)(implicit writes: Writes[T]): WSResponse = {
     await(
       buildClient(uri)
-        .withHeaders(additionalHeaders :+ "Content-Type" -> "application/json":_*)
+        .withHttpHeaders(additionalHeaders :+ "Content-Type" -> "application/json": _*)
         .post(writes.writes(body).toString())
     )
   }
@@ -106,13 +110,15 @@ trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with Wiremo
   def put[T](uri: String)(body: T)(implicit writes: Writes[T]): WSResponse = {
     await(
       buildClient(uri)
-        .withHeaders(
-          "Content-Type" -> "application/json"
-        )
+        .withHttpHeaders("Content-Type" -> "application/json")
         .put(writes.writes(body).toString())
     )
   }
 
-  def buildClient(path: String) = ws.url(s"http://localhost:$port/vat-sign-up$path").withFollowRedirects(false)
+  def intercept[T <: AnyRef](res: => Future[Any])(implicit classTag: ClassTag[T]): T = {
+    super.intercept[T](await(res))
+  }
+
+  def buildClient(path: String): WSRequest = ws.url(s"http://localhost:$port/vat-sign-up$path").withFollowRedirects(false)
 
 }

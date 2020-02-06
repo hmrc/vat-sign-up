@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@ package uk.gov.hmrc.vatsignup.repositories
 
 import java.util.{NoSuchElementException, UUID}
 
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class SubscriptionRequestRepositoryISpec extends WordSpec with GuiceOneAppPerSuite with BeforeAndAfterEach with Matchers {
   lazy val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
 
   private val testSubscriptionRequest = SubscriptionRequest(
@@ -145,7 +145,7 @@ class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSui
       } yield model
 
       await(res) should contain(SubscriptionRequest(
-      testVatNumber, email = Some(newEmail), isDirectDebit = false, contactPreference = None))
+        testVatNumber, email = Some(newEmail), isDirectDebit = false, contactPreference = None))
     }
   }
 

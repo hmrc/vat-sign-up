@@ -18,12 +18,12 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json._
-import play.api.mvc.Action
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.InternalServerException
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, SkipPartnershipKnownFactsMismatch}
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.controllers.StorePartnershipInformationController._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService
@@ -34,8 +34,9 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StorePartnershipInformationController @Inject()(val authConnector: AuthConnector,
-                                                      storePartnershipUtrService: StorePartnershipInformationService
-                                                     )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions with FeatureSwitching {
+                                                      storePartnershipUtrService: StorePartnershipInformationService,
+                                                      cc: ControllerComponents
+                                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions with FeatureSwitching {
 
   def storePartnershipInformation(vatNumber: String): Action[StorePartnershipRequest] =
     Action.async(parse.json[StorePartnershipRequest](StorePartnershipRequest.reader)) { implicit request =>

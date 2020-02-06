@@ -20,7 +20,6 @@ import uk.gov.hmrc.vatsignup.services.monitoring.AuditModel
 
 object ClaimSubscriptionAuditing {
 
-
   val claimSubscriptionTransactionName = "MTDVATClaimSubscriptionRequest"
   val claimSubscriptionAuditType = "mtdVatClaimSubscription"
 

@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.services.StoreVatGroupService
 import uk.gov.hmrc.vatsignup.services.StoreVatGroupService._
 
@@ -27,17 +27,19 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreVatGroupController @Inject()(val authConnector: AuthConnector,
-                                        storeVatGroupService: StoreVatGroupService
-                                       )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                        storeVatGroupService: StoreVatGroupService,
+                                        cc: ControllerComponents
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def storeVatGroup(vatNumber: String): Action[AnyContent] = Action.async {
-    implicit req => authorised() {
-      storeVatGroupService.storeVatGroup(vatNumber) map {
-        case Right(_) => NoContent
-        case Left(VatGroupDatabaseFailureNoVATNumber) => NotFound
-        case Left(_) => InternalServerError
+    implicit req =>
+      authorised() {
+        storeVatGroupService.storeVatGroup(vatNumber) map {
+          case Right(_) => NoContent
+          case Left(VatGroupDatabaseFailureNoVATNumber) => NotFound
+          case Left(_) => InternalServerError
+        }
       }
-    }
   }
 
 }

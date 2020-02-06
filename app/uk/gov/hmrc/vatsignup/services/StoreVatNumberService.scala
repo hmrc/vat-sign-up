@@ -73,7 +73,7 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
       eligibilitySuccess.isOverseas,
       eligibilitySuccess.isDirectDebit
     )
-  }.value
+    }.value
 
   private def checkUserAuthority(vatNumber: String,
                                  enrolments: Enrolments,

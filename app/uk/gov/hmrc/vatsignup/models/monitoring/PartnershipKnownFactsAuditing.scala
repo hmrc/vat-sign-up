@@ -45,7 +45,7 @@ object PartnershipKnownFactsAuditing {
       "retrieved.commsPostCode" -> partnershipKnownFacts.flatMap(_.commsPostCode),
       "retrieved.traderPostCode" -> partnershipKnownFacts.flatMap(_.traderPostCode),
       "isMatch" -> Some(s"$isMatch"),
-      "sautrNotFound" -> (if(partnershipKnownFacts.isEmpty) Some("true") else None)
+      "sautrNotFound" -> (if (partnershipKnownFacts.isEmpty) Some("true") else None)
     ).collect {
       case (key, Some(v)) => (key, v)
     }

@@ -59,7 +59,7 @@ class ControlListEligibilityService @Inject()(knownFactsAndControlListInformatio
         isDirectDebit = isDirectDebit
       )
     }
-  }.value
+    }.value
 
   private def getKnownFactsAndControlListInformation(vatNumber: String
                                                     )(implicit hc: HeaderCarrier,

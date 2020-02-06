@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, _}
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
@@ -69,8 +69,8 @@ trait MockEnrolmentStoreProxyConnector extends MockitoSugar with BeforeAndAfterE
 
 
   def mockEnrolmentStoreUpsertEnrolment(vatNumber: String,
-                          postcode: String,
-                          vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
+                                        postcode: String,
+                                        vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
     when(mockEnrolmentStoreProxyConnector.upsertEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(postcode),

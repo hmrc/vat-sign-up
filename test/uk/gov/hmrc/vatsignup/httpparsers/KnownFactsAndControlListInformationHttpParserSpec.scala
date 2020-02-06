@@ -16,20 +16,17 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import java.time.Month
-
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformationHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
 import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
 
-class KnownFactsAndControlListInformationHttpParserSpec extends UnitSpec with EitherValues with FeatureSwitching {
+class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Matchers with EitherValues with FeatureSwitching {
   val testMethod = "GET"
   val testUrl = "/"
 

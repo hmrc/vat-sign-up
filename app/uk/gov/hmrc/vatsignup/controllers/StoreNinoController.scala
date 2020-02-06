@@ -18,9 +18,9 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsSuccess, JsValue}
-import play.api.mvc.Action
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.models.BusinessEntity.NinoKey
 import uk.gov.hmrc.vatsignup.services.StoreNinoService
 import uk.gov.hmrc.vatsignup.services.StoreNinoService.{NinoDatabaseFailure, NinoDatabaseFailureNoVATNumber, StoreNinoSuccess}
@@ -28,8 +28,10 @@ import uk.gov.hmrc.vatsignup.services.StoreNinoService.{NinoDatabaseFailure, Nin
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StoreNinoController @Inject()(val authConnector: AuthConnector, storeNinoService: StoreNinoService)
-                                   (implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+class StoreNinoController @Inject()(val authConnector: AuthConnector,
+                                    storeNinoService: StoreNinoService,
+                                    cc: ControllerComponents
+                                   )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def storeNino(vatNumber: String): Action[JsValue] =
     Action.async(parse.json) { implicit req =>

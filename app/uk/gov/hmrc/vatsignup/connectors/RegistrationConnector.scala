@@ -82,6 +82,12 @@ object RegistrationConnector {
           + (SautrKey -> sautr)
         )
       )
+    case JointVenture =>
+      Json.obj(
+        GeneralPartnershipKey -> Json.obj(
+          VrnKey -> vatNumber
+        )
+      )
     case LimitedPartnership(sautr, companyNumber) =>
       Json.obj(
         LimitedPartnershipKey -> (

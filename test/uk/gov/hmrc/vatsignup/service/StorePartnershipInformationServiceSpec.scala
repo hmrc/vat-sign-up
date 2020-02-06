@@ -18,13 +18,12 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.util.UUID
 
-import org.scalatest.BeforeAndAfterEach
-import play.api.http.Status._
+import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, SkipPartnershipKnownFactsMismatch}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.GeneralPartnership
@@ -37,7 +36,7 @@ import uk.gov.hmrc.vatsignup.services.{PartnershipKnownFactsService, StorePartne
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StorePartnershipInformationServiceSpec extends UnitSpec
+class StorePartnershipInformationServiceSpec extends WordSpec with Matchers
   with MockSubscriptionRequestRepository with MockPartnershipKnownFactsService with FeatureSwitching with BeforeAndAfterEach {
 
   object TestStorePartnershipInformationService extends StorePartnershipInformationService(

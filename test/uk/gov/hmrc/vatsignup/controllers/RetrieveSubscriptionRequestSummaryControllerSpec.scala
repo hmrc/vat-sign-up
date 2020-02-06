@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.{Digital, LimitedCompany, SubscriptionRequestSummary}
@@ -31,12 +31,15 @@ import uk.gov.hmrc.vatsignup.services.RetrieveSubscriptionRequestSummaryService.
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RetrieveSubscriptionRequestSummaryControllerSpec extends UnitSpec
-  with MockAuthConnector with MockRetrieveSubscriptionRequestSummaryService {
+class RetrieveSubscriptionRequestSummaryControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockRetrieveSubscriptionRequestSummaryService {
 
   object TestRetrieveSubscriptionRequestSummaryController extends RetrieveSubscriptionRequestSummaryController(
     mockAuthConnector,
-    mockRetrieveSubscriptionRequestSummaryService
+    mockRetrieveSubscriptionRequestSummaryService,
+    stubControllerComponents()
   )
 
   implicit val system: ActorSystem = ActorSystem()
@@ -57,10 +60,10 @@ class RetrieveSubscriptionRequestSummaryControllerSpec extends UnitSpec
 
         mockRetrieveSubscriptionRequestSummary(testVatNumber)(Future.successful(Right(testSubscriptionRequestSummary)))
 
-        val res = await(TestRetrieveSubscriptionRequestSummaryController.retrieveSubscriptionRequestSummary(testVatNumber)(FakeRequest()))
+        val res = TestRetrieveSubscriptionRequestSummaryController.retrieveSubscriptionRequestSummary(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.toJson(testSubscriptionRequestSummary)
+        contentAsJson(res) shouldBe Json.toJson(testSubscriptionRequestSummary)
       }
     }
 

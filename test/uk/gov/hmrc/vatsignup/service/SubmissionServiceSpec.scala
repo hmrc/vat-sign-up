@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.connectors.utils.EtmpEntityKeys._
@@ -39,7 +38,7 @@ import uk.gov.hmrc.vatsignup.services._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SubmissionServiceSpec extends UnitSpec with EitherValues
+class SubmissionServiceSpec extends WordSpec with Matchers with EitherValues
   with MockSubscriptionRequestRepository
   with MockCustomerSignUpConnector with MockRegistrationConnector
   with MockTaxEnrolmentsConnector with MockAuditService with MockEmailRequestRepository

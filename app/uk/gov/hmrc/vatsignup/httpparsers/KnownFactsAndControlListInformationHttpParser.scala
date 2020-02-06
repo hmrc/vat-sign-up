@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, OK}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser
 
-object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
+object KnownFactsAndControlListInformationHttpParser extends FeatureSwitching {
   type KnownFactsAndControlListInformationHttpParserResponse = Either[KnownFactsAndControlListInformationFailure, KnownFactsAndControlListInformation]
 
   val postcodeKey = "postcode"
@@ -34,12 +34,12 @@ object KnownFactsAndControlListInformationHttpParser  extends FeatureSwitching {
   val invalidJsonResponseMessage = "Invalid JSON response"
 
   val lastReturnMonthDefault: String = "N/A"
-  val lastNetDueDefault:String = "0.00"
+  val lastNetDueDefault: String = "0.00"
 
   implicit object KnownFactsAndControlListInformationHttpReads extends HttpReads[KnownFactsAndControlListInformationHttpParserResponse] {
     override def read(method: String, url: String, response: HttpResponse): KnownFactsAndControlListInformationHttpParserResponse = {
       response.status match {
-        case OK  if isEnabled(AdditionalKnownFacts) =>
+        case OK if isEnabled(AdditionalKnownFacts) =>
           (for {
             businessPostcode <- (response.json \ postcodeKey).validateOpt[String]
             vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]

@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.http.Status._
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.GetEmailVerificationStateHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 
-class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues {
+class GetEmailVerificationStateHttpParserSpec extends WordSpec with Matchers {
   "GetEmailVerifiedHttpReads#read" when {
     "the response status is OK" should {
       "return a RegistrationSuccess with the returned SAFE ID" in {
@@ -31,7 +30,7 @@ class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues
           responseStatus = OK
         )
 
-        read("", "", httpResponse).right.value shouldBe EmailVerified
+        read("", "", httpResponse) shouldBe Right(EmailVerified)
       }
     }
 
@@ -41,7 +40,7 @@ class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues
           responseStatus = NOT_FOUND
         )
 
-        read("", "", httpResponse).right.value shouldBe EmailNotVerified
+        read("", "", httpResponse) shouldBe Right(EmailNotVerified)
       }
     }
 
@@ -51,7 +50,7 @@ class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues
           responseStatus = INTERNAL_SERVER_ERROR
         )
 
-        read("", "", httpResponse).left.value shouldBe GetEmailVerificationStateErrorResponse(INTERNAL_SERVER_ERROR, httpResponse.body)
+        read("", "", httpResponse) shouldBe Left(GetEmailVerificationStateErrorResponse(INTERNAL_SERVER_ERROR, httpResponse.body))
       }
     }
 

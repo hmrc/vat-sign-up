@@ -17,11 +17,11 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.Action
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.ForbiddenException
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
@@ -31,9 +31,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
-                                            claimSubscriptionService: ClaimSubscriptionService
+                                            claimSubscriptionService: ClaimSubscriptionService,
+                                            cc: ControllerComponents
                                            )(implicit ec: ExecutionContext)
-  extends BaseController with AuthorisedFunctions {
+  extends BackendController(cc) with AuthorisedFunctions {
 
   def claimSubscription(vatNumber: String): Action[ClaimSubscriptionRequest] =
     Action.async(parse.json[ClaimSubscriptionRequest]) { implicit req =>

@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.mvc.Http.Status._
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.{EnrolmentAssigned, EnrolmentAssignmentFailure}
@@ -28,7 +28,7 @@ import uk.gov.hmrc.vatsignup.services.AssignEnrolmentToUserService.{EnrolmentAss
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreProxyConnector {
+class AssignEnrolmentToUserServiceSpec extends WordSpec with Matchers with MockEnrolmentStoreProxyConnector {
 
   object TestAssignEnrolmentToUserService extends AssignEnrolmentToUserService(mockEnrolmentStoreProxyConnector)
 

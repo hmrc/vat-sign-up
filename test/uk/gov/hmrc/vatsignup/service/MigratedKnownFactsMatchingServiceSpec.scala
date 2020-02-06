@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockVatCustomerDetailsConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
@@ -28,7 +29,7 @@ import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockVatCustomerDetailsConnector {
+class MigratedKnownFactsMatchingServiceSpec extends WordSpec with Matchers with MockVatCustomerDetailsConnector {
 
   object TestMigratedKnownFactsMatchingService extends MigratedKnownFactsMatchingService(
     mockVatCustomerDetailsConnector
@@ -49,44 +50,44 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockVatCustome
           "return true" in {
             mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
 
-            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
+            val res = TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
               testVatNumber, testEnteredKnownFacts
-            ))
+            )
 
-            res shouldBe true
+            await(res) shouldBe true
           }
         }
         "the returned known facts match the entered known facts after lowercasing them and removing spacing" should {
           "return true" in {
             mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
 
-            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
+            val res = TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
               testVatNumber, testEnteredKnownFacts.copy(businessPostcode = Some("zz111zz"))
-            ))
+            )
 
-            res shouldBe true
+            await(res) shouldBe true
           }
         }
         "the returned reg date matches the entered reg date for an overseas VRN" should {
           "return true" in {
             mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testOverseasVatCustomerDetails)))
 
-            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
+            val res = TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
               testVatNumber, testEnteredOverseasKnownFacts
-            ))
+            )
 
-            res shouldBe true
+            await(res) shouldBe true
           }
         }
         "the returned known facts don't match the entered known facts" should {
           "return false" in {
             mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
 
-            val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
+            val res = TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
               testVatNumber, testEnteredKnownFacts.copy(businessPostcode = Some("1234"))
-            ))
+            )
 
-            res shouldBe false
+            await(res) shouldBe false
           }
         }
       }
@@ -94,11 +95,11 @@ class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockVatCustome
         "return false" in {
           mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatNumberNotFound)))
 
-          val res = await(TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
+          val res = TestMigratedKnownFactsMatchingService.checkKnownFactsMatch(
             testVatNumber, testEnteredKnownFacts
-          ))
+          )
 
-          res shouldBe false
+          await(res) shouldBe false
         }
       }
     }
