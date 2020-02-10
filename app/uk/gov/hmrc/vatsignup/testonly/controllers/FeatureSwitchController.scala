@@ -19,14 +19,14 @@ package uk.gov.hmrc.vatsignup.testonly.controllers
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitch.switches
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitchSetting, FeatureSwitching}
 
 @Singleton
-class FeatureSwitchController @Inject()(val messagesApi: MessagesApi)
-  extends BaseController with FeatureSwitching {
+class FeatureSwitchController @Inject()(override val messagesApi: MessagesApi, cc: ControllerComponents)
+  extends BackendController(cc) with FeatureSwitching {
 
   private def returnCurrentSettings = {
     val featureSwitches = switches map (featureSwitch => FeatureSwitchSetting(featureSwitch, isEnabled(featureSwitch)))

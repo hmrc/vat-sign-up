@@ -6,25 +6,24 @@ object AppDependencies {
 
   lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
-  private val scalaTestPlusVersion = "2.0.0"
-  private val wiremockVersion = "2.23.2"
-  private val mockitoVersion = "2.28.2"
+  private val scalaTestPlusVersion = "3.1.3"
+  private val wiremockVersion = "2.25.1"
+  private val mockitoVersion = "2.7.6"
   private val catsVersion = "1.6.1"
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "simple-reactivemongo" % "7.21.0-play-25",
+    "uk.gov.hmrc" %% "simple-reactivemongo" % "7.23.0-play-26",
     ws,
-    "uk.gov.hmrc" %% "bootstrap-play-25" % "5.1.0",
+    "uk.gov.hmrc" %% "bootstrap-play-26" % "1.3.0",
     "org.typelevel" %% "cats-core" % catsVersion
   )
 
   def test(scope: String = "test,it") = Seq(
-    "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-25" % scope,
     "org.scalatest" %% "scalatest" % "2.2.6" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % scalaTestPlusVersion % scope,
-    "com.github.tomakehurst" % "wiremock" % wiremockVersion % scope,
+    "com.github.tomakehurst" % "wiremock-jre8" % wiremockVersion % scope,
     "org.mockito" % "mockito-core" % mockitoVersion % scope
   )
 

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.config.mocks
 
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import uk.gov.hmrc.vatsignup.config.EligibilityConfig
 import uk.gov.hmrc.vatsignup.helpers.TestConstants

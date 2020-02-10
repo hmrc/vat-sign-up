@@ -17,11 +17,11 @@
 package uk.gov.hmrc.vatsignup.service
 
 import org.scalatest.EitherValues
-import play.api.http.Status._
+import play.api.test.Helpers._
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -33,7 +33,7 @@ import uk.gov.hmrc.vatsignup.services.StoreEmailService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreEmailServiceSpec extends UnitSpec with MockSubscriptionRequestRepository
+class StoreEmailServiceSpec extends WordSpec with Matchers with MockSubscriptionRequestRepository
   with MockEmailVerificationConnector with MockConfig with EitherValues {
 
   object TestStoreEmailService extends StoreEmailService(

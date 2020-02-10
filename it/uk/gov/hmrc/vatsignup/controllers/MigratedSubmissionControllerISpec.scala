@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EmailVerificationStub._
@@ -56,7 +56,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -87,7 +87,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -116,7 +116,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -145,7 +145,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -174,7 +174,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -203,7 +203,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -231,7 +231,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -259,7 +259,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -287,7 +287,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -315,7 +315,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -343,7 +343,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -371,7 +371,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -399,7 +399,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -428,7 +428,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
         stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
         await(submissionRequestRepo.insert(testSubscriptionRequest))
-        val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+        val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
         res should have(
           httpStatus(NO_CONTENT),
@@ -460,7 +460,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -491,7 +491,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -520,7 +520,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -551,7 +551,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -582,7 +582,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -613,7 +613,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -644,7 +644,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -674,7 +674,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -702,7 +702,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -730,7 +730,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -758,7 +758,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -787,7 +787,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -816,7 +816,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),
@@ -845,7 +845,7 @@ class MigratedSubmissionControllerISpec extends ComponentSpecBase with CustomMat
           stubRegisterEnrolment(testVatNumber, testSafeId)(NO_CONTENT)
 
           await(submissionRequestRepo.insert(testSubscriptionRequest))
-          val res = await(post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj()))
+          val res = post(s"/subscription-request/migrated/vat-number/$testVatNumber/submit")(Json.obj())
 
           res should have(
             httpStatus(NO_CONTENT),

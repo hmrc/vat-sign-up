@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vatsignup.config
 
 import javax.inject.{Inject, Singleton}
-
 import uk.gov.hmrc.vatsignup.models.DateRange
 import uk.gov.hmrc.vatsignup.models.controllist._
 

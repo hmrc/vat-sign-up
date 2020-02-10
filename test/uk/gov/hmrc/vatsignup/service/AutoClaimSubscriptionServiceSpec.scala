@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{Admin, Assistant}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.{UsersFound, UsersGroupsSearchConnectionFailure}
@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class AutoClaimSubscriptionServiceSpec extends UnitSpec with MockKnownFactsConnector
+class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockKnownFactsConnector
   with MockEnrolmentStoreProxyConnector with MockCheckEnrolmentAllocationService with MockAssignEnrolmentToUserService
   with MockUsersGroupsSearchConnector with MockAuditService {
 

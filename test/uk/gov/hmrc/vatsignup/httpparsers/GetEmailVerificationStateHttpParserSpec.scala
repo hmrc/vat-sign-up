@@ -17,13 +17,13 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import org.scalatest.EitherValues
-import play.api.http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser.GetEmailVerificationStateHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.GetEmailVerificationStateHttpParser._
 
-class GetEmailVerificationStateHttpParserSpec extends UnitSpec with EitherValues {
+class GetEmailVerificationStateHttpParserSpec extends WordSpec with Matchers with EitherValues {
   "GetEmailVerifiedHttpReads#read" when {
     "the response status is OK" should {
       "return a RegistrationSuccess with the returned SAFE ID" in {

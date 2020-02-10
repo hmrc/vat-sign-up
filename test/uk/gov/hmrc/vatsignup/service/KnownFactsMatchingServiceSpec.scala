@@ -18,9 +18,10 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.time.Month
 
-import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{Matchers, WordSpec}
+import play.api.test.Helpers._
+import play.api.test.FakeRequest
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
@@ -31,7 +32,7 @@ import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
+class KnownFactsMatchingServiceSpec extends WordSpec with Matchers with FeatureSwitching
  with MockAuditService {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -59,12 +60,13 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
     "4 valid known facts are provided" should {
       "return KnownFactsMatch" in {
         enable(AdditionalKnownFacts)
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testEnteredFourKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -79,12 +81,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
     "4 valid known facts are provided, but the Box 5 figure value sent from the front end is negative" should {
       "return KnownFactsMatch" in {
         enable(AdditionalKnownFacts)
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testEnteredKnownFactsNegativeBox5,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -105,12 +107,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
           lastNetDue = Some("")
         )
 
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testInvalidKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -131,12 +133,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
           lastNetDue = Some("-12345.01")
         )
 
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testInvalidKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -150,12 +152,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
     }
     "2 valid known facts are provided" should {
       "return KnownFactsMismatch" in {
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testTwoKnownFacts,
           retrievedKfs = testFourKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -171,12 +173,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
       "return KnownFactsMatch" in {
         enable(AdditionalKnownFacts)
 
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testEnteredFourKnownFacts.copy(businessPostcode = None),
           retrievedKfs = testFourKnownFacts,
           isOverseas = true
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -194,12 +196,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
       "return KnownFactsMatch" in {
         disable(AdditionalKnownFacts)
 
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testTwoKnownFacts,
           retrievedKfs = testTwoKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,
@@ -222,12 +224,12 @@ class KnownFactsMatchingServiceSpec extends UnitSpec with FeatureSwitching
           lastNetDue = None
         )
 
-        val res = await(TestKnownFactsMatchingService.checkKnownFactsMatch(
+        val res = TestKnownFactsMatchingService.checkKnownFactsMatch(
           vatNumber = testVatNumber,
           enteredKfs = testEnteredKnownFacts,
           retrievedKfs = testTwoKnownFacts,
           isOverseas = false
-        ))
+        )
 
         verifyAudit(KnownFactsAuditModel(
           testVatNumber,

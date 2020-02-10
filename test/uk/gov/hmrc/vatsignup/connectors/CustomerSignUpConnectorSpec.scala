@@ -17,10 +17,10 @@
 package uk.gov.hmrc.vatsignup.connectors
 
 import play.api.libs.json.Json
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 
-class CustomerSignUpConnectorSpec extends UnitSpec {
+class CustomerSignUpConnectorSpec extends WordSpec with Matchers {
 
   "CustomerSignUpConnector" should {
     import CustomerSignUpConnector._

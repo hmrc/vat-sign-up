@@ -18,14 +18,14 @@ package uk.gov.hmrc.vatsignup.service
 
 import java.time.LocalDate
 import java.util.UUID
-
+import play.api.test.Helpers._
 import org.scalatest.EitherValues
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreNinoServiceSpec
-  extends UnitSpec with MockSubscriptionRequestRepository with MockAuditService with EitherValues {
+  extends WordSpec with Matchers with MockSubscriptionRequestRepository with MockAuditService with EitherValues {
 
 
   object TestStoreNinoService extends StoreNinoService(

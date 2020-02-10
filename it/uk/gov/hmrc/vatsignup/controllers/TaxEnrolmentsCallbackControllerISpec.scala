@@ -17,8 +17,8 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import org.scalatest.BeforeAndAfterEach
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks._
@@ -127,7 +127,6 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               EnrolmentStoreProxyStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
               EnrolmentStoreProxyStub.verifyAssignEnrolment(testVatNumber, testCredentialId2)
               EnrolmentStoreProxyStub.verifyAssignEnrolment(testVatNumber, testCredentialId3)
-
             }
           }
 
@@ -144,6 +143,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
               EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
               EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(BAD_GATEWAY)
+              EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId3)(BAD_GATEWAY)
 
               EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
@@ -212,6 +212,8 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               disable(AutoClaimEnrolment)
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
+
+              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(BAD_GATEWAY)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
                 Json.obj("state" -> "EnrolmentError")

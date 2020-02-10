@@ -18,12 +18,12 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -33,10 +33,10 @@ import uk.gov.hmrc.vatsignup.services.StoreEmailService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with MockStoreEmailService {
+class StoreEmailControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockStoreEmailService {
 
   object TestStoreEmailController
-    extends StoreEmailController(mockAuthConnector, mockStoreEmailService)
+    extends StoreEmailController(mockAuthConnector, mockStoreEmailService, stubControllerComponents())
 
   implicit private val system: ActorSystem = ActorSystem()
   implicit private val materializer: ActorMaterializer = ActorMaterializer()
@@ -51,10 +51,10 @@ class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with Mock
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
+        val res = TestStoreEmailController.storeEmail(testVatNumber)(request)
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(EmailVerifiedKey -> emailVerified)
+        contentAsJson(res) shouldBe Json.obj(EmailVerifiedKey -> emailVerified)
       }
     }
 
@@ -65,7 +65,7 @@ class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with Mock
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
+        val res = TestStoreEmailController.storeEmail(testVatNumber)(request)
 
         status(res) shouldBe NOT_FOUND
       }
@@ -78,7 +78,7 @@ class StoreEmailControllerSpec extends UnitSpec with MockAuthConnector with Mock
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreEmailController.storeEmail(testVatNumber)(request))
+        val res = TestStoreEmailController.storeEmail(testVatNumber)(request)
 
         status(res) shouldBe INTERNAL_SERVER_ERROR
       }

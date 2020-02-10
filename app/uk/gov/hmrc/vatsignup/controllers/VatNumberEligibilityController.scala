@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.vatsignup.config.Constants.ControlList.OverseasKey
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService._
 import uk.gov.hmrc.vatsignup.services._
 
@@ -29,9 +29,10 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class VatNumberEligibilityController @Inject()(val authConnector: AuthConnector,
-                                               controlListEligibilityService: ControlListEligibilityService)
+                                               controlListEligibilityService: ControlListEligibilityService,
+                                               cc: ControllerComponents)
                                               (implicit ec: ExecutionContext)
-  extends BaseController with AuthorisedFunctions {
+  extends BackendController(cc) with AuthorisedFunctions {
 
   def checkVatNumberEligibility(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>

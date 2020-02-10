@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.models.controllist
 
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListInformation._
 
 
-class ControlListInformationSpec extends UnitSpec with MockEligibilityConfig {
+class ControlListInformationSpec extends WordSpec with Matchers with MockEligibilityConfig {
 
 
   // n.b. invalid scenario since multiple stagger and business entities are present

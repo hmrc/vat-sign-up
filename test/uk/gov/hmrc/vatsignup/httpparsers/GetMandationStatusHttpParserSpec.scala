@@ -17,15 +17,15 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import org.scalatest.EitherValues
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpFailure
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpReads.read
 import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}
 
-class GetMandationStatusHttpParserSpec extends UnitSpec with EitherValues {
+class GetMandationStatusHttpParserSpec extends WordSpec with Matchers with EitherValues {
   val testMethod = "GET"
   val testUrl = "/"
 

@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._

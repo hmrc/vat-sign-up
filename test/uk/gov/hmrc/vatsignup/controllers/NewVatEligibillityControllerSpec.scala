@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -31,10 +31,10 @@ import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector with MockVatNumberEligibilityService {
+class NewVatEligibillityControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockVatNumberEligibilityService {
 
   object TestNewVatEligibillityController
-    extends NewVatEligibillityController(mockAuthConnector, mockVatNumberEligibilityService)
+    extends NewVatEligibillityController(mockAuthConnector, mockVatNumberEligibilityService, stubControllerComponents())
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -46,10 +46,10 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(AlreadySubscribed))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> AlreadySubscribedValue)
+        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> AlreadySubscribedValue)
       }
     }
     "VatNumberElligibity service returns Eligible" should {
@@ -57,10 +57,10 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Eligible(true, false)))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> EligibleValue,
+        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> EligibleValue,
           EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false))
       }
     }
@@ -69,10 +69,10 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Ineligible))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> IneligibleValue)
+        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> IneligibleValue)
       }
     }
     "VatNumberElligibility service returns Inhibited" should {
@@ -80,10 +80,10 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Inhibited(testMigratableDates)))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> InhibitedValue, MigratableDatesKey -> Json.toJson(testMigratableDates))
+        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> InhibitedValue, MigratableDatesKey -> Json.toJson(testMigratableDates))
       }
     }
     "VatNumberEligibillity service returns MigrationInProgress" should {
@@ -91,10 +91,10 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(MigrationInProgress))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> MigrationInProgressValue)
+        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> MigrationInProgressValue)
       }
     }
     "VatNumberEligibillity service returns Deregistered" should {
@@ -102,10 +102,10 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(Deregistered))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(MtdStatusKey -> DeregisteredValue)
+        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> DeregisteredValue)
       }
     }
     "VatNumberEligibility service returns VatNumberNotFound" should {
@@ -113,7 +113,7 @@ class NewVatEligibillityControllerSpec extends UnitSpec with MockAuthConnector w
         mockAuthorise()(Future.successful(Unit))
         mockGetEligibilityStatus(testVatNumber)(Future.successful(VatNumberNotFound))
 
-        val res = await(TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest()))
+        val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe NOT_FOUND
       }

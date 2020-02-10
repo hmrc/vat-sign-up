@@ -19,6 +19,7 @@ package uk.gov.hmrc.vatsignup.connectors
 import java.time.Month
 
 import org.scalatest.EitherValues
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase

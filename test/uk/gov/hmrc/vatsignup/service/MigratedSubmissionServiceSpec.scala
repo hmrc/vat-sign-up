@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException, NotFoundException}
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.testAgentEnrolment
 import uk.gov.hmrc.vatsignup.service.mocks._
 import uk.gov.hmrc.vatsignup.services.MigratedEnrolmentService.EnrolmentSuccess
@@ -33,7 +34,7 @@ import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepositor
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedSubmissionServiceSpec extends UnitSpec
+class MigratedSubmissionServiceSpec extends WordSpec with Matchers
   with MockMigratedSignUpRequestService
   with MockMigratedRegistrationService
   with MockMigratedSignUpService

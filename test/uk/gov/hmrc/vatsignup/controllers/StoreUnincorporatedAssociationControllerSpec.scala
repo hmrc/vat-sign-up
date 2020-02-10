@@ -18,11 +18,11 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreUnincorporatedAssociationService
@@ -31,14 +31,15 @@ import uk.gov.hmrc.vatsignup.services.StoreUnincorporatedAssociationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreUnincorporatedAssociationControllerSpec extends UnitSpec with MockAuthConnector with MockStoreUnincorporatedAssociationService {
+class StoreUnincorporatedAssociationControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockStoreUnincorporatedAssociationService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreUnincorporatedAssociationController extends StoreUnincorporatedAssociationController(
     mockAuthConnector,
-    mockStoreUnincorporatedAssociationService
+    mockStoreUnincorporatedAssociationService,
+    stubControllerComponents()
   )
 
 
@@ -48,7 +49,7 @@ class StoreUnincorporatedAssociationControllerSpec extends UnitSpec with MockAut
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreUnincorporatedAssociation(testVatNumber)(Future.successful(Right(StoreUnincorporatedAssociationSuccess)))
 
-        val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
+        val result = TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NO_CONTENT
 
@@ -59,7 +60,7 @@ class StoreUnincorporatedAssociationControllerSpec extends UnitSpec with MockAut
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreUnincorporatedAssociation(testVatNumber)(Future.successful(Left(UnincorporatedAssociationDatabaseFailureNoVATNumber)))
 
-        val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
+        val result = TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NOT_FOUND
 
@@ -70,7 +71,7 @@ class StoreUnincorporatedAssociationControllerSpec extends UnitSpec with MockAut
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreUnincorporatedAssociation(testVatNumber)(Future.successful(Left(UnincorporatedAssociationDatabaseFailure)))
 
-        val result: Result = await(TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest()))
+        val result = TestStoreUnincorporatedAssociationController.storeUnincorporatedAssociation(testVatNumber)(FakeRequest())
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
 

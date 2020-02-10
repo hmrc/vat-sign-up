@@ -17,7 +17,9 @@
 package uk.gov.hmrc.vatsignup.helpers
 
 import org.scalatest.BeforeAndAfterEach
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait TestSubmissionRequestRepository extends BeforeAndAfterEach {

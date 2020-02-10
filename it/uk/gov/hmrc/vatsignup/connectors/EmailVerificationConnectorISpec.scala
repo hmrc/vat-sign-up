@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase

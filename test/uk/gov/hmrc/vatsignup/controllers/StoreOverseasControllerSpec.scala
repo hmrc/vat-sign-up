@@ -18,11 +18,11 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockStoreOverseasService
@@ -31,14 +31,15 @@ import uk.gov.hmrc.vatsignup.services.StoreOverseasService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreOverseasControllerSpec extends UnitSpec with MockAuthConnector with MockStoreOverseasService {
+class StoreOverseasControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockStoreOverseasService {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStoreOverseasController extends StoreOverseasController(
     mockAuthConnector,
-    mockStoreOverseasService
+    mockStoreOverseasService,
+    stubControllerComponents()
   )
 
 
@@ -48,7 +49,7 @@ class StoreOverseasControllerSpec extends UnitSpec with MockAuthConnector with M
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreOverseas(testVatNumber)(Future.successful(Right(StoreOverseasSuccess)))
 
-        val result: Result = await(TestStoreOverseasController.storeOverseas(testVatNumber)(FakeRequest()))
+        val result = TestStoreOverseasController.storeOverseas(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NO_CONTENT
 
@@ -59,7 +60,7 @@ class StoreOverseasControllerSpec extends UnitSpec with MockAuthConnector with M
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreOverseas(testVatNumber)(Future.successful(Left(OverseasDatabaseFailureNoVATNumber)))
 
-        val result: Result = await(TestStoreOverseasController.storeOverseas(testVatNumber)(FakeRequest()))
+        val result = TestStoreOverseasController.storeOverseas(testVatNumber)(FakeRequest())
 
         status(result) shouldBe NOT_FOUND
 
@@ -70,7 +71,7 @@ class StoreOverseasControllerSpec extends UnitSpec with MockAuthConnector with M
         mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
         mockStoreOverseas(testVatNumber)(Future.successful(Left(OverseasDatabaseFailure)))
 
-        val result: Result = await(TestStoreOverseasController.storeOverseas(testVatNumber)(FakeRequest()))
+        val result = TestStoreOverseasController.storeOverseas(testVatNumber)(FakeRequest())
 
         status(result) shouldBe INTERNAL_SERVER_ERROR
 

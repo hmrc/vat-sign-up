@@ -18,9 +18,9 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsResult, JsValue, Reads}
-import play.api.mvc.Action
+import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.controllers.StoreContactPreferenceController.StoreContactPreferenceReader
 import uk.gov.hmrc.vatsignup.models.ContactPreference
 import uk.gov.hmrc.vatsignup.models.ContactPreference._
@@ -31,8 +31,9 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class StoreContactPreferenceController @Inject()(val authConnector: AuthConnector,
-                                                 storeContactPreferenceService: StoreContactPreferenceService
-                                                )(implicit ec: ExecutionContext) extends BaseController with AuthorisedFunctions {
+                                                 storeContactPreferenceService: StoreContactPreferenceService,
+                                                 cc: ControllerComponents
+                                                )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def storeContactPreference(vatNumber: String): Action[ContactPreference] =
     Action.async(parse.json(StoreContactPreferenceReader)) { implicit req =>

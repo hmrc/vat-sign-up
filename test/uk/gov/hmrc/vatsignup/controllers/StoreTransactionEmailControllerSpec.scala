@@ -18,12 +18,12 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -33,9 +33,9 @@ import uk.gov.hmrc.vatsignup.services.StoreEmailService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnector with MockStoreEmailService {
+class StoreTransactionEmailControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockStoreEmailService {
 
-  object TestStoreTransactionEmailController extends StoreTransactionEmailController(mockAuthConnector, mockStoreEmailService)
+  object TestStoreTransactionEmailController extends StoreTransactionEmailController(mockAuthConnector, mockStoreEmailService, stubControllerComponents())
 
   implicit private val system: ActorSystem = ActorSystem()
   implicit private val materializer: ActorMaterializer = ActorMaterializer()
@@ -46,12 +46,12 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
         mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Right(StoreEmailSuccess(true))))
 
-        val request = FakeRequest() withBody testEmail
+        val request = FakeRequest().withBody(testEmail)
 
-        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
+        val res = TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request)
 
         status(res) shouldBe OK
-        jsonBodyOf(res) shouldBe Json.obj(EmailVerifiedKey -> true)
+        contentAsJson(res) shouldBe Json.obj(EmailVerifiedKey -> true)
       }
 
     "if vat number doesn't exist" should {
@@ -62,7 +62,7 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
+        val res = TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request)
 
         status(res) shouldBe NOT_FOUND
       }
@@ -76,7 +76,7 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
+        val res = TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request)
 
         status(res) shouldBe INTERNAL_SERVER_ERROR
       }
@@ -90,7 +90,7 @@ class StoreTransactionEmailControllerSpec extends UnitSpec with MockAuthConnecto
 
         val request = FakeRequest() withBody testEmail
 
-        val res: Result = await(TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request))
+        val res = TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request)
 
         status(res) shouldBe BAD_GATEWAY
       }

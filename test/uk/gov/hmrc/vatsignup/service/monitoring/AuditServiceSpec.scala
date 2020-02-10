@@ -19,19 +19,19 @@ package uk.gov.hmrc.vatsignup.service.monitoring
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.test.FakeRequest
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.services.monitoring.{AuditModel, AuditService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AuditServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+class AuditServiceSpec extends WordSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
   val mockAuditConnector = mock[AuditConnector]
   val mockConfiguration = mock[Configuration]
   val testAppName = "app"

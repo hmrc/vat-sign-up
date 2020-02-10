@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.models
 
-import PartnershipKnownFacts._
+import uk.gov.hmrc.vatsignup.models.PartnershipKnownFacts._
 
 case class PartnershipKnownFacts(postCode: Option[String],
                                  correspondencePostCode: Option[String],

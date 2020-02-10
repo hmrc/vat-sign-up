@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.repositories.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{UpdateWriteResult, WriteResult}

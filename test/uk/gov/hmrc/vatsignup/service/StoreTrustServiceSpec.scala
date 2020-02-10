@@ -16,22 +16,22 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.Request
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.models.{Trust, VatGroup}
+import uk.gov.hmrc.vatsignup.models.Trust
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
-import uk.gov.hmrc.vatsignup.services.{StoreTrustService, StoreVatGroupService}
-import uk.gov.hmrc.vatsignup.services.StoreVatGroupService._
-import play.api.test.FakeRequest
+import uk.gov.hmrc.vatsignup.services.StoreTrustService
 import uk.gov.hmrc.vatsignup.services.StoreTrustService.{StoreTrustSuccess, TrustDatabaseFailure, TrustDatabaseFailureNoVATNumber}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreTrustServiceSpec extends UnitSpec
+class StoreTrustServiceSpec extends WordSpec with Matchers
   with MockSubscriptionRequestRepository {
 
   object TestStoreTrustService extends StoreTrustService(

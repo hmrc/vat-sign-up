@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAgentClientRelationshipConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.{testAgentReferenceNumber, testLegacyRelationship, testMtdVatRelationship, testVatNumber}
@@ -34,7 +34,7 @@ import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{Relationsh
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService with MockAgentClientRelationshipConnector {
+class AgentClientRelationshipServiceSpec extends WordSpec with Matchers with MockAuditService with MockAgentClientRelationshipConnector {
 
   object TestAgentClientRelationshipService extends AgentClientRelationshipService(
     mockAgentClientRelationshipConnector,
@@ -50,8 +50,9 @@ class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService 
         Future.successful(Right(HaveRelationshipResponse))
       )
 
-      await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber)) shouldBe Right(RelationshipCheckSuccess)
+      val res = await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber))
 
+      res shouldBe Right(RelationshipCheckSuccess)
       verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
     }
 
@@ -63,8 +64,9 @@ class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService 
         Future.successful(Right(HaveRelationshipResponse))
       )
 
-      await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber)) shouldBe Right(RelationshipCheckSuccess)
+      val res = await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber))
 
+      res shouldBe Right(RelationshipCheckSuccess)
       verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
     }
 
@@ -76,8 +78,9 @@ class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService 
         Future.successful(Right(NoRelationshipResponse))
       )
 
-      await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber)) shouldBe Left(RelationshipCheckNotFound)
+      val res = await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber))
 
+      res shouldBe Left(RelationshipCheckNotFound)
       verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = false))
     }
 
@@ -86,7 +89,9 @@ class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService 
         Future.successful(Left(CheckAgentClientRelationshipResponseFailure(INTERNAL_SERVER_ERROR, Json.obj())))
       )
 
-      await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber)) shouldBe Left(RelationshipCheckError)
+      val res = await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber))
+
+      res shouldBe Left(RelationshipCheckError)
     }
 
     "return RelationshipCheckError if the mtd vat relationship check fails and the legacy relationship doesn't exist" in {
@@ -97,7 +102,9 @@ class AgentClientRelationshipServiceSpec extends UnitSpec with MockAuditService 
         Future.successful(Left(CheckAgentClientRelationshipResponseFailure(INTERNAL_SERVER_ERROR, Json.obj())))
       )
 
-      await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber)) shouldBe Left(RelationshipCheckError)
+      val res = await(TestAgentClientRelationshipService.checkAgentClientRelationship(testVatNumber, testAgentReferenceNumber))
+
+      res shouldBe Left(RelationshipCheckError)
     }
   }
 

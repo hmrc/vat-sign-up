@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.config.featureswitch
 
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 
-class FeatureSwitchingSpec extends UnitSpec with FeatureSwitching {
+class FeatureSwitchingSpec extends WordSpec with Matchers with FeatureSwitching {
 
   val testFeatureSwitch = StubDESFeature
 

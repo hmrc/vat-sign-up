@@ -19,10 +19,10 @@ package uk.gov.hmrc.vatsignup.utils.controllist
 import java.time.LocalDate
 
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
-class CurrentDateProviderSpec extends UnitSpec with GuiceOneAppPerSuite{
+class CurrentDateProviderSpec extends WordSpec with Matchers with GuiceOneAppPerSuite{
   "getCurrentDate" should {
     "return the current date" in {
       val provider = app.injector.instanceOf[CurrentDateProvider]

@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.service
 
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockVatCustomerDetailsConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
@@ -28,7 +29,7 @@ import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedKnownFactsMatchingServiceSpec extends UnitSpec with MockVatCustomerDetailsConnector {
+class MigratedKnownFactsMatchingServiceSpec extends WordSpec with Matchers with MockVatCustomerDetailsConnector {
 
   object TestMigratedKnownFactsMatchingService extends MigratedKnownFactsMatchingService(
     mockVatCustomerDetailsConnector

@@ -20,8 +20,8 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.RegistrationConnector
-import uk.gov.hmrc.vatsignup.models.BusinessEntity
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
+import uk.gov.hmrc.vatsignup.models.BusinessEntity
 import uk.gov.hmrc.vatsignup.models.monitoring.RegisterWithMultipleIDsAuditing.RegisterWithMultipleIDsAuditModel
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 

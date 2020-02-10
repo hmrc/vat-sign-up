@@ -17,14 +17,14 @@
 package uk.gov.hmrc.vatsignup.utils.controllist
 
 import org.scalatest.EitherValues
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants.{ControlList33, ControlList34}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser._
 
 
-class ControlListInformationParserSpec extends UnitSpec with EitherValues {
+class ControlListInformationParserSpec extends WordSpec with Matchers with EitherValues {
   "ControlListInformation.tryParse" should {
     "parse into a ControlListInformation object" when {
       "the string is valid" in {

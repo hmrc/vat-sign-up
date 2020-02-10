@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.service.mocks
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, Suite}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier

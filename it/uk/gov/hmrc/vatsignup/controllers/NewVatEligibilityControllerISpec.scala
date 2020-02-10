@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import java.time.LocalDate
 
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse}
@@ -43,7 +43,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBMandated))
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -58,7 +58,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubEligibleControlListInformation(testVatNumber)
         stubSuccessGetKnownFacts(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -75,7 +75,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubEligibleControlListInformation(testVatNumber)
         stubSuccessGetKnownFactsOverseas(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -88,9 +88,10 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
     "return OK" when {
       "called with a mtdState of Ineligible" in {
         stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubIneligibleControlListInformation(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -104,7 +105,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubDirectDebitControlListInformation(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -117,7 +118,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED, Json.obj())
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -131,7 +132,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubDeregisteredVatNumber(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -145,7 +146,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubDeregisteredControlListInformation(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
@@ -159,7 +160,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubFailureControlListVatNumberNotFound(testVatNumber)
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(NOT_FOUND)
@@ -171,7 +172,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(INTERNAL_SERVER_ERROR, Json.obj())
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(INTERNAL_SERVER_ERROR)

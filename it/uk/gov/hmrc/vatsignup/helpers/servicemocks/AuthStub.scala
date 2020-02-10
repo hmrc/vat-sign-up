@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.HeaderNames
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L0

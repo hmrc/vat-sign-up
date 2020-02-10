@@ -18,17 +18,17 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import java.time.LocalDate
 
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants.{testVatNumber, _}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse, _}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub.{stubGetMandationStatus, _}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers, TestSubmissionRequestRepository}
+import uk.gov.hmrc.vatsignup.models.MigratableDates._
 import uk.gov.hmrc.vatsignup.models.{MigratableDates, NonMTDfB}
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
-import MigratableDates._
 
 class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
   val testDate: LocalDate = LocalDate.of(2018, 10, 18)

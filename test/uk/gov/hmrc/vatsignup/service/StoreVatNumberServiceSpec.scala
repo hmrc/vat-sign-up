@@ -20,12 +20,13 @@ import java.util.UUID
 
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipConnector, MockMandationStatusConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
@@ -45,7 +46,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreVatNumberServiceSpec
-  extends UnitSpec with MockAgentClientRelationshipConnector with MockSubscriptionRequestRepository
+  extends WordSpec with Matchers with MockAgentClientRelationshipConnector with MockSubscriptionRequestRepository
     with MockAuditService with MockConfig with MockMandationStatusConnector
     with MockControlListEligibilityService with MockKnownFactsMatchingService {
 
