@@ -21,9 +21,9 @@ import java.util.UUID
 
 import play.api.test.Helpers.AUTHORIZATION
 import uk.gov.hmrc.vatsignup.config.Constants._
-import uk.gov.hmrc.vatsignup.models.{Digital, MigratableDates}
 import uk.gov.hmrc.vatsignup.models.controllist.ControlListIndices._
 import uk.gov.hmrc.vatsignup.models.controllist.{Company, ControlListInformation, Stagger1}
+import uk.gov.hmrc.vatsignup.models.{Digital, MigratableDates}
 import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
 import uk.gov.hmrc.vatsignup.utils.AuthUtils
 

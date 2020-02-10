@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.utils.JsonUtils._

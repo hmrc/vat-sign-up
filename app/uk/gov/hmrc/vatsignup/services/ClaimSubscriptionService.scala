@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.services
 
-import java.text.SimpleDateFormat
-
 import cats.data.EitherT
 import cats.implicits._
 import javax.inject.{Inject, Singleton}

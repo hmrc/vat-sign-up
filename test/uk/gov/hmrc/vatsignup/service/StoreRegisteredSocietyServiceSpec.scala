@@ -17,10 +17,11 @@
 package uk.gov.hmrc.vatsignup.service
 
 import play.api.mvc.Request
+import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.RegisteredSociety
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -32,7 +33,7 @@ import uk.gov.hmrc.vatsignup.services.{CompanyMatchService, StoreRegisteredSocie
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreRegisteredSocietyServiceSpec extends UnitSpec
+class StoreRegisteredSocietyServiceSpec extends WordSpec with Matchers
   with MockSubscriptionRequestRepository with MockCompanyMatchService {
 
   object TestStoreRegisteredSocietyService extends StoreRegisteredSocietyService(

@@ -18,11 +18,11 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -32,10 +32,10 @@ import uk.gov.hmrc.vatsignup.services.StoreCompanyNumberService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector with MockStoreCompanyNumberService {
+class StoreCompanyNumberControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockStoreCompanyNumberService {
 
   object TestStoreCompanyNumberController
-    extends StoreCompanyNumberController(mockAuthConnector, mockStoreCompanyNumberService)
+    extends StoreCompanyNumberController(mockAuthConnector, mockStoreCompanyNumberService, stubControllerComponents())
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -49,7 +49,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
 
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe NO_CONTENT
         }
@@ -61,7 +61,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Right(StoreCompanyNumberSuccess)))
 
           val request = FakeRequest() withBody(testCompanyNumber, None)
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe NO_CONTENT
         }
@@ -73,10 +73,10 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceMismatch)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe BAD_REQUEST
-          jsonBodyOf(res) shouldBe Json.obj(Constants.HttpCodeKey -> StoreCompanyNumberController.CtReferenceMismatchCode)
+          contentAsJson(res) shouldBe Json.obj(Constants.HttpCodeKey -> StoreCompanyNumberController.CtReferenceMismatchCode)
         }
       }
 
@@ -86,7 +86,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(DatabaseFailureNoVATNumber)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe NOT_FOUND
         }
@@ -98,7 +98,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CompanyNumberDatabaseFailure)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
         }
@@ -110,7 +110,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber, testCtReference)(Future.successful(Left(CtReferenceDatabaseFailure)))
 
           val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
         }
@@ -124,7 +124,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Right(StoreCompanyNumberSuccess)))
 
           val request = FakeRequest() withBody(testCompanyNumber, None)
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe NO_CONTENT
         }
@@ -136,7 +136,7 @@ class StoreCompanyNumberControllerSpec extends UnitSpec with MockAuthConnector w
           mockStoreCompanyNumber(testVatNumber, testCompanyNumber)(Future.successful(Left(MatchCtReferenceFailure)))
 
           val request = FakeRequest() withBody(testCompanyNumber, None)
-          val res: Result = await(TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request))
+          val res = TestStoreCompanyNumberController.storeCompanyNumber(testVatNumber)(request)
 
           status(res) shouldBe BAD_GATEWAY
         }

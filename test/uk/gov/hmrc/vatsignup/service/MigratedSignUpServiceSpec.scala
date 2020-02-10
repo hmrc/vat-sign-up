@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockMigratedCustomerSignUpConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.monitoring.SignUpAuditing.MigratedSignUpAuditModel
@@ -29,8 +29,9 @@ import uk.gov.hmrc.vatsignup.services.MigratedSignUpService
 import uk.gov.hmrc.vatsignup.services.MigratedSignUpService.MigratedSignUpSuccess
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUpConnector with MockAuditService {
+class MigratedSignUpServiceSpec extends WordSpec with Matchers with MockMigratedCustomerSignUpConnector with MockAuditService {
 
   object TestMigratedSignUpService extends MigratedSignUpService(
     mockMigratedCustomerSignUpConnector,
@@ -45,7 +46,7 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       "there is a successful response from DES" should {
         "return MigratedSignUpSuccess" in {
           mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
-            Right(CustomerSignUpResponseSuccess)
+            Future.successful(Right(CustomerSignUpResponseSuccess))
           )
 
           val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isPartialMigration = true, None))
@@ -63,7 +64,7 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       "there is a failure response from DES" should {
         "return MigratedSignUpFailure with the DES status code" in {
           mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
-            Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason"))
+            Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason")))
           )
 
           intercept[InternalServerException] {
@@ -83,7 +84,7 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       "there is a successful response from DES" should {
         "return MigratedSignUpSuccess" in {
           mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
-            Right(CustomerSignUpResponseSuccess)
+            Future.successful(Right(CustomerSignUpResponseSuccess))
           )
 
           val res = await(TestMigratedSignUpService.signUp(testSafeId, testVatNumber, isPartialMigration = true, Some(testAgentReferenceNumber)))
@@ -101,7 +102,7 @@ class MigratedSignUpServiceSpec extends UnitSpec with MockMigratedCustomerSignUp
       "there is a failure response from DES" should {
         "return MigratedSignUpFailure with the DES status code" in {
           mockSignUpMigrated(testSafeId, testVatNumber, isPartialMigration = true)(
-            Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason"))
+            Future.successful(Left(CustomerSignUpResponseFailure(BAD_REQUEST, "failure reason")))
           )
 
           intercept[InternalServerException] {

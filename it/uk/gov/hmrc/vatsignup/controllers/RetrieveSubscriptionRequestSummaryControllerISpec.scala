@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
@@ -43,7 +43,7 @@ class RetrieveSubscriptionRequestSummaryControllerISpec extends ComponentSpecBas
 
         await(submissionRequestRepo.insert(testSubscriptionRequest))
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber")
 
         val expectedSubscriptionRequestSummary = SubscriptionRequestSummary(
           vatNumber = testVatNumber,
@@ -75,7 +75,7 @@ class RetrieveSubscriptionRequestSummaryControllerISpec extends ComponentSpecBas
 
         await(submissionRequestRepo.insert(testSubscriptionRequest))
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber")
 
         res should have(
           httpStatus(BAD_REQUEST)
@@ -87,7 +87,7 @@ class RetrieveSubscriptionRequestSummaryControllerISpec extends ComponentSpecBas
       "the database does not contain a subscription request for the supplied vat number" in {
         stubAuth(OK, successfulAuthResponse())
 
-        val res = await(get(s"/subscription-request/vat-number/$testVatNumber"))
+        val res = get(s"/subscription-request/vat-number/$testVatNumber")
 
         res should have(
           httpStatus(NOT_FOUND)

@@ -17,18 +17,18 @@
 package uk.gov.hmrc.vatsignup.helpers
 
 import helpers.WiremockHelper
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.{Application, Environment, Mode}
 import play.api.libs.json.Writes
 import play.api.libs.ws.{WSClient, WSResponse}
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.test.Helpers._
+import play.api.{Application, Environment, Mode}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
-import play.api.inject.bind
 import uk.gov.hmrc.vatsignup.utils.CurrentDateProvider
 
-trait ComponentSpecBase extends UnitSpec with GuiceOneServerPerSuite with WiremockHelper
+trait ComponentSpecBase extends WordSpec with Matchers with GuiceOneServerPerSuite with WiremockHelper
   with BeforeAndAfterAll with BeforeAndAfterEach with FeatureSwitching {
   lazy val ws = app.injector.instanceOf[WSClient]
 

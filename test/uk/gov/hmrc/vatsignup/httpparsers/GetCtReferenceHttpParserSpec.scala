@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.GetCtReferenceHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.GetCtReferenceHttpParser.{CtReferenceNotFound, GetCtReferenceFailure}
 
-class GetCtReferenceHttpParserSpec extends UnitSpec {
+class GetCtReferenceHttpParserSpec extends WordSpec with Matchers {
   "GetCtReferenceHttpReads#read" when {
     "the response status is OK" when {
       "the body contains a valid CT reference" should {

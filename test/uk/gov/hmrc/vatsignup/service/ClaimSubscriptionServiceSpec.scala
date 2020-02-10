@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status
+import play.api.test.Helpers._
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
@@ -38,7 +38,7 @@ import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatt
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ClaimSubscriptionServiceSpec extends UnitSpec
+class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
   with MockKnownFactsConnector
   with MockAuthConnector
   with MockTaxEnrolmentsConnector
@@ -79,8 +79,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                   testDateOfRegistration.toTaxEnrolmentsFormat
                 )(Future.successful(Right(EnrolSuccess)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta =
-                  false))
+                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
 
                 res shouldBe Right(SubscriptionClaimed)
                 verifyAudit(ClaimSubscriptionAuditModel(
@@ -134,7 +133,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
+                  Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
@@ -168,7 +167,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = Status.BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
+                  Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
@@ -208,8 +207,8 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
                 vatNumber = testVatNumber,
                 businessPostcode = None,
                 vatRegistrationDate = None,
-                isFromBta = true)
-              )
+                isFromBta = true
+              ))
 
               res shouldBe Left(EnrolmentAlreadyAllocated)
             }
@@ -219,17 +218,17 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
             "return an UnexpectedEnrolmentStoreProxyFailure and the status code" in {
               mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
               mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
-                Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(Status.BAD_REQUEST)))
+                Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
               )
 
               val res = await(TestClaimSubscriptionService.claimSubscription(
                 vatNumber = testVatNumber,
                 businessPostcode = None,
                 vatRegistrationDate = None,
-                isFromBta = true)
-              )
+                isFromBta = true
+              ))
 
-              res shouldBe Left(CheckEnrolmentAllocationFailed(Status.BAD_REQUEST))
+              res shouldBe Left(CheckEnrolmentAllocationFailed(BAD_REQUEST))
             }
           }
         }
@@ -246,8 +245,8 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
               vatNumber = testVatNumber,
               businessPostcode = Some(nonMatchingPostcode),
               vatRegistrationDate = Some(testDateOfRegistration),
-              isFromBta = true)
-            )
+              isFromBta = true
+            ))
 
             res shouldBe Left(KnownFactsMismatch)
           }
@@ -288,7 +287,7 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
     "the known facts connector fails" should {
       "return KnownFactsFailure" in {
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(InvalidKnownFacts(
-          status = Status.BAD_REQUEST,
+          status = BAD_REQUEST,
           body = ""
         ))))
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
@@ -348,8 +347,8 @@ class ClaimSubscriptionServiceSpec extends UnitSpec
 
                 val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
                   vatNumber = testVatNumber,
-                  isFromBta = true)
-                )
+                  isFromBta = true
+                ))
 
                 res shouldBe Left(EnrolmentAlreadyAllocated)
               }

@@ -17,10 +17,11 @@
 package uk.gov.hmrc.vatsignup.service
 
 import play.api.http.Status.BAD_REQUEST
+import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.featureswitch.AutoClaimEnrolment
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailConnector
@@ -38,7 +39,7 @@ import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SubscriptionNotificationServiceSpec extends UnitSpec
+class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
   with MockEmailRequestRepository
   with MockEmailConnector
   with MockAutoClaimEnrolmentService
@@ -79,7 +80,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
           "the e-mail request fails" should {
             "return EmailServiceFailure" in {
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
@@ -108,7 +109,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "the e-mail request fails" should {
               "return EmailServiceFailure" in {
 
-                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
@@ -121,7 +122,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
           "ES1 returns EnrolmentNotAllocated" should {
             "return no email" in {
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -132,7 +133,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
             "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -145,7 +146,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
           "ES1 returns a Failure" should {
             "return no email" in {
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -156,7 +157,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
             "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -176,7 +177,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "return DelegatedSubscription" in {
               disable(AutoClaimEnrolment)
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
               mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
 
@@ -189,7 +190,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "return EmailServiceFailure" in {
               disable(AutoClaimEnrolment)
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
@@ -203,7 +204,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               "return AutoClaimDelegatedSubscription" in {
                 enable(AutoClaimEnrolment)
 
-                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
                 mockAutoClaimEnrolment(testVatNumber,agentTriggerPoint)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
                 mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
@@ -217,7 +218,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
               "return EmailServiceFailure" in {
                 enable(AutoClaimEnrolment)
 
-                mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+                mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
                 mockAutoClaimEnrolment(testVatNumber,agentTriggerPoint)(Future.successful(Right(AutoClaimEnrolmentService.EnrolmentAssigned)))
 
                 mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(status = BAD_REQUEST, body = ""))))
@@ -231,7 +232,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
             "return AutoClaimFailedDelegatedSubscription" in {
               enable(AutoClaimEnrolment)
 
-              mockFindEmailRequestById(testVatNumber)(Some(testEmailRequest))
+              mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
               mockAutoClaimEnrolment(testVatNumber,agentTriggerPoint)(Future.successful(Left(AutoClaimEnrolmentService.NoUsersFound)))
               mockSendEmail(testEmail, agentSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
@@ -248,7 +249,7 @@ class SubscriptionNotificationServiceSpec extends UnitSpec
 
   "the e-mail request does not exist in the database" should {
     "return EmailRequestDataNotFound" in {
-      mockFindEmailRequestById(testVatNumber)(None)
+      mockFindEmailRequestById(testVatNumber)(Future.successful(None))
       val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
       res shouldBe Left(EmailRequestDataNotFound)

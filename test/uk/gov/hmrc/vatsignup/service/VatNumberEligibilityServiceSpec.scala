@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockMandationStatusConnector, MockVatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{GetMandationStatusHttpFailure, VatNumberNotFound}
@@ -35,7 +35,7 @@ import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, VatNumberE
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class VatNumberEligibilityServiceSpec extends UnitSpec
+class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
   with MockMandationStatusConnector with MockControlListEligibilityService with MockVatCustomerDetailsConnector {
 
   object TestVatNumberEligibilityService extends VatNumberEligibilityService(

@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -35,7 +35,7 @@ import uk.gov.hmrc.vatsignup.services.SignUpRequestService.{EmailVerificationFai
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SignUpRequestServiceSpec extends UnitSpec
+class SignUpRequestServiceSpec extends WordSpec with Matchers
   with MockSubscriptionRequestRepository with MockEmailVerificationConnector with FeatureSwitching {
 
   override def beforeEach(): Unit = {
@@ -189,7 +189,7 @@ class SignUpRequestServiceSpec extends UnitSpec
 
                 mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
                 mockGetEmailVerificationState(testEmail)(
-                  Future.successful(Left(GetEmailVerificationStateHttpParser.GetEmailVerificationStateErrorResponse(Status.INTERNAL_SERVER_ERROR, "")))
+                  Future.successful(Left(GetEmailVerificationStateHttpParser.GetEmailVerificationStateErrorResponse(INTERNAL_SERVER_ERROR, "")))
                 )
 
                 val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))

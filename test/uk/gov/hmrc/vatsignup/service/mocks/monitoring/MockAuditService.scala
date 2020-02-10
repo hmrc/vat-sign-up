@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.service.mocks.monitoring
 import org.mockito.ArgumentMatchers
 import org.scalatest.{BeforeAndAfterEach, Suite}
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.mvc.Request
 
 import scala.concurrent.ExecutionContext

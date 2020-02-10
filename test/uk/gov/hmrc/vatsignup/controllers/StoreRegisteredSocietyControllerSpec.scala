@@ -18,12 +18,12 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.retrieve.EmptyRetrieval
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -33,10 +33,10 @@ import uk.gov.hmrc.vatsignup.services.StoreRegisteredSocietyService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnector with MockStoreRegisteredSocietyService {
+class StoreRegisteredSocietyControllerSpec extends WordSpec with Matchers with MockAuthConnector with MockStoreRegisteredSocietyService {
 
   object TestStoreRegisteredSocietyController
-    extends StoreRegisteredSocietyController(mockAuthConnector, mockStoreRegisteredSocietyService)
+    extends StoreRegisteredSocietyController(mockAuthConnector, mockStoreRegisteredSocietyService, stubControllerComponents())
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -50,9 +50,9 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
             Future.successful(Right(StoreRegisteredSocietySuccess))
           )
 
-          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+          val request = FakeRequest().withBody(testCompanyNumber, Some(testCtReference))
 
-          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val res = TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request)
 
           status(res) shouldBe NO_CONTENT
         }
@@ -63,12 +63,12 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
           mockAuthorise(retrievals = EmptyRetrieval)(Future.successful(Unit))
           mockStoreRegisteredSociety(testVatNumber, testCompanyNumber, Some(testCtReference))(Future.successful(Left(CtReferenceMismatch)))
 
-          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+          val request = FakeRequest().withBody(testCompanyNumber, Some(testCtReference))
 
-          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val res = TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request)
 
           status(res) shouldBe BAD_REQUEST
-          jsonBodyOf(res) shouldBe Json.obj(
+          contentAsJson(res) shouldBe Json.obj(
             Constants.HttpCodeKey -> StoreRegisteredSocietyController.CtReferenceMismatchCode
           )
         }
@@ -81,9 +81,9 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
             Future.successful(Left(DatabaseFailureNoVATNumber))
           )
 
-          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+          val request = FakeRequest().withBody(testCompanyNumber, Some(testCtReference))
 
-          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val res = TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request)
 
           status(res) shouldBe NOT_FOUND
         }
@@ -96,9 +96,9 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
             Future.successful(Left(RegisteredSocietyDatabaseFailure))
           )
 
-          val request = FakeRequest() withBody(testCompanyNumber, Some(testCtReference))
+          val request = FakeRequest().withBody(testCompanyNumber, Some(testCtReference))
 
-          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val res = TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request)
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
         }
@@ -112,9 +112,9 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
             Future.successful(Right(StoreRegisteredSocietySuccess))
           )
 
-          val request = FakeRequest() withBody(testCompanyNumber, None)
+          val request = FakeRequest().withBody(testCompanyNumber, None)
 
-          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val res = TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request)
 
           status(res) shouldBe NO_CONTENT
         }
@@ -127,9 +127,9 @@ class StoreRegisteredSocietyControllerSpec extends UnitSpec with MockAuthConnect
             Future.successful(Left(RegisteredSocietyDatabaseFailure))
           )
 
-          val request = FakeRequest() withBody(testCompanyNumber, None)
+          val request = FakeRequest().withBody(testCompanyNumber, None)
 
-          val res: Result = await(TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request))
+          val res = TestStoreRegisteredSocietyController.storeRegisteredSociety(testVatNumber)(request)
 
           status(res) shouldBe INTERNAL_SERVER_ERROR
         }

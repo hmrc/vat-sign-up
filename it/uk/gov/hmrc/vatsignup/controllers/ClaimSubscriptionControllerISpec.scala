@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse, vatDecEnrolment}
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EnrolmentStoreProxyStub, TaxEnrolmentsStub}
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
 import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
@@ -34,6 +35,8 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubSuccessGetKnownFacts(testVatNumber)
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+          TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,
@@ -69,6 +72,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFacts(testVatNumber)
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           stubAllocateEnrolment(
             vatNumber = testVatNumber,
             groupId = testGroupId,

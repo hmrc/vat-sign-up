@@ -17,13 +17,13 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import org.scalatest.EitherValues
-import play.api.http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserHttpReads.read
 
-class AssignEnrolmentToUserRequestHttpParserSpec extends UnitSpec with EitherValues {
+class AssignEnrolmentToUserRequestHttpParserSpec extends WordSpec with Matchers with EitherValues {
   "AssignEnrolmentToUserHttpReads#read" when {
     "the response status is OK" should {
       "return an EnrolmentAssigned" in {

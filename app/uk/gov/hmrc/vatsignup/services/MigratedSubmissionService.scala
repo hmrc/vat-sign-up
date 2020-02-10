@@ -20,9 +20,10 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService.SubmissionSuccess
+import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

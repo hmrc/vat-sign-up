@@ -17,11 +17,12 @@
 package uk.gov.hmrc.vatsignup.service
 
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants.Des.VrnKey
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments.MtdEnrolmentKey
 import uk.gov.hmrc.vatsignup.config.Constants.{VatDecEnrolmentKey, VatReferenceKey}
@@ -37,7 +38,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StoreMigratedVRNServiceSpec
-  extends UnitSpec with MockSubscriptionRequestRepository with MockMigratedKnownFactsMatchingService with MockAgentClientRelationshipService {
+  extends WordSpec with Matchers with MockSubscriptionRequestRepository with MockMigratedKnownFactsMatchingService with MockAgentClientRelationshipService {
 
   object TestStoreMigratedVRNService extends StoreMigratedVRNService(
     mockSubscriptionRequestRepository,

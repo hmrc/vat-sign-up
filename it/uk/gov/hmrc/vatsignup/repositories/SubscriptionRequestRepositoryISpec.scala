@@ -18,15 +18,15 @@ package uk.gov.hmrc.vatsignup.repositories
 
 import java.util.{NoSuchElementException, UUID}
 
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SubscriptionRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class SubscriptionRequestRepositoryISpec extends WordSpec with Matchers with GuiceOneAppPerSuite with BeforeAndAfterEach {
   lazy val repo: SubscriptionRequestRepository = app.injector.instanceOf[SubscriptionRequestRepository]
 
   private val testSubscriptionRequest = SubscriptionRequest(

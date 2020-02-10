@@ -19,12 +19,12 @@ package uk.gov.hmrc.vatsignup.controllers
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.scalatest.BeforeAndAfterEach
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import play.api.mvc.{Request, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.InternalServerException
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, SkipPartnershipKnownFactsMismatch}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -35,14 +35,20 @@ import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthConnector with MockStorePartnershipInformationService with FeatureSwitching with BeforeAndAfterEach {
+class StorePartnershipInformationControllerSpec extends WordSpec
+  with Matchers
+  with MockAuthConnector
+  with MockStorePartnershipInformationService
+  with FeatureSwitching
+  with BeforeAndAfterEach {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   object TestStorePartnershipInformationController extends StorePartnershipInformationController(
     mockAuthConnector,
-    mockStorePartnershipInformationService
+    mockStorePartnershipInformationService,
+    stubControllerComponents()
   )
 
   override def beforeEach() {
@@ -63,7 +69,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             testUtr
           )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+          val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
           status(result) shouldBe NO_CONTENT
         }
@@ -78,7 +84,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             testUtr
           )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(noUtrRequest))
+          val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(noUtrRequest)
 
           status(result) shouldBe NO_CONTENT
         }
@@ -92,10 +98,10 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             testUtr
           )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
+          val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
             FakeRequest().withBody[StorePartnershipRequest](
               StorePartnershipRequest(testLimitedPartnership, postCode = None)
-            ))
+            )
           )
 
           status(result) shouldBe NO_CONTENT
@@ -110,7 +116,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             testUtr
           )(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
 
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+          val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
           status(result) shouldBe PRECONDITION_FAILED
         }
@@ -124,7 +130,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
             testUtr
           )(Future.successful(Left(PartnershipInformationDatabaseFailure)))
 
-          val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+          val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
           status(result) shouldBe INTERNAL_SERVER_ERROR
         }
@@ -143,7 +149,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
               Some(testPostCode)
             )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
             status(result) shouldBe NO_CONTENT
           }
@@ -157,10 +163,10 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
               Some(testPostCode)
             )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(
               FakeRequest().withBody[StorePartnershipRequest](
                 StorePartnershipRequest(testLimitedPartnership, postCode = Some(testPostCode))
-              ))
+              )
             )
 
             status(result) shouldBe NO_CONTENT
@@ -175,7 +181,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
               Some(testPostCode)
             )(Future.successful(Left(KnownFactsMismatch)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
             status(result) shouldBe FORBIDDEN
           }
@@ -206,7 +212,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
                 Some(testPostCode)
               )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-              val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+              val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
               status(result) shouldBe NO_CONTENT
             }
@@ -221,10 +227,10 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
               Some(testPostCode)
             )(Future.successful(Left(InvalidSautr)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
             status(result) shouldBe PRECONDITION_FAILED
-            jsonBodyOf(result) shouldBe Json.obj("statusCode" -> PRECONDITION_FAILED, "message" -> StorePartnershipInformationController.invalidSautrKey)
+            contentAsJson(result) shouldBe Json.obj("statusCode" -> PRECONDITION_FAILED, "message" -> StorePartnershipInformationController.invalidSautrKey)
           }
         }
         "store partnership information returns PartnershipInformationDatabaseFailureNoVATNumber" should {
@@ -236,7 +242,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
               Some(testPostCode)
             )(Future.successful(Left(PartnershipInformationDatabaseFailureNoVATNumber)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
             status(result) shouldBe PRECONDITION_FAILED
           }
@@ -250,7 +256,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
               Some(testPostCode)
             )(Future.successful(Left(PartnershipInformationDatabaseFailure)))
 
-            val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
             status(result) shouldBe INTERNAL_SERVER_ERROR
           }
@@ -272,7 +278,7 @@ class StorePartnershipInformationControllerSpec extends UnitSpec with MockAuthCo
         )
 
         mockAuthRetrievePrincipalEnrolment()
-        val result: Result = await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
+        val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
         status(result) shouldBe NO_CONTENT
       }

@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.mvc.Http.Status._
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.{EnrolmentAssigned, EnrolmentAssignmentFailure}
@@ -28,7 +28,7 @@ import uk.gov.hmrc.vatsignup.services.AssignEnrolmentToUserService.{EnrolmentAss
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreProxyConnector {
+class AssignEnrolmentToUserServiceSpec extends WordSpec with Matchers with MockEnrolmentStoreProxyConnector {
 
   object TestAssignEnrolmentToUserService extends AssignEnrolmentToUserService(mockEnrolmentStoreProxyConnector)
 
@@ -41,9 +41,9 @@ class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreP
           userId => mockAssignEnrolment(userId, testVatNumber)(Future.successful(Right(EnrolmentAssigned)))
           )
 
-        val res = TestAssignEnrolmentToUserService.assignEnrolment(testUserIdSet, testVatNumber)
+        val res = await(TestAssignEnrolmentToUserService.assignEnrolment(testUserIdSet, testVatNumber))
 
-        await(res) shouldBe Right(EnrolmentAssignedToUsers)
+        res shouldBe Right(EnrolmentAssignedToUsers)
       }
     }
 
@@ -57,9 +57,9 @@ class AssignEnrolmentToUserServiceSpec extends UnitSpec with MockEnrolmentStoreP
         mockAssignEnrolment("qwerty", testVatNumber)(Future.successful(Left(EnrolmentAssignmentFailure(BAD_REQUEST, ""))))
         mockAssignEnrolment("zxcvbn", testVatNumber)(Future.successful(Left(EnrolmentAssignmentFailure(BAD_REQUEST, ""))))
 
-        val res = TestAssignEnrolmentToUserService.assignEnrolment(testUserIdSet, testVatNumber)
+        val res = await(TestAssignEnrolmentToUserService.assignEnrolment(testUserIdSet, testVatNumber))
 
-        await(res) shouldBe Left(EnrolmentAssignmentFailed(Set("qwerty", "zxcvbn")))
+        res shouldBe Left(EnrolmentAssignmentFailed(Set("qwerty", "zxcvbn")))
       }
     }
   }

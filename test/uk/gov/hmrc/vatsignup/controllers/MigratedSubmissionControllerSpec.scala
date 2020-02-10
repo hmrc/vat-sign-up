@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.controllers
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.Enrolments
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.service.mocks.MockMigratedSubmissionService
@@ -28,12 +28,13 @@ import uk.gov.hmrc.vatsignup.services.MigratedSubmissionService.SubmissionSucces
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MigratedSubmissionControllerSpec extends UnitSpec
+class MigratedSubmissionControllerSpec extends WordSpec with Matchers
   with MockAuthConnector with MockMigratedSubmissionService {
 
   object TestMigratedSubmissionController extends MigratedSubmissionController(
     mockAuthConnector,
-    mockMigratedSubmissionService
+    mockMigratedSubmissionService,
+    stubControllerComponents()
   )
 
   "submit" when {

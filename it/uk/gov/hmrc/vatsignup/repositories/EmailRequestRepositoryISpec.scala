@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.vatsignup.repositories
 
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import reactivemongo.core.errors.DatabaseException
-import uk.gov.hmrc.play.test.UnitSpec
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
-import uk.gov.hmrc.vatsignup.models.{EmailRequest, SubscriptionRequest}
+import uk.gov.hmrc.vatsignup.models.EmailRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EmailRequestRepositoryISpec extends UnitSpec with GuiceOneAppPerSuite with BeforeAndAfterEach {
+class EmailRequestRepositoryISpec extends WordSpec with Matchers with GuiceOneAppPerSuite with BeforeAndAfterEach {
   val repo: EmailRequestRepository = app.injector.instanceOf[EmailRequestRepository]
 
   private val testEmailRequest = EmailRequest(

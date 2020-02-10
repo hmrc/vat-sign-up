@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.mocks.MockEligibilityConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockKnownFactsAndControlListInformationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -37,7 +37,7 @@ import uk.gov.hmrc.vatsignup.services.{ControlListEligibilityService, MigrationC
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ControlListEligibilityServiceSpec extends UnitSpec
+class ControlListEligibilityServiceSpec extends WordSpec with Matchers
   with MockKnownFactsAndControlListInformationConnector with MockAuditService with MockEligibilityConfig with MockMigrationCheckService {
 
   object TestControlListEligibilityService extends ControlListEligibilityService(

@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import java.util.UUID
 
-import play.api.http.Status._
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.config.Constants.ControlList._
 import uk.gov.hmrc.vatsignup.config.featureswitch.AdditionalKnownFacts

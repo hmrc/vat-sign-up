@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vatsignup.controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.InternalServerException
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
@@ -29,8 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BulkMigrationAutoClaimEnrolmentController @Inject()(autoClaimEnrolmentService: AutoClaimEnrolmentService,
-                                                          appConfig: AppConfig)
-                                                         (implicit ec: ExecutionContext) extends BaseController {
+                                                          appConfig: AppConfig,
+                                                          cc: ControllerComponents)
+                                                         (implicit ec: ExecutionContext) extends BackendController(cc) {
+
   def autoClaimEnrolment(vatNumber: String): Action[AnyContent] = Action.async {
     implicit request =>
       if (getBasicAuth(request).contains(appConfig.expectedAuth)) {

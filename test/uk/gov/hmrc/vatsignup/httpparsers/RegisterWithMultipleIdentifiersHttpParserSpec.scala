@@ -17,16 +17,16 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import org.scalatest.EitherValues
-import play.api.http.Status._
+import play.api.test.Helpers._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HttpResponse, InternalServerException}
-import uk.gov.hmrc.play.test.UnitSpec
+import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants.Des._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdentifiersHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser._
 
-class RegisterWithMultipleIdentifiersHttpParserSpec extends UnitSpec with EitherValues {
+class RegisterWithMultipleIdentifiersHttpParserSpec extends WordSpec with Matchers with EitherValues {
   "RegisterWithMultipleIdentifiersHttpReads#read" when {
     "the response status is OK" when {
       "the JSON body is correctly formatted" should {
