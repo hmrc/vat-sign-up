@@ -34,13 +34,13 @@ object GetMandationStatusHttpParser {
           case MTDfBVoluntary.Name => MTDfBVoluntary
           case NonMTDfB.Name => NonMTDfB
           case NonDigital.Name => NonDigital
-        } toRight GetMandationStatusHttpFailure(OK, response.body)
+        } toRight GetMandationStatusHttpFailure(OK, "Invalid JSON returned")
         case PRECONDITION_FAILED =>
           Left(MigrationInProgress)
         case NOT_FOUND =>
           Left(VatNumberNotFound)
         case status =>
-          Left(GetMandationStatusHttpFailure(status, response.body))
+          Left(GetMandationStatusHttpFailure(status, "Invalid status returned."))
       }
   }
 

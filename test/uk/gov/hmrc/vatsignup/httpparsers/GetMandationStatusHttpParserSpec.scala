@@ -63,7 +63,7 @@ class GetMandationStatusHttpParserSpec extends WordSpec with Matchers with Eithe
         "return GetMandationStatusHttpFailure" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> "invalid")))
 
-          read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpFailure(testResponse.status, testResponse.body)
+          read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpFailure(testResponse.status, "Invalid JSON returned")
         }
       }
     }
@@ -86,7 +86,7 @@ class GetMandationStatusHttpParserSpec extends WordSpec with Matchers with Eithe
       "return GetMandationStatusHttpFailure" in {
         val testResponse = HttpResponse(BAD_REQUEST)
 
-        read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpFailure(testResponse.status, testResponse.body)
+        read(testMethod, testUrl, testResponse).left.value shouldBe GetMandationStatusHttpFailure(testResponse.status, "Invalid status returned.")
       }
     }
   }
