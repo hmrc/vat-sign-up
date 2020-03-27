@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.controllers
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json._
 import play.api.mvc.{Action, ControllerComponents}
-import uk.gov.hmrc.auth.core.retrieve.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.play.bootstrap.controller.BackendController

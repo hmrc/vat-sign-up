@@ -22,7 +22,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
-import uk.gov.hmrc.auth.core.retrieve.Retrievals.{credentials, groupIdentifier}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, groupIdentifier}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
 import uk.gov.hmrc.vatsignup.connectors.{KnownFactsConnector, TaxEnrolmentsConnector}
@@ -115,7 +115,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                           implicit hc: HeaderCarrier, request: Request[_]
                                         ): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] = {
     EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)) flatMap {
-      case Credentials(credentialId, GGProviderId) ~ Some(groupId) =>
+      case Some(Credentials(credentialId, GGProviderId)) ~ Some(groupId) =>
         for {
           upsertEnrolmentResponse <- upsertEnrolment(vatNumber, knownFacts, isFromBta)
           res <- allocateEnrolment(vatNumber, knownFacts, isFromBta, groupId, credentialId, upsertEnrolmentResponse)
