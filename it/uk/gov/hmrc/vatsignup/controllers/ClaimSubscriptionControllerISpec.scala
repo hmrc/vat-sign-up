@@ -52,7 +52,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           )
         }
       }
-      "the enrolment is already allocatedd" should {
+      "the enrolment is already allocated" should {
         "return Conflict" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubSuccessGetKnownFacts(testVatNumber)

@@ -46,7 +46,7 @@ object AuthStub extends WireMockMethods {
   def successfulAuthResponse(confidenceLevel: ConfidenceLevel, internalId: Option[String], enrolments: JsObject*): JsObject = Json.obj(
     "allEnrolments" -> enrolments,
     "confidenceLevel" -> confidenceLevel.level,
-    "credentials" -> Json.obj(
+    "optionalCredentials" -> Json.obj(
       "providerId" -> testCredentialId,
       "providerType" -> GGProviderId
     ),
