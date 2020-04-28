@@ -18,7 +18,6 @@ POST        /subscription-request/vat-number/:vatNumber/government-organisation 
 POST        /subscription-request/vat-number/:vatNumber/overseas                     @uk.gov.hmrc.vatsignup.controllers.StoreOverseasController.storeOverseas(vatNumber: String)
 POST        /subscription-request/vat-number/:vatNumber/contact-preference           @uk.gov.hmrc.vatsignup.controllers.StoreContactPreferenceController.storeContactPreference(vatNumber: String)
 
-GET         /subscription-request/vat-number/:vatNumber/mtdfb-eligibility            @uk.gov.hmrc.vatsignup.controllers.VatNumberEligibilityController.checkVatNumberEligibility(vatNumber: String)
 GET         /subscription-request/vat-number/:vatNumber/new-mtdfb-eligibility        @uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController.checkVatNumberEligibillity(vatNumber: String)
 
 POST        /subscription-request/vat-number/:vatNumber/callback                     @uk.gov.hmrc.vatsignup.controllers.TaxEnrolmentsCallbackController.taxEnrolmentsCallback(vatNumber: String)

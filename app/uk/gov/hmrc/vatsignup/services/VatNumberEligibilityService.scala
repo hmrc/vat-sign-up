@@ -32,6 +32,7 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
                                             controlListEligibilityService: ControlListEligibilityService,
                                             vatCustomerDetailsConnector: VatCustomerDetailsConnector
                                            )(implicit ec: ExecutionContext) {
+  //noinspection ScalaStyle
   def getMtdStatus(vatNumber: String)(implicit hc: HeaderCarrier, req: Request[_]): Future[MtdState] =
     mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
       case Right(MTDfBMandated | MTDfBVoluntary) =>
