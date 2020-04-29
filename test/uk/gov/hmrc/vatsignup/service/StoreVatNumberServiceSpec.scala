@@ -107,45 +107,45 @@ class StoreVatNumberServiceSpec
               }
             }
           }
-          "the VAT number is already voluntarily subscribed for MTD-VAT" should {
-            "return AlreadySubscribed" in {
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
-                Future.successful(Right(HaveRelationshipResponse))
-              )
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
-
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
-              res shouldBe Left(AlreadySubscribed)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
-            }
-          }
-          "the VAT number is already mandated for MTD-VAT" should {
-            "return AlreadySubscribed" in {
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
-                Future.successful(Right(HaveRelationshipResponse))
-              )
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
-
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
-              res shouldBe Left(AlreadySubscribed)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
-            }
-          }
-          "the VAT number migration is already in progress for MTD-VAT" should {
-            "return VatMigrationInProgress" in {
-              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
-                Future.successful(Right(HaveRelationshipResponse))
-              )
-              mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
-
-              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
-              res shouldBe Left(VatMigrationInProgress)
-
-              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
-            }
-          }
+//          "the VAT number is already voluntarily subscribed for MTD-VAT" should {
+//            "return AlreadySubscribed" in {
+//              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
+//                Future.successful(Right(HaveRelationshipResponse))
+//              )
+//              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+//
+//              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
+//              res shouldBe Left(AlreadySubscribed)
+//
+//              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+//            }
+//          }
+//          "the VAT number is already mandated for MTD-VAT" should {
+//            "return AlreadySubscribed" in {
+//              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
+//                Future.successful(Right(HaveRelationshipResponse))
+//              )
+//              mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
+//
+//              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
+//              res shouldBe Left(AlreadySubscribed)
+//
+//              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+//            }
+//          }
+//          "the VAT number migration is already in progress for MTD-VAT" should {
+//            "return VatMigrationInProgress" in {
+//              mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
+//                Future.successful(Right(HaveRelationshipResponse))
+//              )
+//              mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
+//
+//              val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, agentUser, None))
+//              res shouldBe Left(VatMigrationInProgress)
+//
+//              verifyAudit(AgentClientRelationshipAuditModel(TestConstants.testVatNumber, TestConstants.testAgentReferenceNumber, haveRelationship = true))
+//            }
+//          }
         }
         "the VAT number is eligible but non migratable" should {
           "return StoreVatNumberSuccess" in {
@@ -235,17 +235,17 @@ class StoreVatNumberServiceSpec
             }
           }
         }
-        "the vat number is currently being migrated" should {
-          "return a VatMigrationInProgress" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
-            mockGetEligibilityStatus(testVatNumber)(Future.successful(
-              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
-            ))
-
-            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None))
-            res shouldBe Left(VatMigrationInProgress)
-          }
-        }
+//        "the vat number is currently being migrated" should {
+//          "return a VatMigrationInProgress" in {
+//            mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
+//            mockGetEligibilityStatus(testVatNumber)(Future.successful(
+//              Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
+//            ))
+//
+//            val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None))
+//            res shouldBe Left(VatMigrationInProgress)
+//          }
+//        }
         "the vat number does not match enrolment" should {
           "return DoesNotMatchEnrolment" in {
             val res = await(TestStoreVatNumberService.storeVatNumber(UUID.randomUUID().toString, principalUser, None))
@@ -343,17 +343,17 @@ class StoreVatNumberServiceSpec
           }
         }
       }
-      "the vat number migration is currently in progress" should {
-        "return a VatMigrationInProgress" in {
-          mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
-          mockGetEligibilityStatus(testVatNumber)(Future.successful(
-            Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
-          ))
-
-          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None))
-          res shouldBe Left(VatMigrationInProgress)
-        }
-      }
+//      "the vat number migration is currently in progress" should {
+//        "return a VatMigrationInProgress" in {
+//          mockGetMandationStatus(testVatNumber)(Future.successful(Left(MigrationInProgress)))
+//          mockGetEligibilityStatus(testVatNumber)(Future.successful(
+//            Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
+//          ))
+//
+//          val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, principalUser, None))
+//          res shouldBe Left(VatMigrationInProgress)
+//        }
+//      }
       "the user does not have either enrolment and did not provide both known facts" should {
         "return InsufficientEnrolments" in {
           val res = await(TestStoreVatNumberService.storeVatNumber(testVatNumber, freshUser, None))

@@ -56,10 +56,6 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
         enrolments,
         vatKnownFacts
       )
-      _ <- checkExistingVatSubscription(
-        vatNumber,
-        enrolments
-      )
       eligibilitySuccess <- checkEligibility(
         vatNumber,
         vatKnownFacts
@@ -139,20 +135,6 @@ class StoreVatNumberService @Inject()(subscriptionRequestRepository: Subscriptio
     }
   }
 
-  private def checkExistingVatSubscription(vatNumber: String,
-                                           enrolments: Enrolments
-                                          )(implicit hc: HeaderCarrier, request: Request[_]): EitherT[Future, StoreVatNumberFailure, NotSubscribed.type] =
-    EitherT(mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
-      case Right(NonMTDfB | NonDigital) | Left(VatNumberNotFound) =>
-        Future.successful(Right(NotSubscribed))
-      case Right(MTDfBMandated | MTDfBVoluntary) =>
-        Future.successful(Left(AlreadySubscribed))
-      case Left(MigrationInProgress) =>
-        Future.successful(Left(VatMigrationInProgress))
-      case _ =>
-        Future.successful(Left(VatSubscriptionConnectionFailure))
-    })
-
   private def insertVatNumber(vatNumber: String,
                               isMigratable: Boolean,
                               isDirectDebit: Boolean
@@ -168,15 +150,11 @@ object StoreVatNumberService {
 
   case class StoreVatNumberSuccess(isOverseas: Boolean, isDirectDebit: Boolean)
 
-  case object NotSubscribed
-
   case object UserHasMatchingEnrolment
 
   case object UserHasKnownFacts
 
   sealed trait StoreVatNumberFailure
-
-  case object AlreadySubscribed extends StoreVatNumberFailure
 
   case object DoesNotMatchEnrolment extends StoreVatNumberFailure
 
@@ -196,11 +174,9 @@ object StoreVatNumberService {
 
   case object AgentServicesConnectionFailure extends StoreVatNumberFailure
 
-  case object VatSubscriptionConnectionFailure extends StoreVatNumberFailure
 
   case object VatNumberDatabaseFailure extends StoreVatNumberFailure
 
-  case object VatMigrationInProgress extends StoreVatNumberFailure
 
 }
 
