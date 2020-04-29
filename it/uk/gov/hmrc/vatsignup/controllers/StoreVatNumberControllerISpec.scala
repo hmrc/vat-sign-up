@@ -40,7 +40,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       "return OK when the vat number has been stored successfully based on a legacy relationship" in {
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
@@ -51,32 +50,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
             OverseasKey -> false,
             DirectDebitKey -> false
           ))
-        )
-      }
-
-      "return CONFLICT when the client is already subscribed" in {
-        stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
-
-        val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
-
-        res should have(
-          httpStatus(CONFLICT),
-          emptyBody
-        )
-      }
-
-      "return BAD REQUEST when the client's VAT migration is in progress" in {
-        stubAuth(OK, successfulAuthResponse(agentEnrolment))
-        stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
-        stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
-
-        val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
-
-        res should have(
-          httpStatus(BAD_REQUEST),
-          jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "VatMigrationInProgress"))
         )
       }
 
@@ -107,7 +80,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       "the user has a HMCE-VAT enrolment" should {
         "return OK when the vat number has been stored successfully" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
@@ -121,19 +93,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
 
-        "claim the enrolment when the user is already subscribed" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
-          stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBVoluntary))
-          stubSuccessGetKnownFacts(testVatNumber)
-
-          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
-
-          res should have(
-            httpStatus(CONFLICT)
-          )
-        }
-
         "return FORBIDDEN when vat number does not match the one in enrolment" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
 
@@ -142,18 +101,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           res should have(
             httpStatus(FORBIDDEN),
             jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "DoesNotMatchEnrolment"))
-          )
-        }
-
-        "return BAD REQUEST when the user's VAT migration is in progress" in {
-          stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
-          stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
-
-          val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
-
-          res should have(
-            httpStatus(BAD_REQUEST),
-            jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "VatMigrationInProgress"))
           )
         }
 
@@ -174,7 +121,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         "return OK" in {
           disable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubDirectDebitControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj(
@@ -196,7 +142,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         "return Ok" in {
           enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj(
@@ -220,7 +165,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         "return Ok" in {
           enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubOverseasFourKFControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj(
@@ -244,7 +188,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         "return OK" in {
           enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubSuccessNotFiled(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj(
@@ -266,7 +209,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         "return FORBIDDEN" in {
           enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj(
@@ -286,7 +228,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           "return OK when the KFs match" in {
             enable(AdditionalKnownFacts)
             stubAuth(OK, successfulAuthResponse())
-            stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
             stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
             val res = post("/subscription-request/vat-number")(Json.obj(
@@ -308,7 +249,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           "return FORBIDDEN when the KFs don't match" in {
             enable(AdditionalKnownFacts)
             stubAuth(OK, successfulAuthResponse())
-            stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
             stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
             val res = post("/subscription-request/vat-number")(Json.obj(
@@ -329,7 +269,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           "Return OK" in {
             enable(AdditionalKnownFacts)
             stubAuth(OK, successfulAuthResponse())
-            stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
             stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
             val res = post("/subscription-request/vat-number")(Json.obj(
@@ -354,7 +293,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       "When known facts mismatch" should {
         "return FORBIDDEN" in {
           stubAuth(OK, successfulAuthResponse())
-          stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
           val res = post("/subscription-request/vat-number")(Json.obj(
@@ -370,26 +308,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         }
       }
 
-
-      "return BAD REQUEST when the user's VAT migration is in progress" in {
-        stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED)
-
-        val res = post("/subscription-request/vat-number")(Json.obj(
-          "vatNumber" -> testVatNumber,
-          "postCode" -> testVatNumber,
-          "registrationDate" -> testVatNumber
-        ))
-
-        res should have(
-          httpStatus(BAD_REQUEST),
-          jsonBodyAs(Json.obj(Constants.HttpCodeKey -> "VatMigrationInProgress"))
-        )
-      }
-
       "return PRECONDITION_FAILED when vat number is not found" in {
         stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubFailureControlListVatNumberNotFound(testVatNumber)
 
         val res = post("/subscription-request/vat-number")(Json.obj(
@@ -405,7 +325,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
 
       "return PRECONDITION_FAILED when vat number is invalid" in {
         stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubFailureKnownFactsInvalidVatNumber(testVatNumber)
 
         val res = post("/subscription-request/vat-number")(Json.obj(
@@ -423,7 +342,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
     "does not have a HMCE-VAT enrolment and have not provided known facts" should {
       "return FORBIDDEN" in {
         stubAuth(OK, successfulAuthResponse())
-        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
 
         val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))
 
@@ -452,7 +370,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
     "return OK with overseas flag included" in {
       stubAuth(OK, successfulAuthResponse(agentEnrolment))
       stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
-      stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
       stubOverseasControlListInformation(testVatNumber)
 
       val res = post("/subscription-request/vat-number")(Json.obj("vatNumber" -> testVatNumber))

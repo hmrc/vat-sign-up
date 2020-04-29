@@ -64,10 +64,6 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
 
   def getErrorResponse(failure: StoreVatNumberFailure): Result =
     failure match {
-      case AlreadySubscribed =>
-        Conflict
-      case VatMigrationInProgress =>
-        BadRequest(Json.obj(HttpCodeKey -> "VatMigrationInProgress"))
       case DoesNotMatchEnrolment =>
         Forbidden(Json.obj(HttpCodeKey -> "DoesNotMatchEnrolment"))
       case InsufficientEnrolments =>
@@ -82,7 +78,7 @@ class StoreVatNumberController @Inject()(val authConnector: AuthConnector,
         UnprocessableEntity(Json.toJson(migratableDates))
       case VatNumberDatabaseFailure =>
         InternalServerError
-      case AgentServicesConnectionFailure | VatSubscriptionConnectionFailure | KnownFactsAndControlListInformationConnectionFailure =>
+      case AgentServicesConnectionFailure | KnownFactsAndControlListInformationConnectionFailure =>
         BadGateway
     }
 
