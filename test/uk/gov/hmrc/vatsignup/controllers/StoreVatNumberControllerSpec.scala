@@ -178,18 +178,6 @@ class StoreVatNumberControllerSpec extends WordSpec with Matchers with MockAuthC
       }
     }
 
-    "the vat number is being migrated" should {
-      "return BAD_REQUEST with reason in body" in {
-        mockAuthRetrieveAgentEnrolment()
-        mockStoreVatNumber(testVatNumber, enrolments)(Future.successful(Left(VatMigrationInProgress)))
-
-        val res = TestStoreVatNumberController.storeVatNumber()(request)
-
-        status(res) shouldBe BAD_REQUEST
-        contentAsJson(res) shouldBe Json.obj(HttpCodeKey -> "VatMigrationInProgress")
-      }
-    }
-
     "the call to agent services failed" should {
       "return FORBIDDEN" in {
         mockAuthRetrieveAgentEnrolment()
