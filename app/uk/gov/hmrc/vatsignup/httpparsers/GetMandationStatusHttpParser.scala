@@ -30,6 +30,8 @@ object GetMandationStatusHttpParser {
       response.status match {
         case OK =>
           (response.json \ MandationStatusKey).asOpt[String] collect {
+          case MTDfB.Name => MTDfB
+          case MTDfBExempt.Name => MTDfBExempt
           case MTDfBMandated.Name => MTDfBMandated
           case MTDfBVoluntary.Name => MTDfBVoluntary
           case NonMTDfB.Name => NonMTDfB

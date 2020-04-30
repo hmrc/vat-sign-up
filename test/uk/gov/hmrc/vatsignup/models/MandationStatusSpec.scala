@@ -22,23 +22,32 @@ import org.scalatest.{WordSpec, Matchers}
 
 class MandationStatusSpec extends WordSpec with Matchers {
 
-  "desReader" should {
-
-    "parse '1' into  MTDfBMandated" in {
-      val data = MandationStatus.desReader.reads(JsString("1")).get
+  "reader" should {
+    "parse 'MTDfB Mandated' into MTDfBMandated" in {
+      val data = MandationStatus.reader.reads(JsString("MTDfB Mandated")).get
       data shouldBe MTDfBMandated
     }
-    "parse '2' into  MTDfBVoluntary" in {
-      val data = MandationStatus.desReader.reads(JsString("2")).get
+    "parse 'MTDfB Voluntary' into MTDfBVoluntary" in {
+      val data = MandationStatus.reader.reads(JsString("MTDfB Voluntary")).get
       data shouldBe MTDfBVoluntary
     }
 
-    "parse '3' into  NonMTDfB" in {
-      val data = MandationStatus.desReader.reads(JsString("3")).get
+    "parse 'MTDfB' into MTDfB" in {
+      val data = MandationStatus.reader.reads(JsString("MTDfB")).get
+      data shouldBe MTDfB
+    }
+
+    "parse 'MTDfB Exempt' into MTDfBExempt" in {
+      val data = MandationStatus.reader.reads(JsString("MTDfB Exempt")).get
+      data shouldBe MTDfBExempt
+    }
+
+    "parse 'Non MTDfB' into NonMTDfB" in {
+      val data = MandationStatus.reader.reads(JsString("Non MTDfB")).get
       data shouldBe NonMTDfB
     }
-    "parse '4' into  NonDigital" in {
-      val data = MandationStatus.desReader.reads(JsString("4")).get
+    "parse 'Non Digital' into NonDigital" in {
+      val data = MandationStatus.reader.reads(JsString("Non Digital")).get
       data shouldBe NonDigital
     }
   }
@@ -47,6 +56,8 @@ class MandationStatusSpec extends WordSpec with Matchers {
     "write the status correctly" in {
       MandationStatus.writer.writes(MTDfBMandated) shouldBe JsString(MTDfBMandated.Name)
       MandationStatus.writer.writes(MTDfBVoluntary) shouldBe JsString(MTDfBVoluntary.Name)
+      MandationStatus.writer.writes(MTDfB) shouldBe JsString(MTDfB.Name)
+      MandationStatus.writer.writes(MTDfBExempt) shouldBe JsString(MTDfBExempt.Name)
       MandationStatus.writer.writes(NonMTDfB) shouldBe JsString(NonMTDfB.Name)
       MandationStatus.writer.writes(NonDigital) shouldBe JsString(NonDigital.Name)
     }
