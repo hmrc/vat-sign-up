@@ -38,8 +38,8 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
   }
 
   "/subscription-request/vat-number/:vatNumber/new-mtdfb-eligibility" should {
-    "return OK" when {
-      "called with a mtdState of AlreadySubscribed" in {
+    "return OK with an AlreadySubscribed status" when {
+      "the user is MTDfBMandated" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBMandated))
 
@@ -50,9 +50,21 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
           jsonBodyAs(Json.obj(MtdStatusKey -> AlreadySubscribedValue))
         )
       }
+      "the user is MTDfB" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfB))
+
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> AlreadySubscribedValue))
+        )
+      }
     }
-    "return OK with a JSON body" when {
-      "called with a mtdState of Eligible" in {
+
+    "return OK with an Eligible status" when {
+      "the user is Non-MTDfB" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubEligibleControlListInformation(testVatNumber)
@@ -66,10 +78,25 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
             EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false)))
         )
       }
+
+      "the user is MTDfBExempt" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBExempt))
+        stubEligibleControlListInformation(testVatNumber)
+        stubSuccessGetKnownFacts(testVatNumber)
+
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false)))
+        )
+      }
     }
 
-    "return OK with a JSON body" when {
-      "called with a mtdState of Eligible and the user is overseas" in {
+    "return OK with an Eligible status" when {
+      "the user is overseas and Non-MTDfB" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubEligibleControlListInformation(testVatNumber)
@@ -83,10 +110,25 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
             EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true)))
         )
       }
+
+      "the user is overseas and MTDfBExempt" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBExempt))
+        stubEligibleControlListInformation(testVatNumber)
+        stubSuccessGetKnownFactsOverseas(testVatNumber)
+
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true)))
+        )
+      }
     }
 
-    "return OK" when {
-      "called with a mtdState of Ineligible" in {
+    "return OK with an Ineligible status" when {
+      "the user is not found" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubIneligibleControlListInformation(testVatNumber)
@@ -99,8 +141,9 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         )
       }
     }
-    "return OK with a JSON body" when {
-      "called with an mtdState of Inhibited" in {
+
+    "return OK with an Inhibited status" when {
+      "the user is within the filing dates inhibition period" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubDirectDebitControlListInformation(testVatNumber)
@@ -113,8 +156,9 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         )
       }
     }
-    "return OK with a JSON body" when {
-      "called with an mtdState of MigrationInProgress" in {
+
+    "return OK with a MigrationInProgress status" when {
+      "the user is already migrating their data" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(PRECONDITION_FAILED, Json.obj())
 
@@ -126,8 +170,9 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         )
       }
     }
-    "return OK with a JSON body" when {
-      "called with an mtdState of Deregistered" in {
+
+    "return OK with a Deregistered status" when {
+      "the user is no longer registered for MTD" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
         stubDeregisteredVatNumber(testVatNumber)
@@ -140,6 +185,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         )
       }
     }
+
     s"return OK with a JSON body of $DeregisteredValue" when {
       "the user is not migrated and is deregistered" in {
         stubAuth(OK, successfulAuthResponse())
@@ -154,8 +200,9 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         )
       }
     }
+
     "return NOT_FOUND" when {
-      "called with an mtdState of VatNumberNotFound" in {
+      "the vat number is not found" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(NOT_FOUND, Json.obj())
         stubFailureControlListVatNumberNotFound(testVatNumber)
@@ -167,8 +214,9 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         )
       }
     }
+
     "return Internal Server Error" when {
-      "called unable to retrieve the mandation status" in {
+      "unable to retrieve the mandation status" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(INTERNAL_SERVER_ERROR, Json.obj())
 
@@ -180,6 +228,5 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
       }
     }
   }
-
 
 }

@@ -39,11 +39,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StoreVatNumberService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository,
                                       agentClientRelationshipConnector: AgentClientRelationshipConnector,
-                                      mandationStatusConnector: MandationStatusConnector,
                                       controlListEligibilityService: ControlListEligibilityService,
                                       knownFactsMatchingService: KnownFactsMatchingService,
-                                      auditService: AuditService,
-                                      appConfig: AppConfig
+                                      auditService: AuditService
                                      )(implicit ec: ExecutionContext) {
 
   def storeVatNumber(vatNumber: String,

@@ -19,34 +19,31 @@ package uk.gov.hmrc.vatsignup.models
 import play.api.libs.json._
 
 sealed trait MandationStatus {
-  def DesString: String
-
   def Name: String
 }
 
 case object MTDfBMandated extends MandationStatus {
-  override val DesString: String = "1"
-
   override val Name: String = "MTDfB Mandated"
 }
 
 case object MTDfBVoluntary extends MandationStatus {
-  override val DesString: String = "2"
-
   override val Name: String = "MTDfB Voluntary"
 }
 
+case object MTDfBExempt extends MandationStatus {
+  override val Name: String = "MTDfB Exempt"
+}
+
+case object MTDfB extends MandationStatus {
+  override val Name: String = "MTDfB"
+}
 
 case object NonMTDfB extends MandationStatus {
-  override val DesString: String = "3"
-
   override val Name: String = "Non MTDfB"
 }
 
 
 case object NonDigital extends MandationStatus {
-  override val DesString: String = "4"
-
   override val Name: String = "Non Digital"
 }
 
@@ -55,12 +52,14 @@ object MandationStatus {
 
   def unapply(arg: MandationStatus): Option[String] = Some(arg.Name)
 
-  val desReader: Reads[MandationStatus] = for {
+  val reader: Reads[MandationStatus] = for {
     value <- JsPath.read[String].map {
-      case MTDfBMandated.DesString => MTDfBMandated
-      case MTDfBVoluntary.DesString => MTDfBVoluntary
-      case NonMTDfB.DesString => NonMTDfB
-      case NonDigital.DesString => NonDigital
+      case MTDfB.Name => MTDfB
+      case MTDfBExempt.Name => MTDfBExempt
+      case MTDfBMandated.Name => MTDfBMandated
+      case MTDfBVoluntary.Name => MTDfBVoluntary
+      case NonMTDfB.Name => NonMTDfB
+      case NonDigital.Name => NonDigital
     }
   } yield value
 
@@ -69,7 +68,8 @@ object MandationStatus {
   )
 
   implicit val format: Format[MandationStatus] = Format[MandationStatus](
-    desReader,
+    reader,
     writer
   )
+
 }

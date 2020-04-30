@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
-import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipConnector, MockMandationStatusConnector}
+import uk.gov.hmrc.vatsignup.connectors.mocks.{MockAgentClientRelationshipConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.MigrationInProgress
@@ -47,17 +47,15 @@ import scala.concurrent.Future
 
 class StoreVatNumberServiceSpec
   extends WordSpec with Matchers with MockAgentClientRelationshipConnector with MockSubscriptionRequestRepository
-    with MockAuditService with MockConfig with MockMandationStatusConnector
+    with MockAuditService
     with MockControlListEligibilityService with MockKnownFactsMatchingService {
 
   object TestStoreVatNumberService extends StoreVatNumberService(
     mockSubscriptionRequestRepository,
     mockAgentClientRelationshipConnector,
-    mockMandationStatusConnector,
     mockControlListEligibilityService,
     mockKnownFactsMatchingService,
-    mockAuditService,
-    mockConfig
+    mockAuditService
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(FakeRequest().headers)
@@ -77,7 +75,6 @@ class StoreVatNumberServiceSpec
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
                   Future.successful(Right(HaveRelationshipResponse))
                 )
-                mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
                   Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
                 ))
@@ -94,7 +91,6 @@ class StoreVatNumberServiceSpec
                 mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
                   Future.successful(Right(HaveRelationshipResponse))
                 )
-                mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
                 mockGetEligibilityStatus(testVatNumber)(Future.successful(
                   Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
                 ))
@@ -113,7 +109,6 @@ class StoreVatNumberServiceSpec
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
               Future.successful(Right(HaveRelationshipResponse))
             )
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = false, isOverseas = false, isDirectDebit = false))
             ))
@@ -130,7 +125,6 @@ class StoreVatNumberServiceSpec
             mockCheckAgentClientRelationship(testAgentReferenceNumber, testVatNumber, testLegacyRelationship)(
               Future.successful(Right(HaveRelationshipResponse))
             )
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(
               Future.successful(Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates)))
             )
@@ -173,7 +167,6 @@ class StoreVatNumberServiceSpec
         "the vat number is not already subscribed for MTD-VAT" when {
           "the vat number is stored successfully" should {
             "return StoreVatNumberSuccess" in {
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(
                 Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
               ))
@@ -185,7 +178,6 @@ class StoreVatNumberServiceSpec
           }
           "the vat number is not stored successfully" should {
             "return a VatNumberDatabaseFailure" in {
-              mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
               mockGetEligibilityStatus(testVatNumber)(Future.successful(
                 Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
               ))
@@ -223,7 +215,6 @@ class StoreVatNumberServiceSpec
       "the vat number is not already subscribed for MTD-VAT" when {
         "the vat number is stored successfully" should {
           "return StoreVatNumberSuccess" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
@@ -236,7 +227,6 @@ class StoreVatNumberServiceSpec
         }
         "Known facts and control list returned ineligible" should {
           "return a Ineligible" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Left(ControlListEligibilityService.IneligibleVatNumber(testMigratableDates))
             ))
@@ -247,7 +237,6 @@ class StoreVatNumberServiceSpec
         }
         "Known facts and control list returned ControlListInformationVatNumberNotFound" should {
           "return a VatNotFound" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Left(ControlListEligibilityService.VatNumberNotFound)
             ))
@@ -258,7 +247,6 @@ class StoreVatNumberServiceSpec
         }
         "Known facts and control list returned KnownFactsInvalidVatNumber" should {
           "return a VatInvalid" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Left(ControlListEligibilityService.InvalidVatNumber))
             )
@@ -269,7 +257,6 @@ class StoreVatNumberServiceSpec
         }
         "known facts returned from api differs from known facts by the user" should {
           "return a KnownFactsMismatch" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))
@@ -281,7 +268,6 @@ class StoreVatNumberServiceSpec
         }
         "the vat number is not stored successfully" should {
           "return a VatNumberDatabaseFailure" in {
-            mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
             mockGetEligibilityStatus(testVatNumber)(Future.successful(
               Right(EligibilitySuccess(testTwoKnownFacts, isMigratable = true, isOverseas = false, isDirectDebit = false))
             ))

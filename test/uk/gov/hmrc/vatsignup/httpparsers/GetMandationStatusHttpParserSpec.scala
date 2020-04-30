@@ -20,10 +20,10 @@ import org.scalatest.EitherValues
 import play.api.test.Helpers._
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
-import org.scalatest.{WordSpec, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpFailure
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.GetMandationStatusHttpReads.read
-import uk.gov.hmrc.vatsignup.models.{MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}
+import uk.gov.hmrc.vatsignup.models.{MTDfB, MTDfBExempt, MTDfBMandated, MTDfBVoluntary, NonDigital, NonMTDfB}
 
 class GetMandationStatusHttpParserSpec extends WordSpec with Matchers with EitherValues {
   val testMethod = "GET"
@@ -31,28 +31,42 @@ class GetMandationStatusHttpParserSpec extends WordSpec with Matchers with Eithe
 
   "GetMandationStatusHttpReads#read" when {
     "the http status is OK" when {
-      s"the json is $MTDfBMandated.toString" should {
+      s"the json is ${MTDfBMandated.toString}" should {
         "return MTDfBMandated" in {
             val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfBMandated.Name)))
 
             read(testMethod, testUrl, testResponse).right.value shouldBe MTDfBMandated
         }
       }
-      s"the json is $MTDfBVoluntary.toString" should {
+      s"the json is ${MTDfBExempt.toString}" should {
+        "return MTDfBMandated" in {
+          val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfBExempt.Name)))
+
+          read(testMethod, testUrl, testResponse).right.value shouldBe MTDfBExempt
+        }
+      }
+      s"the json is ${MTDfB.toString}" should {
+        "return MTDfBMandated" in {
+            val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfB.Name)))
+
+            read(testMethod, testUrl, testResponse).right.value shouldBe MTDfB
+        }
+      }
+      s"the json is ${MTDfBVoluntary.toString}" should {
         "return MTDfBMandated" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> MTDfBVoluntary.Name)))
 
           read(testMethod, testUrl, testResponse).right.value shouldBe MTDfBVoluntary
         }
       }
-      s"the json is $NonMTDfB.toString" should {
+      s"the json is ${NonMTDfB.toString}" should {
         "return MTDfBMandated" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> NonMTDfB.Name)))
 
           read(testMethod, testUrl, testResponse).right.value shouldBe NonMTDfB
         }
       }
-      s"the json is $NonDigital.toString" should {
+      s"the json is ${NonDigital.toString}" should {
         "return MTDfBMandated" in {
           val testResponse = HttpResponse(OK, Some(Json.obj("mandationStatus" -> NonDigital.Name)))
 
