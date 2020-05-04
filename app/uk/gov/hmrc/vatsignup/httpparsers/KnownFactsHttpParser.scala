@@ -17,8 +17,8 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
-import play.api.libs.json.JsSuccess
-import uk.gov.hmrc.http.{HttpReads, HttpResponse}
+import play.api.libs.json.{JsError, JsSuccess}
+import uk.gov.hmrc.http.{HttpReads, HttpResponse, InternalServerException}
 
 object KnownFactsHttpParser {
   type KnownFactsHttpParserResponse = Either[KnownFactsFailure, KnownFacts]
@@ -41,10 +41,8 @@ object KnownFactsHttpParser {
               businessPostcode = bpc,
               vatRegistrationDate = vrd
             ))
-            case _ => Left(InvalidKnownFacts(
-              status = response.status,
-              body = invalidJsonResponseMessage
-            ))
+            case (JsError(_), _) => throw new InternalServerException("[KnownFactsHttpParser] postcode missing in known facts response")
+            case (_, JsError(_)) => throw new InternalServerException("[KnownFactsHttpParser] registration date missing in known facts response")
           }
         case BAD_REQUEST =>
           Left(InvalidVatNumber)
