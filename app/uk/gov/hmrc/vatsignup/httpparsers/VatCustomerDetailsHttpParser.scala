@@ -17,8 +17,8 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
-import play.api.libs.json.JsSuccess
-import uk.gov.hmrc.http.{HttpReads, HttpResponse}
+import play.api.libs.json.{JsError, JsSuccess}
+import uk.gov.hmrc.http.{HttpReads, HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.models.VatCustomerDetails
 
@@ -43,18 +43,16 @@ object VatCustomerDetailsHttpParser {
             case JsSuccess(Some(true), _) =>
               Left(Deregistered)
             case JsSuccess(_, _) =>
-              (for {
-                businessPostcode <- (response.json \ postCodeKey).validate[String]
-                vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
-                isOverseas <- (response.json \ isOverseasKey).validate[Boolean]
-              } yield VatCustomerDetails(KnownFacts(businessPostcode, vatRegistrationDate), isOverseas)) match {
-                case JsSuccess(customerDetails, _) =>
-                  Right(customerDetails)
-                case _ =>
-                  Left(InvalidKnownFacts(
-                    status = response.status,
-                    body = invalidJsonResponseMessage
-                  ))
+              (
+                (response.json \ postCodeKey).validate[String],
+                (response.json \ registrationDateKey).validate[String],
+                (response.json \ isOverseasKey).validate[Boolean]
+              ) match {
+                case (JsSuccess(postCode, _), JsSuccess(regDate, _), JsSuccess(isOverseas, _)) =>
+                  Right(VatCustomerDetails(KnownFacts(postCode, regDate), isOverseas))
+                case (JsError(_), _, _) => throw new InternalServerException("[VatCustomerDetailsHttpParser] postcode missing in known facts response")
+                case (_, JsError(_), _) => throw new InternalServerException("[VatCustomerDetailsHttpParser] registration date missing in known facts response")
+                case (_, _, JsError(_)) => throw new InternalServerException("[VatCustomerDetailsHttpParser] isOverseas field failed to parse in known facts response")
               }
           }
         case BAD_REQUEST =>
