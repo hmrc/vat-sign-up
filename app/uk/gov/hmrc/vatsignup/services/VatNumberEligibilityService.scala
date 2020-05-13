@@ -35,9 +35,9 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
   //noinspection ScalaStyle
   def getMtdStatus(vatNumber: String)(implicit hc: HeaderCarrier, req: Request[_]): Future[MtdState] =
     mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
-      case Right(MTDfBMandated | MTDfBVoluntary) =>
+      case Right(MTDfBMandated | MTDfBVoluntary | MTDfB) =>
         Future.successful(AlreadySubscribed)
-      case Right(NonMTDfB | NonDigital) =>
+      case Right(NonMTDfB | NonDigital | MTDfBExempt) =>
         vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber) map {
           case Left(VatCustomerDetailsHttpParser.Deregistered) =>
             Deregistered

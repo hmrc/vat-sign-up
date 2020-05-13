@@ -61,7 +61,7 @@ class StoreVatNumberControllerMigrationRestrictionsISpec extends ComponentSpecBa
         stubAuth(OK, successfulAuthResponse(agentEnrolment))
         stubCheckAgentClientRelationship(testAgentNumber, testVatNumber, testLegacyRelationship)(OK, Json.obj())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-        stubGetKnownFactsAndControlListInformation33(
+        stubGetKnownFactsAndControlListInformation34(
           testVatNumber,
           testPostCode,
           testDateOfRegistration

@@ -68,7 +68,8 @@ object ControlListParameter {
       REPAYMENT_TRADER -> RepaymentTrader,
       MOSS_TRADER -> MossTrader,
       FLAT_RATE -> FlatRate,
-      PENDING_OA -> PendingOA
+      PENDING_OA -> PendingOA,
+      HIDDEN_ECONOMY -> HiddenEconomy
     )
 }
 
@@ -275,4 +276,10 @@ case object PendingOA extends ControlListParameter {
   val configKey: String = "pending_oa"
   val ordinal = PENDING_OA
   val errorMessage: String = pendingOaMessage
+}
+
+case object HiddenEconomy extends ControlListParameter {
+  val configKey: String = "hidden_economy"
+  val ordinal = HIDDEN_ECONOMY
+  val errorMessage: String = hiddenEconomyMessage
 }

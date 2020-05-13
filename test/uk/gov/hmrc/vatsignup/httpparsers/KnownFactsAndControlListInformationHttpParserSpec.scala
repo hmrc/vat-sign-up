@@ -47,7 +47,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
                   "lastNetDue" -> testLastNetDue.toDouble,
-                  "controlListInformation" -> ControlList33.valid
+                  "controlListInformation" -> ControlList34.valid
                 )
               )
             )
@@ -66,7 +66,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> "N/A",
                   "lastNetDue" -> testLastNetDue.toDouble,
-                  "controlListInformation" -> ControlList33.valid
+                  "controlListInformation" -> ControlList34.valid
                 )
               )
             )
@@ -94,7 +94,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
                   "dateOfReg" -> testDateOfRegistration,
                   "lastReturnMonthPeriod" -> "N/A",
                   "lastNetDue" -> 0.00,
-                  "controlListInformation" -> ControlList33.valid
+                  "controlListInformation" -> ControlList34.valid
                 )
               )
             )
@@ -147,7 +147,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
                 Json.obj(
                   "postcode" -> testPostCode,
                   "dateOfReg" -> testDateOfRegistration,
-                  "controlListInformation" -> ControlList33.valid
+                  "controlListInformation" -> ControlList34.valid
                 )
               )
             )

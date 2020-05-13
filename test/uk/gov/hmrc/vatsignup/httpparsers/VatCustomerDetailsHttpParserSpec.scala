@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import org.scalatest.EitherValues
-import play.api.test.Helpers._
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpResponse
-import org.scalatest.{WordSpec, Matchers}
+import play.api.test.Helpers._
+import uk.gov.hmrc.http.{HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser.VatCustomerDetailsHttpReads.read
@@ -70,21 +69,57 @@ class VatCustomerDetailsHttpParserSpec extends WordSpec with Matchers with Eithe
         }
       }
 
-      s"the json does not contain deregistered and is invalid" should {
+      s"the json does not contain deregistered and is missing the postcode" should {
         "return InvalidKnownFacts" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
             responseJson = Some(
               Json.obj(
+                "isOverseas" -> false,
+                "vatRegistrationDate" -> testDateOfRegistration
+              )
+            )
+          )
+
+          val error = intercept[InternalServerException](read(testMethod, testUrl, testResponse))
+
+          error.message shouldBe "[VatCustomerDetailsHttpParser] postcode missing in known facts response"
+        }
+      }
+
+      s"the json does not contain deregistered and is missing the regdate" should {
+        "return InvalidKnownFacts" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "isOverseas" -> false,
                 "businessPostCode" -> testPostCode
               )
             )
           )
 
-          read(testMethod, testUrl, testResponse).left.value shouldBe InvalidKnownFacts(
-            status = OK,
-            body = invalidJsonResponseMessage
+          val error = intercept[InternalServerException](read(testMethod, testUrl, testResponse))
+
+          error.message shouldBe "[VatCustomerDetailsHttpParser] registration date missing in known facts response"
+        }
+      }
+
+      s"the json does not contain deregistered and is missing isOverseas field" should {
+        "return InvalidKnownFacts" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "businessPostCode" -> testPostCode,
+                "vatRegistrationDate" -> testDateOfRegistration
+              )
+            )
           )
+
+          val error = intercept[InternalServerException](read(testMethod, testUrl, testResponse))
+
+          error.message shouldBe "[VatCustomerDetailsHttpParser] isOverseas field failed to parse in known facts response"
         }
       }
     }

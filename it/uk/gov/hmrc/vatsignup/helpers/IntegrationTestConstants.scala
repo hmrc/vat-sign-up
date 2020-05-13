@@ -62,8 +62,8 @@ object IntegrationTestConstants {
     stagger = Stagger1
   )
 
-  object ControlList33 {
-    val allFalse: String = "1" * CONTROL_INFORMATION33_STRING_LENGTH
+  object ControlList34 {
+    val allFalse: String = "1" * CONTROL_INFORMATION34_STRING_LENGTH
     val eligible: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
     val directDebit: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', DIRECT_DEBIT -> '0')
     val ineligible: String = setupTestDataCore(allFalse)(ANNUAL_STAGGER -> '0', COMPANY -> '0')
@@ -71,7 +71,7 @@ object IntegrationTestConstants {
     def setupTestData(amendments: (Int, Character)*): String = setupTestDataCore(eligible)(amendments: _*)
 
     private def setupTestDataCore(startString: String)(amendments: (Int, Character)*): String = {
-      require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION33_STRING_LENGTH })
+      require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION34_STRING_LENGTH })
       require(amendments.forall { case (_, newValue) => newValue == '0' || newValue == '1' })
 
       amendments.foldLeft[String](startString) {
@@ -81,8 +81,8 @@ object IntegrationTestConstants {
     }
   }
 
-  object ControlList34 {
-    val allFalse: String = "1" * CONTROL_INFORMATION34_STRING_LENGTH
+  object ControlList35 {
+    val allFalse: String = "1" * CONTROL_INFORMATION35_STRING_LENGTH
     val eligible: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
     val multipleEntities: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', SOLE_TRADER -> '0')
     val directDebit: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0', DIRECT_DEBIT -> '0')
@@ -93,7 +93,7 @@ object IntegrationTestConstants {
     def setupTestData(amendments: (Int, Character)*): String = setupTestDataCore(eligible)(amendments: _*)
 
     private def setupTestDataCore(startString: String)(amendments: (Int, Character)*): String = {
-      require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION34_STRING_LENGTH })
+      require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION35_STRING_LENGTH })
       require(amendments.forall { case (_, newValue) => newValue == '0' || newValue == '1' })
 
       amendments.foldLeft[String](startString) {

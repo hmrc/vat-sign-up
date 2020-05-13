@@ -44,4 +44,5 @@ object ControlListMessages {
   val mossTraderMessage = "MOSS trader"
   val flatRateMessage = "Flat rate"
   val pendingOaMessage = "Pending oa"
+  val hiddenEconomyMessage = "Hidden Economy"
 }

@@ -19,8 +19,8 @@ package uk.gov.hmrc.vatsignup.httpparsers
 import org.scalatest.EitherValues
 import play.api.test.Helpers._
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpResponse
-import org.scalatest.{WordSpec, Matchers}
+import uk.gov.hmrc.http.{HttpResponse, InternalServerException}
+import org.scalatest.{Matchers, WordSpec}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFactsHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser._
@@ -50,7 +50,7 @@ class KnownFactsHttpParserSpec extends WordSpec with Matchers with EitherValues 
         }
       }
 
-      s"the json is invalid" should {
+      s"the json is missing a regdate" should {
         "return InvalidKnownFacts" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
@@ -61,10 +61,26 @@ class KnownFactsHttpParserSpec extends WordSpec with Matchers with EitherValues 
             )
           )
 
-          read(testMethod, testUrl, testResponse).left.value shouldBe InvalidKnownFacts(
-            status = OK,
-            body = invalidJsonResponseMessage
+          val error = intercept[InternalServerException](read(testMethod, testUrl, testResponse))
+
+          error.message shouldBe "[KnownFactsHttpParser] registration date missing in known facts response"
+        }
+      }
+
+      s"the json is missing a postcode" should {
+        "return InvalidKnownFacts" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "vatRegistrationDate" -> testDateOfRegistration
+              )
+            )
           )
+
+          val error = intercept[InternalServerException](read(testMethod, testUrl, testResponse))
+
+          error.message shouldBe "[KnownFactsHttpParser] postcode missing in known facts response"
         }
       }
     }
