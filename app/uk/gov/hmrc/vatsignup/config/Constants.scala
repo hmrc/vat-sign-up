@@ -57,7 +57,7 @@ object Constants {
     val DirectDebitKey = "isDirectDebit"
   }
 
-  val CONTROL_INFORMATION33_STRING_LENGTH: Int = 33
-
   val CONTROL_INFORMATION34_STRING_LENGTH: Int = 34
+
+  val CONTROL_INFORMATION35_STRING_LENGTH: Int = 35
 }

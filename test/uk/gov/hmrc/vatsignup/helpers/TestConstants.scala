@@ -116,25 +116,6 @@ object TestConstants {
     testControlListInformation
   )
 
-  object ControlList33 {
-    val allFalse: String = "1" * CONTROL_INFORMATION33_STRING_LENGTH
-    val valid: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
-    val businessEntityConflict: String = setupTestData(COMPANY -> '0', SOLE_TRADER -> '0')
-    val staggerConflict: String = setupTestData(ANNUAL_STAGGER -> '0', STAGGER_1 -> '0')
-
-    def setupTestData(amendments: (Int, Character)*): String = setupTestDataCore(valid)(amendments: _*)
-
-    private def setupTestDataCore(startString: String)(amendments: (Int, Character)*): String = {
-      require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION33_STRING_LENGTH })
-      require(amendments.forall { case (_, newValue) => newValue == '0' || newValue == '1' })
-
-      amendments.foldLeft[String](startString) {
-        case (pre: String, (index: Int, value: Character)) =>
-          pre.substring(0, index) + value + pre.substring(index + 1, pre.length)
-      }
-    }
-  }
-
   object ControlList34 {
     val allFalse: String = "1" * CONTROL_INFORMATION34_STRING_LENGTH
     val valid: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
@@ -145,6 +126,25 @@ object TestConstants {
 
     private def setupTestDataCore(startString: String)(amendments: (Int, Character)*): String = {
       require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION34_STRING_LENGTH })
+      require(amendments.forall { case (_, newValue) => newValue == '0' || newValue == '1' })
+
+      amendments.foldLeft[String](startString) {
+        case (pre: String, (index: Int, value: Character)) =>
+          pre.substring(0, index) + value + pre.substring(index + 1, pre.length)
+      }
+    }
+  }
+
+  object ControlList35 {
+    val allFalse: String = "1" * CONTROL_INFORMATION35_STRING_LENGTH
+    val valid: String = setupTestDataCore(allFalse)(STAGGER_1 -> '0', COMPANY -> '0')
+    val businessEntityConflict: String = setupTestData(COMPANY -> '0', SOLE_TRADER -> '0')
+    val staggerConflict: String = setupTestData(ANNUAL_STAGGER -> '0', STAGGER_1 -> '0')
+
+    def setupTestData(amendments: (Int, Character)*): String = setupTestDataCore(valid)(amendments: _*)
+
+    private def setupTestDataCore(startString: String)(amendments: (Int, Character)*): String = {
+      require(amendments.forall { case (index, _) => index >= 0 && index < CONTROL_INFORMATION35_STRING_LENGTH })
       require(amendments.forall { case (_, newValue) => newValue == '0' || newValue == '1' })
 
       amendments.foldLeft[String](startString) {
