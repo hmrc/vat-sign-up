@@ -25,7 +25,7 @@ import play.api.mvc.{Request, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.InternalServerException
 import org.scalatest.{WordSpec, Matchers}
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, SkipPartnershipKnownFactsMismatch}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.StorePartnershipRequest
@@ -186,37 +186,17 @@ class StorePartnershipInformationControllerSpec extends WordSpec
             status(result) shouldBe FORBIDDEN
           }
         }
-        "store partnership information returns NoPostCodeReturned" when {
-          s"the $SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
-            "throws Internal server exception" in {
-              mockAuthRetrievePrincipalEnrolment()
-              mockStorePartnershipInformation(
-                testVatNumber,
-                testGeneralPartnership,
-                Some(testPostCode)
-              )(Future.successful(Left(InsufficientData)))
+          "return No Content" in {
+            mockAuthRetrievePrincipalEnrolment()
+            mockStorePartnershipInformation(
+              testVatNumber,
+              testGeneralPartnership,
+              Some(testPostCode)
+            )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-              intercept[InternalServerException] {
-                await(TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request))
-              }
-            }
-          }
-          s"the $SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
-            "return No Content" in {
-              enable(SkipPartnershipKnownFactsMismatch)
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
-              mockAuthRetrievePrincipalEnrolment()
-              mockStorePartnershipInformation(
-                testVatNumber,
-                testGeneralPartnership,
-                Some(testPostCode)
-              )(Future.successful(Right(StorePartnershipInformationSuccess)))
-
-              val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
-
-              status(result) shouldBe NO_CONTENT
-            }
-          }
+            status(result) shouldBe NO_CONTENT
         }
         "store partnership information returns InvalidSautr" should {
           "return PRECONDITION_FAILED" in {
@@ -261,28 +241,26 @@ class StorePartnershipInformationControllerSpec extends WordSpec
             status(result) shouldBe INTERNAL_SERVER_ERROR
           }
         }
-      }
-    }
+        "post code and sautr is not provided" should {
+          "return No Content" in {
+            mockAuthRetrievePrincipalEnrolment()
+            mockStorePartnershipInformation(
+              testVatNumber,
+              testNoUtrGeneralPartnership,
+              None
+            )(Future.successful(Right(StorePartnershipInformationSuccess)))
 
-    "post code and sautr is not provided" should {
-      "return No Content" in {
-        mockAuthRetrievePrincipalEnrolment()
-        mockStorePartnershipInformation(
-          testVatNumber,
-          testNoUtrGeneralPartnership,
-          None
-        )(Future.successful(Right(StorePartnershipInformationSuccess)))
+            val request: Request[StorePartnershipRequest] = FakeRequest().withBody[StorePartnershipRequest](
+              StorePartnershipRequest(testNoUtrGeneralPartnership, postCode = None)
+            )
 
-        val request: Request[StorePartnershipRequest] = FakeRequest().withBody[StorePartnershipRequest](
-          StorePartnershipRequest(testNoUtrGeneralPartnership, postCode = None)
-        )
+            mockAuthRetrievePrincipalEnrolment()
+            val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
 
-        mockAuthRetrievePrincipalEnrolment()
-        val result = TestStorePartnershipInformationController.storePartnershipInformation(testVatNumber)(request)
-
-        status(result) shouldBe NO_CONTENT
+            status(result) shouldBe NO_CONTENT
+          }
+        }
       }
     }
   }
-
 }

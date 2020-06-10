@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.services
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching, SkipPartnershipKnownFactsMismatch}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitching}
 import uk.gov.hmrc.vatsignup.models.PartnershipBusinessEntity
 import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.StorePartnershipInformationService._
@@ -53,10 +53,8 @@ class StorePartnershipInformationService @Inject()(subscriptionRequestRepository
         partnershipKnownFactsService.checkKnownFactsMatch(vatNumber, sautr, postCode) flatMap {
           case Right(_) =>
             storePartnershipInformationCore(vatNumber, partnershipInformation)
-          case Left(PartnershipKnownFactsService.NoPostCodesReturned) if isEnabled(SkipPartnershipKnownFactsMismatch) =>
-            storePartnershipInformationCore(vatNumber, PartnershipBusinessEntity.copyWithoutSautr(partnershipInformation))
           case Left(PartnershipKnownFactsService.NoPostCodesReturned) =>
-            Future.successful(Left(InsufficientData))
+            storePartnershipInformationCore(vatNumber, PartnershipBusinessEntity.copyWithoutSautr(partnershipInformation))
           case Left(PartnershipKnownFactsService.PostCodeDoesNotMatch) =>
             Future.successful(Left(KnownFactsMismatch))
           case Left(PartnershipKnownFactsService.InvalidSautr) =>

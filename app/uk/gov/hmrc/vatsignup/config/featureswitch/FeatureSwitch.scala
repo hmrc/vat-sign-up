@@ -30,7 +30,6 @@ object FeatureSwitch {
     StubDESFeature,
     StubAgentServicesFeature,
     AdditionalKnownFacts,
-    SkipPartnershipKnownFactsMismatch,
     AutoClaimEnrolment
   )
 
@@ -60,11 +59,6 @@ case object StubAgentServicesFeature extends FeatureSwitch {
 case object AdditionalKnownFacts extends FeatureSwitch {
   val displayName: String = "Enable additional known facts check (Box 5 and filing month)"
   val name: String = s"$prefix.additional-known-facts"
-}
-
-case object SkipPartnershipKnownFactsMismatch extends FeatureSwitch {
-  val displayName: String = "Skip known facts mismatches for partnerships"
-  val name: String = s"$prefix.skip-partnership-kf-mismatch"
 }
 
 case object AutoClaimEnrolment extends FeatureSwitch {
