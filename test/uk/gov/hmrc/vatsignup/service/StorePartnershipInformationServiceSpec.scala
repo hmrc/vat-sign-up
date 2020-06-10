@@ -25,7 +25,7 @@ import play.api.test.FakeRequest
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.http.HeaderCarrier
 import org.scalatest.{WordSpec, Matchers}
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, SkipPartnershipKnownFactsMismatch}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.GeneralPartnership
 import uk.gov.hmrc.vatsignup.repositories.mocks.MockSubscriptionRequestRepository
@@ -118,35 +118,15 @@ class StorePartnershipInformationServiceSpec extends WordSpec with Matchers
         await(res) shouldBe Left(KnownFactsMismatch)
 
       }
-
     }
-
-    "the UTR does not exist on the enrolment and there is not enough data to check the known facts" when {
-      "the SkipPartnershipKnownFactsMismatch feature switch is disabled" should {
-        "return Insufficient Data" in {
-          mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(NoPostCodesReturned)))
-
-          val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(Some(testUtr)), Some(testPostCode))
-
-          await(res) shouldBe Left(InsufficientData)
-
-        }
-      }
-
-      "the SkipPartnershipKnownFactsMismatch feature switch is enabled" should {
         "return StorePartnershipInformationSuccess" in {
-          enable(SkipPartnershipKnownFactsMismatch)
           mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(NoPostCodesReturned)))
           mockUpsertBusinessEntity(testVatNumber, GeneralPartnership(None))(Future.successful(mock[UpdateWriteResult]))
 
           val res = TestStorePartnershipInformationService.storePartnershipInformation(testVatNumber, GeneralPartnership(Some(testUtr)), Some(testPostCode))
 
           await(res) shouldBe Right(StorePartnershipInformationSuccess)
-
-        }
       }
-    }
-
     "the UTR does not exist on the enrolment and it is an invalid SAUTR" should {
       "return InvalidSautr" in {
         mockCheckKnownFactsMatch(testVatNumber, testUtr, testPostCode)(Future.successful(Left(PartnershipKnownFactsService.InvalidSautr)))
