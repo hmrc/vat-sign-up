@@ -42,23 +42,48 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
       "the user is MTDfBMandated" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBMandated))
+        stubSuccessGetKnownFacts(testVatNumber)
 
         val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
-          jsonBodyAs(Json.obj(MtdStatusKey -> AlreadySubscribedValue))
+          jsonBodyAs(Json.obj(
+            MtdStatusKey -> AlreadySubscribedValue,
+            IsOverseasKey -> false
+          ))
         )
       }
+
       "the user is MTDfB" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfB))
+        stubSuccessGetKnownFacts(testVatNumber)
 
         val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
 
         res should have(
           httpStatus(OK),
-          jsonBodyAs(Json.obj(MtdStatusKey -> AlreadySubscribedValue))
+          jsonBodyAs(Json.obj(
+            MtdStatusKey -> AlreadySubscribedValue,
+            IsOverseasKey -> false
+          ))
+        )
+      }
+
+      "the user is overseas and MTDfB" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfB))
+        stubSuccessGetKnownFactsOverseas(testVatNumber)
+
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(
+            MtdStatusKey -> AlreadySubscribedValue,
+            IsOverseasKey -> true
+          ))
         )
       }
     }
@@ -67,7 +92,6 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
       "the user is Non-MTDfB" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-        stubEligibleControlListInformation(testVatNumber)
         stubSuccessGetKnownFacts(testVatNumber)
 
         val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
@@ -82,7 +106,6 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
       "the user is MTDfBExempt" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBExempt))
-        stubEligibleControlListInformation(testVatNumber)
         stubSuccessGetKnownFacts(testVatNumber)
 
         val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
@@ -99,7 +122,6 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
       "the user is overseas and Non-MTDfB" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
-        stubEligibleControlListInformation(testVatNumber)
         stubSuccessGetKnownFactsOverseas(testVatNumber)
 
         val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
@@ -114,7 +136,6 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
       "the user is overseas and MTDfBExempt" in {
         stubAuth(OK, successfulAuthResponse())
         stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(MTDfBExempt))
-        stubEligibleControlListInformation(testVatNumber)
         stubSuccessGetKnownFactsOverseas(testVatNumber)
 
         val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")

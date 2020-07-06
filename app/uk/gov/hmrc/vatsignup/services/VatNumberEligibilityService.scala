@@ -35,17 +35,18 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
   //noinspection ScalaStyle
   def getMtdStatus(vatNumber: String)(implicit hc: HeaderCarrier, req: Request[_]): Future[MtdState] =
     mandationStatusConnector.getMandationStatus(vatNumber) flatMap {
-      case Right(MTDfBMandated | MTDfBVoluntary | MTDfB) =>
-        Future.successful(AlreadySubscribed)
-      case Right(NonMTDfB | NonDigital | MTDfBExempt) =>
+      case Right(mandationStatus) =>
         vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber) map {
           case Left(VatCustomerDetailsHttpParser.Deregistered) =>
             Deregistered
           case Right(VatCustomerDetails(_, isOverseas)) =>
-            Eligible(
-              migrated = true,
-              overseas = isOverseas
-            )
+            if (List(NonMTDfB, NonDigital, MTDfBExempt).contains(mandationStatus))
+              Eligible(
+                migrated = true,
+                overseas = isOverseas
+              )
+            else
+              AlreadySubscribed(isOverseas)
         }
       case Left(GetMandationStatusHttpParser.VatNumberNotFound) =>
         controlListEligibilityService.getEligibilityStatus(vatNumber) map {
@@ -76,7 +77,7 @@ object VatNumberEligibilityService {
 
   sealed trait MtdState
 
-  case object AlreadySubscribed extends MtdState
+  case class AlreadySubscribed(isOverseas: Boolean) extends MtdState
 
   case class Eligible(migrated: Boolean, overseas: Boolean) extends MtdState
 
