@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.test.Helpers._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import org.scalatest.{WordSpec, Matchers}
+import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.controllers.NewVatEligibillityController._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -44,18 +44,21 @@ class NewVatEligibillityControllerSpec extends WordSpec with Matchers with MockA
     "VatNumberEligibility service returns Already Subscribed" should {
       "return OK with mtdStatus AlreadySubscribed" in {
         mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(AlreadySubscribed))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(AlreadySubscribed(false)))
 
         val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
-        contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> AlreadySubscribedValue)
+        contentAsJson(res) shouldBe Json.obj(
+          MtdStatusKey -> AlreadySubscribedValue,
+          IsOverseasKey -> false
+        )
       }
     }
     "VatNumberElligibity service returns Eligible" should {
       "return OK with mtdStatus Eligible" in {
         mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Eligible(true, false)))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(Eligible(migrated = true, overseas = false)))
 
         val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 

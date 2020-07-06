@@ -53,24 +53,44 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
         "the user is mandated to MTD" should {
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
+            mockGetVatCustomerDetails(testVatNumber)(
+              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+            )
 
-            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(false)
           }
         }
 
-        "the user is MTDfB" should {
+        "the user is MTDfB and not overseas" should {
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfB)))
+            mockGetVatCustomerDetails(testVatNumber)(
+              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+            )
 
-            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(false)
+          }
+        }
+
+        "the user is MTDfB and overseas" should {
+          s"return $AlreadySubscribed" in {
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfB)))
+            mockGetVatCustomerDetails(testVatNumber)(
+              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = true)))
+            )
+
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(true)
           }
         }
 
         "the user is voluntarily in MTD" should {
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
+            mockGetVatCustomerDetails(testVatNumber)(
+              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+            )
 
-            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(false)
           }
         }
       }

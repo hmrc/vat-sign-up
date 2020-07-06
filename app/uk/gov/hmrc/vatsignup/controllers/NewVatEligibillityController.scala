@@ -37,7 +37,11 @@ class NewVatEligibillityController @Inject()(val authConnector: AuthConnector,
     implicit request =>
       authorised() {
         vatNumberEligibilityService.getMtdStatus(vatNumber) map {
-          case AlreadySubscribed => Ok(Json.obj(MtdStatusKey -> AlreadySubscribedValue))
+          case AlreadySubscribed(isOverseas) =>
+            Ok(Json.obj(
+              MtdStatusKey -> AlreadySubscribedValue,
+              IsOverseasKey -> isOverseas
+            ))
           case Eligible(isMigrated, isOverseas) =>
             Ok(Json.obj(
               MtdStatusKey -> EligibleValue,
