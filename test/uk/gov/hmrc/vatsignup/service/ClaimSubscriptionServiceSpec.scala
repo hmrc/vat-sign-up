@@ -79,7 +79,46 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testDateOfRegistration.toTaxEnrolmentsFormat
                 )(Future.successful(Right(EnrolSuccess)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+                val res = await(TestClaimSubscriptionService.claimSubscription(
+                  testVatNumber,
+                  Some(testPostCode),
+                  testDateOfRegistration,
+                  isFromBta = false
+                ))
+
+                res shouldBe Right(SubscriptionClaimed)
+                verifyAudit(ClaimSubscriptionAuditModel(
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat,
+                  isFromBta = false,
+                  isSuccess = true
+                ))
+              }
+
+              "return SubscriptionClaimed when vrn is overseas" in {
+                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  Future.successful(Right(UpsertEnrolmentSuccess))
+                )
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+                )
+                mockAllocateEnrolment(
+                  testGroupId,
+                  testCredentialId,
+                  testVatNumber,
+                  testPostCode,
+                  testDateOfRegistration.toTaxEnrolmentsFormat
+                )(Future.successful(Right(EnrolSuccess)))
+
+                val res = await(TestClaimSubscriptionService.claimSubscription(
+                  testVatNumber,
+                  None,
+                  testDateOfRegistration,
+                  isFromBta = false
+                ))
 
                 res shouldBe Right(SubscriptionClaimed)
                 verifyAudit(ClaimSubscriptionAuditModel(
@@ -111,7 +150,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testDateOfRegistration.toTaxEnrolmentsFormat
                 )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentFailureMessage))))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
+                val res = await(TestClaimSubscriptionService.claimSubscription(
+                  testVatNumber,
+                  Some(testPostCode),
+                  testDateOfRegistration,
+                  isFromBta = true
+                ))
 
                 res shouldBe Left(EnrolFailure)
                 verifyAudit(ClaimSubscriptionAuditModel(
@@ -146,7 +190,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testDateOfRegistration.toTaxEnrolmentsFormat
                 )(Future.successful(Right(EnrolSuccess)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+                val res = await(TestClaimSubscriptionService.claimSubscription(
+                  testVatNumber,
+                  Some(testPostCode),
+                  testDateOfRegistration,
+                  isFromBta = false
+                ))
 
                 res shouldBe Right(SubscriptionClaimed)
 
@@ -159,6 +208,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 ))
               }
             }
+
             "tax enrolment to allocate enrolment a failure" should {
               "return TaxEnrolmentsFailure" in {
                 val allocateEnrolmentErrorMessage = "allocateEnrolErr"
@@ -180,7 +230,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testDateOfRegistration.toTaxEnrolmentsFormat
                 )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentErrorMessage))))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = true))
+                val res = await(TestClaimSubscriptionService.claimSubscription(
+                  testVatNumber,
+                  Some(testPostCode),
+                  testDateOfRegistration,
+                  isFromBta = true
+                ))
 
                 res shouldBe Left(EnrolFailure)
                 verifyAudit(ClaimSubscriptionAuditModel(
@@ -204,9 +259,9 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               )
 
               val res = await(TestClaimSubscriptionService.claimSubscription(
-                vatNumber = testVatNumber,
-                businessPostcode = None,
-                vatRegistrationDate = None,
+                testVatNumber,
+                Some(testPostCode),
+                testDateOfRegistration,
                 isFromBta = true
               ))
 
@@ -222,9 +277,9 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               )
 
               val res = await(TestClaimSubscriptionService.claimSubscription(
-                vatNumber = testVatNumber,
-                businessPostcode = None,
-                vatRegistrationDate = None,
+                testVatNumber,
+                Some(testPostCode),
+                testDateOfRegistration,
                 isFromBta = true
               ))
 
@@ -242,9 +297,9 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
             val nonMatchingPostcode = "ZZ2 2ZZ"
 
             val res = await(TestClaimSubscriptionService.claimSubscription(
-              vatNumber = testVatNumber,
-              businessPostcode = Some(nonMatchingPostcode),
-              vatRegistrationDate = Some(testDateOfRegistration),
+              testVatNumber,
+              Some(nonMatchingPostcode),
+              testDateOfRegistration,
               isFromBta = true
             ))
 
@@ -258,7 +313,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
           mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
-          val res = TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false)
+          val res = TestClaimSubscriptionService.claimSubscription(
+            testVatNumber,
+            Some(testPostCode),
+            testDateOfRegistration,
+            isFromBta = false
+          )
 
           intercept[ForbiddenException](await(res))
         }
@@ -269,7 +329,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+        val res = await(TestClaimSubscriptionService.claimSubscription(
+          testVatNumber,
+          Some(testPostCode),
+          testDateOfRegistration,
+          isFromBta = false
+        ))
 
         res shouldBe Left(InvalidVatNumber)
       }
@@ -279,7 +344,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
         mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+        val res = await(TestClaimSubscriptionService.claimSubscription(
+          testVatNumber,
+          Some(testPostCode),
+          testDateOfRegistration,
+          isFromBta = false
+        ))
 
         res shouldBe Left(VatNumberNotFound)
       }
@@ -292,7 +362,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
         ))))
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(testVatNumber, None, None, isFromBta = false))
+        val res = await(TestClaimSubscriptionService.claimSubscription(
+          testVatNumber,
+          Some(testPostCode),
+          testDateOfRegistration,
+          isFromBta = false
+        ))
 
         res shouldBe Left(KnownFactsFailure)
       }

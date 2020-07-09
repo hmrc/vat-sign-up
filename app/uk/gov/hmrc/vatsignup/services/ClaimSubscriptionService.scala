@@ -46,15 +46,15 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                         )(implicit ec: ExecutionContext) {
 
   def claimSubscription(vatNumber: String,
-                        businessPostcode: Option[String],
-                        vatRegistrationDate: Option[String],
+                        optBusinessPostcode: Option[String],
+                        vatRegistrationDate: String,
                         isFromBta: Boolean
                        )(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
       _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
       _ <- EitherT.fromEither[Future](checkKnownFactsMatch(
-        businessPostcode,
+        optBusinessPostcode,
         vatRegistrationDate,
         knownFacts
       ))
@@ -76,18 +76,15 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
   }.value
 
   private def checkKnownFactsMatch(optBusinessPostcode: Option[String],
-                                   optVatRegistrationDate: Option[String],
+                                   vatRegistrationDate: String,
                                    storedKnownFacts: KnownFacts): Either[ClaimSubscriptionService.KnownFactsMismatch.type, KnownFactsMatch] = {
-    (optBusinessPostcode, optVatRegistrationDate) match {
-      case (Some(businessPostcode), Some(vatRegistrationDate)) =>
-        if ((storedKnownFacts.vatRegistrationDate == vatRegistrationDate)
-          &&
-          ((storedKnownFacts.businessPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (businessPostcode filterNot (_.isWhitespace)))
-        ) Right(KnownFactsMatched)
-        else Left(KnownFactsMismatch)
-      case _ =>
-        Right(KnownFactsNotSupplied)
-    }
+
+    val registrationDateMatch = vatRegistrationDate.equals(storedKnownFacts.vatRegistrationDate)
+    val postCodeMatch = optBusinessPostcode.isEmpty ||
+      optBusinessPostcode.map(_ filterNot (_.isWhitespace)).contains(storedKnownFacts.businessPostcode filterNot (_.isWhitespace))
+
+    if (registrationDateMatch && postCodeMatch) Right(KnownFactsMatched)
+    else Left(KnownFactsMismatch)
   }
 
   private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, KnownFacts] =
@@ -195,8 +192,6 @@ object ClaimSubscriptionService {
   sealed trait KnownFactsMatch
 
   case object KnownFactsMatched extends KnownFactsMatch
-
-  case object KnownFactsNotSupplied extends KnownFactsMatch
 
   sealed trait ClaimSubscriptionFailure
 
