@@ -33,12 +33,12 @@ trait MockClaimSubscriptionService extends BeforeAndAfterEach with MockitoSugar 
   val mockClaimSubscriptionService: ClaimSubscriptionService = mock[ClaimSubscriptionService]
 
   def mockClaimSubscription(vatNumber: String,
-                            businessPostcode: Option[String],
-                            vatRegistrationDate:Option[String],
+                            optBusinessPostcode: Option[String],
+                            vatRegistrationDate:String,
                             isFromBta: Boolean)(response: Future[ClaimSubscriptionResponse]): Unit =
     when(mockClaimSubscriptionService.claimSubscription(
       ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(businessPostcode),
+      ArgumentMatchers.eq(optBusinessPostcode),
       ArgumentMatchers.eq(vatRegistrationDate),
       ArgumentMatchers.eq(isFromBta)
     )(

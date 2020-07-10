@@ -18,10 +18,10 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.test.Helpers._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
-import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
@@ -39,7 +39,7 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val enrolments = Enrolments(Set(testAgentEnrolment))
+  val enrolments: Enrolments = Enrolments(Set(testAgentEnrolment))
 
   "claimSubscription" when {
     "the user has a matching VATDEC enrolment" when {
@@ -109,7 +109,28 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
           mockClaimSubscription(
             testVatNumber,
             Some(testPostCode),
-            Some(testDateOfRegistration),
+            testDateOfRegistration,
+            isFromBta
+          )(
+            Future.successful(Right(SubscriptionClaimed))
+          )
+
+          val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
+
+          status(res) shouldBe NO_CONTENT
+        }
+      }
+
+      "the known facts match and claim subscription is successful for an overseas vrn" should {
+        "return NO_CONTENT" in {
+          val isFromBta = true
+          val request = FakeRequest().withBody(ClaimSubscriptionRequest(Some(testPostCode), Some(testDateOfRegistration), isFromBta))
+
+          mockAuthRetrieveEnrolments()
+          mockClaimSubscription(
+            testVatNumber,
+            None,
+            testDateOfRegistration,
             isFromBta
           )(
             Future.successful(Right(SubscriptionClaimed))
@@ -130,7 +151,7 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
           mockClaimSubscription(
             testVatNumber,
             Some(testPostCode),
-            Some(testDateOfRegistration),
+            testDateOfRegistration,
             isFromBta
           )(
             Future.successful(Left(KnownFactsMismatch))
@@ -152,7 +173,7 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
           mockClaimSubscription(
             testVatNumber,
             Some(testPostCode),
-            Some(testDateOfRegistration),
+            testDateOfRegistration,
             isFromBta
           )(
             Future.successful(Left(InvalidVatNumber))
@@ -174,7 +195,7 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
           mockClaimSubscription(
             testVatNumber,
             Some(testPostCode),
-            Some(testDateOfRegistration),
+            testDateOfRegistration,
             isFromBta
           )(
             Future.successful(Left(VatNumberNotFound))
@@ -193,7 +214,7 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
           mockClaimSubscription(
             testVatNumber,
             Some(testPostCode),
-            Some(testDateOfRegistration),
+            testDateOfRegistration,
             isFromBta
           )(
             Future.successful(Left(EnrolmentAlreadyAllocated))

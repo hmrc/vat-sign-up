@@ -66,6 +66,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         }
       }
     }
+
     "the user does not have an existing VATDEC enrolment but provides known facts" when {
       "the MTD VAT enrolment is claimed successfully" should {
         "return NO_CONTENT" in {
@@ -95,6 +96,37 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         }
       }
     }
+
+    "the overseas user does not have an existing VATDEC enrolment but provides known facts" when {
+      "the MTD VAT enrolment is claimed successfully" should {
+        "return NO_CONTENT" in {
+          stubAuth(OK, successfulAuthResponse())
+          stubSuccessGetKnownFacts(testVatNumber)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+          stubAllocateEnrolment(
+            vatNumber = testVatNumber,
+            groupId = testGroupId,
+            credentialId = testCredentialId,
+            postcode = testPostCode,
+            vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
+          )(CREATED)
+
+          val res = post(s"/claim-subscription/vat-number/$testVatNumber")(
+            ClaimSubscriptionRequest(
+              postCode = None,
+              registrationDate = Some(testDateOfRegistration),
+              isFromBta = true
+            )
+          )
+
+          res should have(
+            httpStatus(NO_CONTENT)
+          )
+        }
+      }
+    }
+
     "the enrolment is already allocated" should {
       "return Conflict" in {
         stubAuth(OK, successfulAuthResponse())
