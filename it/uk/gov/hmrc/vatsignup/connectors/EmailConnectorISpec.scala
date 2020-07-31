@@ -32,29 +32,7 @@ class EmailConnectorISpec extends ComponentSpecBase {
   "registerEnrolment" when {
     "Tax Enrolments returns a successful response" should {
       "return a SuccessfulTaxEnrolment" in {
-        EmailStub.stubSendEmail(testEmail, testEmailTemplate)(ACCEPTED)
-
-        val res = connector.sendEmail(testEmail, testEmailTemplate, None)
-
-        await(res) shouldBe Right(EmailQueued)
-      }
-    }
-
-    "Tax Enrolments returns a unsuccessful response" should {
-      "return a FailedTaxEnrolment" in {
-        EmailStub.stubSendEmail(testEmail, testEmailTemplate)(BAD_REQUEST)
-
-        val res = connector.sendEmail(testEmail, testEmailTemplate, None)
-
-        await(res) shouldBe Left(SendEmailFailure(BAD_REQUEST, ""))
-      }
-    }
-  }
-
-  "registerEnrolment when is delegated" when {
-    "Tax Enrolments returns a successful response" should {
-      "return a SuccessfulTaxEnrolment" in {
-        EmailStub.stubSendEmailDelegated(testEmail, testEmailTemplate, testVatNumber)(ACCEPTED)
+        EmailStub.stubSendEmail(testEmail, testEmailTemplate, testVatNumber)(ACCEPTED)
 
         val res = connector.sendEmail(testEmail, testEmailTemplate, Some(testVatNumber))
 
@@ -64,7 +42,29 @@ class EmailConnectorISpec extends ComponentSpecBase {
 
     "Tax Enrolments returns a unsuccessful response" should {
       "return a FailedTaxEnrolment" in {
-        EmailStub.stubSendEmailDelegated(testEmail, testEmailTemplate, testVatNumber)(BAD_REQUEST)
+        EmailStub.stubSendEmail(testEmail, testEmailTemplate, testVatNumber)(BAD_REQUEST)
+
+        val res = connector.sendEmail(testEmail, testEmailTemplate, Some(testVatNumber))
+
+        await(res) shouldBe Left(SendEmailFailure(BAD_REQUEST, ""))
+      }
+    }
+  }
+
+  "registerEnrolment when is delegated" when {
+    "Tax Enrolments returns a successful response" should {
+      "return a SuccessfulTaxEnrolment" in {
+        EmailStub.stubSendEmail(testEmail, testEmailTemplate, testVatNumber)(ACCEPTED)
+
+        val res = connector.sendEmail(testEmail, testEmailTemplate, Some(testVatNumber))
+
+        await(res) shouldBe Right(EmailQueued)
+      }
+    }
+
+    "Tax Enrolments returns a unsuccessful response" should {
+      "return a FailedTaxEnrolment" in {
+        EmailStub.stubSendEmail(testEmail, testEmailTemplate, testVatNumber)(BAD_REQUEST)
 
         val res = connector.sendEmail(testEmail, testEmailTemplate, Some(testVatNumber))
 

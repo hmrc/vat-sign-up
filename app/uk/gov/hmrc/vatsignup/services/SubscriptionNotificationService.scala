@@ -82,13 +82,13 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
   private def sendEmailIndividual(emailAddress: String, vatNumber: String, subscriptionState: SubscriptionState)
                                  (implicit hc: HeaderCarrier): Future[Either[NotificationFailure, NotificationSuccess]] = {
     subscriptionState match {
-      case Success => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None) map {
+      case Success => emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, Some(vatNumber)) map {
         case Left(_) => Left(EmailServiceFailure)
         case Right(_) => Right(NotificationSent)
       }
       case _ => checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber) flatMap {
         case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(_)) =>
-          emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, None) map {
+          emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, Some(vatNumber)) map {
             case Left(_) => Left(EmailServiceFailure)
             case Right(_) => Right(NotificationSent)
           }

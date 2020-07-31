@@ -22,21 +22,7 @@ object EmailStub extends WireMockMethods {
 
   val sendEmailUri: String = s"/hmrc/email"
 
-  def stubSendEmail(emailAddress: String, emailTemplate: String)(status: Int): Unit = {
-
-    val sendEmailJsonBody = Json.obj(
-      "to" -> Json.arr(emailAddress),
-      "templateId" -> emailTemplate
-    )
-
-    when(
-      method = POST,
-      uri = sendEmailUri,
-      body = sendEmailJsonBody
-    ) thenReturn status
-  }
-
-  def stubSendEmailDelegated(emailAddress: String, emailTemplate: String, vatNumber: String)(status: Int): Unit = {
+  def stubSendEmail(emailAddress: String, emailTemplate: String, vatNumber: String)(status: Int): Unit = {
     val sendEmailJsonBody = Json.obj(
       "to" -> Json.arr(emailAddress),
       "templateId" -> emailTemplate,
