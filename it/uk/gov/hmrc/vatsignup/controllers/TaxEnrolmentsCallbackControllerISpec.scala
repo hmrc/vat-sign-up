@@ -37,7 +37,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
         "return NO_CONTENT with the status" in {
           await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-          EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(ACCEPTED)
+          EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
           val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
           res should have(
@@ -53,7 +53,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
                 EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
 
-                EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate)(ACCEPTED)
+                EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
                 val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
 
@@ -116,7 +116,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(CREATED)
               EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId3)(CREATED)
 
-              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+              EmailStub.stubSendEmail(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
               res should have(
@@ -145,7 +145,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId2)(BAD_GATEWAY)
               EnrolmentStoreProxyStub.stubAssignEnrolment(testVatNumber, testCredentialId3)(BAD_GATEWAY)
 
-              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+              EmailStub.stubSendEmail(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
               res should have(
@@ -163,7 +163,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
             "return ERROR with the status" in {
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+              EmailStub.stubSendEmail(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
 
@@ -181,7 +181,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
             await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-            EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+            EmailStub.stubSendEmail(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
             val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "SUCCEEDED"))
             res should have(
@@ -196,7 +196,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
+              EmailStub.stubSendEmail(testEmail, agentSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
 
@@ -213,7 +213,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EmailStub.stubSendEmailDelegated(testEmail, agentSuccessEmailTemplate, testVatNumber)(BAD_GATEWAY)
+              EmailStub.stubSendEmail(testEmail, agentSuccessEmailTemplate, testVatNumber)(BAD_GATEWAY)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
                 Json.obj("state" -> "EnrolmentError")

@@ -70,7 +70,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
 
               mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
-              mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Right(EmailQueued)))
+              mockSendEmail(testEmail, principalSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
               res shouldBe Right(NotificationSent)
@@ -81,7 +81,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
             "return EmailServiceFailure" in {
 
               mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-              mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+              mockSendEmail(testEmail, principalSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Success))
 
               res shouldBe Left(EmailServiceFailure)
@@ -97,7 +97,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
-                mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Right(EmailQueued)))
+                mockSendEmail(testEmail, principalSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
@@ -111,7 +111,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
-                mockSendEmail(testEmail, principalSuccessEmailTemplate, None)(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
+                mockSendEmail(testEmail, principalSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
                 res shouldBe Left(EmailServiceFailure)
