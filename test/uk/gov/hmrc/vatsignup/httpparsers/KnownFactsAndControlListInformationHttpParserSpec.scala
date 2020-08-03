@@ -16,14 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.httpparsers
 
-import java.time.Month
-
-import org.scalatest.EitherValues
-import play.api.test.Helpers._
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
-import org.scalatest.{WordSpec, Matchers}
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformationHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser._
@@ -35,187 +32,126 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
 
   "KnownFactsAndControlListInformationHttpReads#read" when {
     "the http status is OK" when {
-      "when the additional known facts fs is enabled" when {
-        s"the json is valid" should {
-          "return known facts and control list information" in {
-            enable(AdditionalKnownFacts)
-            val testResponse = HttpResponse(
-              responseStatus = OK,
-              responseJson = Some(
-                Json.obj(
-                  "postcode" -> testPostCode,
-                  "dateOfReg" -> testDateOfRegistration,
-                  "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
-                  "lastNetDue" -> testLastNetDue.toDouble,
-                  "controlListInformation" -> ControlList34.valid
-                )
+      s"the json is valid" should {
+        "return known facts and control list information" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "postcode" -> testPostCode,
+                "dateOfReg" -> testDateOfRegistration,
+                "lastReturnMonthPeriod" -> testLastReturnMonthPeriod,
+                "lastNetDue" -> testLastNetDue.toDouble,
+                "controlListInformation" -> ControlList34.valid
               )
             )
+          )
 
-            read(testMethod, testUrl, testResponse) shouldBe Right(testKnownFactsAndControlListInformation)
-          }
+          read(testMethod, testUrl, testResponse) shouldBe Right(testKnownFactsAndControlListInformation)
         }
-        s"the json is valid and the month is not available" should {
-          "assume the VMF data is incomplete and return the known facts" in {
-            enable(AdditionalKnownFacts)
-            val testResponse = HttpResponse(
-              responseStatus = OK,
-              responseJson = Some(
-                Json.obj(
-                  "postcode" -> testPostCode,
-                  "dateOfReg" -> testDateOfRegistration,
-                  "lastReturnMonthPeriod" -> "N/A",
-                  "lastNetDue" -> testLastNetDue.toDouble,
-                  "controlListInformation" -> ControlList34.valid
-                )
+      }
+      s"the json is valid and the month is not available" should {
+        "assume the VMF data is incomplete and return the known facts" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "postcode" -> testPostCode,
+                "dateOfReg" -> testDateOfRegistration,
+                "lastReturnMonthPeriod" -> "N/A",
+                "lastNetDue" -> testLastNetDue.toDouble,
+                "controlListInformation" -> ControlList34.valid
               )
             )
+          )
 
-            read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
-              VatKnownFacts(
-                Some(testPostCode),
-                testDateOfRegistration,
-                None,
-                Some(testLastNetDue)
-              ),
-              testControlListInformation
-            ))
-          }
+          read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
+            VatKnownFacts(
+              Some(testPostCode),
+              testDateOfRegistration,
+              None,
+              Some(testLastNetDue)
+            ),
+            testControlListInformation
+          ))
         }
+      }
 
-        s"the json is valid, the month is not available and the net due is 0" should {
-          "return basic known facts and control list information" in {
-            enable(AdditionalKnownFacts)
-            val testResponse = HttpResponse(
-              responseStatus = OK,
-              responseJson = Some(
-                Json.obj(
-                  "postcode" -> testPostCode,
-                  "dateOfReg" -> testDateOfRegistration,
-                  "lastReturnMonthPeriod" -> "N/A",
-                  "lastNetDue" -> 0.00,
-                  "controlListInformation" -> ControlList34.valid
-                )
+      s"the json is valid, the month is not available and the net due is 0" should {
+        "return basic known facts and control list information" in {
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(
+              Json.obj(
+                "postcode" -> testPostCode,
+                "dateOfReg" -> testDateOfRegistration,
+                "lastReturnMonthPeriod" -> "N/A",
+                "lastNetDue" -> 0.00,
+                "controlListInformation" -> ControlList34.valid
               )
             )
+          )
 
-            read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
-              VatKnownFacts(
-                Some(testPostCode),
-                testDateOfRegistration,
-                None,
-                None
-              ),
-              testControlListInformation
-            ))
-          }
-        }
-
-        s"the json is invalid" should {
-          "return UnexpectedKnownFactsAndControlListInformationFailure" in {
-            enable(AdditionalKnownFacts)
-            val testJson = Json.obj(
-              "postcode" -> testPostCode,
-              "dateOfReg" -> testDateOfRegistration
-            )
-            // No control list info
-            val testResponse = HttpResponse(
-              responseStatus = OK,
-              responseJson = Some(testJson)
-            )
-
-            val res: UnexpectedKnownFactsAndControlListInformationFailure = read(
-              method = testMethod,
-              url = testUrl,
-              response = testResponse
-            ).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
-
-            res.status shouldBe OK
-            res.body should include(invalidJsonResponseMessage)
-
-            Json.parse(res.body.replace(invalidJsonResponseMessage, "")) shouldBe testJson
-          }
+          read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
+            VatKnownFacts(
+              Some(testPostCode),
+              testDateOfRegistration,
+              None,
+              None
+            ),
+            testControlListInformation
+          ))
         }
       }
-      "when the additional known facts fs is disabled" when {
-        s"the json is valid" should {
-          "return known facts and control list information" in {
-            disable(AdditionalKnownFacts)
-            val testResponse = HttpResponse(
-              responseStatus = OK,
-              responseJson = Some(
-                Json.obj(
-                  "postcode" -> testPostCode,
-                  "dateOfReg" -> testDateOfRegistration,
-                  "controlListInformation" -> ControlList34.valid
-                )
-              )
-            )
 
-            read(testMethod, testUrl, testResponse) shouldBe Right(KnownFactsAndControlListInformation(
-              VatKnownFacts(
-                Some(testPostCode),
-                testDateOfRegistration,
-                None,
-                None
-              ),
-              testControlListInformation
-            ))
-          }
+      s"the json is invalid" should {
+        "return UnexpectedKnownFactsAndControlListInformationFailure" in {
+          val testJson = Json.obj(
+            "postcode" -> testPostCode,
+            "dateOfReg" -> testDateOfRegistration
+          )
+          // No control list info
+          val testResponse = HttpResponse(
+            responseStatus = OK,
+            responseJson = Some(testJson)
+          )
+
+          val res: UnexpectedKnownFactsAndControlListInformationFailure = read(
+            method = testMethod,
+            url = testUrl,
+            response = testResponse
+          ).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
+
+          res.status shouldBe OK
+          res.body should include(invalidJsonResponseMessage)
+
+          Json.parse(res.body.replace(invalidJsonResponseMessage, "")) shouldBe testJson
         }
-
-        s"the json is invalid" should {
-          "return UnexpectedKnownFactsAndControlListInformationFailure" in {
-            disable(AdditionalKnownFacts)
-            val testJson = Json.obj(
-              "postcode" -> testPostCode,
-              "dateOfReg" -> testDateOfRegistration
-            )
-            // No control list info
-            val testResponse = HttpResponse(
-              responseStatus = OK,
-              responseJson = Some(testJson)
-            )
-
-            val res: UnexpectedKnownFactsAndControlListInformationFailure = read(
-              method = testMethod,
-              url = testUrl,
-              response = testResponse
-            ).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
-
-            res.status shouldBe OK
-            res.body should include(invalidJsonResponseMessage)
-
-            Json.parse(res.body.replace(invalidJsonResponseMessage, "")) shouldBe testJson
-          }
-        }
-
-      }
-    }
-
-    "the http status is BAD_REQUEST" should {
-      "return KnownFactsInvalidVatNumber" in {
-        val testResponse = HttpResponse(BAD_REQUEST)
-
-        read(testMethod, testUrl, testResponse).left.value shouldBe KnownFactsInvalidVatNumber
-      }
-    }
-
-    "the http status is NOT_FOUND" should {
-      "return ControlListInformationVatNumberNotFound" in {
-        val testResponse = HttpResponse(NOT_FOUND)
-
-        read(testMethod, testUrl, testResponse).left.value shouldBe ControlListInformationVatNumberNotFound
-      }
-    }
-
-    "the http status is anything else" should {
-      "return UnexpectedKnownFactsAndControlListInformationFailure" in {
-        val testResponse = HttpResponse(INTERNAL_SERVER_ERROR)
-
-        read(testMethod, testUrl, testResponse).left.value shouldBe UnexpectedKnownFactsAndControlListInformationFailure(testResponse.status, testResponse.body)
       }
     }
   }
 
+  "the http status is BAD_REQUEST" should {
+    "return KnownFactsInvalidVatNumber" in {
+      val testResponse = HttpResponse(BAD_REQUEST)
+
+      read(testMethod, testUrl, testResponse).left.value shouldBe KnownFactsInvalidVatNumber
+    }
+  }
+
+  "the http status is NOT_FOUND" should {
+    "return ControlListInformationVatNumberNotFound" in {
+      val testResponse = HttpResponse(NOT_FOUND)
+
+      read(testMethod, testUrl, testResponse).left.value shouldBe ControlListInformationVatNumberNotFound
+    }
+  }
+
+  "the http status is anything else" should {
+    "return UnexpectedKnownFactsAndControlListInformationFailure" in {
+      val testResponse = HttpResponse(INTERNAL_SERVER_ERROR)
+
+      read(testMethod, testUrl, testResponse).left.value shouldBe UnexpectedKnownFactsAndControlListInformationFailure(testResponse.status, testResponse.body)
+    }
+  }
 }

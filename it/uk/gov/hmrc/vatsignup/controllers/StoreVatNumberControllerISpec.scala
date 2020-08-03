@@ -22,16 +22,12 @@ import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.config.Constants
 import uk.gov.hmrc.vatsignup.config.Constants.ControlList._
-import uk.gov.hmrc.vatsignup.config.featureswitch.AdditionalKnownFacts
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AgentClientRelationshipsStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.GetMandationStatusStub._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.AgentClientRelationshipsHttpParser.NoRelationshipCode
-import uk.gov.hmrc.vatsignup.models.{MTDfBVoluntary, NonMTDfB}
 
 class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatchers with TestSubmissionRequestRepository {
 
@@ -117,30 +113,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
     }
 
     "does not have a HMCE-VAT enrolment but has provided known facts" when {
-      "The vat number has been stored successfully" should {
-        "return OK" in {
-          disable(AdditionalKnownFacts)
-          stubAuth(OK, successfulAuthResponse())
-          stubDirectDebitControlListInformation(testVatNumber)
-
-          val res = post("/subscription-request/vat-number")(Json.obj(
-            "vatNumber" -> testVatNumber,
-            "postCode" -> testPostCode,
-            "registrationDate" -> testDateOfRegistration
-          ))
-
-          res should have(
-            httpStatus(OK),
-            jsonBodyAs(Json.obj(
-              OverseasKey -> false,
-              DirectDebitKey -> true
-            ))
-          )
-        }
-      }
-      "The vat number has been stored successfully, 4 known facts are passed and fs is enabled" should {
+      "The vat number has been stored successfully, 4 known facts are passed" should {
         "return Ok" in {
-          enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
@@ -161,9 +135,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
       }
-      "The vat number has been stored successfully, is overseas and fs is enabled" should {
+      "The vat number has been stored successfully, is overseas" should {
         "return Ok" in {
-          enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
           stubOverseasFourKFControlListInformation(testVatNumber)
 
@@ -184,9 +157,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
       }
-      "The vat number has been stored successfully, 2 known facts are passed and fs is enabled" should {
+      "The vat number has been stored successfully, 2 known facts are passed" should {
         "return OK" in {
-          enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
           stubSuccessNotFiled(testVatNumber)
 
@@ -205,9 +177,8 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
           )
         }
       }
-      "2 known facts are passed and fs is enabled when the user is not overseas" should {
+      "2 known facts are passed when the user is not overseas" should {
         "return FORBIDDEN" in {
-          enable(AdditionalKnownFacts)
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
@@ -226,7 +197,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
       "4 known facts are passed in" when {
         "the box 5 value is negative" should {
           "return OK when the KFs match" in {
-            enable(AdditionalKnownFacts)
             stubAuth(OK, successfulAuthResponse())
             stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
@@ -247,7 +217,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
             )
           }
           "return FORBIDDEN when the KFs don't match" in {
-            enable(AdditionalKnownFacts)
             stubAuth(OK, successfulAuthResponse())
             stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
@@ -267,7 +236,6 @@ class StoreVatNumberControllerISpec extends ComponentSpecBase with CustomMatcher
         }
         "the box 5 value is positive" should {
           "Return OK" in {
-            enable(AdditionalKnownFacts)
             stubAuth(OK, successfulAuthResponse())
             stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 

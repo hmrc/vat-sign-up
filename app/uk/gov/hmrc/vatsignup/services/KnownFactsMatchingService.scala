@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.services
 import javax.inject._
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.models.VatKnownFacts
 import uk.gov.hmrc.vatsignup.models.monitoring.KnownFactsAuditing.KnownFactsAuditModel
 import uk.gov.hmrc.vatsignup.services.KnownFactsMatchingService._
@@ -46,7 +46,7 @@ class KnownFactsMatchingService @Inject()(auditService: AuditService)(implicit e
       case (Some(enteredPostcode), Some(retrievedPostcode))
         if (enteredPostcode filterNot (_.isWhitespace)) equalsIgnoreCase (retrievedPostcode filterNot (_.isWhitespace)) =>
         true
-      case (None, _) if isEnabled(AdditionalKnownFacts) && isOverseas =>
+      case (None, _) if isOverseas =>
         true
       case _ =>
         false
@@ -56,24 +56,15 @@ class KnownFactsMatchingService @Inject()(auditService: AuditService)(implicit e
     val lastNetDueMatch = enteredKfs.lastNetDue.absoluteValue == retrievedKfs.lastNetDue.absoluteValue
     val lastReturnMonthPeriodMatch = enteredKfs.lastReturnMonthPeriod == retrievedKfs.lastReturnMonthPeriod
 
-    if (isEnabled(AdditionalKnownFacts)) {
-      if (businessPostcodeMatch && vatRegDateMatch && lastNetDueMatch && lastReturnMonthPeriodMatch) {
-        auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = true))
-        Right(KnownFactsMatch)
-      }
-      else {
-        auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = false))
-        Left(KnownFactsMismatch)
-      }
-    } else if (businessPostcodeMatch && vatRegDateMatch) {
+    if (businessPostcodeMatch && vatRegDateMatch && lastNetDueMatch && lastReturnMonthPeriodMatch) {
       auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = true))
       Right(KnownFactsMatch)
-    } else {
+    }
+    else {
       auditService.audit(KnownFactsAuditModel(vatNumber, enteredKfs, retrievedKfs, matched = false))
       Left(KnownFactsMismatch)
     }
   }
-
 }
 
 object KnownFactsMatchingService {

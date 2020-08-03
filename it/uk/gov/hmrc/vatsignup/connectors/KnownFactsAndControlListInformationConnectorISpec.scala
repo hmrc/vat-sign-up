@@ -21,7 +21,7 @@ import java.time.Month
 import org.scalatest.EitherValues
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.config.featureswitch.{AdditionalKnownFacts, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsAndControlListInformationStub
@@ -37,9 +37,8 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   "getKnownFactsAndControlListInformation" when {
-    "DES returns a successful response and the fs is enabled" should {
+    "DES returns a successful response" should {
       "return the known facts and control list information" in {
-        enable(AdditionalKnownFacts)
         KnownFactsAndControlListInformationStub.stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
 
         val res = await(
@@ -51,25 +50,6 @@ class KnownFactsAndControlListInformationConnectorISpec extends ComponentSpecBas
             vatRegistrationDate = testDateOfRegistration,
             lastReturnMonthPeriod = Some(Month.MARCH),
             lastNetDue = Some(testLastNetDue)
-          ),
-          controlListInformation = eligibleModel
-        )
-      }
-    }
-    "DES returns a successful response and the fs is disabled" should {
-      "return the known facts and control list information" in {
-        disable(AdditionalKnownFacts)
-        KnownFactsAndControlListInformationStub.stubSuccessGetKnownFactsAndControlListInformation(testVatNumber)
-
-        val res = await(
-          KnownFactsAndControlListInformationConnector.getKnownFactsAndControlListInformation(testVatNumber)
-        )
-        res.right.value shouldBe KnownFactsAndControlListInformation(
-          VatKnownFacts(
-            businessPostcode = Some(testPostCode),
-            vatRegistrationDate = testDateOfRegistration,
-            lastReturnMonthPeriod = None,
-            lastNetDue = None
           ),
           controlListInformation = eligibleModel
         )
