@@ -29,7 +29,6 @@ object FeatureSwitch {
   val switches: Set[FeatureSwitch] = Set(
     StubDESFeature,
     StubAgentServicesFeature,
-    AdditionalKnownFacts,
     AutoClaimEnrolment
   )
 
@@ -54,11 +53,6 @@ case object StubDESFeature extends FeatureSwitch {
 case object StubAgentServicesFeature extends FeatureSwitch {
   val displayName = s"Use stub for Agent Services connection"
   val name = s"$prefix.stub-agent-services"
-}
-
-case object AdditionalKnownFacts extends FeatureSwitch {
-  val displayName: String = "Enable additional known facts check (Box 5 and filing month)"
-  val name: String = s"$prefix.additional-known-facts"
 }
 
 case object AutoClaimEnrolment extends FeatureSwitch {
