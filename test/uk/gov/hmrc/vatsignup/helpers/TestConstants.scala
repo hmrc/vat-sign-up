@@ -195,4 +195,9 @@ object TestConstants {
   val testBasePostCode: String = UUID.randomUUID().toString
   val testCommsPostCode: String = UUID.randomUUID().toString
   val testTraderPostCode: String = UUID.randomUUID().toString
+
+  val testVatCustomerDetails = VatCustomerDetails(
+    KnownFacts(testPostCode, testDateOfRegistration),
+    isOverseas = false
+  )
 }

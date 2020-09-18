@@ -21,9 +21,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockVatCustomerDetailsConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser.VatNumberNotFound
-import uk.gov.hmrc.vatsignup.models.{VatCustomerDetails, VatKnownFacts}
+import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.MigratedKnownFactsMatchingService
 
 import scala.concurrent.ExecutionContext.Implicits.global

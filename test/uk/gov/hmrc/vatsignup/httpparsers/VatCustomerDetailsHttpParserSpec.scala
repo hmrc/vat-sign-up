@@ -21,10 +21,9 @@ import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser.VatCustomerDetailsHttpReads.read
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser._
-import uk.gov.hmrc.vatsignup.models.VatCustomerDetails
+import uk.gov.hmrc.vatsignup.models.{VatCustomerDetails, KnownFacts}
 
 class VatCustomerDetailsHttpParserSpec extends WordSpec with Matchers with EitherValues {
   val testMethod = "GET"

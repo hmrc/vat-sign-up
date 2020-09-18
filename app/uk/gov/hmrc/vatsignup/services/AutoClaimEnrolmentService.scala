@@ -25,10 +25,10 @@ import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Admin
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, KnownFactsConnector, UsersGroupsSearchConnector}
+import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, UsersGroupsSearchConnector, VatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UsersFound
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
+import uk.gov.hmrc.vatsignup.models.KnownFacts
 import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -36,9 +36,8 @@ import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatt
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
 @Singleton
-class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnector,
+class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustomerDetailsConnector,
                                           enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                           checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService,
@@ -65,7 +64,7 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
       _ = audit(vatNumber, triggerPoint, isSuccess = true, None, Some(legacyVatGroupId), legacyVatUserIds, None)
       _ = log(autoClaimEnrolmentService, vatNumber, triggerPoint, isSuccess = true, None, groupIdFound = true, legacyVatUserIds.size)
     } yield EnrolmentAssigned
-    }.value
+  }.value
 
   private implicit class LeftWithLogging[F[_], A, B](value: EitherT[F, A, B]) {
     def logLeft(vatNumber: String, triggerPoint: String,
@@ -156,9 +155,11 @@ class AutoClaimEnrolmentService @Inject()(knownFactsConnector: KnownFactsConnect
   }
 
   private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, KnownFacts] =
-    EitherT(knownFactsConnector.getKnownFacts(vatNumber)) leftMap {
-      case KnownFactsHttpParser.InvalidVatNumber => InvalidVatNumber
-      case KnownFactsHttpParser.VatNumberNotFound => VatNumberNotFound
+    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)) map { details =>
+      details.knownFacts
+    } leftMap {
+      case VatCustomerDetailsHttpParser.InvalidVatNumber => InvalidVatNumber
+      case VatCustomerDetailsHttpParser.VatNumberNotFound => VatNumberNotFound
       case _ => KnownFactsFailure
     }
 
@@ -231,8 +232,6 @@ object AutoClaimEnrolmentService {
   case object EnrolmentAssigned extends AutoClaimEnrolmentSuccess
 
   case object EnrolmentAlreadyAllocated extends AutoClaimEnrolmentSuccess
-
-  case class KnownFacts(businessPostcode: String, vatRegistrationDate: String)
 
   case object UpsertEnrolmentSuccess extends AutoClaimEnrolmentSuccess
 

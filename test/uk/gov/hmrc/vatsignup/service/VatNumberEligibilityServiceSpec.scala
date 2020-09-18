@@ -24,7 +24,6 @@ import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks.{MockMandationStatusConnector, MockVatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetMandationStatusHttpParser.{GetMandationStatusHttpFailure, VatNumberNotFound}
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.{GetMandationStatusHttpParser, VatCustomerDetailsHttpParser}
 import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.service.mocks.MockControlListEligibilityService

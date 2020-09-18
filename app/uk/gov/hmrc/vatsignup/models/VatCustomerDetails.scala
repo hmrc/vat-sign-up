@@ -16,6 +16,6 @@
 
 package uk.gov.hmrc.vatsignup.models
 
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
-
 case class VatCustomerDetails(knownFacts: KnownFacts, isOverseas: Boolean)
+
+case class KnownFacts(businessPostcode: String, vatRegistrationDate: String)
