@@ -19,8 +19,7 @@ package uk.gov.hmrc.vatsignup.httpparsers
 import play.api.http.Status._
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse, InternalServerException}
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
-import uk.gov.hmrc.vatsignup.models.VatCustomerDetails
+import uk.gov.hmrc.vatsignup.models.{KnownFacts, VatCustomerDetails}
 
 object VatCustomerDetailsHttpParser {
   type VatCustomerDetailsHttpParserResponse = Either[VatCustomerDetailsFailure, VatCustomerDetails]
@@ -35,6 +34,7 @@ object VatCustomerDetailsHttpParser {
 
   val deregisteredUserKey = "deregistered"
 
+  //noinspection ScalaStyle
   implicit object VatCustomerDetailsHttpReads extends HttpReads[VatCustomerDetailsHttpParserResponse] {
     def read(method: String, url: String, response: HttpResponse): VatCustomerDetailsHttpParserResponse = {
       response.status match {

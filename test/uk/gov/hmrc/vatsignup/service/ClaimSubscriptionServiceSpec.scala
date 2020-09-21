@@ -16,21 +16,19 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.test.Helpers._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
-import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.{InvalidKnownFacts, KnownFacts}
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
-import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, KnownFactsHttpParser}
+import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, VatCustomerDetailsHttpParser}
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.service.mocks.MockCheckEnrolmentAllocationService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
-import uk.gov.hmrc.vatsignup.services.CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import uk.gov.hmrc.vatsignup.services.{CheckEnrolmentAllocationService, ClaimSubscriptionService}
 import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
@@ -39,7 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
-  with MockKnownFactsConnector
+  with MockVatCustomerDetailsConnector
   with MockAuthConnector
   with MockTaxEnrolmentsConnector
   with MockCheckEnrolmentAllocationService
@@ -47,7 +45,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
 
   object TestClaimSubscriptionService extends ClaimSubscriptionService(
     mockAuthConnector,
-    mockKnownFactsConnector,
+    mockVatCustomerDetailsConnector,
     mockTaxEnrolmentsConnector,
     mockCheckEnrolmentAllocationService,
     mockAuditService
@@ -63,7 +61,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
           "tax enrolment to upsert the enrolment is successful" when {
             "tax enrolment to allocate enrolment returns a success" should {
               "return SubscriptionClaimed" in {
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
@@ -97,7 +95,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               }
 
               "return SubscriptionClaimed when vrn is overseas" in {
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
@@ -134,7 +132,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               "return TaxEnrolmentsFailure" in {
                 val allocateEnrolmentFailureMessage = "allocateEnrolmentFailure"
 
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
@@ -174,7 +172,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               "return SubscriptionClaimed" in {
                 val upsertEnrolmentErrorMessage = "upsertEnrolErr"
 
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
@@ -214,7 +212,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 val allocateEnrolmentErrorMessage = "allocateEnrolErr"
                 val upsertEnrolmentErrorMessage = "upsertEnrolErr"
 
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
@@ -290,7 +288,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
 
         "the supplied known facts do not match what is held on ETMP" should {
           "return KnownFactsMismatch" in {
-            mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
             mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
             mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
 
@@ -309,7 +307,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
       }
       "auth does not return a valid credential" should {
         "return InvalidCredential" in {
-          mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+          mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
           mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
@@ -326,7 +324,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     }
     "the known facts connector returns invalid VAT number" should {
       "return InvalidVatNumber" in {
-        mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
+        mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.InvalidVatNumber)))
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(
@@ -341,7 +339,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     }
     "the known facts connector returns VAT number not found" should {
       "return InvalidVatNumber" in {
-        mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
+        mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.VatNumberNotFound)))
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(
@@ -356,10 +354,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     }
     "the known facts connector fails" should {
       "return KnownFactsFailure" in {
-        mockGetKnownFacts(testVatNumber)(Future.successful(Left(InvalidKnownFacts(
-          status = BAD_REQUEST,
-          body = ""
-        ))))
+        mockGetVatCustomerDetails(testVatNumber)(
+          Future.successful(Left(VatCustomerDetailsHttpParser.InvalidKnownFacts(
+            status = BAD_REQUEST,
+            body = ""
+          )))
+        )
         mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(
@@ -382,7 +382,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
           "tax enrolment to upsert the enrolment is successful" when {
             "tax enrolment to allocate enrolment returns a success" should {
               "return SubscriptionClaimed" in {
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
                 mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))

@@ -20,7 +20,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.AuthStub.{stubAuth, successfulAuthResponse, vatDecEnrolment}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
-import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.stubSuccessGetKnownFacts
+import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub.{stubDeregisteredVatNumber, stubSuccessGetKnownFacts}
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub.stubAllocateEnrolment
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.{EnrolmentStoreProxyStub, TaxEnrolmentsStub}
 import uk.gov.hmrc.vatsignup.helpers.{ComponentSpecBase, CustomMatchers}
@@ -92,6 +92,25 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
 
           res should have(
             httpStatus(NO_CONTENT)
+          )
+        }
+      }
+
+      "the users VRN is Deregistered" should {
+        "return INTERNAL_SERVER_ERROR" in {
+          stubAuth(OK, successfulAuthResponse())
+          stubDeregisteredVatNumber(testVatNumber)
+
+          val res = post(s"/claim-subscription/vat-number/$testVatNumber")(
+            ClaimSubscriptionRequest(
+              postCode = Some(testPostCode),
+              registrationDate = Some(testDateOfRegistration),
+              isFromBta = true
+            )
+          )
+
+          res should have(
+            httpStatus(INTERNAL_SERVER_ERROR)
           )
         }
       }

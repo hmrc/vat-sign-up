@@ -58,6 +58,7 @@ class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
             case Left(VatNumberNotFound | InvalidVatNumber) => BadRequest
             case Left(KnownFactsFailure | EnrolFailure) => BadGateway
             case Left(EnrolmentAlreadyAllocated) => Conflict
+            case Left(Deregistered) => InternalServerError("Deregistered user attempted to claim subscription")
           }
       }
     }

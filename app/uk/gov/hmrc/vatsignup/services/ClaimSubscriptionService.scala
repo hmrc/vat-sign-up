@@ -25,11 +25,11 @@ import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, groupIdentifier}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
-import uk.gov.hmrc.vatsignup.connectors.{KnownFactsConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.vatsignup.connectors.{TaxEnrolmentsConnector, VatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure
-import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, KnownFactsHttpParser}
+import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, VatCustomerDetailsHttpParser}
+import uk.gov.hmrc.vatsignup.models.KnownFacts
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
@@ -39,7 +39,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
-                                         knownFactsConnector: KnownFactsConnector,
+                                         vatCustomerDetailsConnector: VatCustomerDetailsConnector,
                                          taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                          checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                          auditService: AuditService
@@ -88,9 +88,12 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
   }
 
   private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, KnownFacts] =
-    EitherT(knownFactsConnector.getKnownFacts(vatNumber)) leftMap {
-      case KnownFactsHttpParser.InvalidVatNumber => InvalidVatNumber
-      case KnownFactsHttpParser.VatNumberNotFound => VatNumberNotFound
+    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)) map { details =>
+      details.knownFacts
+    } leftMap {
+      case VatCustomerDetailsHttpParser.InvalidVatNumber => InvalidVatNumber
+      case VatCustomerDetailsHttpParser.VatNumberNotFound => VatNumberNotFound
+      case VatCustomerDetailsHttpParser.Deregistered => Deregistered
       case _ => KnownFactsFailure
     }
 
@@ -200,6 +203,8 @@ object ClaimSubscriptionService {
   case object VatNumberNotFound extends ClaimSubscriptionFailure
 
   case object KnownFactsMismatch extends ClaimSubscriptionFailure
+
+  case object Deregistered extends ClaimSubscriptionFailure
 
   case object InvalidVatNumber extends ClaimSubscriptionFailure
 

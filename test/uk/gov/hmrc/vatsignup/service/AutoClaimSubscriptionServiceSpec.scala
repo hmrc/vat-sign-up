@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import play.api.test.Helpers._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.{Admin, Assistant}
 import uk.gov.hmrc.http.HeaderCarrier
-import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.{UsersFound, UsersGroupsSearchConnectionFailure}
@@ -36,13 +36,16 @@ import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatt
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
-class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockKnownFactsConnector
-  with MockEnrolmentStoreProxyConnector with MockCheckEnrolmentAllocationService with MockAssignEnrolmentToUserService
-  with MockUsersGroupsSearchConnector with MockAuditService {
+class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
+  with MockVatCustomerDetailsConnector
+  with MockEnrolmentStoreProxyConnector
+  with MockCheckEnrolmentAllocationService
+  with MockAssignEnrolmentToUserService
+  with MockUsersGroupsSearchConnector
+  with MockAuditService {
 
   object TestAutoClaimEnrolmentService extends AutoClaimEnrolmentService(
-    mockKnownFactsConnector,
+    mockVatCustomerDetailsConnector,
     mockEnrolmentStoreProxyConnector,
     mockCheckEnrolmentAllocationService,
     mockAssignEnrolmentToUserService,
@@ -77,8 +80,8 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockK
                   mockGetUsersForGroup(testGroupId)(
                     Future.successful(Right(UsersFound(testMapCredentialRoles)))
                   )
-                  mockGetKnownFacts(testVatNumber)(
-                    Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration)))
+                  mockGetVatCustomerDetails(testVatNumber)(
+                    Future.successful(Right(testVatCustomerDetails))
                   )
                   mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
@@ -113,7 +116,9 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockK
                   mockGetUsersForGroup(testGroupId)(
                     Future.successful(Right(UsersFound(testMapCredentialRoles)))
                   )
-                  mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
+                  mockGetVatCustomerDetails(testVatNumber)(
+                    Future.successful(Right(testVatCustomerDetails))
+                  )
                   mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
@@ -149,7 +154,9 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockK
                 mockGetUsersForGroup(testGroupId)(
                   Future.successful(Right(UsersFound(testMapCredentialRoles)))
                 )
-                mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
+                mockGetVatCustomerDetails(testVatNumber)(
+                  Future.successful(Right(testVatCustomerDetails))
+                )
                 mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                 )
@@ -182,7 +189,9 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockK
               mockGetUsersForGroup(testGroupId)(
                 Future.successful(Right(UsersFound(testMapCredentialRoles)))
               )
-              mockGetKnownFacts(testVatNumber)(Future.successful(Right(KnownFactsHttpParser.KnownFacts(testPostCode, testDateOfRegistration))))
+              mockGetVatCustomerDetails(testVatNumber)(
+                Future.successful(Right(testVatCustomerDetails))
+              )
               mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                 Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
               )
@@ -212,7 +221,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockK
             mockGetUsersForGroup(testGroupId)(
               Future.successful(Right(UsersFound(testMapCredentialRoles)))
             )
-            mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.InvalidVatNumber)))
+            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.InvalidVatNumber)))
 
             val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
@@ -236,7 +245,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers with MockK
             mockGetUsersForGroup(testGroupId)(
               Future.successful(Right(UsersFound(testMapCredentialRoles)))
             )
-            mockGetKnownFacts(testVatNumber)(Future.successful(Left(KnownFactsHttpParser.VatNumberNotFound)))
+            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.VatNumberNotFound)))
 
             val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 

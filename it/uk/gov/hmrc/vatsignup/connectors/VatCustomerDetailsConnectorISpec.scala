@@ -22,9 +22,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub
-import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsHttpParser.KnownFacts
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser._
-import uk.gov.hmrc.vatsignup.models.VatCustomerDetails
+import uk.gov.hmrc.vatsignup.models.{KnownFacts, VatCustomerDetails}
 
 class VatCustomerDetailsConnectorISpec extends ComponentSpecBase with EitherValues {
 
