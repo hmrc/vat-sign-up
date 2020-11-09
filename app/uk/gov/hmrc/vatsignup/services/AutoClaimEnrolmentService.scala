@@ -45,7 +45,10 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
                                           auditService: AuditService
                                          )(implicit ec: ExecutionContext) {
 
-  def autoClaimEnrolment(vatNumber: String, triggerPoint: String)(implicit hc: HeaderCarrier, request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
+  def autoClaimEnrolment(vatNumber: String,
+                         triggerPoint: String
+                        )(implicit hc: HeaderCarrier,
+                          request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
     for {
       legacyVatGroupId <- getLegacyEnrolmentAllocation(vatNumber)
         .logLeft(vatNumber, triggerPoint, call = getLegacyEnrolmentAllocationCall)
@@ -62,28 +65,40 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
       _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
         .logLeft(vatNumber, triggerPoint, call = assignEnrolmentToUserCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ = audit(vatNumber, triggerPoint, isSuccess = true, None, Some(legacyVatGroupId), legacyVatUserIds, None)
-      _ = log(autoClaimEnrolmentService, vatNumber, triggerPoint, isSuccess = true, None, groupIdFound = true, legacyVatUserIds.size)
+      _ = log(vatNumber, triggerPoint, isSuccess = true, None, groupIdFound = true, legacyVatUserIds.size)
     } yield EnrolmentAssigned
   }.value
 
   private implicit class LeftWithLogging[F[_], A, B](value: EitherT[F, A, B]) {
-    def logLeft(vatNumber: String, triggerPoint: String,
-                call: String, groupId: Option[String] = None,
+    def logLeft(vatNumber: String,
+                triggerPoint: String,
+                call: String,
+                groupId: Option[String] = None,
                 userIds: Set[String] = Set.empty
-               )(implicit F: Functor[F], hc: HeaderCarrier, request: Request[_]): EitherT[F, A, B] = {
-      value.leftMap { error =>
-        val isSuccess = if (error == EnrolmentNotAllocated || error == NoUsersFound) true else false
-        audit(vatNumber, triggerPoint, isSuccess, Some(call), groupId, userIds, Some(error.toString))
-        log(autoClaimEnrolmentService, vatNumber, triggerPoint, isSuccess, Some(call), groupId.isDefined, userIds.size)
-        error
+               )(implicit F: Functor[F],
+                 hc: HeaderCarrier,
+                 request: Request[_]): EitherT[F, A, B] =
+      value.leftMap {
+        error =>
+          val isSuccess = if (error == EnrolmentNotAllocated || error == NoUsersFound) true else false
+
+          audit(vatNumber, triggerPoint, isSuccess, Some(call), groupId, userIds, Some(error.toString))
+
+          log(vatNumber, triggerPoint, isSuccess, Some(call), groupId.isDefined, userIds.size)
+
+          error
       }
-    }
   }
 
-  private def audit(vatNumber: String, triggerPoint: String,
-                    isSuccess: Boolean, call: Option[String],
-                    groupId: Option[String], userIds: Set[String],
-                    auditInformation: Option[String])(implicit headerCarrier: HeaderCarrier, request: Request[_]): Unit = {
+  private def audit(vatNumber: String,
+                    triggerPoint: String,
+                    isSuccess: Boolean,
+                    call: Option[String],
+                    groupId: Option[String],
+                    userIds: Set[String],
+                    auditInformation: Option[String]
+                   )(implicit headerCarrier: HeaderCarrier,
+                     request: Request[_]): Unit = {
 
     auditService.audit(AutoClaimEnrolementAuditingModel(
       vatNumber,
@@ -96,9 +111,11 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
     ))
   }
 
-  private def log(serviceName: String, vatNumber: String,
-                  triggerPoint: String, isSuccess: Boolean,
-                  call: Option[String], groupIdFound: Boolean,
+  private def log(vatNumber: String,
+                  triggerPoint: String,
+                  isSuccess: Boolean,
+                  call: Option[String],
+                  groupIdFound: Boolean,
                   numberOfIDs: Int): Unit = {
 
     val logString = Json.obj(
@@ -118,8 +135,9 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
     }
   }
 
-  private def getLegacyEnrolmentAllocation(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] = {
-    EitherT(checkEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(vatNumber)) transform {
+  private def getLegacyEnrolmentAllocation(vatNumber: String)
+                                          (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, String] =
+    EitherT(checkEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(vatNumber)).transform {
       case Right(_) =>
         Left(EnrolmentNotAllocated)
       case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(groupId)) =>
@@ -127,10 +145,9 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
       case Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status)) =>
         Left(EnrolmentStoreProxyFailure(status))
     }
-  }
 
-  private def getLegacyEnrolmentUserIDs(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] = {
-    EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)) transform {
+  private def getLegacyEnrolmentUserIDs(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] =
+    EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)).transform {
       case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) if retrievedUserIds.nonEmpty =>
         Right(retrievedUserIds)
       case Right(QueryUsersHttpParser.NoUsersFound) =>
@@ -138,13 +155,12 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
       case _ =>
         Left(EnrolmentStoreProxyConnectionFailure)
     }
-  }
 
-  private def getAdminUserId(groupId: String, legacyVatUserIds: Set[String])(implicit hc: HeaderCarrier): Future[Either[AutoClaimEnrolmentFailure, String]] = {
-    usersGroupsSearchConnector.getUsersForGroup(groupId) map {
+  private def getAdminUserId(groupId: String, legacyVatUserIds: Set[String])(implicit hc: HeaderCarrier): Future[Either[AutoClaimEnrolmentFailure, String]] =
+    usersGroupsSearchConnector.getUsersForGroup(groupId).map {
       case Right(UsersFound(userIds)) =>
-        userIds collectFirst {
-          case (userId, Admin) if legacyVatUserIds contains userId => userId
+        userIds.collectFirst {
+          case (userId, Admin) if legacyVatUserIds.contains(userId) => userId
         } match {
           case Some(userId) => Right(userId)
           case None => Left(NoAdminUsers)
@@ -152,12 +168,12 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
       case Left(_) =>
         Left(UsersGroupsSearchFailure)
     }
-  }
 
   private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, KnownFacts] =
-    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)) map { details =>
-      details.knownFacts
-    } leftMap {
+    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)).map {
+      details =>
+        details.knownFacts
+    }.leftMap {
       case VatCustomerDetailsHttpParser.InvalidVatNumber => InvalidVatNumber
       case VatCustomerDetailsHttpParser.VatNumberNotFound => VatNumberNotFound
       case _ => KnownFactsFailure
@@ -170,41 +186,39 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
       vatNumber = vatNumber,
       postcode = knownFacts.businessPostcode,
       vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-    )) transform {
+    )).transform {
       case Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess) =>
         Right(AutoClaimEnrolmentService.UpsertEnrolmentSuccess)
       case Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(_, message)) =>
-        Left(AutoClaimEnrolmentService.UpsertEnrolmentFailure(message))
+        Right(AutoClaimEnrolmentService.IgnoredUpsertEnrolmentFailure(message))
     }
 
   private def allocateEnrolmentWithoutKnownFacts(vatNumber: String,
                                                  groupId: String,
                                                  credentialId: String
-                                                )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
+                                                )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
     EitherT(enrolmentStoreProxyConnector.allocateEnrolmentWithoutKnownFacts(
       groupId = groupId,
       credentialId = credentialId,
       vatNumber = vatNumber
-    )) transform {
+    )).transform {
       case Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess) =>
         Right(AutoClaimEnrolmentService.EnrolSuccess)
       case Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(message)) =>
         Left(AutoClaimEnrolmentService.EnrolAdminIdFailure(credentialId, message))
     }
-  }
 
   private def assignEnrolmentToUser(credentialIds: Set[String], vatNumber: String)
-                                   (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] = {
+                                   (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
     EitherT(assignEnrolmentToUserService.assignEnrolment(
       userIds = credentialIds,
       vatNumber = vatNumber
-    )) transform {
+    )).transform {
       case Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers) =>
         Right(AutoClaimEnrolmentService.EnrolmentAssigned)
       case Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed(failedIds)) =>
         Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(failedIds))
     }
-  }
 
 }
 
@@ -235,6 +249,8 @@ object AutoClaimEnrolmentService {
 
   case object UpsertEnrolmentSuccess extends AutoClaimEnrolmentSuccess
 
+  case class IgnoredUpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentSuccess
+
   sealed trait AutoClaimEnrolmentFailure
 
   case object NoUsersFound extends AutoClaimEnrolmentFailure
@@ -252,8 +268,6 @@ object AutoClaimEnrolmentService {
   case class EnrolmentStoreProxyFailure(status: Int) extends AutoClaimEnrolmentFailure
 
   case object EnrolmentStoreProxyConnectionFailure extends AutoClaimEnrolmentFailure
-
-  case class UpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentFailure
 
   case class EnrolmentAssignmentFailureForIds(failedIds: Set[String]) extends AutoClaimEnrolmentFailure
 

@@ -31,7 +31,7 @@ import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.services.AgentClientRelationshipService.{LegacyRelationship, MtdVatRelationship}
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService.GGProviderId
 
-object TestConstants {
+object  TestConstants {
   val testVatNumber: String = UUID.randomUUID().toString
   val testNino: String = UUID.randomUUID().toString
   val testCompanyNumber: String = UUID.randomUUID().toString

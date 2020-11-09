@@ -25,7 +25,7 @@ import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, groupIdentifier}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
-import uk.gov.hmrc.vatsignup.connectors.{TaxEnrolmentsConnector, VatCustomerDetailsConnector}
+import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, TaxEnrolmentsConnector, VatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, VatCustomerDetailsHttpParser}
@@ -41,6 +41,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                          vatCustomerDetailsConnector: VatCustomerDetailsConnector,
                                          taxEnrolmentsConnector: TaxEnrolmentsConnector,
+                                         enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                          checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                          auditService: AuditService
                                         )(implicit ec: ExecutionContext) {
@@ -49,7 +50,8 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                         optBusinessPostcode: Option[String],
                         vatRegistrationDate: String,
                         isFromBta: Boolean
-                       )(implicit hc: HeaderCarrier, request: Request[_]): Future[ClaimSubscriptionResponse] = {
+                       )(implicit hc: HeaderCarrier,
+                         request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
       _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
@@ -66,8 +68,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
   def claimSubscriptionWithEnrolment(vatNumber: String,
                                      isFromBta: Boolean
                                     )(implicit hc: HeaderCarrier,
-                                      request: Request[_]
-                                    ): Future[ClaimSubscriptionResponse] = {
+                                      request: Request[_]): Future[ClaimSubscriptionResponse] = {
     for {
       _ <- getEnrolmentAllocationStatus(vatNumber)
       knownFacts <- getKnownFacts(vatNumber)
@@ -81,16 +82,17 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
 
     val registrationDateMatch = vatRegistrationDate.equals(storedKnownFacts.vatRegistrationDate)
     val postCodeMatch = optBusinessPostcode.isEmpty ||
-      optBusinessPostcode.map(_ filterNot (_.isWhitespace)).contains(storedKnownFacts.businessPostcode filterNot (_.isWhitespace))
+      optBusinessPostcode.map(_.filterNot(_.isWhitespace)).contains(storedKnownFacts.businessPostcode.filterNot(_.isWhitespace))
 
     if (registrationDateMatch && postCodeMatch) Right(KnownFactsMatched)
     else Left(KnownFactsMismatch)
   }
 
   private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, KnownFacts] =
-    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)) map { details =>
-      details.knownFacts
-    } leftMap {
+    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)).map {
+      details =>
+        details.knownFacts
+    }.leftMap {
       case VatCustomerDetailsHttpParser.InvalidVatNumber => InvalidVatNumber
       case VatCustomerDetailsHttpParser.VatNumberNotFound => VatNumberNotFound
       case VatCustomerDetailsHttpParser.Deregistered => Deregistered
@@ -98,8 +100,8 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     }
 
   private def getEnrolmentAllocationStatus(vatNumber: String)
-                                          (implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, EnrolmentNotAllocated.type] = {
-    EitherT(checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber)) transform {
+                                          (implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, EnrolmentNotAllocated.type] =
+    EitherT(checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber)).transform {
       case Right(_) =>
         Right(EnrolmentNotAllocated)
       case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(_)) =>
@@ -107,40 +109,35 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       case Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status)) =>
         Left(CheckEnrolmentAllocationFailed(status))
     }
-  }
 
   private def upsertAndAllocateEnrolment(vatNumber: String,
                                          knownFacts: KnownFacts,
-                                         isFromBta: Boolean)(
-                                          implicit hc: HeaderCarrier, request: Request[_]
-                                        ): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] = {
-    EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)) flatMap {
+                                         isFromBta: Boolean
+                                        )(implicit hc: HeaderCarrier,
+                                          request: Request[_]): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
+
+    EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)).flatMap {
       case Some(Credentials(credentialId, GGProviderId)) ~ Some(groupId) =>
         for {
-          upsertEnrolmentResponse <- upsertEnrolment(vatNumber, knownFacts, isFromBta)
-          res <- allocateEnrolment(vatNumber, knownFacts, isFromBta, groupId, credentialId, upsertEnrolmentResponse)
+          upsertEnrolmentResponse <- upsertEnrolment(vatNumber, knownFacts)
+          res <- allocateEnrolment(vatNumber, isFromBta, groupId, credentialId, upsertEnrolmentResponse)
         } yield res
       case _ =>
         EitherT.liftF(Future.failed(new ForbiddenException("Invalid auth credentials")))
     }
-  }
 
   private def allocateEnrolment(vatNumber: String,
-                                knownFacts: KnownFacts,
                                 isFromBta: Boolean,
                                 groupId: String,
                                 credentialId: String,
                                 upsertEnrolmentResponse: UpsertEnrolmentResponse
-                               )(
-                                 implicit hc: HeaderCarrier, request: Request[_]
-                               ): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
-    EitherT(taxEnrolmentsConnector.allocateEnrolment(
+                               )(implicit hc: HeaderCarrier,
+                                 request: Request[_]): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
+    EitherT(enrolmentStoreProxyConnector.allocateEnrolmentWithoutKnownFacts(
       groupId = groupId,
       credentialId = credentialId,
-      vatNumber = vatNumber,
-      postcode = knownFacts.businessPostcode,
-      vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-    )) bimap( {
+      vatNumber = vatNumber
+    )).bimap({
       enrolFailure: AllocateEnrolmentResponseHttpParser.EnrolFailure =>
         val upsertEnrolmentFailureMessage = upsertEnrolmentResponse match {
           case UpsertEnrolmentSuccess => None
@@ -148,8 +145,6 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
         }
         auditService.audit(ClaimSubscriptionAuditModel(
           vatNumber,
-          businessPostcode = knownFacts.businessPostcode,
-          vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
           isFromBta = isFromBta,
           isSuccess = false,
           allocateEnrolmentFailureMessage = Some(enrolFailure.message),
@@ -159,22 +154,21 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
     }, result => {
       auditService.audit(ClaimSubscriptionAuditModel(
         vatNumber,
-        businessPostcode = knownFacts.businessPostcode,
-        vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat,
         isFromBta = isFromBta,
         isSuccess = true
       ))
       result
     })
 
-  private def upsertEnrolment(vatNumber: String, knownFacts: KnownFacts, isFromBta: Boolean)(
-    implicit hc: HeaderCarrier, request: Request[_]
-  ): EitherT[Future, ClaimSubscriptionFailure, UpsertEnrolmentResponse] =
+  private def upsertEnrolment(vatNumber: String,
+                              knownFacts: KnownFacts
+                             )(implicit hc: HeaderCarrier,
+                               request: Request[_]): EitherT[Future, ClaimSubscriptionFailure, UpsertEnrolmentResponse] =
     EitherT(taxEnrolmentsConnector.upsertEnrolment(
       vatNumber = vatNumber,
       postcode = knownFacts.businessPostcode,
       vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-    )) transform {
+    )).transform {
       case Right(_) =>
         Right(UpsertEnrolmentSuccess)
       case Left(UpsertEnrolmentFailure(_, message)) =>

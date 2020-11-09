@@ -181,7 +181,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
             }
           }
           "upsert the enrolment fails" when {
-            "return Failure" in {
+            "return Success" in {
               mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
                 Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
               )
@@ -195,20 +195,26 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
               mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
                 Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
               )
+              mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
+                Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
+              )
+              mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
+                Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
+              )
 
               val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
-              res shouldBe Left(AutoClaimEnrolmentService.UpsertEnrolmentFailure(testErrorMsg))
+              res shouldBe Right(AutoClaimEnrolmentService.EnrolmentAssigned)
 
               verifyAudit(AutoClaimEnrolementAuditingModel(
                 testVatNumber,
                 agentLedSignUp,
-                isSuccess = false,
-                call = Some(upsertEnrolmentAllocationCall),
+                isSuccess = true,
+                call = None,
                 groupId = Some(testGroupId),
                 userIds = testSetCredentialIds,
-                auditInformation = Some(AutoClaimEnrolmentService.UpsertEnrolmentFailure(testErrorMsg).toString)
-              ))
+                auditInformation = None)
+              )
             }
           }
         }

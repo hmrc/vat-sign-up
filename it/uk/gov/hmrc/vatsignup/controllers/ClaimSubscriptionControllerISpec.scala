@@ -37,12 +37,10 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
           EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
-          stubAllocateEnrolment(
+          EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(
             vatNumber = testVatNumber,
             groupId = testGroupId,
-            credentialId = testCredentialId,
-            postcode = testPostCode,
-            vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
+            credentialId = testCredentialId
           )(CREATED)
 
           val res = post(s"/claim-subscription/vat-number/$testVatNumber")(ClaimSubscriptionRequest(isFromBta = true))
@@ -74,12 +72,10 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           stubSuccessGetKnownFacts(testVatNumber)
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
           TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
-          stubAllocateEnrolment(
+          EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(
             vatNumber = testVatNumber,
             groupId = testGroupId,
-            credentialId = testCredentialId,
-            postcode = testPostCode,
-            vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
+            credentialId = testCredentialId
           )(CREATED)
 
           val res = post(s"/claim-subscription/vat-number/$testVatNumber")(
@@ -123,12 +119,10 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
           stubSuccessGetKnownFacts(testVatNumber)
           stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
           TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
-          stubAllocateEnrolment(
+          EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(
             vatNumber = testVatNumber,
             groupId = testGroupId,
-            credentialId = testCredentialId,
-            postcode = testPostCode,
-            vatRegistrationDate = testDateOfRegistration.toTaxEnrolmentsFormat
+            credentialId = testCredentialId
           )(CREATED)
 
           val res = post(s"/claim-subscription/vat-number/$testVatNumber")(
