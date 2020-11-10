@@ -41,7 +41,8 @@ class BulkMigrationAutoClaimEnrolmentController @Inject()(autoClaimEnrolmentServ
           case Left(EnrolmentNotAllocated) | Left(NoUsersFound) => NoContent
           case reason => throw new InternalServerException(s"Unexpected failure when trying to automatically claim an enrolment due to $reason")
         }
-      } else Future.successful(Unauthorized.withHeaders(WWW_AUTHENTICATE -> s"""Basic realm="${appConfig.authRealm}""""))
+      }
+      else Future.successful(Unauthorized.withHeaders(WWW_AUTHENTICATE -> s"""Basic realm="${appConfig.authRealm}""""))
   }
 
 }

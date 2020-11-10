@@ -33,14 +33,14 @@ import scala.concurrent.ExecutionContext
 class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
                                             claimSubscriptionService: ClaimSubscriptionService,
                                             cc: ControllerComponents
-                                           )(implicit ec: ExecutionContext)
-  extends BackendController(cc) with AuthorisedFunctions {
+                                           )(implicit ec: ExecutionContext) extends BackendController(cc) with AuthorisedFunctions {
 
   def claimSubscription(vatNumber: String): Action[ClaimSubscriptionRequest] =
-    Action.async(parse.json[ClaimSubscriptionRequest]) { implicit req =>
+    Action.async(parse.json[ClaimSubscriptionRequest]) {
+      implicit request =>
       authorised().retrieve(Retrievals.allEnrolments) {
         enrolments =>
-          ((enrolments.vatNumber, req.body) match {
+          ((enrolments.vatNumber, request.body) match {
             case (Right(enrolmentVatNumber), ClaimSubscriptionRequest(_, _, isFromBta)) if enrolmentVatNumber == vatNumber =>
               claimSubscriptionService.claimSubscriptionWithEnrolment(vatNumber, isFromBta)
             case (Left(_), ClaimSubscriptionRequest(optPostCode, Some(registrationDate), isFromBta)) =>
@@ -52,7 +52,7 @@ class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
               )
             case _ =>
               throw new ForbiddenException("Either matching legacy enrolment or known facts must be provided to claim enrolment.")
-          }) map {
+          }).map {
             case Right(SubscriptionClaimed) => NoContent
             case Left(KnownFactsMismatch) => Forbidden
             case Left(VatNumberNotFound | InvalidVatNumber) => BadRequest

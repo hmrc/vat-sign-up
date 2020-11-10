@@ -25,8 +25,6 @@ object ClaimSubscriptionAuditing {
   val claimSubscriptionAuditType = "mtdVatClaimSubscription"
 
   case class ClaimSubscriptionAuditModel(vatNumber: String,
-                                         businessPostcode: String,
-                                         vatRegistrationDate: String,
                                          isFromBta: Boolean,
                                          isSuccess: Boolean,
                                          allocateEnrolmentFailureMessage: Option[String] = None,
@@ -37,8 +35,6 @@ object ClaimSubscriptionAuditing {
 
     override val detail: Map[String, String] = Map(
       "vatNumber" -> vatNumber,
-      "businessPostcode" -> businessPostcode,
-      "vatRegistrationDate" -> vatRegistrationDate,
       "isFromBta" -> isFromBta.toString,
       "isSuccess" -> isSuccess.toString,
       "allocateEnrolmentFailureMessage" -> allocateEnrolmentFailureMessage.getOrElse(""),
