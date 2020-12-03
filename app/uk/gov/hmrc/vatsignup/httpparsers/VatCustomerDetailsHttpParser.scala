@@ -59,18 +59,13 @@ object VatCustomerDetailsHttpParser {
           Left(InvalidVatNumber)
         case NOT_FOUND =>
           Left(VatNumberNotFound)
-        case _ =>
-          Left(InvalidKnownFacts(
-            status = response.status,
-            body = response.body
-          ))
+        case _ => throw new InternalServerException(
+          s"[VatCustomerDetailsHttpParser] GetKnownFacts API returned, Response Status: ${response.status} Response Body: ${response.body}")
       }
     }
   }
 
   sealed trait VatCustomerDetailsFailure
-
-  case class InvalidKnownFacts(status: Int, body: String) extends VatCustomerDetailsFailure
 
   case object InvalidVatNumber extends VatCustomerDetailsFailure
 

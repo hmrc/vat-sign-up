@@ -334,26 +334,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
         res shouldBe Left(VatNumberNotFound)
       }
     }
-    "the known facts connector fails" should {
-      "return KnownFactsFailure" in {
-        mockGetVatCustomerDetails(testVatNumber)(
-          Future.successful(Left(VatCustomerDetailsHttpParser.InvalidKnownFacts(
-            status = BAD_REQUEST,
-            body = ""
-          )))
-        )
-        mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(
-          testVatNumber,
-          Some(testPostCode),
-          testDateOfRegistration,
-          isFromBta = false
-        ))
-
-        res shouldBe Left(KnownFactsFailure)
-      }
-    }
   }
 
 
