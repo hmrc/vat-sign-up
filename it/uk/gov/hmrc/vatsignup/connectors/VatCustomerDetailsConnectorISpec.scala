@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.connectors
 
 import org.scalatest.EitherValues
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.KnownFactsStub
@@ -70,6 +70,15 @@ class VatCustomerDetailsConnectorISpec extends ComponentSpecBase with EitherValu
         val res = await(vatCustomerDetailsConnector.getVatCustomerDetails(testVatNumber))
 
         res.left.value shouldBe VatNumberNotFound
+      }
+    }
+    "Vat subscription returns InvalidKnownFacts" should {
+      "throw an InternalServerException" in {
+        KnownFactsStub.stubFailureNoPostCode(testVatNumber)
+
+        intercept[InternalServerException] {
+          await(vatCustomerDetailsConnector.getVatCustomerDetails(testVatNumber))
+        }
       }
     }
   }

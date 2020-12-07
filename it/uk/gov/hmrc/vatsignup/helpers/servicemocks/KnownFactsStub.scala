@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, OK}
+import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, OK, BAD_GATEWAY}
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 
@@ -43,6 +43,9 @@ object KnownFactsStub extends WireMockMethods {
 
   def stubFailureInvalidVatNumber(vatNumber: String): StubMapping =
     stubGetKnownFacts(vatNumber)(BAD_REQUEST, None)
+
+  def stubFailureNoPostCode(vatNumber: String): StubMapping =
+    stubGetKnownFacts(vatNumber)(BAD_GATEWAY, None)
 
   private def successResponseBody(isOverseas: Boolean) =
     Json.obj(

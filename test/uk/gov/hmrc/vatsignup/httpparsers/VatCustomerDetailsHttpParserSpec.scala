@@ -139,15 +139,5 @@ class VatCustomerDetailsHttpParserSpec extends WordSpec with Matchers with Eithe
       }
     }
 
-    "the http status is anything else" should {
-      "return InvalidKnownFacts" in {
-        val testResponse = HttpResponse(INTERNAL_SERVER_ERROR)
-
-        read(testMethod, testUrl, testResponse).left.value shouldBe InvalidKnownFacts(
-          status = testResponse.status,
-          body = testResponse.body
-        )
-      }
-    }
   }
 }
