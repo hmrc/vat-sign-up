@@ -97,7 +97,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
 
   private def getEnrolmentAllocationStatus(vatNumber: String)
                                           (implicit hc: HeaderCarrier): EitherT[Future, ClaimSubscriptionFailure, EnrolmentNotAllocated.type] =
-    EitherT(checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber)).transform {
+    EitherT(checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber, ignoreAssignments = true)).transform {
       case Right(_) =>
         Right(EnrolmentNotAllocated)
       case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(_)) =>

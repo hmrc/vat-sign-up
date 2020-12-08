@@ -23,7 +23,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
-import EnrolmentStoreProxyConnector.principalQueryKey
+import EnrolmentStoreProxyConnector._
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
@@ -35,17 +35,17 @@ import scala.concurrent.{ExecutionContext, Future}
 class EnrolmentStoreProxyConnector @Inject()(http: HttpClient,
                                              appConfig: AppConfig)(implicit ec: ExecutionContext) {
 
-  def getAllocatedEnrolments(enrolmentKey: String)(implicit hc: HeaderCarrier): Future[EnrolmentStoreProxyResponse] = {
+  def getAllocatedEnrolments(enrolmentKey: String, ignoreAssignments: Boolean)(implicit hc: HeaderCarrier): Future[EnrolmentStoreProxyResponse] = {
     http.GET[EnrolmentStoreProxyResponse](
       url = appConfig.getAllocatedEnrolmentUrl(enrolmentKey),
-      queryParams = Seq(principalQueryKey)
+      queryParams = Seq(principalQueryParameter, ignoreAssignmentsQueryParameter(ignoreAssignments))
     )
   }
 
   def getUserIds(vatNumber: String)(implicit hc: HeaderCarrier): Future[QueryUsersResponse] = {
     http.GET[QueryUsersResponse](
       url = appConfig.queryUsersUrl(vatNumber),
-      queryParams = Seq(principalQueryKey))
+      queryParams = Seq(principalQueryParameter))
   }
 
   def upsertEnrolment(vatNumber: String,
@@ -103,6 +103,6 @@ class EnrolmentStoreProxyConnector @Inject()(http: HttpClient,
 }
 
 object EnrolmentStoreProxyConnector {
-  val principalQueryKey: (String, String) = "type" -> "principal"
-
+  val principalQueryParameter: (String, String) = "type" -> "principal"
+  def ignoreAssignmentsQueryParameter(ignoreAssignments: Boolean): (String, String) = "ignore-assignments" -> ignoreAssignments.toString
 }

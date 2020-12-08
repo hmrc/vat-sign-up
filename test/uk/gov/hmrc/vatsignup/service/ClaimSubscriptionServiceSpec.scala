@@ -67,7 +67,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(
@@ -97,7 +97,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(
@@ -129,7 +129,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(
@@ -165,7 +165,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(
@@ -201,7 +201,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(
@@ -231,7 +231,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
           "the enrolment is already allocated, CheckEnrolmentAllocation" should {
             "return a EnrolmentAlreadyAllocated" in {
               mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                 Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
               )
 
@@ -249,7 +249,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
           "CheckEnrolmentAllocation fails" should {
             "return an UnexpectedEnrolmentStoreProxyFailure and the status code" in {
               mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                 Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
               )
 
@@ -268,7 +268,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
         "the supplied known facts do not match what is held on ETMP" should {
           "return KnownFactsMismatch" in {
             mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-            mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
+            mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
             mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
 
             val nonMatchingPostcode = "ZZ2 2ZZ"
@@ -287,7 +287,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
       "auth does not return a valid credential" should {
         "return InvalidCredential" in {
           mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-          mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
+          mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
           val res = TestClaimSubscriptionService.claimSubscription(
@@ -304,7 +304,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     "the known facts connector returns invalid VAT number" should {
       "return InvalidVatNumber" in {
         mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.InvalidVatNumber)))
-        mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(
           testVatNumber,
@@ -319,7 +319,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     "the known facts connector returns VAT number not found" should {
       "return InvalidVatNumber" in {
         mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.VatNumberNotFound)))
-        mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
 
         val res = await(TestClaimSubscriptionService.claimSubscription(
           testVatNumber,
@@ -347,7 +347,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(
@@ -372,7 +372,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
             "the enrolment is already allocated, CheckEnrolmentAllocation" should {
               "return a EnrolmentAlreadyAllocated" in {
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                 )
 

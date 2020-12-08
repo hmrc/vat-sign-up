@@ -42,29 +42,29 @@ class CheckEnrolmentAllocationServiceSpec extends WordSpec with Matchers
   "getGroupIdForMtdVatEnrolment" when {
     "EnrolmentStoreProxy returns EnrolmentNotAllocated" should {
       "return EnrolmentNotAllocated" in {
-        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber))(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
+        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber), ignoreAssignments = true)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
 
-        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber)
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)
 
         await(res) shouldBe Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)
       }
     }
     "EnrolmentStoreProxy returns EnrolmentAlreadyAllocated" should {
       "return EnrolmentAlreadyAllocated" in {
-        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber))(
+        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber), ignoreAssignments = true)(
           Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId)))
         )
 
-        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber)
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)
 
         await(res) shouldBe Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId))
       }
     }
     "EnrolmentStoreProxy returns an unexpected failure" should {
       "return Failure" in {
-        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber))(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
+        mockGetAllocatedEnrolment(mtdVatEnrolmentKey(testVatNumber), ignoreAssignments = true)(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
 
-        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber)
+        val res = TestCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)
 
         await(res) shouldBe Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))
       }
@@ -75,7 +75,7 @@ class CheckEnrolmentAllocationServiceSpec extends WordSpec with Matchers
   "getGroupIdForLegacyVatEnrolment" when {
     "EnrolmentStoreProxy returns EnrolmentNotAllocated" should {
       "return EnrolmentNotAllocated" in {
-        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber))(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
+        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber), ignoreAssignments = false)(Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentNotAllocated)))
 
         val res = TestCheckEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(testVatNumber)
 
@@ -84,7 +84,7 @@ class CheckEnrolmentAllocationServiceSpec extends WordSpec with Matchers
     }
     "EnrolmentStoreProxy returns EnrolmentAlreadyAllocated" should {
       "return EnrolmentAlreadyAllocated" in {
-        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber))(
+        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber), ignoreAssignments = false)(
           Future.successful(Right(EnrolmentStoreProxyHttpParser.EnrolmentAlreadyAllocated(testGroupId)))
         )
 
@@ -95,7 +95,7 @@ class CheckEnrolmentAllocationServiceSpec extends WordSpec with Matchers
     }
     "EnrolmentStoreProxy returns an unexpected failure" should {
       "return Failure" in {
-        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber))(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
+        mockGetAllocatedEnrolment(legacyVatEnrolmentKey(testVatNumber), ignoreAssignments = false)(Future.successful(Left(EnrolmentStoreProxyFailure(BAD_REQUEST))))
 
         val res = TestCheckEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(testVatNumber)
 

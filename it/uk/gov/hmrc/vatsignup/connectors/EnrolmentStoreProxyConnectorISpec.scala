@@ -69,20 +69,22 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
   "GetAllocatedEnrolments" should {
     "Return EnrolmentAlreadyAllocated" when {
-      "EnrolmentStoreProxy ES1 returns an OK and Json Response" in {
-        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
+      "EnrolmentStoreProxy ES1 returns an OK and Json Response" when {
+        "ignore assignments is set" in {
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(OK)
 
-        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
+          val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber), ignoreAssignments = true)
 
-        await(res) shouldBe Right(EnrolmentAlreadyAllocated(testGroupId))
+          await(res) shouldBe Right(EnrolmentAlreadyAllocated(testGroupId))
+        }
       }
     }
 
     "Return EnrolmentNotAllocated" when {
       "EnrolmentStoreProxy ES1 returns No Content" in {
-        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(NO_CONTENT)
 
-        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
+        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber), ignoreAssignments = false)
 
         await(res) shouldBe Right(EnrolmentNotAllocated)
       }
@@ -90,9 +92,9 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
     "Return EnrolmentStoreProxyFailure and status code" when {
       "EnrolmentStoreProxy ES1 returns Bad Request" in {
-        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(BAD_REQUEST)
+        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(BAD_REQUEST)
 
-        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber))
+        val res = connector.getAllocatedEnrolments(mtdVatEnrolmentKey(testVatNumber), ignoreAssignments = false)
 
         await(res) shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
       }

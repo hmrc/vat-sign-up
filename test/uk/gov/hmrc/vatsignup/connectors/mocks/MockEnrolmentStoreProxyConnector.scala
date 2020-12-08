@@ -40,9 +40,9 @@ trait MockEnrolmentStoreProxyConnector extends MockitoSugar with BeforeAndAfterE
 
   val mockEnrolmentStoreProxyConnector: EnrolmentStoreProxyConnector = mock[EnrolmentStoreProxyConnector]
 
-  def mockGetAllocatedEnrolment(vatNumber: String)(response: Future[EnrolmentStoreProxyResponse]): Unit = {
+  def mockGetAllocatedEnrolment(vatNumber: String, ignoreAssignments: Boolean)(response: Future[EnrolmentStoreProxyResponse]): Unit = {
     when(mockEnrolmentStoreProxyConnector.getAllocatedEnrolments(
-      ArgumentMatchers.eq(vatNumber)
+      ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(ignoreAssignments)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
