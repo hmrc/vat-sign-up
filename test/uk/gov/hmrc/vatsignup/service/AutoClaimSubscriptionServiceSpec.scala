@@ -21,7 +21,7 @@ import play.api.mvc.Request
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.{Admin, Assistant}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.{UsersFound, UsersGroupsSearchConnectionFailure}
@@ -65,80 +65,41 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
     "legacy group ID is returned" when {
       "legacy user IDs are returned" when {
         "the known facts connector is successful" when {
-          "upsert the enrolment is successful" when {
-            "allocate the new group ID is successful" when {
-              "assign the new user IDs is successful" when {
-                "returns successful" in {
-                  mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-                    Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-                  )
-                  mockGetUserIds(testVatNumber)(
-                    Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds)))
-                  )
-                  mockGetUsersForGroup(testGroupId)(
-                    Future.successful(Right(UsersFound(testMapCredentialRoles)))
-                  )
-                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                    Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
-                  )
-                  mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                    Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
-                  )
-                  mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
-                    Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
-                  )
+          "allocate the new group ID is successful" when {
+            "assign the new user IDs is successful" when {
+              "returns successful" in {
+                mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+                  Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+                )
+                mockGetUserIds(testVatNumber)(
+                  Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds)))
+                )
+                mockGetUsersForGroup(testGroupId)(
+                  Future.successful(Right(UsersFound(testMapCredentialRoles)))
+                )
+                mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
+                  Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
+                )
+                mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
+                  Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
+                )
 
-                  val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+                val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
-                  res shouldBe Right(AutoClaimEnrolmentService.EnrolmentAssigned)
+                res shouldBe Right(AutoClaimEnrolmentService.EnrolmentAssigned)
 
-                  verifyAudit(AutoClaimEnrolementAuditingModel(
-                    testVatNumber,
-                    agentLedSignUp,
-                    isSuccess = true,
-                    groupId = Some(testGroupId),
-                    userIds = testSetCredentialIds
-                  ))
-                }
-              }
-              "assign the new user IDs fails" when {
-                "return Failure" in {
-                  val testSetCredentialIds = Set(testCredentialId, testCredentialId2, testCredentialId3)
-                  mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-                    Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-                  )
-                  mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
-                  mockGetUsersForGroup(testGroupId)(
-                    Future.successful(Right(UsersFound(testMapCredentialRoles)))
-                  )
-                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                    Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
-                  )
-                  mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                    Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
-                  )
-                  mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
-                    Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed(Set(testCredentialId3))))
-                  )
-
-                  val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-                  res shouldBe Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)))
-
-                  verifyAudit(AutoClaimEnrolementAuditingModel(
-                    testVatNumber,
-                    agentLedSignUp,
-                    isSuccess = false,
-                    call = Some(assignEnrolmentToUserCall),
-                    groupId = Some(testGroupId),
-                    userIds = testSetCredentialIds,
-                    auditInformation = Some(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)).toString)
-                  ))
-                }
+                verifyAudit(AutoClaimEnrolementAuditingModel(
+                  testVatNumber,
+                  agentLedSignUp,
+                  isSuccess = true,
+                  groupId = Some(testGroupId),
+                  userIds = testSetCredentialIds
+                ))
               }
             }
-            "allocate the new group ID fails" when {
+            "assign the new user IDs fails" when {
               "return Failure" in {
+                val testSetCredentialIds = Set(testCredentialId, testCredentialId2, testCredentialId3)
                 mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
                   Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                 )
@@ -146,16 +107,43 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockGetUsersForGroup(testGroupId)(
                   Future.successful(Right(UsersFound(testMapCredentialRoles)))
                 )
-                mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
-                )
                 mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                  Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(testErrorMsg)))
+                  Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
+                )
+                mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
+                  Future.successful(Left(AssignEnrolmentToUserService.EnrolmentAssignmentFailed(Set(testCredentialId3))))
                 )
 
                 val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
-                res shouldBe Left(AutoClaimEnrolmentService.EnrolAdminIdFailure(testCredentialId, testErrorMsg))
+                res shouldBe Left(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)))
+
+                verifyAudit(AutoClaimEnrolementAuditingModel(
+                  testVatNumber,
+                  agentLedSignUp,
+                  isSuccess = false,
+                  call = Some(assignEnrolmentToUserCall),
+                  groupId = Some(testGroupId),
+                  userIds = testSetCredentialIds,
+                  auditInformation = Some(AutoClaimEnrolmentService.EnrolmentAssignmentFailureForIds(Set(testCredentialId3)).toString)
+                ))
+              }
+            }
+          }
+          "allocate the new group ID fails" when {
+            "return Failure" in {
+              mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+              )
+              mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
+              mockGetUsersForGroup(testGroupId)(
+                Future.successful(Right(UsersFound(testMapCredentialRoles)))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
+                Future.failed(new InternalServerException(testErrorMsg))
+              )
+              intercept[InternalServerException] {
+                await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
                 verifyAudit(AutoClaimEnrolementAuditingModel(
                   testVatNumber,
@@ -164,236 +152,204 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   call = Some(allocateEnrolmentWithoutKnownFactsCall),
                   groupId = Some(testGroupId),
                   userIds = testSetCredentialIds,
-                  auditInformation = Some(AutoClaimEnrolmentService.EnrolAdminIdFailure(testCredentialId, testErrorMsg).toString)
+                  auditInformation = Some((testCredentialId, testErrorMsg).toString)
                 ))
               }
-            }
-          }
-          "upsert the enrolment fails" when {
-            "return Success" in {
-              mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-              )
-              mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
-              mockGetUsersForGroup(testGroupId)(
-                Future.successful(Right(UsersFound(testMapCredentialRoles)))
-              )
-              mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
-              )
-              mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                Future.successful(Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess))
-              )
-              mockAssignEnrolmentToUser(testSetCredentialIds filterNot (_ == testCredentialId), testVatNumber)(
-                Future.successful(Right(AssignEnrolmentToUserService.EnrolmentAssignedToUsers))
-              )
 
-              val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-              res shouldBe Right(AutoClaimEnrolmentService.EnrolmentAssigned)
-
-              verifyAudit(AutoClaimEnrolementAuditingModel(
-                testVatNumber,
-                agentLedSignUp,
-                isSuccess = true,
-                call = None,
-                groupId = Some(testGroupId),
-                userIds = testSetCredentialIds,
-                auditInformation = None)
-              )
             }
           }
         }
       }
-      "users groups search returns no admins" should {
-        "return NoAdminUsers" in {
-          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-          )
-          mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
-          mockGetUsersForGroup(testGroupId)(
-            Future.successful(Right(UsersFound(Map(testCredentialId -> Assistant))))
-          )
-
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-          res shouldBe Left(NoAdminUsers)
-
-          verifyAudit(AutoClaimEnrolementAuditingModel(
-            testVatNumber,
-            agentLedSignUp,
-            isSuccess = false,
-            call = Some(getAdminUserIdCall),
-            groupId = Some(testGroupId),
-            userIds = testSetCredentialIds,
-            auditInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
-          ))
-        }
-      }
-      "users groups search fails" should {
-        "return UsersGroupsSearchFailure" in {
-          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-          )
-          mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
-          mockGetUsersForGroup(testGroupId)(
-            Future.successful(Left(UsersGroupsSearchConnectionFailure(INTERNAL_SERVER_ERROR)))
-          )
-
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-          res shouldBe Left(UsersGroupsSearchFailure)
-
-          verifyAudit(AutoClaimEnrolementAuditingModel(
-            testVatNumber,
-            agentLedSignUp,
-            isSuccess = false,
-            call = Some(getAdminUserIdCall),
-            groupId = Some(testGroupId),
-            userIds = testSetCredentialIds,
-            auditInformation = Some(AutoClaimEnrolmentService.UsersGroupsSearchFailure.toString)
-          ))
-        }
-      }
-      "the only admin user does not have the legacy VAT enrolment" should {
-        "return NoAdminUsers" in {
-          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-          )
-          mockGetUserIds(testVatNumber)(
-            Future.successful(Right(QueryUsersHttpParser.UsersFound(
-              Set(
-                testCredentialId,
-                testCredentialId2
-              )
-            )))
-          )
-          mockGetUsersForGroup(testGroupId)(
-            Future.successful(Right(UsersFound(
-              Map(
-                testCredentialId -> Assistant,
-                testCredentialId2 -> Assistant,
-                testCredentialId3 -> Admin
-              )
-            )))
-          )
-
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-          res shouldBe Left(NoAdminUsers)
-
-          verifyAudit(AutoClaimEnrolementAuditingModel(
-            testVatNumber,
-            agentLedSignUp,
-            isSuccess = false,
-            call = Some(getAdminUserIdCall),
-            groupId = Some(testGroupId),
-            userIds = testSetCredentialIds,
-            auditInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
-          ))
-        }
-      }
-      "legacy user IDS are found but no userIds are returned" should {
-        "return a ConnectionFailure" in {
-          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-          )
-          mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(Set()))))
-
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-          res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
-
-          verifyAudit(AutoClaimEnrolementAuditingModel(
-            testVatNumber,
-            agentLedSignUp,
-            isSuccess = false,
-            call = Some(getLegacyEnrolmentUserIDsCall),
-            groupId = Some(testGroupId),
-            auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
-          ))
-        }
-      }
-      "legacy user IDS are not returned" when {
-        "returns NoUsersFound" in {
-          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-          )
-          mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.NoUsersFound)))
-
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-          res shouldBe Left(NoUsersFound)
-
-          verifyAudit(AutoClaimEnrolementAuditingModel(
-            testVatNumber,
-            agentLedSignUp,
-            isSuccess = true,
-            call = Some(getLegacyEnrolmentUserIDsCall),
-            groupId = Some(testGroupId),
-            auditInformation = Some(AutoClaimEnrolmentService.NoUsersFound.toString)
-          ))
-        }
-      }
-      "legacy user IDs are not returned" when {
-        "returns ConnectionFailure" in {
-          mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-            Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-          )
-          mockGetUserIds(testVatNumber)(Future.successful(Left(QueryUsersHttpParser.EnrolmentStoreProxyConnectionFailure(BAD_REQUEST))))
-
-          val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-          res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
-
-          verifyAudit(AutoClaimEnrolementAuditingModel(
-            testVatNumber,
-            agentLedSignUp,
-            isSuccess = false,
-            call = Some(getLegacyEnrolmentUserIDsCall),
-            groupId = Some(testGroupId),
-            auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
-          ))
-        }
-      }
     }
-    "legacy group ID is not returned" when {
-      "returns EnrolmentNotAllocated" in {
+    "users groups search returns no admins" should {
+      "return NoAdminUsers" in {
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+          Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+        )
+        mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
+        mockGetUsersForGroup(testGroupId)(
+          Future.successful(Right(UsersFound(Map(testCredentialId -> Assistant))))
         )
 
         val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
 
-        res shouldBe Left(EnrolmentNotAllocated)
-
-        verifyAudit(AutoClaimEnrolementAuditingModel(
-          testVatNumber,
-          agentLedSignUp,
-          isSuccess = true,
-          call = Some(getLegacyEnrolmentAllocationCall),
-          auditInformation = Some(AutoClaimEnrolmentService.EnrolmentNotAllocated.toString)
-        ))
-      }
-    }
-    "legacy group ID is not returned" when {
-      "returns EnrolmentStoreProxyFailure" in {
-        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-          Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
-        )
-
-        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-        res shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
+        res shouldBe Left(NoAdminUsers)
 
         verifyAudit(AutoClaimEnrolementAuditingModel(
           testVatNumber,
           agentLedSignUp,
           isSuccess = false,
-          call = Some(getLegacyEnrolmentAllocationCall),
-          auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyFailure(BAD_REQUEST).toString)
+          call = Some(getAdminUserIdCall),
+          groupId = Some(testGroupId),
+          userIds = testSetCredentialIds,
+          auditInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
+        ))
+      }
+    }
+    "users groups search fails" should {
+      "return UsersGroupsSearchFailure" in {
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+        )
+        mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
+        mockGetUsersForGroup(testGroupId)(
+          Future.successful(Left(UsersGroupsSearchConnectionFailure(INTERNAL_SERVER_ERROR)))
+        )
+
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+        res shouldBe Left(UsersGroupsSearchFailure)
+
+        verifyAudit(AutoClaimEnrolementAuditingModel(
+          testVatNumber,
+          agentLedSignUp,
+          isSuccess = false,
+          call = Some(getAdminUserIdCall),
+          groupId = Some(testGroupId),
+          userIds = testSetCredentialIds,
+          auditInformation = Some(AutoClaimEnrolmentService.UsersGroupsSearchFailure.toString)
+        ))
+      }
+    }
+    "the only admin user does not have the legacy VAT enrolment" should {
+      "return NoAdminUsers" in {
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+        )
+        mockGetUserIds(testVatNumber)(
+          Future.successful(Right(QueryUsersHttpParser.UsersFound(
+            Set(
+              testCredentialId,
+              testCredentialId2
+            )
+          )))
+        )
+        mockGetUsersForGroup(testGroupId)(
+          Future.successful(Right(UsersFound(
+            Map(
+              testCredentialId -> Assistant,
+              testCredentialId2 -> Assistant,
+              testCredentialId3 -> Admin
+            )
+          )))
+        )
+
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+        res shouldBe Left(NoAdminUsers)
+
+        verifyAudit(AutoClaimEnrolementAuditingModel(
+          testVatNumber,
+          agentLedSignUp,
+          isSuccess = false,
+          call = Some(getAdminUserIdCall),
+          groupId = Some(testGroupId),
+          userIds = testSetCredentialIds,
+          auditInformation = Some(AutoClaimEnrolmentService.NoAdminUsers.toString)
+        ))
+      }
+    }
+    "legacy user IDS are found but no userIds are returned" should {
+      "return a ConnectionFailure" in {
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+        )
+        mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(Set()))))
+
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+        res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
+
+        verifyAudit(AutoClaimEnrolementAuditingModel(
+          testVatNumber,
+          agentLedSignUp,
+          isSuccess = false,
+          call = Some(getLegacyEnrolmentUserIDsCall),
+          groupId = Some(testGroupId),
+          auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
+        ))
+      }
+    }
+    "legacy user IDS are not returned" when {
+      "returns NoUsersFound" in {
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+        )
+        mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.NoUsersFound)))
+
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+        res shouldBe Left(NoUsersFound)
+
+        verifyAudit(AutoClaimEnrolementAuditingModel(
+          testVatNumber,
+          agentLedSignUp,
+          isSuccess = true,
+          call = Some(getLegacyEnrolmentUserIDsCall),
+          groupId = Some(testGroupId),
+          auditInformation = Some(AutoClaimEnrolmentService.NoUsersFound.toString)
+        ))
+      }
+    }
+    "legacy user IDs are not returned" when {
+      "there is a connection failure" in {
+        mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+          Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+        )
+        mockGetUserIds(testVatNumber)(Future.successful(Left(QueryUsersHttpParser.EnrolmentStoreProxyConnectionFailure(BAD_REQUEST))))
+
+        val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+        res shouldBe Left(EnrolmentStoreProxyConnectionFailure)
+
+        verifyAudit(AutoClaimEnrolementAuditingModel(
+          testVatNumber,
+          agentLedSignUp,
+          isSuccess = false,
+          call = Some(getLegacyEnrolmentUserIDsCall),
+          groupId = Some(testGroupId),
+          auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyConnectionFailure.toString)
         ))
       }
     }
   }
+  "legacy group ID is not returned" when {
+    "returns EnrolmentNotAllocated" in {
+      mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+        Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+      )
+
+      val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+      res shouldBe Left(EnrolmentNotAllocated)
+
+      verifyAudit(AutoClaimEnrolementAuditingModel(
+        testVatNumber,
+        agentLedSignUp,
+        isSuccess = true,
+        call = Some(getLegacyEnrolmentAllocationCall),
+        auditInformation = Some(AutoClaimEnrolmentService.EnrolmentNotAllocated.toString)
+      ))
+    }
+  }
+  "legacy group ID is not returned" when {
+    "returns EnrolmentStoreProxyFailure" in {
+      mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
+        Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
+      )
+
+      val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+      res shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
+
+      verifyAudit(AutoClaimEnrolementAuditingModel(
+        testVatNumber,
+        agentLedSignUp,
+        isSuccess = false,
+        call = Some(getLegacyEnrolmentAllocationCall),
+        auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyFailure(BAD_REQUEST).toString)
+      ))
+    }
+  }
+
 }

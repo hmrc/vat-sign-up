@@ -18,14 +18,11 @@ package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, _}
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.TaxEnrolmentsConnector
-import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
-import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.TaxEnrolmentsResponse
-import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
 import scala.concurrent.Future
 
@@ -39,34 +36,10 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
 
   val mockTaxEnrolmentsConnector: TaxEnrolmentsConnector = mock[TaxEnrolmentsConnector]
 
-  def mockUpsertEnrolment(vatNumber: String,
-                          postcode: Option[String],
-                          vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
-    when(mockTaxEnrolmentsConnector.upsertEnrolment(
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(postcode),
-      ArgumentMatchers.eq(vatRegistrationDate)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-  }
-
   def mockRegisterEnrolment(vatNumber: String, safeId: String)(response: Future[TaxEnrolmentsResponse]): Unit = {
     when(mockTaxEnrolmentsConnector.registerEnrolment(
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(safeId)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
-
-  def mockAllocateEnrolment(groupId: String,
-                            credentialId: String,
-                            vatNumber: String,
-                            postcode: Option[String],
-                            vatRegistrationDate: String)(response: Future[AllocateEnrolmentResponse]): Unit =
-    when(mockTaxEnrolmentsConnector.allocateEnrolment(
-      ArgumentMatchers.eq(groupId),
-      ArgumentMatchers.eq(credentialId),
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(postcode),
-      ArgumentMatchers.eq(vatRegistrationDate)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-
 }

@@ -22,6 +22,7 @@ import org.scalatest.{Matchers, WordSpec}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
@@ -58,30 +59,32 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
       }
 
       "claim subscription fails on the enrol call" should {
-        "return BAD_GATEWAY" in {
+        "throw an exception" in {
           val isFromBta = true
           val request = FakeRequest().withBody(ClaimSubscriptionRequest(None, None, isFromBta))
 
           mockAuthRetrievePrincipalEnrolment()
-          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(Future.successful(Left(AllocationFailure)))
+          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(Future.failed(new InternalServerException("Failed to enrol user")))
 
           val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
 
-          status(res) shouldBe BAD_GATEWAY
+          intercept[InternalServerException](await(res))
         }
       }
 
       "claim subscription fails to get known facts" should {
-        "return BAD_GATEWAY" in {
+        "throw an exception" in {
           val isFromBta = true
           val request = FakeRequest().withBody(ClaimSubscriptionRequest(None, None, isFromBta))
 
           mockAuthRetrievePrincipalEnrolment()
-          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(Future.successful(Left(KnownFactsFailure)))
+          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(
+            Future.failed(new InternalServerException(s"Failed to retrieve known facts for $testVatNumber"))
+          )
 
           val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
 
-          status(res) shouldBe BAD_GATEWAY
+          intercept[InternalServerException](await(res))
         }
       }
       "claim subscription finds the enrolment is already allocated" should {

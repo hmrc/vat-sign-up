@@ -22,7 +22,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.vatsignup.config.AppConfig
 import uk.gov.hmrc.vatsignup.config.Constants.TaxEnrolments._
-import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
@@ -49,61 +48,6 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
     http.PUT[JsObject, TaxEnrolmentsResponse](
       url = s"${applicationConfig.taxEnrolmentsUrl}/subscriptions/$vatNumber/subscriber",
       body = enrolmentRequestBody
-    )
-  }
-
-  def upsertEnrolment(vatNumber: String,
-                      postcode: Option[String],
-                      vatRegistrationDate: String)
-                     (implicit hc: HeaderCarrier): Future[UpsertEnrolmentResponse] = {
-    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
-
-    val requestBody = Json.obj(
-      "verifiers" -> Json.arr(
-        postcode.map(pc => Json.obj(
-          "key" -> "Postcode",
-          "value" -> pc
-        )),
-        Json.obj(
-          "key" -> "VATRegistrationDate",
-          "value" -> vatRegistrationDate
-        )
-      )
-    )
-    http.PUT[JsObject, UpsertEnrolmentResponse](
-      url = applicationConfig.upsertEnrolmentUrl(enrolmentKey),
-      body = requestBody
-    )
-
-  }
-
-  def allocateEnrolment(groupId: String,
-                        credentialId: String,
-                        vatNumber: String,
-                        postcode: Option[String],
-                        vatRegistrationDate: String
-                       )(implicit hc: HeaderCarrier): Future[AllocateEnrolmentResponse] = {
-    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
-
-    val requestBody = Json.obj(
-      "userId" -> credentialId,
-      "friendlyName" -> "Making Tax Digital - VAT",
-      "type" -> "principal",
-      "verifiers" -> Json.arr(
-        postcode.map(pc => Json.obj(
-          "key" -> "Postcode",
-          "value" -> pc
-        )),
-        Json.obj(
-          "key" -> "VATRegistrationDate",
-          "value" -> vatRegistrationDate
-        )
-      )
-    )
-
-    http.POST[JsObject, AllocateEnrolmentResponse](
-      url = applicationConfig.allocateEnrolmentUrl(groupId, enrolmentKey),
-      body = requestBody
     )
   }
 

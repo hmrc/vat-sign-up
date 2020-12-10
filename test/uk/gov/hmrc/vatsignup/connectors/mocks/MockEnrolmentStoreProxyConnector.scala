@@ -18,15 +18,14 @@ package uk.gov.hmrc.vatsignup.connectors.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, _}
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.connectors.EnrolmentStoreProxyConnector
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.AllocateEnrolmentResponse
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.AssignEnrolmentToUserResponse
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser.EnrolmentStoreProxyResponse
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser.QueryUsersResponse
-import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.UpsertEnrolmentResponse
 
 import scala.concurrent.Future
 
@@ -67,14 +66,4 @@ trait MockEnrolmentStoreProxyConnector extends MockitoSugar with BeforeAndAfterE
       ArgumentMatchers.eq(vatNumber)
     )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
 
-
-  def mockEnrolmentStoreUpsertEnrolment(vatNumber: String,
-                          postcode: Option[String],
-                          vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
-    when(mockEnrolmentStoreProxyConnector.upsertEnrolment(
-      ArgumentMatchers.eq(vatNumber),
-      ArgumentMatchers.eq(postcode),
-      ArgumentMatchers.eq(vatRegistrationDate)
-    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
-  }
 }
