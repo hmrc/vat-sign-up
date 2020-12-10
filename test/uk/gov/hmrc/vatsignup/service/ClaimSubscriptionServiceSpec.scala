@@ -20,12 +20,11 @@ import org.scalatest.{Matchers, WordSpec}
 import play.api.mvc.Request
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
+import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
-import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
-import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, VatCustomerDetailsHttpParser}
+import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.service.mocks.MockCheckEnrolmentAllocationService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
@@ -59,14 +58,10 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     "the known facts connector is successful" when {
       "auth returns a valid ggw credential and group ID" when {
         "CheckEnrolmentAllocation returns EnrolmentNotAllocated" when {
-          "tax enrolment to upsert the enrolment is successful" when {
             "tax enrolment to allocate enrolment returns a success" should {
               "return SubscriptionClaimed" in {
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Right(UpsertEnrolmentSuccess))
-                )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
@@ -76,27 +71,24 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testVatNumber
                 )(Future.successful(Right(EnrolSuccess)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(
-                  testVatNumber,
-                  Some(testPostCode),
-                  testDateOfRegistration,
-                  isFromBta = false
-                ))
+              val res = await(TestClaimSubscriptionService.claimSubscription(
+                testVatNumber,
+                Some(testPostCode),
+                testDateOfRegistration,
+                isFromBta = false
+              ))
 
-                res shouldBe Right(SubscriptionClaimed)
-                verifyAudit(ClaimSubscriptionAuditModel(
-                  testVatNumber,
-                  isFromBta = false,
-                  isSuccess = true
-                ))
-              }
+              res shouldBe Right(SubscriptionClaimed)
+              verifyAudit(ClaimSubscriptionAuditModel(
+                testVatNumber,
+                isFromBta = false,
+                isSuccess = true
+              ))
+            }
 
               "return SubscriptionClaimed when vrn is overseas" in {
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Right(UpsertEnrolmentSuccess))
-                )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
@@ -106,12 +98,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testVatNumber
                 )(Future.successful(Right(EnrolSuccess)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(
-                  testVatNumber,
-                  None,
-                  testDateOfRegistration,
-                  isFromBta = false
-                ))
+              val res = await(TestClaimSubscriptionService.claimSubscription(
+                testVatNumber,
+                None,
+                testDateOfRegistration,
+                isFromBta = false
+              ))
 
                 res shouldBe Right(SubscriptionClaimed)
                 verifyAudit(ClaimSubscriptionAuditModel(
@@ -122,13 +114,10 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               }
             }
             "tax enrolment to allocate enrolment returns a failure" should {
-              "return TaxEnrolmentsFailure" in {
+              "throw an exception" in {
                 val allocateEnrolmentFailureMessage = "allocateEnrolmentFailure"
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Right(UpsertEnrolmentSuccess))
-                )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
@@ -136,16 +125,16 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testGroupId,
                   testCredentialId,
                   testVatNumber
-                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentFailureMessage))))
+                )(Future.failed(new InternalServerException(allocateEnrolmentFailureMessage)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(
+              intercept[InternalServerException] {
+                await(TestClaimSubscriptionService.claimSubscription(
                   testVatNumber,
                   Some(testPostCode),
                   testDateOfRegistration,
                   isFromBta = true
                 ))
 
-                res shouldBe Left(AllocationFailure)
                 verifyAudit(ClaimSubscriptionAuditModel(
                   testVatNumber,
                   isFromBta = true,
@@ -155,16 +144,42 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               }
             }
           }
-          "tax enrolment to upsert the enrolment fails" when {
-            "tax enrolment to allocate enrolment returns a success" should {
-              "return SubscriptionClaimed" in {
-                val upsertEnrolmentErrorMessage = "upsertEnrolErr"
+        "allocate enrolment returns a success" should {
+          "return SubscriptionClaimed" in {
+            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+            mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+            mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+              Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+            )
+            mockAllocateEnrolmentWithoutKnownFacts(
+              testGroupId,
+              testCredentialId,
+              testVatNumber
+            )(Future.successful(Right(EnrolSuccess)))
+
+            val res = await(TestClaimSubscriptionService.claimSubscription(
+              testVatNumber,
+              Some(testPostCode),
+              testDateOfRegistration,
+              isFromBta = false
+            ))
+
+            res shouldBe Right(SubscriptionClaimed)
+
+            verifyAudit(ClaimSubscriptionAuditModel(
+              testVatNumber,
+              isFromBta = false,
+              isSuccess = true
+            ))
+          }
+        }
+
+        "allocate enrolment returns a failure" should {
+          "throw an exception" in {
+            val allocateEnrolmentErrorMessage = "allocateEnrolErr"
 
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
-                )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
@@ -172,61 +187,26 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testGroupId,
                   testCredentialId,
                   testVatNumber
-                )(Future.successful(Right(EnrolSuccess)))
+                )(Future.failed(new InternalServerException(allocateEnrolmentErrorMessage)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscription(
-                  testVatNumber,
-                  Some(testPostCode),
-                  testDateOfRegistration,
-                  isFromBta = false
-                ))
+            intercept[InternalServerException] {
+              await(TestClaimSubscriptionService.claimSubscription(
+                testVatNumber,
+                Some(testPostCode),
+                testDateOfRegistration,
+                isFromBta = true
+              ))
 
-                res shouldBe Right(SubscriptionClaimed)
-
-                verifyAudit(ClaimSubscriptionAuditModel(
-                  testVatNumber,
-                  isFromBta = false,
-                  isSuccess = true
-                ))
-              }
-            }
-
-            "tax enrolment to allocate enrolment a failure" should {
-              "return TaxEnrolmentsFailure" in {
-                val allocateEnrolmentErrorMessage = "allocateEnrolErr"
-                val upsertEnrolmentErrorMessage = "upsertEnrolErr"
-
-                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
-                )
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
-                )
-                mockAllocateEnrolmentWithoutKnownFacts(
-                  testGroupId,
-                  testCredentialId,
-                  testVatNumber
-                )(Future.successful(Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(allocateEnrolmentErrorMessage))))
-
-                val res = await(TestClaimSubscriptionService.claimSubscription(
-                  testVatNumber,
-                  Some(testPostCode),
-                  testDateOfRegistration,
-                  isFromBta = true
-                ))
-
-                res shouldBe Left(AllocationFailure)
-                verifyAudit(ClaimSubscriptionAuditModel(
-                  testVatNumber,
-                  isFromBta = true,
-                  isSuccess = false,
-                  allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage))
-                )
-              }
+              verifyAudit(ClaimSubscriptionAuditModel(
+                testVatNumber,
+                isFromBta = true,
+                isSuccess = false,
+                allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage))
+              )
             }
           }
+        }
+      }
 
           "the enrolment is already allocated, CheckEnrolmentAllocation" should {
             "return a EnrolmentAlreadyAllocated" in {
@@ -235,16 +215,16 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
               )
 
-              val res = await(TestClaimSubscriptionService.claimSubscription(
-                testVatNumber,
-                Some(testPostCode),
-                testDateOfRegistration,
-                isFromBta = true
-              ))
+          val res = await(TestClaimSubscriptionService.claimSubscription(
+            testVatNumber,
+            Some(testPostCode),
+            testDateOfRegistration,
+            isFromBta = true
+          ))
 
-              res shouldBe Left(EnrolmentAlreadyAllocated)
-            }
-          }
+          res shouldBe Left(EnrolmentAlreadyAllocated)
+        }
+      }
 
           "CheckEnrolmentAllocation fails" should {
             "return an UnexpectedEnrolmentStoreProxyFailure and the status code" in {
@@ -253,12 +233,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
               )
 
-              val res = await(TestClaimSubscriptionService.claimSubscription(
-                testVatNumber,
-                Some(testPostCode),
-                testDateOfRegistration,
-                isFromBta = true
-              ))
+          val res = await(TestClaimSubscriptionService.claimSubscription(
+            testVatNumber,
+            Some(testPostCode),
+            testDateOfRegistration,
+            isFromBta = true
+          ))
 
               res shouldBe Left(CheckEnrolmentAllocationFailed(BAD_REQUEST))
             }
@@ -271,14 +251,14 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
             mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
             mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
 
-            val nonMatchingPostcode = "ZZ2 2ZZ"
+        val nonMatchingPostcode = "ZZ2 2ZZ"
 
-            val res = await(TestClaimSubscriptionService.claimSubscription(
-              testVatNumber,
-              Some(nonMatchingPostcode),
-              testDateOfRegistration,
-              isFromBta = true
-            ))
+        val res = await(TestClaimSubscriptionService.claimSubscription(
+          testVatNumber,
+          Some(nonMatchingPostcode),
+          testDateOfRegistration,
+          isFromBta = true
+        ))
 
             res shouldBe Left(KnownFactsMismatch)
           }
@@ -290,15 +270,14 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
           mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
           mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
-          val res = TestClaimSubscriptionService.claimSubscription(
-            testVatNumber,
-            Some(testPostCode),
-            testDateOfRegistration,
-            isFromBta = false
-          )
+        val res = TestClaimSubscriptionService.claimSubscription(
+          testVatNumber,
+          Some(testPostCode),
+          testDateOfRegistration,
+          isFromBta = false
+        )
 
-          intercept[ForbiddenException](await(res))
-        }
+        intercept[ForbiddenException](await(res))
       }
     }
     "the known facts connector returns invalid VAT number" should {
@@ -331,22 +310,16 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
         res shouldBe Left(VatNumberNotFound)
       }
     }
-
   }
-
 
   "claimSubscriptionWithEnrolment" when {
     "the known facts connector is successful" when {
       "auth returns a valid ggw credential and group ID" when {
         "CheckEnrolmentAllocatjon returns EnrolmentNotAllocated" when {
-          "tax enrolment to upsert the enrolment is successful" when {
             "tax enrolment to allocate enrolment returns a success" should {
               "return SubscriptionClaimed" in {
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
-                  Future.successful(Right(UpsertEnrolmentSuccess))
-                )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
                   Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
                 )
@@ -356,10 +329,10 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   testVatNumber
                 )(Future.successful(Right(EnrolSuccess)))
 
-                val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
-                  testVatNumber,
-                  isFromBta = false
-                ))
+              val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
+                testVatNumber,
+                isFromBta = false
+              ))
 
                 res shouldBe Right(SubscriptionClaimed)
                 verifyAudit(ClaimSubscriptionAuditModel(
@@ -376,23 +349,23 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                 )
 
-                val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
-                  vatNumber = testVatNumber,
-                  isFromBta = true
-                ))
+              val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
+                vatNumber = testVatNumber,
+                isFromBta = true
+              ))
 
-                res shouldBe Left(EnrolmentAlreadyAllocated)
-              }
+              res shouldBe Left(EnrolmentAlreadyAllocated)
             }
           }
         }
       }
     }
-  }
-  "toTaxEnrolmentFormat" should {
-    "convert the date to the correct format" in {
-      "2017-01-01".toTaxEnrolmentsFormat shouldBe "01/01/17"
-      "1999-01-01".toTaxEnrolmentsFormat shouldBe "01/01/99"
+    "toTaxEnrolmentFormat" should {
+      "convert the date to the correct format" in {
+        "2017-01-01".toTaxEnrolmentsFormat shouldBe "01/01/17"
+        "1999-01-01".toTaxEnrolmentsFormat shouldBe "01/01/99"
+      }
     }
   }
+
 }

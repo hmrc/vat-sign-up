@@ -101,7 +101,6 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
     }
   }
 
-
   "allocateEnrolmentWithoutKnownFacts" when {
     "Enrolment Store Proxy returns a Created" should {
       "return an EnrolSuccess" in {
@@ -135,7 +134,6 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
       }
     }
   }
-
 
   "upsertEnrolment" when {
     "Enrolment Store Proxy returns a successful response" should {

@@ -18,13 +18,12 @@ package uk.gov.hmrc.vatsignup.services
 
 import cats.data.EitherT
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals.{credentials, groupIdentifier}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
-import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier}
+import uk.gov.hmrc.http.{ForbiddenException, HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, VatCustomerDetailsConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser
@@ -33,6 +32,7 @@ import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSu
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -92,7 +92,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
       case VatCustomerDetailsHttpParser.InvalidVatNumber => InvalidVatNumber
       case VatCustomerDetailsHttpParser.VatNumberNotFound => VatNumberNotFound
       case VatCustomerDetailsHttpParser.Deregistered => Deregistered
-      case _ => KnownFactsFailure
+      case _ => throw new InternalServerException(s"Failed to retrieve known facts for VRN: $vatNumber")
     }
 
   private def getEnrolmentAllocationStatus(vatNumber: String)
@@ -109,7 +109,7 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
   private def allocateEnrolment(vatNumber: String,
                                 isFromBta: Boolean
                                )(implicit hc: HeaderCarrier,
-                                request: Request[_]): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
+                                 request: Request[_]): EitherT[Future, ClaimSubscriptionFailure, EnrolSuccess.type] =
 
     EitherT.right(authConnector.authorise(EmptyPredicate, credentials and groupIdentifier)).flatMap {
       case Some(Credentials(credentialId, GGProviderId)) ~ Some(groupId) =>
@@ -117,22 +117,23 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
           groupId = groupId,
           credentialId = credentialId,
           vatNumber = vatNumber
-        )).bimap(
-         failure => {auditService.audit(ClaimSubscriptionAuditModel(
-           vatNumber,
-           isFromBta = isFromBta,
-           isSuccess = false,
-           allocateEnrolmentFailureMessage = Some(failure.message)
-         ))
-           ClaimSubscriptionService.AllocationFailure
-         },
-          result => {
+        )).transform {
+          case Left(failure) =>
+            auditService.audit(ClaimSubscriptionAuditModel(
+              vatNumber,
+              isFromBta = isFromBta,
+              isSuccess = false,
+              allocateEnrolmentFailureMessage = Some(failure.message)
+            ))
+            throw new InternalServerException(s"Failed to allocate the enrolment for CredId: $credentialId due to ${failure.message}")
+
+          case Right(success) =>
             auditService.audit(ClaimSubscriptionAuditModel(vatNumber,
               isFromBta = isFromBta,
               isSuccess = true
             ))
-            result
-          })
+            Right(success)
+        }
       case _ =>
         EitherT.liftF(Future.failed(new ForbiddenException("Invalid auth credentials")))
     }
@@ -161,11 +162,9 @@ object ClaimSubscriptionService {
 
   case object Deregistered extends ClaimSubscriptionFailure
 
-  case object InvalidVatNumber extends ClaimSubscriptionFailure
-
-  case object KnownFactsFailure extends ClaimSubscriptionFailure
-
   case object AllocationFailure extends ClaimSubscriptionFailure
+
+  case object InvalidVatNumber extends ClaimSubscriptionFailure
 
   case class CheckEnrolmentAllocationFailed(status: Int) extends ClaimSubscriptionFailure
 

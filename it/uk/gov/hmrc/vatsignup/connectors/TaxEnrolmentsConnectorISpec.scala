@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.TaxEnrolmentsStub
-import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolFailure, EnrolSuccess}
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.TaxEnrolmentsHttpParser.{FailedTaxEnrolment, SuccessfulTaxEnrolment}
 import uk.gov.hmrc.vatsignup.httpparsers.UpsertEnrolmentResponseHttpParser.{UpsertEnrolmentFailure, UpsertEnrolmentSuccess}
 
@@ -52,65 +52,5 @@ class TaxEnrolmentsConnectorISpec extends ComponentSpecBase {
       }
     }
   }
-
-  "upsertEnrolment" when {
-    "Tax Enrolments returns a successful response" should {
-      "return an EnrolSuccess" in {
-        TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(NO_CONTENT)
-
-        val res = connector.upsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration)
-
-        await(res) shouldBe Right(UpsertEnrolmentSuccess)
-      }
-    }
-
-    "Tax Enrolments returns an unsuccessful response" should {
-      "return an EnrolFailure" in {
-        TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(BAD_REQUEST)
-
-        val res = connector.upsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration)
-
-        await(res) shouldBe Left(UpsertEnrolmentFailure(BAD_REQUEST, ""))
-      }
-    }
-  }
-
-  "allocateEnrolment" when {
-    "Tax Enrolments returns a Created" should {
-      "return an EnrolSuccess when postcode is there" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, Some(testPostCode), testDateOfRegistration)(CREATED)
-
-        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, Some(testPostCode), testDateOfRegistration)
-
-        await(res) shouldBe Right(EnrolSuccess)
-      }
-
-      "return an EnrolSuccess when postcode is not there" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, None, testDateOfRegistration)(CREATED)
-
-        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, None, testDateOfRegistration)
-
-        await(res) shouldBe Right(EnrolSuccess)
-      }
-    }
-
-    "Tax Enrolments returns a Bad Request" should {
-      "return an EnrolFailure when postcode is there" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, Some(testPostCode), testDateOfRegistration)(BAD_REQUEST)
-
-        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, Some(testPostCode), testDateOfRegistration)
-
-        await(res) shouldBe Left(EnrolFailure(""))
-      }
-      "return an EnrolFailure when postcode is not there" in {
-        TaxEnrolmentsStub.stubAllocateEnrolment(testVatNumber, testGroupId, testCredentialId, None, testDateOfRegistration)(BAD_REQUEST)
-
-        val res = connector.allocateEnrolment(testGroupId, testCredentialId, testVatNumber, None, testDateOfRegistration)
-
-        await(res) shouldBe Left(EnrolFailure(""))
-      }
-    }
-  }
-
 
 }

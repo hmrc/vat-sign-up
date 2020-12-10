@@ -19,12 +19,13 @@ package uk.gov.hmrc.vatsignup.services
 import cats.Functor
 import cats.data.EitherT
 import cats.implicits._
+
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Admin
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, InternalServerException}
 import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, UsersGroupsSearchConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UsersFound
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
@@ -174,7 +175,7 @@ class AutoClaimEnrolmentService @Inject()(enrolmentStoreProxyConnector: Enrolmen
       case Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess) =>
         Right(AutoClaimEnrolmentService.EnrolSuccess)
       case Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(message)) =>
-        Left(AutoClaimEnrolmentService.EnrolAdminIdFailure(credentialId, message))
+        throw new InternalServerException(s"Failed to enrol user with CredentialId: $credentialId, due to $message")
     }
 
   private def assignEnrolmentToUser(credentialIds: Set[String], vatNumber: String)
@@ -214,15 +215,9 @@ object AutoClaimEnrolmentService {
 
   case object EnrolmentAlreadyAllocated extends AutoClaimEnrolmentSuccess
 
-  case object UpsertEnrolmentSuccess extends AutoClaimEnrolmentSuccess
-
-  case class IgnoredUpsertEnrolmentFailure(failureMessage: String) extends AutoClaimEnrolmentSuccess
-
   sealed trait AutoClaimEnrolmentFailure
 
   case object NoUsersFound extends AutoClaimEnrolmentFailure
-
-  case class EnrolAdminIdFailure(adminId: String, message: String) extends AutoClaimEnrolmentFailure
 
   case object EnrolmentNotAllocated extends AutoClaimEnrolmentFailure
 

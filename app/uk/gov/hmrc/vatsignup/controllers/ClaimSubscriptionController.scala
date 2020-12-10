@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.http.ForbiddenException
+import uk.gov.hmrc.http.{ForbiddenException, InternalServerException}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import uk.gov.hmrc.vatsignup.models.ClaimSubscriptionRequest
 import uk.gov.hmrc.vatsignup.services.ClaimSubscriptionService
@@ -56,9 +56,9 @@ class ClaimSubscriptionController @Inject()(val authConnector: AuthConnector,
             case Right(SubscriptionClaimed) => NoContent
             case Left(KnownFactsMismatch) => Forbidden
             case Left(VatNumberNotFound | InvalidVatNumber) => BadRequest
-            case Left(KnownFactsFailure | AllocationFailure) => BadGateway
             case Left(EnrolmentAlreadyAllocated) => Conflict
             case Left(Deregistered) => InternalServerError("Deregistered user attempted to claim subscription")
+            case failure => throw new InternalServerException(s"Unexpected failure: ${failure.toString}")
           }
       }
     }
