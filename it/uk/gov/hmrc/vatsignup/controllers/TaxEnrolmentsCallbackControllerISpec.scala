@@ -51,7 +51,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
               "return NO_CONTENT (204) with the status" in {
                 await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-                EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
+                EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
 
                 EmailStub.stubSendEmail(testEmail, principalSuccessEmailTemplate, testVatNumber)(ACCEPTED)
 
@@ -70,7 +70,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
             "return no Email" in {
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(NO_CONTENT)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(Json.obj("state" -> "ERROR"))
               res should have(
@@ -85,7 +85,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
             "return no Email" in {
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = false)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(SERVICE_UNAVAILABLE)
+              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(SERVICE_UNAVAILABLE)
 
               val res = post(s"/subscription-request/vat-number/$testVatNumber/callback")(
                 Json.obj("state" -> "EnrolmentError")
@@ -107,7 +107,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
+              EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
@@ -136,7 +136,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
-              EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
+              EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
               KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)

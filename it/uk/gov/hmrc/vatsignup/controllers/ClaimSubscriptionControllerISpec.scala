@@ -33,7 +33,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
           EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(
@@ -53,7 +53,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return Conflict" in {
           stubAuth(OK, successfulAuthResponse(vatDecEnrolment()))
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(OK)
 
           val res = post(s"/claim-subscription/vat-number/$testVatNumber")(ClaimSubscriptionRequest(isFromBta = true))
 
@@ -69,7 +69,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
           TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(
             vatNumber = testVatNumber,
@@ -116,7 +116,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
         "return NO_CONTENT" in {
           stubAuth(OK, successfulAuthResponse())
           stubSuccessGetKnownFacts(testVatNumber)
-          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+          stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
           TaxEnrolmentsStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
           EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(
             vatNumber = testVatNumber,
@@ -142,7 +142,7 @@ class ClaimSubscriptionControllerISpec extends ComponentSpecBase with CustomMatc
     "the enrolment is already allocated" should {
       "return Conflict" in {
         stubAuth(OK, successfulAuthResponse())
-        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber)(OK)
+        stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(OK)
 
         val res = post(s"/claim-subscription/vat-number/$testVatNumber")(
           ClaimSubscriptionRequest(

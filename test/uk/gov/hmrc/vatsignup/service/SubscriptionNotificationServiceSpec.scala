@@ -96,7 +96,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
               "return NotificationSent" in {
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = false)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Right(EmailQueued)))
                 mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
@@ -110,7 +110,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
               "return EmailServiceFailure" in {
 
                 mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = false)(Future.successful(Left(EnrolmentAlreadyAllocated(""))))
                 mockSendEmail(testEmail, principalSuccessEmailTemplate, Some(testVatNumber))(Future.successful(Left(SendEmailFailure(BAD_REQUEST, ""))))
                 val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
 
@@ -123,7 +123,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
             "return no email" in {
 
               mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = false)(Future.successful(Right(EnrolmentNotAllocated)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
@@ -134,7 +134,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
             "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
 
               mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Right(EnrolmentNotAllocated)))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = false)(Future.successful(Right(EnrolmentNotAllocated)))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, AuthRefreshed))
@@ -147,7 +147,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
             "return no email" in {
 
               mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = false)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, Failure))
@@ -158,7 +158,7 @@ class SubscriptionNotificationServiceSpec extends WordSpec with Matchers
             "ignore the new states from ETMP, treat them as a Failure and don't send the email" in {
 
               mockFindEmailRequestById(testVatNumber)(Future.successful(Some(testEmailRequest)))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = false)(Future.successful(Left(UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST))))
               mockRemoveEmailRequest(testVatNumber)(Future.successful(mock[WriteResult]))
 
               val res = await(TestSubscriptionNotificationService.sendEmailNotification(testVatNumber, AuthRefreshed))

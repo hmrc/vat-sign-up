@@ -27,7 +27,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
 
   s"/migration-notification/vat-number/$testVatNumber" should {
     "successfully add the enrolment and return NO_CONTENT" in {
-      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
+      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
       UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
       KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
@@ -44,7 +44,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
     }
 
     "return NO_CONTENT if no group ids are found" in {
-      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(NO_CONTENT)
+      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(NO_CONTENT)
       val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)
       res should have(
         httpStatus(NO_CONTENT)
@@ -52,7 +52,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
     }
 
     "return NO_CONTENT if no user ids are found" in {
-      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
+      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(NO_CONTENT)
 
       val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)
@@ -62,7 +62,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
     }
 
     "throw an exception" in {
-      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber)(OK)
+      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
       UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
       KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)

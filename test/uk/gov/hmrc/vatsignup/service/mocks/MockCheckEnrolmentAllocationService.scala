@@ -36,17 +36,15 @@ trait MockCheckEnrolmentAllocationService extends BeforeAndAfterEach with Mockit
 
   val mockCheckEnrolmentAllocationService: CheckEnrolmentAllocationService = mock[CheckEnrolmentAllocationService]
 
-  def mockGetGroupIdForMtdVatEnrolment(vatNumber: String)(response: Future[CheckEnrolmentAllocationResponse]): Unit = {
+  def mockGetGroupIdForMtdVatEnrolment(vatNumber: String, ignoreAssignments: Boolean)(response: Future[CheckEnrolmentAllocationResponse]): Unit = {
     when(mockCheckEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(
-      ArgumentMatchers.eq(vatNumber
-      ))(ArgumentMatchers.any[HeaderCarrier])
-    ) thenReturn response
+      ArgumentMatchers.eq(vatNumber), ArgumentMatchers.eq(ignoreAssignments)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 
   def mockGetGroupIdForLegacyVatEnrolment(vatNumber: String)(response: Future[CheckEnrolmentAllocationResponse]): Unit = {
     when(mockCheckEnrolmentAllocationService.getGroupIdForLegacyVatEnrolment(
-      ArgumentMatchers.eq(vatNumber
-      ))(ArgumentMatchers.any[HeaderCarrier])
-    ) thenReturn response
+      ArgumentMatchers.eq(vatNumber)
+    )(ArgumentMatchers.any[HeaderCarrier])) thenReturn response
   }
 }

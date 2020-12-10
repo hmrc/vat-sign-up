@@ -42,13 +42,13 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
       .thenReturn(status = status, body = jsonResponseBody(principalUserIdKey, testCredentialId))
   }
 
-  def stubGetAllocatedMtdVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
-    when(method = GET, uri = s"$enrolmentStoreProxyUri/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups\\?type=principal")
+  def stubGetAllocatedMtdVatEnrolmentStatus(vatNumber: String, ignoreAssignments: Boolean)(status: Int): StubMapping = {
+    when(method = GET, uri = s"$enrolmentStoreProxyUri/enrolments/HMRC-MTD-VAT~VRN~$vatNumber/groups\\?type=principal&ignore-assignments=$ignoreAssignments")
       .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey, testGroupId))
   }
 
-  def stubGetAllocatedLegacyVatEnrolmentStatus(vatNumber: String)(status: Int): StubMapping = {
-    when(method = GET, uri = s"$enrolmentStoreProxyUri/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/groups\\?type=principal")
+  def stubGetAllocatedLegacyVatEnrolmentStatus(vatNumber: String, ignoreAssignments: Boolean)(status: Int): StubMapping = {
+    when(method = GET, uri = s"$enrolmentStoreProxyUri/enrolments/HMCE-VATDEC-ORG~VATRegNo~$vatNumber/groups\\?type=principal&ignore-assignments=$ignoreAssignments")
       .thenReturn(status = status, body = jsonResponseBody(principalGroupIdKey, testGroupId))
   }
 

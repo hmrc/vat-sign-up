@@ -86,7 +86,7 @@ class SubscriptionNotificationService @Inject()(emailRequestRepository: EmailReq
         case Left(_) => Left(EmailServiceFailure)
         case Right(_) => Right(NotificationSent)
       }
-      case _ => checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber) flatMap {
+      case _ => checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber, ignoreAssignments = false) flatMap {
         case Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(_)) =>
           emailConnector.sendEmail(emailAddress, principalSuccessEmailTemplate, Some(vatNumber)) map {
             case Left(_) => Left(EmailServiceFailure)
