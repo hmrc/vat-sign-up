@@ -53,7 +53,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBMandated)))
             mockGetVatCustomerDetails(testVatNumber)(
-              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(false)
@@ -64,7 +64,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfB)))
             mockGetVatCustomerDetails(testVatNumber)(
-              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(false)
@@ -75,7 +75,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfB)))
             mockGetVatCustomerDetails(testVatNumber)(
-              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = true)))
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = true)))
             )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(true)
@@ -86,7 +86,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
           s"return $AlreadySubscribed" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBVoluntary)))
             mockGetVatCustomerDetails(testVatNumber)(
-              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe AlreadySubscribed(false)
@@ -100,7 +100,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
             s"return $Eligible with the overseas flag set to true" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetVatCustomerDetails(testVatNumber)(
-                Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = true)))
+                Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = true)))
               )
 
               await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = true)
@@ -111,7 +111,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
             s"return $Eligible with the overseas flag set to true" in {
               mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonMTDfB)))
               mockGetVatCustomerDetails(testVatNumber)(
-                Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+                Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
               )
 
               await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
@@ -134,7 +134,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
           s"return $Eligible" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(NonDigital)))
             mockGetVatCustomerDetails(testVatNumber)(
-              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
@@ -145,7 +145,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
           s"return $Eligible" in {
             mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBExempt)))
             mockGetVatCustomerDetails(testVatNumber)(
-              Future.successful(Right(VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)))
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
             await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)

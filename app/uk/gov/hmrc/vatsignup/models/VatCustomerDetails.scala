@@ -18,4 +18,4 @@ package uk.gov.hmrc.vatsignup.models
 
 case class VatCustomerDetails(knownFacts: KnownFacts, isOverseas: Boolean)
 
-case class KnownFacts(businessPostcode: String, vatRegistrationDate: String)
+case class KnownFacts(businessPostcode: Option[String], vatRegistrationDate: String)

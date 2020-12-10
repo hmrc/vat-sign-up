@@ -63,7 +63,7 @@ class ClaimSubscriptionControllerSpec extends WordSpec with Matchers with MockAu
           val request = FakeRequest().withBody(ClaimSubscriptionRequest(None, None, isFromBta))
 
           mockAuthRetrievePrincipalEnrolment()
-          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(Future.successful(Left(EnrolFailure)))
+          mockClaimSubscriptionWithEnrolment(testVatNumber, isFromBta)(Future.successful(Left(AllocationFailure)))
 
           val res = TestClaimSubscriptionController.claimSubscription(testVatNumber)(request)
 

@@ -38,7 +38,7 @@ class MigratedKnownFactsMatchingServiceSpec extends WordSpec with Matchers with 
 
   private val testEnteredKnownFacts = VatKnownFacts(Some(testPostCode), testDateOfRegistration, None, None)
   private val testEnteredOverseasKnownFacts = VatKnownFacts(None, testDateOfRegistration, None, None)
-  private val testRetrievedKnownFacts = KnownFacts(testPostCode, testDateOfRegistration)
+  private val testRetrievedKnownFacts = KnownFacts(Some(testPostCode), testDateOfRegistration)
   private val testVatCustomerDetails = VatCustomerDetails(testRetrievedKnownFacts, isOverseas = false)
   private val testOverseasVatCustomerDetails = VatCustomerDetails(testRetrievedKnownFacts, isOverseas = true)
 

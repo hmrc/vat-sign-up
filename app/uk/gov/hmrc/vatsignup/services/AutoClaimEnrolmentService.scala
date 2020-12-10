@@ -25,20 +25,17 @@ import play.api.libs.json.Json
 import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.Admin
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, UsersGroupsSearchConnector, VatCustomerDetailsConnector}
+import uk.gov.hmrc.vatsignup.connectors.{EnrolmentStoreProxyConnector, UsersGroupsSearchConnector}
 import uk.gov.hmrc.vatsignup.httpparsers.GetUsersForGroupHttpParser.UsersFound
 import uk.gov.hmrc.vatsignup.httpparsers.{AllocateEnrolmentResponseHttpParser, _}
-import uk.gov.hmrc.vatsignup.models.KnownFacts
 import uk.gov.hmrc.vatsignup.models.monitoring.AutoClaimEnrolementAuditing.AutoClaimEnrolementAuditingModel
 import uk.gov.hmrc.vatsignup.services.AutoClaimEnrolmentService._
 import uk.gov.hmrc.vatsignup.services.monitoring.AuditService
-import uk.gov.hmrc.vatsignup.utils.KnownFactsDateFormatter.KnownFactsDateFormatter
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustomerDetailsConnector,
-                                          enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
+class AutoClaimEnrolmentService @Inject()(enrolmentStoreProxyConnector: EnrolmentStoreProxyConnector,
                                           checkEnrolmentAllocationService: CheckEnrolmentAllocationService,
                                           assignEnrolmentToUserService: AssignEnrolmentToUserService,
                                           usersGroupsSearchConnector: UsersGroupsSearchConnector,
@@ -56,10 +53,6 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
         .logLeft(vatNumber, triggerPoint, call = getLegacyEnrolmentUserIDsCall, Some(legacyVatGroupId))
       adminUserId <- EitherT(getAdminUserId(legacyVatGroupId, legacyVatUserIds))
         .logLeft(vatNumber, triggerPoint, call = getAdminUserIdCall, Some(legacyVatGroupId), legacyVatUserIds)
-      knownFacts <- getKnownFacts(vatNumber)
-        .logLeft(vatNumber, triggerPoint, call = getKnownFactsCall, Some(legacyVatGroupId), legacyVatUserIds)
-      _ <- upsertEnrolmentAllocation(vatNumber, knownFacts)
-        .logLeft(vatNumber, triggerPoint, call = upsertEnrolmentAllocationCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ <- allocateEnrolmentWithoutKnownFacts(vatNumber, legacyVatGroupId, adminUserId)
         .logLeft(vatNumber, triggerPoint, call = allocateEnrolmentWithoutKnownFactsCall, Some(legacyVatGroupId), legacyVatUserIds)
       _ <- assignEnrolmentToUser(legacyVatUserIds filterNot (_ == adminUserId), vatNumber)
@@ -169,30 +162,6 @@ class AutoClaimEnrolmentService @Inject()(vatCustomerDetailsConnector: VatCustom
         Left(UsersGroupsSearchFailure)
     }
 
-  private def getKnownFacts(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, KnownFacts] =
-    EitherT(vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber)).map {
-      details =>
-        details.knownFacts
-    }.leftMap {
-      case VatCustomerDetailsHttpParser.InvalidVatNumber => InvalidVatNumber
-      case VatCustomerDetailsHttpParser.VatNumberNotFound => VatNumberNotFound
-      case _ => KnownFactsFailure
-    }
-
-  private def upsertEnrolmentAllocation(vatNumber: String,
-                                        knownFacts: KnownFacts
-                                       )(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, AutoClaimEnrolmentSuccess] =
-    EitherT(enrolmentStoreProxyConnector.upsertEnrolment(
-      vatNumber = vatNumber,
-      postcode = knownFacts.businessPostcode,
-      vatRegistrationDate = knownFacts.vatRegistrationDate.toTaxEnrolmentsFormat
-    )).transform {
-      case Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess) =>
-        Right(AutoClaimEnrolmentService.UpsertEnrolmentSuccess)
-      case Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(_, message)) =>
-        Right(AutoClaimEnrolmentService.IgnoredUpsertEnrolmentFailure(message))
-    }
-
   private def allocateEnrolmentWithoutKnownFacts(vatNumber: String,
                                                  groupId: String,
                                                  credentialId: String
@@ -227,8 +196,6 @@ object AutoClaimEnrolmentService {
   val getLegacyEnrolmentAllocationCall: String = "getLegacyEnrolmentAllocation"
   val getLegacyEnrolmentUserIDsCall: String = "getLegacyEnrolmentUserIDs"
   val getAdminUserIdCall: String = "getAdminUserId"
-  val getKnownFactsCall: String = "getKnownFacts"
-  val upsertEnrolmentAllocationCall: String = "upsertEnrolmentAllocation"
   val allocateEnrolmentWithoutKnownFactsCall: String = "allocateEnrolmentWithoutKnownFacts"
   val assignEnrolmentToUserCall: String = "assignEnrolmentToUser"
 

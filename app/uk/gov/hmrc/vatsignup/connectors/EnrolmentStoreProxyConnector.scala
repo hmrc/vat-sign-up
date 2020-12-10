@@ -49,17 +49,17 @@ class EnrolmentStoreProxyConnector @Inject()(http: HttpClient,
   }
 
   def upsertEnrolment(vatNumber: String,
-                      postcode: String,
+                      postcode: Option[String],
                       vatRegistrationDate: String)
                      (implicit hc: HeaderCarrier): Future[UpsertEnrolmentResponse] = {
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
 
     val requestBody = Json.obj(
       "verifiers" -> Json.arr(
-        Json.obj(
+        postcode.map(pc => Json.obj(
           "key" -> "Postcode",
-          "value" -> postcode
-        ),
+          "value" -> pc
+        )),
         Json.obj(
           "key" -> "VATRegistrationDate",
           "value" -> vatRegistrationDate

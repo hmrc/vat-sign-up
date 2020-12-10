@@ -40,7 +40,7 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
   val mockTaxEnrolmentsConnector: TaxEnrolmentsConnector = mock[TaxEnrolmentsConnector]
 
   def mockUpsertEnrolment(vatNumber: String,
-                          postcode: String,
+                          postcode: Option[String],
                           vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
     when(mockTaxEnrolmentsConnector.upsertEnrolment(
       ArgumentMatchers.eq(vatNumber),
@@ -59,7 +59,7 @@ trait MockTaxEnrolmentsConnector extends MockitoSugar with BeforeAndAfterEach {
   def mockAllocateEnrolment(groupId: String,
                             credentialId: String,
                             vatNumber: String,
-                            postcode: String,
+                            postcode: Option[String],
                             vatRegistrationDate: String)(response: Future[AllocateEnrolmentResponse]): Unit =
     when(mockTaxEnrolmentsConnector.allocateEnrolment(
       ArgumentMatchers.eq(groupId),

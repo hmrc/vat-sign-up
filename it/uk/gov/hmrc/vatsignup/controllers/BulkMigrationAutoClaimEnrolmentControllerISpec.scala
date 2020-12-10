@@ -31,7 +31,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
       UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
       KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
-      EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+      EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
       EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(CREATED)
 
       val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)
@@ -66,7 +66,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
       UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
       KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
-      EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+      EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
       EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)(INTERNAL_SERVER_ERROR)
 
       val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)

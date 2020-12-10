@@ -69,7 +69,7 @@ trait MockEnrolmentStoreProxyConnector extends MockitoSugar with BeforeAndAfterE
 
 
   def mockEnrolmentStoreUpsertEnrolment(vatNumber: String,
-                          postcode: String,
+                          postcode: Option[String],
                           vatRegistrationDate: String)(response: Future[UpsertEnrolmentResponse]): Unit = {
     when(mockEnrolmentStoreProxyConnector.upsertEnrolment(
       ArgumentMatchers.eq(vatNumber),

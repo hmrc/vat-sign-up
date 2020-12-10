@@ -37,7 +37,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
-  with MockVatCustomerDetailsConnector
   with MockEnrolmentStoreProxyConnector
   with MockCheckEnrolmentAllocationService
   with MockAssignEnrolmentToUserService
@@ -45,7 +44,6 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
   with MockAuditService {
 
   object TestAutoClaimEnrolmentService extends AutoClaimEnrolmentService(
-    mockVatCustomerDetailsConnector,
     mockEnrolmentStoreProxyConnector,
     mockCheckEnrolmentAllocationService,
     mockAssignEnrolmentToUserService,
@@ -80,10 +78,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   mockGetUsersForGroup(testGroupId)(
                     Future.successful(Right(UsersFound(testMapCredentialRoles)))
                   )
-                  mockGetVatCustomerDetails(testVatNumber)(
-                    Future.successful(Right(testVatCustomerDetails))
-                  )
-                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -116,10 +111,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   mockGetUsersForGroup(testGroupId)(
                     Future.successful(Right(UsersFound(testMapCredentialRoles)))
                   )
-                  mockGetVatCustomerDetails(testVatNumber)(
-                    Future.successful(Right(testVatCustomerDetails))
-                  )
-                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                  mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                     Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                   )
                   mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -154,10 +146,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 mockGetUsersForGroup(testGroupId)(
                   Future.successful(Right(UsersFound(testMapCredentialRoles)))
                 )
-                mockGetVatCustomerDetails(testVatNumber)(
-                  Future.successful(Right(testVatCustomerDetails))
-                )
-                mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentSuccess))
                 )
                 mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -189,10 +178,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
               mockGetUsersForGroup(testGroupId)(
                 Future.successful(Right(UsersFound(testMapCredentialRoles)))
               )
-              mockGetVatCustomerDetails(testVatNumber)(
-                Future.successful(Right(testVatCustomerDetails))
-              )
-              mockEnrolmentStoreUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+              mockEnrolmentStoreUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                 Future.successful(Left(UpsertEnrolmentResponseHttpParser.UpsertEnrolmentFailure(BAD_REQUEST, testErrorMsg)))
               )
               mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
@@ -216,56 +202,6 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 auditInformation = None)
               )
             }
-          }
-        }
-        "the known facts connector fails" when {
-          "returns InvalidVatNumber" in {
-            mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-              Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-            )
-            mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
-            mockGetUsersForGroup(testGroupId)(
-              Future.successful(Right(UsersFound(testMapCredentialRoles)))
-            )
-            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.InvalidVatNumber)))
-
-            val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-            res shouldBe Left(InvalidVatNumber)
-
-            verifyAudit(AutoClaimEnrolementAuditingModel(
-              testVatNumber,
-              agentLedSignUp,
-              isSuccess = false,
-              call = Some(getKnownFactsCall),
-              groupId = Some(testGroupId),
-              userIds = testSetCredentialIds,
-              auditInformation = Some(AutoClaimEnrolmentService.InvalidVatNumber.toString)
-            ))
-          }
-          "returns VatNumberNotFound" in {
-            mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
-              Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-            )
-            mockGetUserIds(testVatNumber)(Future.successful(Right(QueryUsersHttpParser.UsersFound(testSetCredentialIds))))
-            mockGetUsersForGroup(testGroupId)(
-              Future.successful(Right(UsersFound(testMapCredentialRoles)))
-            )
-            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Left(VatCustomerDetailsHttpParser.VatNumberNotFound)))
-
-            val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
-
-            res shouldBe Left(VatNumberNotFound)
-
-            verifyAudit(AutoClaimEnrolementAuditingModel(
-              testVatNumber,
-              agentLedSignUp,
-              isSuccess = false,
-              call = Some(getKnownFactsCall),
-              groupId = Some(testGroupId),
-              userIds = testSetCredentialIds,
-              auditInformation = Some(AutoClaimEnrolmentService.VatNumberNotFound.toString)
-            ))
           }
         }
       }

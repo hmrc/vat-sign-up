@@ -27,8 +27,7 @@ object ClaimSubscriptionAuditing {
   case class ClaimSubscriptionAuditModel(vatNumber: String,
                                          isFromBta: Boolean,
                                          isSuccess: Boolean,
-                                         allocateEnrolmentFailureMessage: Option[String] = None,
-                                         upsertEnrolmentFailureMessage: Option[String] = None
+                                         allocateEnrolmentFailureMessage: Option[String] = None
                                         ) extends AuditModel {
 
     override val transactionName: String = claimSubscriptionTransactionName
@@ -37,8 +36,7 @@ object ClaimSubscriptionAuditing {
       "vatNumber" -> vatNumber,
       "isFromBta" -> isFromBta.toString,
       "isSuccess" -> isSuccess.toString,
-      "allocateEnrolmentFailureMessage" -> allocateEnrolmentFailureMessage.getOrElse(""),
-      "upsertKnownFactsFailureMessage" -> upsertEnrolmentFailureMessage.getOrElse("")
+      "allocateEnrolmentFailureMessage" -> allocateEnrolmentFailureMessage.getOrElse("")
     ).filter { case (_, value) => value.nonEmpty }
 
     override val auditType: String = claimSubscriptionAuditType

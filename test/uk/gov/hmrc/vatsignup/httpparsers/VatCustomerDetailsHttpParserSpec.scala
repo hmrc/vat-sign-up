@@ -46,7 +46,7 @@ class VatCustomerDetailsHttpParserSpec extends WordSpec with Matchers with Eithe
         }
       }
       s"the json does not contain deregistered and is valid" should {
-        "return Known facts" in {
+        "return Known facts with a postcode" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
             responseJson = Some(
@@ -60,29 +60,31 @@ class VatCustomerDetailsHttpParserSpec extends WordSpec with Matchers with Eithe
 
           read(testMethod, testUrl, testResponse) shouldBe Right(VatCustomerDetails(
             KnownFacts(
-              businessPostcode = testPostCode,
+              businessPostcode = Some(testPostCode),
               vatRegistrationDate = testDateOfRegistration
             ),
             isOverseas = false
           ))
         }
-      }
 
-      s"the json does not contain deregistered and is missing the postcode" should {
-        "return InvalidKnownFacts" in {
+        "return Known facts without a postcode" in {
           val testResponse = HttpResponse(
             responseStatus = OK,
             responseJson = Some(
               Json.obj(
-                "isOverseas" -> false,
-                "vatRegistrationDate" -> testDateOfRegistration
+                "vatRegistrationDate" -> testDateOfRegistration,
+                "isOverseas" -> false
               )
             )
           )
 
-          val error = intercept[InternalServerException](read(testMethod, testUrl, testResponse))
-
-          error.message shouldBe "[VatCustomerDetailsHttpParser] postcode missing in known facts response"
+          read(testMethod, testUrl, testResponse) shouldBe Right(VatCustomerDetails(
+            KnownFacts(
+              businessPostcode = None,
+              vatRegistrationDate = testDateOfRegistration
+            ),
+            isOverseas = false
+          ))
         }
       }
 

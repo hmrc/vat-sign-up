@@ -122,13 +122,13 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
     )
   }
 
-  def stubUpsertEnrolment(vatNumber: String, postcode: String, vatRegistrationDate: String)(status: Int): Unit = {
+  def stubUpsertEnrolment(vatNumber: String, postcode: Option[String], vatRegistrationDate: String)(status: Int): Unit = {
     val allocateEnrolmentJsonBody = Json.obj(
       "verifiers" -> Json.arr(
-        Json.obj(
+        postcode.map(pc => Json.obj(
           "key" -> "Postcode",
-          "value" -> postcode
-        ),
+          "value" -> pc
+        )),
         Json.obj(
           "key" -> "VATRegistrationDate",
           "value" -> vatRegistrationDate

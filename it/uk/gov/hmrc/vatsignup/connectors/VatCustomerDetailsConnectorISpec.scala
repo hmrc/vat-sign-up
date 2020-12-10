@@ -39,7 +39,7 @@ class VatCustomerDetailsConnectorISpec extends ComponentSpecBase with EitherValu
 
         val res = await(vatCustomerDetailsConnector.getVatCustomerDetails(testVatNumber))
 
-        res.right.value shouldBe VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = false)
+        res.right.value shouldBe VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)
       }
     }
 
@@ -49,7 +49,7 @@ class VatCustomerDetailsConnectorISpec extends ComponentSpecBase with EitherValu
 
         val res = await(vatCustomerDetailsConnector.getVatCustomerDetails(testVatNumber))
 
-        res.right.value shouldBe VatCustomerDetails(KnownFacts(testPostCode, testDateOfRegistration), isOverseas = true)
+        res.right.value shouldBe VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = true)
       }
     }
 

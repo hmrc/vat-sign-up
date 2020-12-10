@@ -44,7 +44,7 @@ object VatCustomerDetailsHttpParser {
               Left(Deregistered)
             case JsSuccess(_, _) =>
               (
-                (response.json \ postCodeKey).validate[String],
+                (response.json \ postCodeKey).validateOpt[String],
                 (response.json \ registrationDateKey).validate[String],
                 (response.json \ isOverseasKey).validate[Boolean]
               ) match {

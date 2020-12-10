@@ -53,17 +53,17 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
   }
 
   def upsertEnrolment(vatNumber: String,
-                      postcode: String,
+                      postcode: Option[String],
                       vatRegistrationDate: String)
                      (implicit hc: HeaderCarrier): Future[UpsertEnrolmentResponse] = {
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
 
     val requestBody = Json.obj(
       "verifiers" -> Json.arr(
-        Json.obj(
+        postcode.map(pc => Json.obj(
           "key" -> "Postcode",
-          "value" -> postcode
-        ),
+          "value" -> pc
+        )),
         Json.obj(
           "key" -> "VATRegistrationDate",
           "value" -> vatRegistrationDate
@@ -80,7 +80,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
   def allocateEnrolment(groupId: String,
                         credentialId: String,
                         vatNumber: String,
-                        postcode: String,
+                        postcode: Option[String],
                         vatRegistrationDate: String
                        )(implicit hc: HeaderCarrier): Future[AllocateEnrolmentResponse] = {
     val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
@@ -90,10 +90,10 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient,
       "friendlyName" -> "Making Tax Digital - VAT",
       "type" -> "principal",
       "verifiers" -> Json.arr(
-        Json.obj(
+        postcode.map(pc => Json.obj(
           "key" -> "Postcode",
-          "value" -> postcode
-        ),
+          "value" -> pc
+        )),
         Json.obj(
           "key" -> "VATRegistrationDate",
           "value" -> vatRegistrationDate
