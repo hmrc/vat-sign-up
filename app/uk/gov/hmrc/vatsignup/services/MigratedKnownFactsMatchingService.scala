@@ -33,7 +33,7 @@ class MigratedKnownFactsMatchingService @Inject()(vatCustomerDetailsConnector: V
         enteredKnownFacts.vatRegistrationDate == responseKnownFacts.knownFacts.vatRegistrationDate
       case Right(responseKnownFacts) =>
         enteredKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase)
-          .contains(responseKnownFacts.knownFacts.businessPostcode.filterNot(_.isWhitespace).toLowerCase) &&
+          .equals(responseKnownFacts.knownFacts.businessPostcode.map(_.filterNot(_.isWhitespace).toLowerCase)) &&
         enteredKnownFacts.vatRegistrationDate == responseKnownFacts.knownFacts.vatRegistrationDate
       case Left(_) => false
     }

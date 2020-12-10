@@ -137,20 +137,36 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
   "upsertEnrolment" when {
     "Enrolment Store Proxy returns a successful response" should {
-      "return an EnrolSuccess" in {
-        stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(NO_CONTENT)
+      "return an EnrolSuccess when there is a postcode" in {
+        stubUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration)(NO_CONTENT)
 
-        val res = connector.upsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)
+        val res = connector.upsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration)
+
+        await(res) shouldBe Right(UpsertEnrolmentSuccess)
+      }
+
+      "return an EnrolSuccess when there is not a postcode" in {
+        stubUpsertEnrolment(testVatNumber, None, testDateOfRegistration)(NO_CONTENT)
+
+        val res = connector.upsertEnrolment(testVatNumber, None, testDateOfRegistration)
 
         await(res) shouldBe Right(UpsertEnrolmentSuccess)
       }
     }
 
     "Enrolment Store Proxy returns an unsuccessful response" should {
-      "return an EnrolFailure" in {
-        stubUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)(BAD_REQUEST)
+      "return an EnrolFailure when there is a postcode" in {
+        stubUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration)(BAD_REQUEST)
 
-        val res = connector.upsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration)
+        val res = connector.upsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration)
+
+        await(res) shouldBe Left(UpsertEnrolmentFailure(BAD_REQUEST, ""))
+      }
+
+      "return an EnrolFailure when there is not postcode" in {
+        stubUpsertEnrolment(testVatNumber, None, testDateOfRegistration)(BAD_REQUEST)
+
+        val res = connector.upsertEnrolment(testVatNumber, None, testDateOfRegistration)
 
         await(res) shouldBe Left(UpsertEnrolmentFailure(BAD_REQUEST, ""))
       }

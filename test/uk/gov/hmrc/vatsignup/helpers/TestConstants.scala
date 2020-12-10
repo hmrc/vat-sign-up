@@ -197,7 +197,7 @@ object  TestConstants {
   val testTraderPostCode: String = UUID.randomUUID().toString
 
   val testVatCustomerDetails = VatCustomerDetails(
-    KnownFacts(testPostCode, testDateOfRegistration),
+    KnownFacts(Some(testPostCode), testDateOfRegistration),
     isOverseas = false
   )
 }

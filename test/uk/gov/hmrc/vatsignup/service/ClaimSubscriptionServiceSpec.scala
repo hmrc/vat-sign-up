@@ -47,7 +47,6 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
   object TestClaimSubscriptionService extends ClaimSubscriptionService(
     mockAuthConnector,
     mockVatCustomerDetailsConnector,
-    mockTaxEnrolmentsConnector,
     mockEnrolmentStoreProxyConnector,
     mockCheckEnrolmentAllocationService,
     mockAuditService
@@ -65,7 +64,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               "return SubscriptionClaimed" in {
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
@@ -95,7 +94,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               "return SubscriptionClaimed when vrn is overseas" in {
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
@@ -125,10 +124,9 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
             "tax enrolment to allocate enrolment returns a failure" should {
               "return TaxEnrolmentsFailure" in {
                 val allocateEnrolmentFailureMessage = "allocateEnrolmentFailure"
-
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
@@ -147,7 +145,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   isFromBta = true
                 ))
 
-                res shouldBe Left(EnrolFailure)
+                res shouldBe Left(AllocationFailure)
                 verifyAudit(ClaimSubscriptionAuditModel(
                   testVatNumber,
                   isFromBta = true,
@@ -164,7 +162,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
 
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
@@ -200,7 +198,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
 
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Left(UpsertEnrolmentFailure(status = BAD_REQUEST, message = upsertEnrolmentErrorMessage)))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
@@ -219,13 +217,12 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   isFromBta = true
                 ))
 
-                res shouldBe Left(EnrolFailure)
+                res shouldBe Left(AllocationFailure)
                 verifyAudit(ClaimSubscriptionAuditModel(
                   testVatNumber,
                   isFromBta = true,
                   isSuccess = false,
-                  allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage),
-                  upsertEnrolmentFailureMessage = Some(upsertEnrolmentErrorMessage))
+                  allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage))
                 )
               }
             }
@@ -347,7 +344,7 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               "return SubscriptionClaimed" in {
                 mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
                 mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockUpsertEnrolment(testVatNumber, testPostCode, testDateOfRegistration.toTaxEnrolmentsFormat)(
+                mockUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(
                   Future.successful(Right(UpsertEnrolmentSuccess))
                 )
                 mockGetGroupIdForMtdVatEnrolment(testVatNumber)(
