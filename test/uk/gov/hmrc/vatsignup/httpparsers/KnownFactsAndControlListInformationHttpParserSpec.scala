@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.httpparsers
 import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.libs.json.Json
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.KnownFactsAndControlListInformationHttpParser.KnownFactsAndControlListInformationHttpReads.read
@@ -105,7 +105,7 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
       }
 
       s"the json is invalid" should {
-        "return UnexpectedKnownFactsAndControlListInformationFailure" in {
+        "throw an InternalServerException" in {
           val testJson = Json.obj(
             "postcode" -> testPostCode,
             "dateOfReg" -> testDateOfRegistration
@@ -116,16 +116,13 @@ class KnownFactsAndControlListInformationHttpParserSpec extends WordSpec with Ma
             responseJson = Some(testJson)
           )
 
-          val res: UnexpectedKnownFactsAndControlListInformationFailure = read(
-            method = testMethod,
-            url = testUrl,
-            response = testResponse
-          ).left.value.asInstanceOf[UnexpectedKnownFactsAndControlListInformationFailure]
-
-          res.status shouldBe OK
-          res.body should include(invalidJsonResponseMessage)
-
-          Json.parse(res.body.replace(invalidJsonResponseMessage, "")) shouldBe testJson
+          intercept[InternalServerException](
+            read(
+              method = testMethod,
+              url = testUrl,
+              response = testResponse
+            )).message
+            .shouldEqual("Invalid JSON response: controlList is missing in the json response")
         }
       }
     }

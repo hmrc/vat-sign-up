@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.httpparsers
 
 import play.api.http.Status._
-import uk.gov.hmrc.http.{HttpReads, HttpResponse}
+import uk.gov.hmrc.http.{HttpReads, HttpResponse, InternalServerException}
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
 import uk.gov.hmrc.vatsignup.models.{KnownFactsAndControlListInformation, VatKnownFacts}
 import uk.gov.hmrc.vatsignup.utils.controllist.ControlListInformationParser
@@ -40,20 +40,14 @@ object KnownFactsAndControlListInformationHttpParser extends FeatureSwitching {
     override def read(method: String, url: String, response: HttpResponse): KnownFactsAndControlListInformationHttpParserResponse = {
       response.status match {
         case OK =>
-          (for {
-            businessPostcode <- (response.json \ postcodeKey).validateOpt[String]
-            vatRegistrationDate <- (response.json \ registrationDateKey).validate[String]
-            optLastReturnMonthPeriod <- (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
-            optLastNetDue <- (response.json \ lastNetDueKey).validateOpt[Double]
-            controlList <- (response.json \ controlListInformationKey).validate[String]
-          } yield ControlListInformationParser.tryParse(controlList) match {
+          ControlListInformationParser.tryParse(getControlList(response)) match {
             case Right(validControlList) =>
-              val lastMonthReturnPeriod = optLastReturnMonthPeriod filterNot (_ == lastReturnMonthDefault) map VatKnownFacts.fromMMM
-              val lastNetDue = optLastNetDue.map { x => "%.2f".format(x) } filterNot (_ == lastNetDueDefault && lastMonthReturnPeriod.isEmpty)
+              val lastMonthReturnPeriod = getLastReturnMonthPeriod(response) filterNot (_ == lastReturnMonthDefault) map VatKnownFacts.fromMMM
+              val lastNetDue = getLastNetDue(response).map { x => "%.2f".format(x) } filterNot (_ == lastNetDueDefault && lastMonthReturnPeriod.isEmpty)
               Right(KnownFactsAndControlListInformation(
                 VatKnownFacts(
-                  businessPostcode = businessPostcode,
-                  vatRegistrationDate = vatRegistrationDate,
+                  businessPostcode = getBusinessPostcode(response),
+                  vatRegistrationDate = getVatRegistrationDate(response),
                   lastReturnMonthPeriod = lastMonthReturnPeriod,
                   lastNetDue = lastNetDue
                 ),
@@ -61,9 +55,7 @@ object KnownFactsAndControlListInformationHttpParser extends FeatureSwitching {
               ))
             case Left(parsingError) =>
               Left(UnexpectedKnownFactsAndControlListInformationFailure(OK, parsingError.toString))
-          }) getOrElse Left(
-            UnexpectedKnownFactsAndControlListInformationFailure(OK, s"$invalidJsonResponseMessage ${response.body}")
-          )
+          }
 
         case BAD_REQUEST =>
           Left(KnownFactsInvalidVatNumber)
@@ -73,6 +65,26 @@ object KnownFactsAndControlListInformationHttpParser extends FeatureSwitching {
           Left(UnexpectedKnownFactsAndControlListInformationFailure(status, response.body))
       }
     }
+
+    private def getBusinessPostcode(response: HttpResponse): Option[String] =
+      (response.json \ postcodeKey).validateOpt[String]
+        .getOrElse(throw new InternalServerException(s"$invalidJsonResponseMessage: postcodeKey is missing in the json response"))
+
+    private def getVatRegistrationDate(response: HttpResponse): String =
+      (response.json \ registrationDateKey).validate[String]
+        .getOrElse(throw new InternalServerException(s"$invalidJsonResponseMessage: registrationDateKey is missing in the json response"))
+
+    private def getLastReturnMonthPeriod(response: HttpResponse): Option[String] =
+      (response.json \ lastReturnMonthPeriodKey).validateOpt[String]
+        .getOrElse(throw new InternalServerException(s"$invalidJsonResponseMessage: lastReturnMonthPeriodKey is missing in the json response"))
+
+    private def getLastNetDue(response: HttpResponse): Option[Double] =
+      (response.json \ lastNetDueKey).validateOpt[Double]
+        .getOrElse(throw new InternalServerException(s"$invalidJsonResponseMessage: lastNetDue is missing in the json response"))
+
+    private def getControlList(response: HttpResponse): String =
+      (response.json \ controlListInformationKey).validate[String]
+        .getOrElse(throw new InternalServerException(s"$invalidJsonResponseMessage: controlList is missing in the json response"))
   }
 
   sealed trait KnownFactsAndControlListInformationFailure

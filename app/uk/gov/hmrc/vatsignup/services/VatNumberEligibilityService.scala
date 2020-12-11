@@ -64,7 +64,7 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
           case Left(ControlListEligibilityService.VatNumberNotFound) =>
             VatNumberNotFound
           case Left(error) =>
-            throw new InternalServerException(s"Could not retrieve control list: $error")
+            throw new InternalServerException(s"Could not retrieve control list for VRN $vatNumber: $error")
         }
       case Left(GetMandationStatusHttpParser.MigrationInProgress) =>
         Future.successful(MigrationInProgress)
