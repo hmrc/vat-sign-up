@@ -66,6 +66,33 @@ The API returns only two status codes with no response body as the failures are 
 | ```204```  | Successfully assigned the MTD-VAT enrolment to all users that have the VAT-DEC enrolment for the supplied VRN.
 | ```500```  | Failed to assign the enrolment / downstream service failures
 
+## Stubs
+All routes are prepended with `/vat-sign-up/test-only`
+
+### Email Verification Stubs
+#### POST /email-verification/verify-passcode
+
+Returns a status based on the provided passcode.
+
+**Example Request body**
+
+```
+{
+    "passcode": "123456",
+    "email": "test@test.com"
+}
+```
+
+### Example Response
+
+| Passcode              |  Status                                |
+|-----------------------|----------------------------------------|
+| 123456                | 204 (No Content) - already verified    |
+| 111111                | 404 (Not Found) - passcode not found   |
+| 222222                | 404 (Not Found) - passcode mismatch    |
+| 333333                | 400 (Forbidden) - max attempts exceeded|
+| Any other 6 digit code| 201 (Created) - successfully verified  |
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html" )

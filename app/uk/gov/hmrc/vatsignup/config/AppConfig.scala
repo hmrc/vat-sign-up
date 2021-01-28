@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.config
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, StubEmailVerification}
 import uk.gov.hmrc.vatsignup.models.DateRange
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.utils.BasicAuthentication
@@ -54,7 +54,7 @@ class AppConfig @Inject()(val config: ServicesConfig) extends FeatureSwitching {
 
   lazy val emailVerificationUrl: String = config.baseUrl("email-verification")
 
-  lazy val emailVerifiedUrl= s"$emailVerificationUrl/email-verification/verified-email-check"
+  lazy val emailVerifiedUrl = s"$emailVerificationUrl/email-verification/verified-email-check"
 
   lazy val verifyEmailUrl = s"$emailVerificationUrl/email-verification/verification-requests"
 
@@ -163,5 +163,11 @@ class AppConfig @Inject()(val config: ServicesConfig) extends FeatureSwitching {
   }
 
   def authRealm: String = config.getString("basicAuthentication.realm")
+
+  def verifyEmailVerificationPasscodeUrl: String = {
+    val url = if (isEnabled(StubEmailVerification)) config.baseUrl("base") else config.baseUrl("email-verification")
+
+    s"$url/email-verification/verify-passcode"
+  }
 
 }
