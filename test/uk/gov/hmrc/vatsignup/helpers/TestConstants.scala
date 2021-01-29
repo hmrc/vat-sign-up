@@ -38,6 +38,7 @@ object  TestConstants {
   val testCtReference: String = UUID.randomUUID().toString
   val testUtr: String = UUID.randomUUID().toString
   val testEmail: String = UUID.randomUUID().toString
+  val testPasscode: String = UUID.randomUUID().toString
   val testAgentReferenceNumber: String = UUID.randomUUID().toString
   val testSafeId: String = UUID.randomUUID().toString
   val testToken: String = UUID.randomUUID().toString
