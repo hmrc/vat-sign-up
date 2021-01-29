@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ object FeatureSwitch {
   val switches: Set[FeatureSwitch] = Set(
     StubDESFeature,
     StubAgentServicesFeature,
-    AutoClaimEnrolment
+    AutoClaimEnrolment,
+    StubEmailVerification
   )
 
   def apply(str: String): FeatureSwitch =
@@ -58,4 +59,9 @@ case object StubAgentServicesFeature extends FeatureSwitch {
 case object AutoClaimEnrolment extends FeatureSwitch {
   val displayName: String = "Enable the auto claim enrolment"
   val name: String = s"$prefix.auto-claim-enrolment"
+}
+
+case object StubEmailVerification extends FeatureSwitch {
+  val displayName: String = "Use stub for new email verification flow"
+  val name: String = s"$prefix.stub-email-verification"
 }
