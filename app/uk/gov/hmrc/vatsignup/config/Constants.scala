@@ -45,6 +45,7 @@ object Constants {
 
   object EmailVerification {
     val EmailKey = "email"
+    val PasscodeKey = "passcode"
     val TemplateIdKey = "templateId"
     val TemplateParametersKey = "templateParameters"
     val LinkExpiryDurationKey = "linkExpiryDuration"

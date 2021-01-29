@@ -58,6 +58,11 @@ class AppConfig @Inject()(val config: ServicesConfig) extends FeatureSwitching {
 
   lazy val verifyEmailUrl = s"$emailVerificationUrl/email-verification/verification-requests"
 
+  def emailPasscodeVerificationUrl: String = {
+    if (isEnabled(StubEmailVerification)) s"$baseUrl/vat-sign-up/test-only/email-verification/verify-passcode"
+    else s"$emailVerificationUrl/email-verification/verify-passcode"
+  }
+
   lazy val frontendBaseUrl: String = config.getString("microservice.services.vat-sign-up-frontend.url")
 
   lazy val principalVerifyEmailContinueUrl = s"$frontendBaseUrl/vat-through-software/sign-up/email-verified"
@@ -163,11 +168,5 @@ class AppConfig @Inject()(val config: ServicesConfig) extends FeatureSwitching {
   }
 
   def authRealm: String = config.getString("basicAuthentication.realm")
-
-  def verifyEmailVerificationPasscodeUrl: String = {
-    val url = if (isEnabled(StubEmailVerification)) config.baseUrl("base") else config.baseUrl("email-verification")
-
-    s"$url/email-verification/verify-passcode"
-  }
 
 }
