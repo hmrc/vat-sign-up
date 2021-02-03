@@ -18,5 +18,6 @@ POST          /vat-sign-up/test-only/feature-switch                             
 GET           /vat-sign-up/test-only/dd-config                                  @uk.gov.hmrc.vatsignup.testonly.controllers.DDEndDateConfigController.getConfig
 
 POST          /vat-sign-up/test-only/email-verification/verify-passcode         @uk.gov.hmrc.vatsignup.testonly.stubs.controllers.StubEmailVerificationController.verifyEmailPasscode
+POST          /vat-sign-up/test-only/email-verification/verified-email-check    @uk.gov.hmrc.vatsignup.testonly.stubs.controllers.StubEmailVerificationController.emailVerifiedCheck
 
 ->            /                                                                 prod.Routes

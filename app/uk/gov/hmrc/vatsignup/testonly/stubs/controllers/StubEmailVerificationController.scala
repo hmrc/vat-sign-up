@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vatsignup.testonly.stubs.controllers
 
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -36,6 +36,10 @@ class StubEmailVerificationController @Inject()(cc: ControllerComponents) extend
         case "333333" => Forbidden(Json.obj("code" -> "MAX_EMAILS_EXCEEDED"))
         case _ => Created
       }
+  }
+
+  def emailVerifiedCheck: Action[AnyContent] = Action { _ =>
+    Ok(Json.obj())
   }
 
 }

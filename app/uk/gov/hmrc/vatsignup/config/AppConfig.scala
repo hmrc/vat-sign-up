@@ -54,7 +54,8 @@ class AppConfig @Inject()(val config: ServicesConfig) extends FeatureSwitching {
 
   lazy val emailVerificationUrl: String = config.baseUrl("email-verification")
 
-  lazy val emailVerifiedUrl = s"$emailVerificationUrl/email-verification/verified-email-check"
+  lazy val emailVerifiedUrl = if (isEnabled(StubEmailVerification)) s"$baseUrl/vat-sign-up/test-only/email-verification/verified-email-check"
+  else s"$emailVerificationUrl/email-verification/verified-email-check"
 
   lazy val verifyEmailUrl = s"$emailVerificationUrl/email-verification/verification-requests"
 

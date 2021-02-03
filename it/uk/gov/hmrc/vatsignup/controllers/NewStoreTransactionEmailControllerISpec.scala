@@ -66,7 +66,7 @@ class NewStoreTransactionEmailControllerISpec extends ComponentSpecBase with Cus
           )
         }
 
-        "return BAD_GATEWAY with correct reason if the passcode is not matched" in {
+        "return BAD_REQUEST with correct reason if the passcode is not matched" in {
           stubAuth(OK, successfulAuthResponse())
 
           await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
@@ -79,12 +79,12 @@ class NewStoreTransactionEmailControllerISpec extends ComponentSpecBase with Cus
             ))
 
           res should have(
-            httpStatus(BAD_GATEWAY),
+            httpStatus(BAD_REQUEST),
             jsonBodyAs(Json.obj(reasonKey -> passcodeMismatchKey))
           )
         }
 
-        "return BAD_GATEWAY with correct reason if the passcode is not found" in {
+        "return BAD_REQUEST with correct reason if the passcode is not found" in {
           stubAuth(OK, successfulAuthResponse())
 
           await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
@@ -97,12 +97,12 @@ class NewStoreTransactionEmailControllerISpec extends ComponentSpecBase with Cus
             ))
 
           res should have(
-            httpStatus(BAD_GATEWAY),
+            httpStatus(BAD_REQUEST),
             jsonBodyAs(Json.obj(reasonKey -> passcodeNotFoundKey))
           )
         }
 
-        "return BAD_GATEWAY with correct reason if the passcode matching is attempted too many times" in {
+        "return BAD_REQUEST with correct reason if the passcode matching is attempted too many times" in {
           stubAuth(OK, successfulAuthResponse())
 
           await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
@@ -115,7 +115,7 @@ class NewStoreTransactionEmailControllerISpec extends ComponentSpecBase with Cus
             ))
 
           res should have(
-            httpStatus(BAD_GATEWAY),
+            httpStatus(BAD_REQUEST),
             jsonBodyAs(Json.obj(reasonKey -> maxAttemptsExceededKey))
           )
         }

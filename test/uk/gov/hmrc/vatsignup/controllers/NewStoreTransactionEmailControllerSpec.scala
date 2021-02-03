@@ -92,7 +92,7 @@ class NewStoreTransactionEmailControllerSpec extends WordSpec with Matchers with
     }
 
     "the call to email verification has failed" should {
-      "return BAD_GATEWAY with a reason" in {
+      "return BAD_REQUEST with a reason" in {
         mockAuthorise()(Future.successful(Unit))
 
         mockStoreTransactionEmail(testVatNumber, testRequest)(Future.successful(Left(EmailVerificationFailure(testReason))))
@@ -101,7 +101,7 @@ class NewStoreTransactionEmailControllerSpec extends WordSpec with Matchers with
 
         val res = TestController.storeTransactionEmail(testVatNumber)(request)
 
-        status(res) shouldBe BAD_GATEWAY
+        status(res) shouldBe BAD_REQUEST
         contentAsJson(res) shouldBe Json.obj(reasonKey -> testReason)
       }
     }

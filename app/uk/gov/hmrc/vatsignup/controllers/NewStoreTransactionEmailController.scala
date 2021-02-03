@@ -43,7 +43,7 @@ class NewStoreTransactionEmailController @Inject()(val authConnector: AuthConnec
           emailService.storeTransactionEmail(vatNumber, transactionEmailRequest) map {
             case Right(StoreEmailSuccess) => Created
             case Left(EmailVerificationFailure(reason)) =>
-              BadGateway(Json.obj(
+              BadRequest(Json.obj(
                 reasonKey -> reason
               ))
             case Left(EmailDatabaseFailureNoVATNumber) => NotFound
