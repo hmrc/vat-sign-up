@@ -18,7 +18,6 @@ package uk.gov.hmrc.vatsignup.services
 
 import cats.data.EitherT
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.config.featureswitch.FeatureSwitching
@@ -30,6 +29,7 @@ import uk.gov.hmrc.vatsignup.repositories.SubscriptionRequestRepository
 import uk.gov.hmrc.vatsignup.services.SignUpRequestService._
 import uk.gov.hmrc.vatsignup.utils.EnrolmentUtils._
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -68,6 +68,8 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
   private def getSignUpEmail(subscriptionRequest: SubscriptionRequest,
                              isDelegated: Boolean)(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, Option[EmailAddress]]] = {
     subscriptionRequest.email match {
+      case Some(signUpEmail) if subscriptionRequest.transactionEmail.contains(signUpEmail) && subscriptionRequest.emailVerified.contains(true) =>
+        Future.successful(Right(Some(EmailAddress(signUpEmail, isVerified = true))))
       case Some(signUpEmail) =>
         emailVerificationConnector.getEmailVerificationState(signUpEmail) map {
           case Right(EmailVerified) =>
@@ -91,8 +93,10 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
   private def getTransactionEmail(subscriptionRequest: SubscriptionRequest,
                                   optSignUpEmail: Option[EmailAddress]
                                  )(implicit hc: HeaderCarrier): Future[Either[GetSignUpRequestFailure, EmailAddress]] = {
-    (subscriptionRequest.transactionEmail, optSignUpEmail) match {
-      case (Some(transactionEmail), _) =>
+    (subscriptionRequest.transactionEmail, subscriptionRequest.emailVerified, optSignUpEmail) match {
+      case (Some(transactionEmail), Some(true), _) =>
+        Future.successful(Right(EmailAddress(transactionEmail, isVerified = true)))
+      case (Some(transactionEmail), None, _) =>
         emailVerificationConnector.getEmailVerificationState(transactionEmail) map {
           case Right(EmailVerified) =>
             Right(EmailAddress(transactionEmail, isVerified = true))
@@ -101,7 +105,7 @@ class SignUpRequestService @Inject()(subscriptionRequestRepository: Subscription
           case Left(_) =>
             Left(EmailVerificationFailure)
         }
-      case (None, Some(signUpEmail)) =>
+      case (None, _, Some(signUpEmail)) =>
         Future.successful(Right(signUpEmail))
       case _ =>
         Future.successful(Left(InsufficientData))

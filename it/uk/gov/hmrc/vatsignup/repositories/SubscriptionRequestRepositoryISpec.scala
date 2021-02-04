@@ -195,6 +195,51 @@ class SubscriptionRequestRepositoryISpec extends WordSpec with Matchers with Gui
     }
   }
 
+  "upsertEmailVerificationStatus" should {
+    val testSubscriptionRequest = SubscriptionRequest(
+      vatNumber = testVatNumber,
+      emailVerified = Some(true),
+      isDirectDebit = false,
+      contactPreference = None
+    )
+
+    "throw NoSuchElementException where the vat number doesn't exist" in {
+      val res = for {
+        _ <- repo.upsertEmailVerificationStatus(testVatNumber, emailVerified = true)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      intercept[NoSuchElementException] {
+        await(res)
+      }
+    }
+
+    "update the subscription request where there isn't already an emailVerified boolean stored" in {
+      val res = for {
+        _ <- repo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false)
+        _ <- repo.upsertEmailVerificationStatus(testVatNumber, emailVerified = true)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(testSubscriptionRequest)
+    }
+
+    "replace an existing stored emailVerified boolean stored" in {
+      val res = for {
+        _ <- repo.insert(testSubscriptionRequest)
+        _ <- repo.upsertEmailVerificationStatus(testVatNumber, emailVerified = false)
+        model <- repo.findById(testVatNumber)
+      } yield model
+
+      await(res) should contain(SubscriptionRequest(
+        testVatNumber,
+        emailVerified = Some(false),
+        isDirectDebit = false,
+        contactPreference = None
+      ))
+    }
+  }
+
   "upsertBusinessEntity" should {
     s"store a $SoleTrader" in {
       val res = for {

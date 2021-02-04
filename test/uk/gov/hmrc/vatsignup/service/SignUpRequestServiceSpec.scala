@@ -127,6 +127,44 @@ class SignUpRequestServiceSpec extends WordSpec with Matchers
                     )
                   }
                 }
+
+                s"there is a $Digital contact preference stored in the database and emailVerified is true" should {
+                  s"return a successful $SignUpRequest" in {
+
+                    val testSubscriptionRequest =
+                      SubscriptionRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = Some(LimitedCompany(testCompanyNumber)),
+                        ctReference = Some(testCtReference),
+                        transactionEmail = Some(testEmail),
+                        emailVerified = Some(true),
+                        email = Some(testEmail),
+                        isMigratable = testIsMigratable,
+                        isDirectDebit = false,
+                        contactPreference = Some(Digital)
+                      )
+
+                    mockFindById(testVatNumber)(Future.successful(Some(testSubscriptionRequest)))
+                    mockGetEmailVerificationState(testEmail)(Future.successful(Right(EmailVerified)))
+
+                    val res = TestSignUpRequestService.getSignUpRequest(testVatNumber, Enrolments(Set.empty))
+
+                    val verifiedEmail = EmailAddress(testEmail, isVerified = true)
+
+                    await(res) shouldBe Right(
+                      SignUpRequest(
+                        vatNumber = testVatNumber,
+                        businessEntity = LimitedCompany(testCompanyNumber),
+                        signUpEmail = Some(verifiedEmail),
+                        transactionEmail = verifiedEmail,
+                        isDelegated = false,
+                        isMigratable = testIsMigratable,
+                        contactPreference = Digital
+                      )
+                    )
+                  }
+                }
+
                 s"there is $None for contact preference stored in the database" should {
                   s"return a Left $InsufficientData" in {
 

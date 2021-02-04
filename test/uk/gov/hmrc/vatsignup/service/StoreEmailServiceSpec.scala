@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.vatsignup.service
 
-import org.scalatest.EitherValues
+import org.scalatest.{EitherValues, Matchers, WordSpec}
 import play.api.test.Helpers._
 import reactivemongo.api.commands.UpdateWriteResult
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.mocks.MockConfig
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockEmailVerificationConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -211,6 +210,40 @@ class StoreEmailServiceSpec extends WordSpec with Matchers with MockSubscription
         upsertTransactionEmail(testVatNumber, testEmail)(Future.failed(new Exception))
 
         val res = await(TestStoreEmailService.storeTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment))))
+
+        res.left.value shouldBe EmailDatabaseFailure
+      }
+    }
+
+  }
+
+  "storeVerifiedTransactionEmail" when {
+    "the email stores successfully" when {
+      "return a StoreEmailSuccess with an emailVerified of false" in {
+        upsertTransactionEmail(testVatNumber, testEmail)(Future.successful(mock[UpdateWriteResult]))
+        upsertEmailVerificationStatus(testVatNumber, status = true)(Future.successful(mock[UpdateWriteResult]))
+
+        val res = await(TestStoreEmailService.storeVerifiedTransactionEmail(testVatNumber, testEmail))
+
+        res.right.value shouldBe StoreEmailSuccess(emailVerified = true)
+      }
+    }
+
+    "the vat number has not previously been stored" should {
+      "return an EmailDatabaseFailureNoVATNumber" in {
+        upsertTransactionEmail(testVatNumber, testEmail)(Future.failed(new NoSuchElementException))
+
+        val res = await(TestStoreEmailService.storeVerifiedTransactionEmail(testVatNumber, testEmail))
+
+        res.left.value shouldBe EmailDatabaseFailureNoVATNumber
+      }
+    }
+
+    "the email fails to store" should {
+      "return an EmailDatabaseFailure" in {
+        upsertTransactionEmail(testVatNumber, testEmail)(Future.failed(new Exception))
+
+        val res = await(TestStoreEmailService.storeVerifiedTransactionEmail(testVatNumber, testEmail))
 
         res.left.value shouldBe EmailDatabaseFailure
       }

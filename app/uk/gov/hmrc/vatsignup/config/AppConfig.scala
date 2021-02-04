@@ -19,7 +19,7 @@ package uk.gov.hmrc.vatsignup.config
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching, StubEmailVerification}
+import uk.gov.hmrc.vatsignup.config.featureswitch.{FeatureSwitch, FeatureSwitching}
 import uk.gov.hmrc.vatsignup.models.DateRange
 import uk.gov.hmrc.vatsignup.models.controllist._
 import uk.gov.hmrc.vatsignup.utils.BasicAuthentication
@@ -57,11 +57,6 @@ class AppConfig @Inject()(val config: ServicesConfig) extends FeatureSwitching {
   lazy val emailVerifiedUrl = s"$emailVerificationUrl/email-verification/verified-email-check"
 
   lazy val verifyEmailUrl = s"$emailVerificationUrl/email-verification/verification-requests"
-
-  def emailPasscodeVerificationUrl: String = {
-    if (isEnabled(StubEmailVerification)) s"$baseUrl/vat-sign-up/test-only/email-verification/verify-passcode"
-    else s"$emailVerificationUrl/email-verification/verify-passcode"
-  }
 
   lazy val frontendBaseUrl: String = config.getString("microservice.services.vat-sign-up-frontend.url")
 

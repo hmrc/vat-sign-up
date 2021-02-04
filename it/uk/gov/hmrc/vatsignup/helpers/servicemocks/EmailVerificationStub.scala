@@ -26,8 +26,6 @@ object EmailVerificationStub extends WireMockMethods {
 
   private val verifyEmailUri = "/email-verification/verification-requests"
 
-  private val verifyPassCodeUri = "/email-verification/verify-passcode"
-
   def stubGetEmailVerified(email: String): Unit =
     when(
       method = POST,
@@ -41,16 +39,6 @@ object EmailVerificationStub extends WireMockMethods {
       uri = verifyEmailUri,
       body = verifyEmailBody(emailAddress, continueUrl)
     ) thenReturn response
-
-  def stubVerifyEmailPasscode(emailAddress: String, passCode: String)(response: Int, body: JsObject = Json.obj()): Unit =
-    when(
-      method = POST,
-      uri = verifyPassCodeUri,
-      body = Json.obj(
-        EmailKey -> emailAddress,
-        PasscodeKey -> passCode
-      )
-    ) thenReturn (response, body)
 
   private def verifyEmailBody(emailAddress: String, continueUrl: String) =
     Json.obj(

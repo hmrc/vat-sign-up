@@ -18,12 +18,11 @@ package uk.gov.hmrc.vatsignup.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.test.Helpers._
+import org.scalatest.{Matchers, WordSpec}
 import play.api.libs.json.Json
-import play.api.mvc.Result
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.Enrolments
-import org.scalatest.{WordSpec, Matchers}
 import uk.gov.hmrc.vatsignup.config.Constants.EmailVerification.EmailVerifiedKey
 import uk.gov.hmrc.vatsignup.connectors.mocks.MockAuthConnector
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
@@ -41,18 +40,18 @@ class StoreTransactionEmailControllerSpec extends WordSpec with Matchers with Mo
   implicit private val materializer: ActorMaterializer = ActorMaterializer()
 
   "storeTransactionEmail" should {
-      "return OK with 'true' email verification state" in {
-        mockAuthRetrieveAgentEnrolment()
+    "return OK with 'true' email verification state" in {
+      mockAuthRetrieveAgentEnrolment()
 
-        mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Right(StoreEmailSuccess(true))))
+      mockStoreTransactionEmail(testVatNumber, testEmail, Enrolments(Set(testAgentEnrolment)))(Future.successful(Right(StoreEmailSuccess(true))))
 
-        val request = FakeRequest().withBody(testEmail)
+      val request = FakeRequest().withBody(testEmail)
 
-        val res = TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request)
+      val res = TestStoreTransactionEmailController.storeTransactionEmail(testVatNumber)(request)
 
-        status(res) shouldBe OK
-        contentAsJson(res) shouldBe Json.obj(EmailVerifiedKey -> true)
-      }
+      status(res) shouldBe OK
+      contentAsJson(res) shouldBe Json.obj(EmailVerifiedKey -> true)
+    }
 
     "if vat number doesn't exist" should {
       "return NOT_FOUND" in {
@@ -98,4 +97,45 @@ class StoreTransactionEmailControllerSpec extends WordSpec with Matchers with Mo
 
   }
 
+  "storeVerifiedTransactionEmail" should {
+    "return CREATED when email is stored successfully" in {
+      mockAuthorise()(Future.successful(Unit))
+
+      mockStoreVerifiedTransactionEmail(testVatNumber, testEmail)(Future.successful(Right(StoreEmailSuccess(true))))
+
+      val request = FakeRequest().withBody(testEmail)
+
+      val res = TestStoreTransactionEmailController.storeVerifiedTransactionEmail(testVatNumber)(request)
+
+      status(res) shouldBe CREATED
+    }
+
+    "if vat number doesn't exist" should {
+      "return NOT_FOUND" in {
+        mockAuthorise()(Future.successful(Unit))
+
+        mockStoreVerifiedTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailDatabaseFailureNoVATNumber)))
+
+        val request = FakeRequest() withBody testEmail
+
+        val res = TestStoreTransactionEmailController.storeVerifiedTransactionEmail(testVatNumber)(request)
+
+        status(res) shouldBe NOT_FOUND
+      }
+    }
+
+    "the e-mail storage has failed" should {
+      "return INTERNAL_SERVER_ERROR" in {
+        mockAuthorise()(Future.successful(Unit))
+
+        mockStoreVerifiedTransactionEmail(testVatNumber, testEmail)(Future.successful(Left(EmailDatabaseFailure)))
+
+        val request = FakeRequest() withBody testEmail
+
+        val res = TestStoreTransactionEmailController.storeVerifiedTransactionEmail(testVatNumber)(request)
+
+        status(res) shouldBe INTERNAL_SERVER_ERROR
+      }
+    }
+  }
 }

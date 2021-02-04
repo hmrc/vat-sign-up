@@ -26,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class RetrieveSubscriptionRequestSummaryService @Inject()(subscriptionRequestRepository: SubscriptionRequestRepository)(implicit ec: ExecutionContext) {
   def retrieveSubscriptionRequestSummary(vatNumber: String): Future[RetrieveSubscriptionRequestSummaryResponse] = {
     subscriptionRequestRepository.findById(vatNumber) map {
-      case Some(SubscriptionRequest(_, _, Some(businessEntity), optSignUpEmail, Some(transactionEmail), _, _, Some(contactPreference))) =>
+      case Some(SubscriptionRequest(_, _, Some(businessEntity), optSignUpEmail, Some(transactionEmail), _, _, _, Some(contactPreference))) =>
         Right(SubscriptionRequestSummary(vatNumber, businessEntity, optSignUpEmail, transactionEmail, contactPreference))
       case Some(_) =>
         Left(IncompleteSubscriptionRequest)
