@@ -91,6 +91,22 @@ class StoreEmailService @Inject()(subscriptionRequestRepository: SubscriptionReq
     }
   }
 
+  def storeVerifiedTransactionEmail(vatNumber: String,
+                                    emailAddress: String)
+                                   (implicit hc: HeaderCarrier): Future[Either[StoreEmailFailure, StoreEmailSuccess]] = {
+
+    subscriptionRequestRepository.upsertTransactionEmail(vatNumber, emailAddress) flatMap { _ =>
+      subscriptionRequestRepository.upsertEmailVerificationStatus(vatNumber, emailVerified = true) map { _ =>
+        Right(StoreEmailSuccess(true))
+      }
+    } recover {
+      case e: NoSuchElementException =>
+        Left(EmailDatabaseFailureNoVATNumber)
+      case _ =>
+        Left(EmailDatabaseFailure)
+    }
+  }
+
 }
 
 object StoreEmailService {

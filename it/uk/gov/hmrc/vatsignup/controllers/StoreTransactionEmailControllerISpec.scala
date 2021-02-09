@@ -104,4 +104,51 @@ class StoreTransactionEmailControllerISpec extends ComponentSpecBase with Custom
     }
   }
 
+  "PUT /subscription-request/vat-number/:vatNumber/store-transaction-email" when {
+    "the vat number exists" when {
+      "the call is principal" should {
+        "return CREATED when email is stored successfully" in {
+          stubAuth(OK, successfulAuthResponse())
+
+          await(submissionRequestRepo.upsertVatNumber(testVatNumber, isMigratable = true, isDirectDebit = false))
+
+          val res = put(s"/subscription-request/vat-number/$testVatNumber/store-transaction-email")(
+            Json.obj(
+              "transactionEmail" -> testEmail
+            ))
+
+          res should have(
+            httpStatus(CREATED)
+          )
+        }
+      }
+    }
+
+    "the vat number does not exist" should {
+      "return NOT_FOUND" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/store-transaction-email")(
+          Json.obj(
+            "transactionEmail" -> testEmail
+          ))
+
+        res should have(
+          httpStatus(NOT_FOUND)
+        )
+      }
+    }
+
+    "the json is invalid" should {
+      "return BAD_REQUEST" in {
+        stubAuth(OK, successfulAuthResponse())
+
+        val res = put(s"/subscription-request/vat-number/$testVatNumber/store-transaction-email")(Json.obj())
+
+        res should have(
+          httpStatus(BAD_REQUEST)
+        )
+      }
+    }
+  }
 }

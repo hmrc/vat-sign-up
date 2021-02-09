@@ -29,8 +29,7 @@ object FeatureSwitch {
   val switches: Set[FeatureSwitch] = Set(
     StubDESFeature,
     StubAgentServicesFeature,
-    AutoClaimEnrolment,
-    StubEmailVerification
+    AutoClaimEnrolment
   )
 
   def apply(str: String): FeatureSwitch =
@@ -59,9 +58,4 @@ case object StubAgentServicesFeature extends FeatureSwitch {
 case object AutoClaimEnrolment extends FeatureSwitch {
   val displayName: String = "Enable the auto claim enrolment"
   val name: String = s"$prefix.auto-claim-enrolment"
-}
-
-case object StubEmailVerification extends FeatureSwitch {
-  val displayName: String = "Use stub for new email verification flow"
-  val name: String = s"$prefix.stub-email-verification"
 }

@@ -78,6 +78,15 @@ class SubscriptionRequestRepository @Inject()(mongo: ReactiveMongoComponent,
   def upsertTransactionEmail(vatNumber: String, transactionEmail: String): Future[UpdateWriteResult] =
     upsert(vatNumber, transactionEmailKey, transactionEmail)
 
+  def upsertEmailVerificationStatus(vatNumber: String, emailVerified: Boolean): Future[UpdateWriteResult] =
+    collection.update(
+      selector = Json.obj(idKey -> vatNumber),
+      update = Json.obj("$set" -> Json.obj(
+        emailVerifiedKey -> emailVerified
+      )),
+      upsert = false
+    ).filter(_.n == 1)
+
   def upsertContactPreference(vatNumber: String, contactPreference: ContactPreference): Future[WriteResult] =
     collection.update(
       selector = Json.obj(idKey -> vatNumber),

@@ -41,17 +41,29 @@ class StoreTransactionEmailController @Inject()(val authConnector: AuthConnector
       implicit req =>
         authorised().retrieve(Retrievals.allEnrolments) {
           enrolments =>
-          val transactionEmail = req.body
-          storeEmailService.storeTransactionEmail(vatNumber, transactionEmail, enrolments) map {
-            case Right(StoreEmailSuccess(emailVerified)) =>
-              Ok(Json.obj(
-                EmailVerifiedKey -> emailVerified
-              ))
+            val transactionEmail = req.body
+            storeEmailService.storeTransactionEmail(vatNumber, transactionEmail, enrolments) map {
+              case Right(StoreEmailSuccess(emailVerified)) =>
+                Ok(Json.obj(
+                  EmailVerifiedKey -> emailVerified
+                ))
+              case Left(EmailDatabaseFailureNoVATNumber) => NotFound
+              case Left(EmailDatabaseFailure) => InternalServerError
+              case Left(EmailVerificationFailure) => BadGateway
+            }
+        }
+    }
+
+  def storeVerifiedTransactionEmail(vatNumber: String): Action[String] =
+    Action.async(parse.json((JsPath \ transactionEmailKey).read[String])) {
+      implicit request =>
+        authorised() {
+          val transactionEmail = request.body
+          storeEmailService.storeVerifiedTransactionEmail(vatNumber, transactionEmail) map {
+            case Right(StoreEmailSuccess(_)) => Created
             case Left(EmailDatabaseFailureNoVATNumber) => NotFound
             case Left(EmailDatabaseFailure) => InternalServerError
-            case Left(EmailVerificationFailure) => BadGateway
           }
-
         }
     }
 

@@ -18,8 +18,8 @@ package uk.gov.hmrc.vatsignup.service.mocks
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, Suite}
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.services.StoreEmailService._
@@ -58,6 +58,17 @@ trait MockStoreEmailService extends MockitoSugar with BeforeAndAfterEach {
       ArgumentMatchers.eq(vatNumber),
       ArgumentMatchers.eq(email),
       ArgumentMatchers.eq(enrolments)
+    )(
+      ArgumentMatchers.any[HeaderCarrier]
+    )) thenReturn response
+  }
+
+  def mockStoreVerifiedTransactionEmail(vatNumber: String,
+                                        email: String
+                                       )(response: Future[Either[StoreEmailFailure, StoreEmailSuccess]]): Unit = {
+    when(mockStoreEmailService.storeVerifiedTransactionEmail(
+      ArgumentMatchers.eq(vatNumber),
+      ArgumentMatchers.eq(email)
     )(
       ArgumentMatchers.any[HeaderCarrier]
     )) thenReturn response

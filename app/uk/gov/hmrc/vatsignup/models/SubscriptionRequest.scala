@@ -26,6 +26,7 @@ case class SubscriptionRequest(vatNumber: String,
                                businessEntity: Option[BusinessEntity] = None,
                                email: Option[String] = None,
                                transactionEmail: Option[String] = None,
+                               emailVerified: Option[Boolean] = None,
                                isMigratable: Boolean = true,
                                isDirectDebit: Boolean,
                                contactPreference: Option[ContactPreference]
@@ -44,6 +45,7 @@ object SubscriptionRequest {
   val partnershipUtrKey = "sautr"
   val emailKey = "email"
   val transactionEmailKey = "transactionEmail"
+  val emailVerifiedKey = "emailVerified"
   val creationTimestampKey = "creationTimestamp"
   val isMigratableKey = "isMigratable"
   val isDirectDebitKey = "isDirectDebit"
@@ -59,6 +61,7 @@ object SubscriptionRequest {
         businessEntity <- json.validateOpt[BusinessEntity] recover { case _ => None }
         email <- (json \ emailKey).validateOpt[String]
         transactionEmail <- (json \ transactionEmailKey).validateOpt[String]
+        emailVerified <- (json \ emailVerifiedKey).validateOpt[Boolean]
         isMigratable <- (json \ isMigratableKey).validate[Boolean]
         isDirectDebit <- (json \ isDirectDebitKey).validate[Boolean]
         contactPreference <- (json \ contactPreferenceKey).validateOpt[ContactPreference]
@@ -68,6 +71,7 @@ object SubscriptionRequest {
         businessEntity = businessEntity,
         email = email,
         transactionEmail = transactionEmail,
+        emailVerified = emailVerified,
         isMigratable = isMigratable,
         isDirectDebit = isDirectDebit,
         contactPreference = contactPreference
@@ -77,6 +81,7 @@ object SubscriptionRequest {
         idKey -> subscriptionRequest.vatNumber,
         emailKey -> subscriptionRequest.email,
         transactionEmailKey -> subscriptionRequest.transactionEmail,
+        emailVerifiedKey -> subscriptionRequest.emailVerified,
         creationTimestampKey -> Json.obj("$date" -> Instant.now.toEpochMilli),
         isMigratableKey -> subscriptionRequest.isMigratable,
         isDirectDebitKey -> subscriptionRequest.isDirectDebit,
