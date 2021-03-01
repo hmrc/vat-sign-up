@@ -51,7 +51,8 @@ trait ComponentSpecBase extends WordSpec with Matchers with GuiceOneServerPerSui
     "microservice.services.des.url" -> mockUrl,
     "basicAuthentication.username" -> "username",
     "basicAuthentication.password" -> "password",
-    "basicAuthentication.realm" -> "realm"
+    "basicAuthentication.realm" -> "realm",
+    "play.ws.timeout.request" -> "2s"
   ) ++ mockedServices(
     "auth",
     "tax-enrolments",
