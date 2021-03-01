@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, OK}
+import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.{Scenario, StubMapping}
+import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 
@@ -51,12 +52,12 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
 
   def stubGetKnownFactsAndControlListInformationMultipleEntities34(vatNumber: String, businessPostcode: String, vatRegistrationDate: String): Unit = {
     val body = Json.obj(
-    "postcode" -> businessPostcode,
-    "dateOfReg" -> vatRegistrationDate,
-    "controlListInformation" -> ControlList35.multipleEntities
+      "postcode" -> businessPostcode,
+      "dateOfReg" -> vatRegistrationDate,
+      "controlListInformation" -> ControlList35.multipleEntities
     )
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(body))
-    }
+  }
 
   def stubIneligibleControlListInformation(vatNumber: String): Unit = {
     val body = Json.obj(
@@ -122,6 +123,44 @@ object KnownFactsAndControlListInformationStub extends WireMockMethods {
 
   def stubFailureKnownFactsInvalidVatNumber(vatNumber: String): StubMapping =
     stubGetKnownFactsAndControlListInformation(vatNumber)(BAD_REQUEST, None)
+
+  def stubTimeoutRetry(vatNumber: String): StubMapping = {
+    stubFor(get(urlEqualTo(s"/vat/known-facts/control-list/$vatNumber"))
+      .inScenario("timeout")
+      .whenScenarioStateIs(Scenario.STARTED)
+      .willReturn(
+        aResponse().withStatus(GATEWAY_TIMEOUT).withFixedDelay(2100)
+      )
+      .willSetStateTo("pass")
+    )
+
+    stubFor(get(urlEqualTo(s"/vat/known-facts/control-list/$vatNumber"))
+      .inScenario("timeout")
+      .whenScenarioStateIs("pass")
+      .willReturn(
+        aResponse().withStatus(OK).withBody(successResponseBody.toString())
+      )
+    )
+  }
+
+  def stubInternalServerErrorRetry(vatNumber: String): StubMapping = {
+    stubFor(get(urlEqualTo(s"/vat/known-facts/control-list/$vatNumber"))
+      .inScenario("error")
+      .whenScenarioStateIs(Scenario.STARTED)
+      .willReturn(
+        aResponse().withStatus(INTERNAL_SERVER_ERROR)
+      )
+      .willSetStateTo("pass")
+    )
+
+    stubFor(get(urlEqualTo(s"/vat/known-facts/control-list/$vatNumber"))
+      .inScenario("error")
+      .whenScenarioStateIs("pass")
+      .willReturn(
+        aResponse().withStatus(OK).withBody(successResponseBody.toString())
+      )
+    )
+  }
 
   def stubSuccessNotFiled(vatNumber: String): Unit =
     stubGetKnownFactsAndControlListInformation(vatNumber)(OK, Some(Json.obj(
