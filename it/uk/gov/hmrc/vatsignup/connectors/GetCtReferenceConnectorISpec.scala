@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
+import com.github.tomakehurst.wiremock.client.WireMock.{getRequestedFor, urlEqualTo, verify}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
@@ -35,6 +36,24 @@ class GetCtReferenceConnectorISpec extends ComponentSpecBase {
       val res = connector.getCtReference(testCompanyNumber)
 
       await(res) shouldBe Right(testCtReference)
+    }
+
+    "return the CT reference on a successful retry after a timeout" in {
+      stubTimeoutRetry(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
+
+      val res = await(connector.getCtReference(testCompanyNumber))
+
+      res shouldBe Right(testCtReference)
+      verify(2, getRequestedFor(urlEqualTo(s"/corporation-tax/identifiers/crn/$testCompanyNumber")))
+    }
+
+    "return the CT reference on a successful retry after a 500 response" in {
+      stubFailureRetry(testCompanyNumber)(OK, ctReferenceBody(testCtReference))
+
+      val res = await(connector.getCtReference(testCompanyNumber))
+
+      res shouldBe Right(testCtReference)
+      verify(2, getRequestedFor(urlEqualTo(s"/corporation-tax/identifiers/crn/$testCompanyNumber")))
     }
   }
 
