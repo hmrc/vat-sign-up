@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.vatsignup.helpers.servicemocks
 
+import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.{Scenario, StubMapping}
 import play.api.test.Helpers._
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.vatsignup.models._
@@ -197,6 +199,45 @@ object RegistrationStub extends WireMockMethods {
           registerOverseasWithUkEstablishmentJsonBody(vatNumber, companyNumber)
       }
     ) thenReturn(OK, registerResponseBody(safeId))
+  }
+
+  def stubTimeoutRetry(safeId: String): StubMapping = {
+    val delayInMilliseconds = 2100
+    stubFor(post(urlEqualTo(registerUri))
+      .inScenario("timeout")
+      .whenScenarioStateIs(Scenario.STARTED)
+      .willReturn(
+        aResponse().withStatus(GATEWAY_TIMEOUT).withFixedDelay(delayInMilliseconds)
+      )
+      .willSetStateTo("pass")
+    )
+
+    stubFor(post(urlEqualTo(registerUri))
+      .inScenario("timeout")
+      .whenScenarioStateIs("pass")
+      .willReturn(
+        aResponse().withStatus(OK).withBody(registerResponseBody(safeId).toString())
+      )
+    )
+  }
+
+  def stubInternalServerErrorRetry(safeId: String): StubMapping = {
+    stubFor(post(urlEqualTo(registerUri))
+      .inScenario("error")
+      .whenScenarioStateIs(Scenario.STARTED)
+      .willReturn(
+        aResponse().withStatus(INTERNAL_SERVER_ERROR)
+      )
+      .willSetStateTo("pass")
+    )
+
+    stubFor(post(urlEqualTo(registerUri))
+      .inScenario("error")
+      .whenScenarioStateIs("pass")
+      .willReturn(
+        aResponse().withStatus(OK).withBody(registerResponseBody(safeId).toString())
+      )
+    )
   }
 
 }
