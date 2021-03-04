@@ -61,10 +61,10 @@ class RegistrationConnector @Inject()(val http: HttpClient,
         case response => Future.successful(response)
       }
       .recoverWith {
-      case ex: GatewayTimeoutException =>
-        Logger.warn(message = s"[RegistrationConnector] is retying once due to a 'GatewayTimeoutException: ${ex.message}'")
-        request
-    }
+        case ex: GatewayTimeoutException =>
+          Logger.warn(message = s"[RegistrationConnector] is retying once due to a 'GatewayTimeoutException: ${ex.message}'")
+          request
+      }
   }
 
 }
@@ -85,7 +85,7 @@ object RegistrationConnector {
       )
     case LimitedCompany(companyNumber) =>
       Json.obj(
-       LimitedCompanyKey -> Json.obj(
+        LimitedCompanyKey -> Json.obj(
           VrnKey -> vatNumber,
           CrnKey -> companyNumber
         )
@@ -94,8 +94,8 @@ object RegistrationConnector {
       Json.obj(
         GeneralPartnershipKey -> (
           Json.obj(VrnKey -> vatNumber)
-          + (SautrKey -> sautr)
-        )
+            + (SautrKey -> sautr)
+          )
       )
     case LimitedPartnership(sautr, companyNumber) =>
       Json.obj(
@@ -104,8 +104,8 @@ object RegistrationConnector {
             VrnKey -> vatNumber,
             CrnKey -> companyNumber
           )
-          + (SautrKey -> sautr)
-        )
+            + (SautrKey -> sautr)
+          )
       )
     case LimitedLiabilityPartnership(sautr, companyNumber) =>
       Json.obj(
@@ -114,8 +114,8 @@ object RegistrationConnector {
             VrnKey -> vatNumber,
             CrnKey -> companyNumber
           )
-          + (SautrKey -> sautr)
-        )
+            + (SautrKey -> sautr)
+          )
       )
     case ScottishLimitedPartnership(sautr, companyNumber) =>
       Json.obj(
@@ -124,8 +124,8 @@ object RegistrationConnector {
             VrnKey -> vatNumber,
             CrnKey -> companyNumber
           )
-          + (SautrKey -> sautr)
-        )
+            + (SautrKey -> sautr)
+          )
       )
     case VatGroup =>
       Json.obj(
