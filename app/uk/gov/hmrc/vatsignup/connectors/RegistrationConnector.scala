@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
+import play.api.Logger
+
 import javax.inject.{Inject, Singleton}
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
+import uk.gov.hmrc.http.{GatewayTimeoutException, HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 import uk.gov.hmrc.vatsignup.config.AppConfig
@@ -41,7 +43,7 @@ class RegistrationConnector @Inject()(val http: HttpClient,
       .withExtraHeaders(applicationConfig.desEnvironmentHeader)
       .copy(authorization = Some(Authorization(applicationConfig.desAuthorisationToken)))
 
-    http.POST[JsObject, RegisterWithMultipleIdentifiersResponse](
+    def request: Future[RegisterWithMultipleIdentifiersResponse] = http.POST[JsObject, RegisterWithMultipleIdentifiersResponse](
       url = applicationConfig.registerWithMultipleIdentifiersUrl,
       body = toRegisterApiJson(businessEntity, vatNumber)
     )(
@@ -50,6 +52,19 @@ class RegistrationConnector @Inject()(val http: HttpClient,
       headerCarrier,
       implicitly[ExecutionContext]
     )
+
+    request
+      .flatMap {
+        case Left(RegisterWithMultipleIdsErrorResponse(status, _)) if status >= 500 & status < 600 =>
+          Logger.warn(s"[RegistrationConnector] is retrying once due to a $status from DES")
+          request
+        case response => Future.successful(response)
+      }
+      .recoverWith {
+      case ex: GatewayTimeoutException =>
+        Logger.warn(message = s"[RegistrationConnector] is retying once due to a 'GatewayTimeoutException: ${ex.message}'")
+        request
+    }
   }
 
 }
