@@ -46,8 +46,8 @@ object RegistrationStub extends WireMockMethods {
     Json.obj(
       "ordinaryPartnership" -> (
         Json.obj("vrn" -> vatNumber)
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerLimitedPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
@@ -57,8 +57,8 @@ object RegistrationStub extends WireMockMethods {
           "vrn" -> vatNumber,
           "crn" -> companyNumber
         )
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerLimitedLiabilityPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
@@ -68,8 +68,8 @@ object RegistrationStub extends WireMockMethods {
           "vrn" -> vatNumber,
           "crn" -> companyNumber
         )
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerScottishLimitedPartnershipJsonBody(vatNumber: String, sautr: Option[String], companyNumber: String): JsObject =
@@ -79,8 +79,8 @@ object RegistrationStub extends WireMockMethods {
           "vrn" -> vatNumber,
           "crn" -> companyNumber
         )
-        + ("sautr" -> sautr)
-      )
+          + ("sautr" -> sautr)
+        )
     )
 
   private def registerVatGroupJsonBody(vatNumber: String): JsObject =
@@ -96,6 +96,7 @@ object RegistrationStub extends WireMockMethods {
         "vrn" -> vatNumber
       )
     )
+
   private def registerUnincorporatedAssociationJsonBody(vatNumber: String): JsObject =
     Json.obj(
       "unincorporatedAssociation" -> Json.obj(
@@ -131,12 +132,14 @@ object RegistrationStub extends WireMockMethods {
         "vrn" -> vatNumber
       )
     )
+
   private def registerOverseasJsonBody(vatNumber: String): JsObject =
     Json.obj(
       "nonUKCompanyNoUKEstablishment" -> Json.obj(
         "vrn" -> vatNumber
       )
     )
+
   private def registerOverseasWithUkEstablishmentJsonBody(vatNumber: String, companyNumber: String): JsObject =
     Json.obj(
       "nonUKCompanyWithUKEstablishment" -> Json.obj(

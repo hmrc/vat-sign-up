@@ -18,7 +18,7 @@ package uk.gov.hmrc.vatsignup.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.{postRequestedFor, urlEqualTo}
-import org.scalatest.{BeforeAndAfterAll, EitherValues}
+import org.scalatest.EitherValues
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
@@ -27,15 +27,10 @@ import uk.gov.hmrc.vatsignup.helpers.servicemocks.RegistrationStub._
 import uk.gov.hmrc.vatsignup.httpparsers.RegisterWithMultipleIdentifiersHttpParser.RegisterWithMultipleIdsSuccess
 import uk.gov.hmrc.vatsignup.models._
 
-class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues with BeforeAndAfterAll {
+class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues {
   private lazy val registrationConnector: RegistrationConnector = app.injector.instanceOf[RegistrationConnector]
 
   private implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    WireMock.resetAllScenarios()
-  }
 
   "registerBusinessEntity" when {
     "the business entity is a general partnership" when {
@@ -211,26 +206,26 @@ class RegistrationConnectorISpec extends ComponentSpecBase with EitherValues wit
       }
     }
 
-      "return the register with multiple IDs status on a successful retry after a timeout" in {
-        stubTimeoutRetry(testSafeId)
+    "return the register with multiple IDs status on a successful retry after a timeout" in {
+      stubTimeoutRetry(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
+      val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+      res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
 
-        WireMock.verify(2, postRequestedFor(urlEqualTo("/cross-regime/register/VATC")))
-      }
+      WireMock.verify(2, postRequestedFor(urlEqualTo("/cross-regime/register/VATC")))
     }
+  }
 
-      "return the register with multiple IDs status on a successful retry after a 500 response" in {
-        stubInternalServerErrorRetry(testSafeId)
+  "return the register with multiple IDs status on a successful retry after a 500 response" in {
+    stubInternalServerErrorRetry(testSafeId)
 
-        val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
+    val res = await(registrationConnector.registerBusinessEntity(testVatNumber, SoleTrader(testNino)))
 
-        res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
+    res shouldBe Right(RegisterWithMultipleIdsSuccess(testSafeId))
 
-        WireMock.verify(2, postRequestedFor(urlEqualTo("/cross-regime/register/VATC")))
-      }
+    WireMock.verify(2, postRequestedFor(urlEqualTo("/cross-regime/register/VATC")))
+  }
 
 
 }
