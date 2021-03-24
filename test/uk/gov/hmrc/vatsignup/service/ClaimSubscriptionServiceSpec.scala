@@ -25,6 +25,7 @@ import uk.gov.hmrc.vatsignup.connectors.mocks._
 import uk.gov.hmrc.vatsignup.helpers.TestConstants._
 import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.EnrolSuccess
 import uk.gov.hmrc.vatsignup.httpparsers.VatCustomerDetailsHttpParser
+import uk.gov.hmrc.vatsignup.models.KnownFacts
 import uk.gov.hmrc.vatsignup.models.monitoring.ClaimSubscriptionAuditing.ClaimSubscriptionAuditModel
 import uk.gov.hmrc.vatsignup.service.mocks.MockCheckEnrolmentAllocationService
 import uk.gov.hmrc.vatsignup.service.mocks.monitoring.MockAuditService
@@ -58,18 +59,18 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     "the known facts connector is successful" when {
       "auth returns a valid ggw credential and group ID" when {
         "CheckEnrolmentAllocation returns EnrolmentNotAllocated" when {
-            "tax enrolment to allocate enrolment returns a success" should {
-              "return SubscriptionClaimed" in {
-                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
-                )
-                mockAllocateEnrolmentWithoutKnownFacts(
-                  testGroupId,
-                  testCredentialId,
-                  testVatNumber
-                )(Future.successful(Right(EnrolSuccess)))
+          "tax enrolment to allocate enrolment returns a success" should {
+            "return SubscriptionClaimed" in {
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.successful(Right(EnrolSuccess)))
 
               val res = await(TestClaimSubscriptionService.claimSubscription(
                 testVatNumber,
@@ -86,17 +87,49 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               ))
             }
 
-              "return SubscriptionClaimed when vrn is overseas" in {
-                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
-                )
-                mockAllocateEnrolmentWithoutKnownFacts(
-                  testGroupId,
-                  testCredentialId,
-                  testVatNumber
-                )(Future.successful(Right(EnrolSuccess)))
+            "return SubscriptionClaimed when postcodes have mismatching cases" in {
+              val testPostCode1 = "zz11 1ZZ"
+              val testPostCode2 = "ZZ11 1zz"
+
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails.copy(
+                knownFacts = KnownFacts(Some(testPostCode1), testDateOfRegistration)
+              ))))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.successful(Right(EnrolSuccess)))
+
+              val res = await(TestClaimSubscriptionService.claimSubscription(
+                testVatNumber,
+                Some(testPostCode2),
+                testDateOfRegistration,
+                isFromBta = false
+              ))
+
+              res shouldBe Right(SubscriptionClaimed)
+              verifyAudit(ClaimSubscriptionAuditModel(
+                testVatNumber,
+                isFromBta = false,
+                isSuccess = true
+              ))
+            }
+
+            "return SubscriptionClaimed when vrn is overseas" in {
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.successful(Right(EnrolSuccess)))
 
               val res = await(TestClaimSubscriptionService.claimSubscription(
                 testVatNumber,
@@ -105,27 +138,27 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 isFromBta = false
               ))
 
-                res shouldBe Right(SubscriptionClaimed)
-                verifyAudit(ClaimSubscriptionAuditModel(
-                  testVatNumber,
-                  isFromBta = false,
-                  isSuccess = true
-                ))
-              }
+              res shouldBe Right(SubscriptionClaimed)
+              verifyAudit(ClaimSubscriptionAuditModel(
+                testVatNumber,
+                isFromBta = false,
+                isSuccess = true
+              ))
             }
-            "tax enrolment to allocate enrolment returns a failure" should {
-              "throw an exception" in {
-                val allocateEnrolmentFailureMessage = "allocateEnrolmentFailure"
-                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
-                )
-                mockAllocateEnrolmentWithoutKnownFacts(
-                  testGroupId,
-                  testCredentialId,
-                  testVatNumber
-                )(Future.failed(new InternalServerException(allocateEnrolmentFailureMessage)))
+          }
+          "tax enrolment to allocate enrolment returns a failure" should {
+            "throw an exception" in {
+              val allocateEnrolmentFailureMessage = "allocateEnrolmentFailure"
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.failed(new InternalServerException(allocateEnrolmentFailureMessage)))
 
               intercept[InternalServerException] {
                 await(TestClaimSubscriptionService.claimSubscription(
@@ -144,131 +177,131 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
               }
             }
           }
-        "allocate enrolment returns a success" should {
-          "return SubscriptionClaimed" in {
-            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+          "allocate enrolment returns a success" should {
+            "return SubscriptionClaimed" in {
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.successful(Right(EnrolSuccess)))
+
+              val res = await(TestClaimSubscriptionService.claimSubscription(
+                testVatNumber,
+                Some(testPostCode),
+                testDateOfRegistration,
+                isFromBta = false
+              ))
+
+              res shouldBe Right(SubscriptionClaimed)
+
+              verifyAudit(ClaimSubscriptionAuditModel(
+                testVatNumber,
+                isFromBta = false,
+                isSuccess = true
+              ))
+            }
+          }
+
+          "allocate enrolment returns a failure" should {
+            "throw an exception" in {
+              val allocateEnrolmentErrorMessage = "allocateEnrolErr"
+
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.failed(new InternalServerException(allocateEnrolmentErrorMessage)))
+
+              intercept[InternalServerException] {
+                await(TestClaimSubscriptionService.claimSubscription(
+                  testVatNumber,
+                  Some(testPostCode),
+                  testDateOfRegistration,
+                  isFromBta = true
+                ))
+
+                verifyAudit(ClaimSubscriptionAuditModel(
+                  testVatNumber,
+                  isFromBta = true,
+                  isSuccess = false,
+                  allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage))
+                )
+              }
+            }
+          }
+        }
+
+        "the enrolment is already allocated, CheckEnrolmentAllocation" should {
+          "return a EnrolmentAlreadyAllocated" in {
             mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
             mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-              Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
             )
-            mockAllocateEnrolmentWithoutKnownFacts(
-              testGroupId,
-              testCredentialId,
-              testVatNumber
-            )(Future.successful(Right(EnrolSuccess)))
 
             val res = await(TestClaimSubscriptionService.claimSubscription(
               testVatNumber,
               Some(testPostCode),
               testDateOfRegistration,
-              isFromBta = false
+              isFromBta = true
             ))
 
-            res shouldBe Right(SubscriptionClaimed)
-
-            verifyAudit(ClaimSubscriptionAuditModel(
-              testVatNumber,
-              isFromBta = false,
-              isSuccess = true
-            ))
+            res shouldBe Left(EnrolmentAlreadyAllocated)
           }
         }
 
-        "allocate enrolment returns a failure" should {
-          "throw an exception" in {
-            val allocateEnrolmentErrorMessage = "allocateEnrolErr"
-
-                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
-                )
-                mockAllocateEnrolmentWithoutKnownFacts(
-                  testGroupId,
-                  testCredentialId,
-                  testVatNumber
-                )(Future.failed(new InternalServerException(allocateEnrolmentErrorMessage)))
-
-            intercept[InternalServerException] {
-              await(TestClaimSubscriptionService.claimSubscription(
-                testVatNumber,
-                Some(testPostCode),
-                testDateOfRegistration,
-                isFromBta = true
-              ))
-
-              verifyAudit(ClaimSubscriptionAuditModel(
-                testVatNumber,
-                isFromBta = true,
-                isSuccess = false,
-                allocateEnrolmentFailureMessage = Some(allocateEnrolmentErrorMessage))
-              )
-            }
-          }
-        }
-      }
-
-          "the enrolment is already allocated, CheckEnrolmentAllocation" should {
-            "return a EnrolmentAlreadyAllocated" in {
-              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-              )
-
-          val res = await(TestClaimSubscriptionService.claimSubscription(
-            testVatNumber,
-            Some(testPostCode),
-            testDateOfRegistration,
-            isFromBta = true
-          ))
-
-          res shouldBe Left(EnrolmentAlreadyAllocated)
-        }
-      }
-
-          "CheckEnrolmentAllocation fails" should {
-            "return an UnexpectedEnrolmentStoreProxyFailure and the status code" in {
-              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
-              )
-
-          val res = await(TestClaimSubscriptionService.claimSubscription(
-            testVatNumber,
-            Some(testPostCode),
-            testDateOfRegistration,
-            isFromBta = true
-          ))
-
-              res shouldBe Left(CheckEnrolmentAllocationFailed(BAD_REQUEST))
-            }
-          }
-        }
-
-        "the supplied known facts do not match what is held on ETMP" should {
-          "return KnownFactsMismatch" in {
-            mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-            mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
+        "CheckEnrolmentAllocation fails" should {
+          "return an UnexpectedEnrolmentStoreProxyFailure and the status code" in {
             mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+            mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+              Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
+            )
 
-        val nonMatchingPostcode = "ZZ2 2ZZ"
+            val res = await(TestClaimSubscriptionService.claimSubscription(
+              testVatNumber,
+              Some(testPostCode),
+              testDateOfRegistration,
+              isFromBta = true
+            ))
 
-        val res = await(TestClaimSubscriptionService.claimSubscription(
-          testVatNumber,
-          Some(nonMatchingPostcode),
-          testDateOfRegistration,
-          isFromBta = true
-        ))
-
-            res shouldBe Left(KnownFactsMismatch)
+            res shouldBe Left(CheckEnrolmentAllocationFailed(BAD_REQUEST))
           }
         }
       }
-      "auth does not return a valid credential" should {
-        "return InvalidCredential" in {
+
+      "the supplied known facts do not match what is held on ETMP" should {
+        "return KnownFactsMismatch" in {
           mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
           mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
-          mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
+          mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+
+          val nonMatchingPostcode = "ZZ2 2ZZ"
+
+          val res = await(TestClaimSubscriptionService.claimSubscription(
+            testVatNumber,
+            Some(nonMatchingPostcode),
+            testDateOfRegistration,
+            isFromBta = true
+          ))
+
+          res shouldBe Left(KnownFactsMismatch)
+        }
+      }
+    }
+    "auth does not return a valid credential" should {
+      "return InvalidCredential" in {
+        mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated)))
+        mockAuthRetrieveCredentialAndGroupId(testCredentials, None)
 
         val res = TestClaimSubscriptionService.claimSubscription(
           testVatNumber,
@@ -316,38 +349,38 @@ class ClaimSubscriptionServiceSpec extends WordSpec with Matchers
     "the known facts connector is successful" when {
       "auth returns a valid ggw credential and group ID" when {
         "CheckEnrolmentAllocatjon returns EnrolmentNotAllocated" when {
-            "tax enrolment to allocate enrolment returns a success" should {
-              "return SubscriptionClaimed" in {
-                mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
-                )
-                mockAllocateEnrolmentWithoutKnownFacts(
-                  testGroupId,
-                  testCredentialId,
-                  testVatNumber
-                )(Future.successful(Right(EnrolSuccess)))
+          "tax enrolment to allocate enrolment returns a success" should {
+            "return SubscriptionClaimed" in {
+              mockGetVatCustomerDetails(testVatNumber)(Future.successful(Right(testVatCustomerDetails)))
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
+              mockAllocateEnrolmentWithoutKnownFacts(
+                testGroupId,
+                testCredentialId,
+                testVatNumber
+              )(Future.successful(Right(EnrolSuccess)))
 
               val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
                 testVatNumber,
                 isFromBta = false
               ))
 
-                res shouldBe Right(SubscriptionClaimed)
-                verifyAudit(ClaimSubscriptionAuditModel(
-                  testVatNumber,
-                  isFromBta = false,
-                  isSuccess = true
-                ))
-              }
+              res shouldBe Right(SubscriptionClaimed)
+              verifyAudit(ClaimSubscriptionAuditModel(
+                testVatNumber,
+                isFromBta = false,
+                isSuccess = true
+              ))
             }
-            "the enrolment is already allocated, CheckEnrolmentAllocation" should {
-              "return a EnrolmentAlreadyAllocated" in {
-                mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
-                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
-                  Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
-                )
+          }
+          "the enrolment is already allocated, CheckEnrolmentAllocation" should {
+            "return a EnrolmentAlreadyAllocated" in {
+              mockAuthRetrieveCredentialAndGroupId(testCredentials, Some(testGroupId))
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+              )
 
               val res = await(TestClaimSubscriptionService.claimSubscriptionWithEnrolment(
                 vatNumber = testVatNumber,

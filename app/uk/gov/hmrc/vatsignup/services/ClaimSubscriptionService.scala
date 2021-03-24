@@ -77,8 +77,13 @@ class ClaimSubscriptionService @Inject()(authConnector: AuthConnector,
                                    storedKnownFacts: KnownFacts): Either[ClaimSubscriptionService.KnownFactsMismatch.type, KnownFactsMatch] = {
 
     val registrationDateMatch = vatRegistrationDate.equals(storedKnownFacts.vatRegistrationDate)
-    val postCodeMatch = optBusinessPostcode.isEmpty ||
-      optBusinessPostcode.map(_.filterNot(_.isWhitespace)).equals(storedKnownFacts.businessPostcode.map(_.filterNot(_.isWhitespace)))
+
+    val postCodeMatch = (optBusinessPostcode, storedKnownFacts.businessPostcode) match {
+      case (Some(postcode), Some(storedPostcode)) =>
+        postcode.filterNot(_.isWhitespace).equalsIgnoreCase(storedPostcode.filterNot(_.isWhitespace))
+      case (None, _) =>
+        true
+    }
 
     if (registrationDateMatch && postCodeMatch) Right(KnownFactsMatched)
     else Left(KnownFactsMismatch)
