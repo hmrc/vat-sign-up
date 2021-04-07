@@ -25,6 +25,7 @@ import uk.gov.hmrc.vatsignup.models._
 import uk.gov.hmrc.vatsignup.services.ControlListEligibilityService.{EligibilitySuccess, IneligibleVatNumber}
 import uk.gov.hmrc.vatsignup.services.VatNumberEligibilityService._
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -39,11 +40,12 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
         vatCustomerDetailsConnector.getVatCustomerDetails(vatNumber) map {
           case Left(VatCustomerDetailsHttpParser.Deregistered) =>
             Deregistered
-          case Right(VatCustomerDetails(_, isOverseas)) =>
+          case Right(VatCustomerDetails(knownFacts, isOverseas)) =>
             if (List(NonMTDfB, NonDigital, MTDfBExempt).contains(mandationStatus))
               Eligible(
                 migrated = true,
-                overseas = isOverseas
+                overseas = isOverseas,
+                isNew = LocalDate.parse(knownFacts.vatRegistrationDate).isAfter(LocalDate.now().minusDays(7))
               )
             else
               AlreadySubscribed(isOverseas)
@@ -53,7 +55,8 @@ class VatNumberEligibilityService @Inject()(mandationStatusConnector: MandationS
           case Right(eligibilitySuccess: EligibilitySuccess) =>
             Eligible(
               migrated = false,
-              overseas = eligibilitySuccess.isOverseas
+              overseas = eligibilitySuccess.isOverseas,
+              isNew = LocalDate.parse(eligibilitySuccess.vatKnownFacts.vatRegistrationDate).isAfter(LocalDate.now().minusDays(7))
             )
           case Left(IneligibleVatNumber(MigratableDates.empty)) =>
             Ineligible
@@ -79,7 +82,7 @@ object VatNumberEligibilityService {
 
   case class AlreadySubscribed(isOverseas: Boolean) extends MtdState
 
-  case class Eligible(migrated: Boolean, overseas: Boolean) extends MtdState
+  case class Eligible(migrated: Boolean, overseas: Boolean, isNew: Boolean) extends MtdState
 
   case object Ineligible extends MtdState
 

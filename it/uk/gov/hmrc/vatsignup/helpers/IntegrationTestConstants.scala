@@ -53,6 +53,7 @@ object IntegrationTestConstants {
 
   val testPostCode = "ZZ11 1ZZ"
   val testDateOfRegistration = "2017-01-01"
+  val testRecentDateOfRegistration: String = LocalDate.now().toString
   val testLastReturnMonthPeriod: String = "MAR"
   val testFrontendLastReturnMonthPeriod: String = "March"
   val testLastNetDue: String = "10000.02"

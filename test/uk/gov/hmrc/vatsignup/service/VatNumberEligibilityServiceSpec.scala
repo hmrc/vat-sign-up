@@ -103,7 +103,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
                 Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = true)))
               )
 
-              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = true)
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = true, isNew = false)
             }
           }
 
@@ -114,7 +114,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
                 Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
               )
 
-              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false, isNew = false)
             }
           }
 
@@ -137,7 +137,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
               Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
-            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false, isNew = false)
           }
         }
 
@@ -148,7 +148,18 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
               Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testDateOfRegistration), isOverseas = false)))
             )
 
-            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false)
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false, isNew = false)
+          }
+        }
+
+        "the user is recently registered" should {
+          s"return $Eligible with isNew = true" in {
+            mockGetMandationStatus(testVatNumber)(Future.successful(Right(MTDfBExempt)))
+            mockGetVatCustomerDetails(testVatNumber)(
+              Future.successful(Right(VatCustomerDetails(KnownFacts(Some(testPostCode), testRecentDateOfRegistration), isOverseas = false)))
+            )
+
+            await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = true, overseas = false, isNew = true)
           }
         }
       }
@@ -169,7 +180,7 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
                 ))
               ))
 
-              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = false, overseas = true)
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = false, overseas = true, isNew = false)
             }
           }
 
@@ -185,7 +196,23 @@ class VatNumberEligibilityServiceSpec extends WordSpec with Matchers
                 ))
               ))
 
-              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = false, overseas = false)
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = false, overseas = false, isNew = false)
+            }
+          }
+
+          "the user is recently registered" should {
+            s"return $Eligible with the isNew = true" in {
+              mockGetMandationStatus(testVatNumber)(Future.successful(Left(VatNumberNotFound)))
+              mockGetEligibilityStatus(testVatNumber)(Future.successful(
+                Right(EligibilitySuccess(
+                  testFourKnownFacts.copy(vatRegistrationDate = testRecentDateOfRegistration),
+                  isMigratable = true,
+                  isOverseas = false,
+                  isDirectDebit = false
+                ))
+              ))
+
+              await(TestVatNumberEligibilityService.getMtdStatus(testVatNumber)) shouldBe Eligible(migrated = false, overseas = false, isNew = true)
             }
           }
         }

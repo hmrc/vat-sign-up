@@ -58,13 +58,13 @@ class NewVatEligibillityControllerSpec extends WordSpec with Matchers with MockA
     "VatNumberElligibity service returns Eligible" should {
       "return OK with mtdStatus Eligible" in {
         mockAuthorise()(Future.successful(Unit))
-        mockGetEligibilityStatus(testVatNumber)(Future.successful(Eligible(migrated = true, overseas = false)))
+        mockGetEligibilityStatus(testVatNumber)(Future.successful(Eligible(migrated = true, overseas = false, isNew = false)))
 
         val res = TestNewVatEligibillityController.checkVatNumberEligibillity(testVatNumber)(FakeRequest())
 
         status(res) shouldBe OK
         contentAsJson(res) shouldBe Json.obj(MtdStatusKey -> EligibleValue,
-          EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false))
+          EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false, IsNewKey -> false))
       }
     }
     "VatNumberElligibility service returns Ineligible" should {

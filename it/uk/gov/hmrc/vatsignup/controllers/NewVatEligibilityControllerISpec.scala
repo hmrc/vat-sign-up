@@ -99,7 +99,21 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
-            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false)))
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false, IsNewKey -> false)))
+        )
+      }
+
+      "the user is Non-MTDfB and newly registered" in {
+        stubAuth(OK, successfulAuthResponse())
+        stubGetMandationStatus(testVatNumber)(OK, mandationStatusBody(NonMTDfB))
+        stubSuccessGetKnownFactsRecentDate(testVatNumber)
+
+        val res = get(s"/subscription-request/vat-number/$testVatNumber/new-mtdfb-eligibility")
+
+        res should have(
+          httpStatus(OK),
+          jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false, IsNewKey -> true)))
         )
       }
 
@@ -113,7 +127,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
-            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false)))
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> false, IsNewKey -> false)))
         )
       }
     }
@@ -129,7 +143,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
-            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true)))
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true, IsNewKey -> false)))
         )
       }
 
@@ -143,7 +157,7 @@ class NewVatEligibilityControllerISpec extends ComponentSpecBase with CustomMatc
         res should have(
           httpStatus(OK),
           jsonBodyAs(Json.obj(MtdStatusKey -> EligibleValue,
-            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true)))
+            EligiblityDetailsKey -> Json.obj(IsMigratedKey -> true, IsOverseasKey -> true, IsNewKey -> false)))
         )
       }
     }
