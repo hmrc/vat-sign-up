@@ -35,6 +35,9 @@ object KnownFactsStub extends WireMockMethods {
   def stubSuccessGetKnownFacts(vatNumber: String): StubMapping =
     stubGetKnownFacts(vatNumber)(OK, Some(successResponseBody(isOverseas = false)))
 
+  def stubSuccessGetKnownFactsRecentDate(vatNumber: String): StubMapping =
+    stubGetKnownFacts(vatNumber)(OK, Some(successResponseBody(isOverseas = false, regDate = testRecentDateOfRegistration)))
+
   def stubSuccessGetKnownFactsOverseas(vatNumber: String): StubMapping =
     stubGetKnownFacts(vatNumber)(OK, Some(successResponseBody(isOverseas = true)))
 
@@ -47,10 +50,10 @@ object KnownFactsStub extends WireMockMethods {
   def stubFailureNoPostCode(vatNumber: String): StubMapping =
     stubGetKnownFacts(vatNumber)(BAD_GATEWAY, None)
 
-  private def successResponseBody(isOverseas: Boolean) =
+  private def successResponseBody(isOverseas: Boolean, regDate: String = testDateOfRegistration) =
     Json.obj(
       "businessPostCode" -> testPostCode,
-      "vatRegistrationDate" -> testDateOfRegistration,
+      "vatRegistrationDate" -> regDate,
       "isOverseas" -> isOverseas
     )
 }

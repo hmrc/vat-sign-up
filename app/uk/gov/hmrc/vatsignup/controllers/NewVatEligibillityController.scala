@@ -42,12 +42,13 @@ class NewVatEligibillityController @Inject()(val authConnector: AuthConnector,
               MtdStatusKey -> AlreadySubscribedValue,
               IsOverseasKey -> isOverseas
             ))
-          case Eligible(isMigrated, isOverseas) =>
+          case Eligible(isMigrated, isOverseas, isNew) =>
             Ok(Json.obj(
               MtdStatusKey -> EligibleValue,
               EligiblityDetailsKey -> Json.obj(
                 IsMigratedKey -> isMigrated,
-                IsOverseasKey -> isOverseas
+                IsOverseasKey -> isOverseas,
+                IsNewKey -> isNew
               )
             ))
           case Ineligible => Ok(Json.obj(MtdStatusKey -> IneligibleValue))
@@ -70,6 +71,7 @@ object NewVatEligibillityController {
   val EligiblityDetailsKey = "eligibilityDetails"
   val IsMigratedKey = "isMigrated"
   val IsOverseasKey = "isOverseas"
+  val IsNewKey = "isNew"
   val IneligibleValue = "Ineligible"
   val InhibitedValue = "Inhibited"
   val MigratableDatesKey = "migratableDates"
