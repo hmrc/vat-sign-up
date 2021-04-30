@@ -34,10 +34,4 @@ javaOptions in IntegrationTest += "-Dlogger.resource=logback-test.xml"
 addTestReportOption(IntegrationTest, "int-test-reports")
 parallelExecution in IntegrationTest := false
 majorVersion := 1
-
-resolvers ++= Seq(
-  Resolver.bintrayRepo("hmrc", "releases"),
-  Resolver.jcenterRepo
-)
-
 scalacOptions += "-Ypartial-unification"
