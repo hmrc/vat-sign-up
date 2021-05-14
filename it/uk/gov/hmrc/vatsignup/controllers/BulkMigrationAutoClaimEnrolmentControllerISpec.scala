@@ -27,6 +27,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
 
   s"/migration-notification/vat-number/$testVatNumber" should {
     "successfully add the enrolment and return NO_CONTENT" in {
+      EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
       EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
       UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
@@ -43,15 +44,27 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
       EnrolmentStoreProxyStub.verifyAllocateEnrolmentWithoutKnownFacts(testVatNumber, testGroupId, testCredentialId)
     }
 
-    "return NO_CONTENT if no group ids are found" in {
-      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(NO_CONTENT)
+    "return NO_CONTENT if group ids containing the MTDVAT enrolments are found" in {
+      EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(OK)
+
       val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)
       res should have(
         httpStatus(NO_CONTENT)
       )
     }
 
-    "return NO_CONTENT if no user ids are found" in {
+    "return NO_CONTENT if no group ids containing the Legacy and MTDVAT enrolments are found" in {
+      EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
+      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(NO_CONTENT)
+
+      val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)
+      res should have(
+        httpStatus(NO_CONTENT)
+      )
+    }
+
+    "return NO_CONTENT if no user ids containing the legacy enrolment are found" in {
+      EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
       EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(NO_CONTENT)
 
@@ -62,6 +75,7 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
     }
 
     "throw an exception" in {
+      EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
       EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
       EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
       UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)

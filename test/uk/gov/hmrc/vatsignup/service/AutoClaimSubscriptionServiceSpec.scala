@@ -61,13 +61,16 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
     testCredentialId3 -> Admin
   )
 
-  "auto claim enrolment" when {
-    "legacy group ID is returned" when {
-      "legacy user IDs are returned" when {
-        "the known facts connector is successful" when {
-          "allocate the new group ID is successful" when {
-            "assign the new user IDs is successful" when {
-              "returns successful" in {
+  "autoClaimEnrolment" when {
+    "no group IDs with an MTDVAT enrolment are returned" when {
+      "a group ID with a legacy VAT enrolment is returned" when {
+        "user IDs with legacy VAT enrolments are returned" when {
+          "allocating the MTDVAT enrolment to the group ID is successful" when {
+            "assign the MTDVAT enrolment to the user IDs is successful" should {
+              "return Right(EnrolmentAssigned)" in {
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+                )
                 mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
                   Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                 )
@@ -97,9 +100,14 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 ))
               }
             }
-            "assign the new user IDs fails" when {
-              "return Failure" in {
+
+            "assigning the MTDVAT enrolment to the user ID fails" when {
+              "return EnrolmentAssignmentFailureForIds(Set(<FailedIDs>)" in {
                 val testSetCredentialIds = Set(testCredentialId, testCredentialId2, testCredentialId3)
+
+                mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                  Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+                )
                 mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
                   Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
                 )
@@ -130,8 +138,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
               }
             }
           }
-          "allocate the new group ID fails" when {
-            "return Failure" in {
+
+          "allocating the MTDVAT enrolment to the group ID fails" when {
+            "throw an exception with the credential ID and error message from the allocate enrolment API" in {
+              mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+                Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+              )
               mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
                 Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
               )
@@ -140,7 +152,7 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                 Future.successful(Right(UsersFound(testMapCredentialRoles)))
               )
               mockAllocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)(
-                Future.failed(new InternalServerException(testErrorMsg))
+                Future.failed(new InternalServerException(testCredentialId + testErrorMsg))
               )
               intercept[InternalServerException] {
                 await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
@@ -155,14 +167,17 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
                   auditInformation = Some((testCredentialId, testErrorMsg).toString)
                 ))
               }
-
             }
           }
         }
       }
     }
-    "users groups search returns no admins" should {
-      "return NoAdminUsers" in {
+
+    "the call to users groups search returns no admin user IDs" should {
+      "return Left(NoAdminUsers)" in {
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
           Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
         )
@@ -186,8 +201,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
         ))
       }
     }
-    "users groups search fails" should {
-      "return UsersGroupsSearchFailure" in {
+
+    "the call to users groups search fails" should {
+      "return Left(UsersGroupsSearchFailure)" in {
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
           Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
         )
@@ -211,8 +230,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
         ))
       }
     }
-    "the only admin user does not have the legacy VAT enrolment" should {
-      "return NoAdminUsers" in {
+
+    "the only admin user ID does not have the legacy VAT enrolment" should {
+      "return Left(NoAdminUsers)" in {
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
           Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
         )
@@ -249,8 +272,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
         ))
       }
     }
-    "legacy user IDS are found but no userIds are returned" should {
+
+    "user IDs with legacy VAT enrolment are found but no the get user IDs API returns an empty list of user IDs" should {
       "return a ConnectionFailure" in {
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
           Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
         )
@@ -270,8 +297,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
         ))
       }
     }
-    "legacy user IDS are not returned" when {
-      "returns NoUsersFound" in {
+
+    "user IDs with legacy VAT enrolments are not returned from the get user IDs API" should {
+      "return Left(NoUsersFound)" in {
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
           Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
         )
@@ -291,8 +322,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
         ))
       }
     }
-    "legacy user IDs are not returned" when {
-      "there is a connection failure" in {
+
+    "the call to get user IDs API fails" should {
+      "return Left(EnrolmentStoreProxyConnectionFailure)" in {
+        mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+          Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+        )
         mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
           Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
         )
@@ -313,8 +348,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
       }
     }
   }
-  "legacy group ID is not returned" when {
-    "returns EnrolmentNotAllocated" in {
+
+  "no group ID with a legacy VAT enrolment is returned" should {
+    "return Left(EnrolmentNotAllocated)" in {
+      mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+        Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+      )
       mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
         Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
       )
@@ -332,8 +371,12 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
       ))
     }
   }
-  "legacy group ID is not returned" when {
-    "returns EnrolmentStoreProxyFailure" in {
+
+  "the call to get group IDs with legacy VAT enrolment fails" should {
+    "return Left(EnrolmentStoreProxyFailure)" in {
+      mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+        Future.successful(Right(CheckEnrolmentAllocationService.EnrolmentNotAllocated))
+      )
       mockGetGroupIdForLegacyVatEnrolment(testVatNumber)(
         Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))
       )
@@ -348,6 +391,45 @@ class AutoClaimSubscriptionServiceSpec extends WordSpec with Matchers
         isSuccess = false,
         call = Some(getLegacyEnrolmentAllocationCall),
         auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyFailure(BAD_REQUEST).toString)
+      ))
+    }
+  }
+
+  "the call to get group IDs with MTDVAT enrolment fails" should {
+    "return Left(EnrolmentStoreProxyFailure)" in {
+      mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+        Future.successful(Left(CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(BAD_REQUEST)))      )
+
+      val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+      res shouldBe Left(EnrolmentStoreProxyFailure(BAD_REQUEST))
+
+      verifyAudit(AutoClaimEnrolementAuditingModel(
+        testVatNumber,
+        agentLedSignUp,
+        isSuccess = false,
+        call = Some(getMtdvatEnrolmentAllocationCall),
+        auditInformation = Some(AutoClaimEnrolmentService.EnrolmentStoreProxyFailure(BAD_REQUEST).toString)
+      ))
+    }
+  }
+
+  "the call to get group IDs with MTDVAT enrolment returns a group ID" should {
+    "return Left(EnrolmentAlreadyAllocated)" in {
+      mockGetGroupIdForMtdVatEnrolment(testVatNumber, ignoreAssignments = true)(
+        Future.successful(Left(CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(testGroupId)))
+      )
+
+      val res = await(TestAutoClaimEnrolmentService.autoClaimEnrolment(testVatNumber, agentLedSignUp))
+
+      res shouldBe Left(EnrolmentAlreadyAllocated)
+
+      verifyAudit(AutoClaimEnrolementAuditingModel(
+        testVatNumber,
+        agentLedSignUp,
+        isSuccess = false,
+        call = Some(getMtdvatEnrolmentAllocationCall),
+        auditInformation = Some(AutoClaimEnrolmentService.EnrolmentAlreadyAllocated.toString)
       ))
     }
   }

@@ -48,6 +48,8 @@ class AutoClaimEnrolmentService @Inject()(enrolmentStoreProxyConnector: Enrolmen
                         )(implicit hc: HeaderCarrier,
                           request: Request[_]): Future[AutoClaimEnrolmentResponse] = {
     for {
+      _ <- getMtdvatEnrolmentAllocation(vatNumber)
+        .logLeft(vatNumber, triggerPoint, call = getMtdvatEnrolmentAllocationCall)
       legacyVatGroupId <- getLegacyEnrolmentAllocation(vatNumber)
         .logLeft(vatNumber, triggerPoint, call = getLegacyEnrolmentAllocationCall)
       legacyVatUserIds <- getLegacyEnrolmentUserIDs(vatNumber)
@@ -140,6 +142,15 @@ class AutoClaimEnrolmentService @Inject()(enrolmentStoreProxyConnector: Enrolmen
         Left(EnrolmentStoreProxyFailure(status))
     }
 
+  private def getMtdvatEnrolmentAllocation(vatNumber: String)
+                                          (implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, CheckEnrolmentAllocationService.EnrolmentNotAllocated.type] =
+    EitherT(checkEnrolmentAllocationService.getGroupIdForMtdVatEnrolment(vatNumber, ignoreAssignments = true)).leftMap {
+      case CheckEnrolmentAllocationService.EnrolmentAlreadyAllocated(_) =>
+        EnrolmentAlreadyAllocated
+      case CheckEnrolmentAllocationService.UnexpectedEnrolmentStoreProxyFailure(status) =>
+        EnrolmentStoreProxyFailure(status)
+    }
+
   private def getLegacyEnrolmentUserIDs(vatNumber: String)(implicit hc: HeaderCarrier): EitherT[Future, AutoClaimEnrolmentFailure, Set[String]] =
     EitherT(enrolmentStoreProxyConnector.getUserIds(vatNumber)).transform {
       case Right(QueryUsersHttpParser.UsersFound(retrievedUserIds)) if retrievedUserIds.nonEmpty =>
@@ -195,6 +206,7 @@ class AutoClaimEnrolmentService @Inject()(enrolmentStoreProxyConnector: Enrolmen
 object AutoClaimEnrolmentService {
 
   val getLegacyEnrolmentAllocationCall: String = "getLegacyEnrolmentAllocation"
+  val getMtdvatEnrolmentAllocationCall: String = "getMtdvatEnrolmentAllocation"
   val getLegacyEnrolmentUserIDsCall: String = "getLegacyEnrolmentUserIDs"
   val getAdminUserIdCall: String = "getAdminUserId"
   val allocateEnrolmentWithoutKnownFactsCall: String = "allocateEnrolmentWithoutKnownFacts"
@@ -213,9 +225,9 @@ object AutoClaimEnrolmentService {
 
   case object EnrolmentAssigned extends AutoClaimEnrolmentSuccess
 
-  case object EnrolmentAlreadyAllocated extends AutoClaimEnrolmentSuccess
-
   sealed trait AutoClaimEnrolmentFailure
+
+  case object EnrolmentAlreadyAllocated extends AutoClaimEnrolmentFailure
 
   case object NoUsersFound extends AutoClaimEnrolmentFailure
 
