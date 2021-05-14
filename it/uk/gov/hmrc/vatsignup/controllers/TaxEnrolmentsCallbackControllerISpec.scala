@@ -107,6 +107,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
+              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
               EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
@@ -136,6 +137,7 @@ class TaxEnrolmentsCallbackControllerISpec extends ComponentSpecBase with Before
 
               await(emailRequestRepo.insert(EmailRequest(testVatNumber, testEmail, isDelegated = true)))
 
+              EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
               EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
               EnrolmentStoreProxyStub.stubGetUserIds(testVatNumber)(OK)
               UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
