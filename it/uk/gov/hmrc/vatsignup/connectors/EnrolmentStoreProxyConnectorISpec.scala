@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.vatsignup.connectors
 
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.vatsignup.helpers.ComponentSpecBase
 import uk.gov.hmrc.vatsignup.helpers.IntegrationTestConstants._
 import uk.gov.hmrc.vatsignup.helpers.servicemocks.EnrolmentStoreProxyStub._
-import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolFailure, EnrolSuccess}
+import uk.gov.hmrc.vatsignup.httpparsers.AllocateEnrolmentResponseHttpParser.{EnrolSuccess, MultipleEnrolmentsInvalid, UnexpectedEnrolFailure}
 import uk.gov.hmrc.vatsignup.httpparsers.AssignEnrolmentToUserHttpParser.EnrolmentAssigned
 import uk.gov.hmrc.vatsignup.httpparsers.EnrolmentStoreProxyHttpParser._
 import uk.gov.hmrc.vatsignup.httpparsers.QueryUsersHttpParser._
@@ -118,7 +119,20 @@ class EnrolmentStoreProxyConnectorISpec extends ComponentSpecBase {
 
         val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
 
-        await(res) shouldBe Left(EnrolFailure(""))
+        await(res) shouldBe Left(UnexpectedEnrolFailure(""))
+      }
+    }
+
+    "Enrolment Store Proxy returns a multiple enrolments invalid failure" should {
+      "return MultipleEnrolmentsInvalid" in {
+        stubAllocateEnrolmentWithoutKnownFactsFailure(testVatNumber, testGroupId, testCredentialId)(
+          CONFLICT,
+          Json.obj("code" -> "MULTIPLE_ENROLMENTS_INVALID")
+        )
+
+        val res = connector.allocateEnrolmentWithoutKnownFacts(testGroupId, testCredentialId, testVatNumber)
+
+        await(res) shouldBe Left(MultipleEnrolmentsInvalid)
       }
     }
   }

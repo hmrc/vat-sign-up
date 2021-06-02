@@ -80,6 +80,26 @@ object EnrolmentStoreProxyStub extends WireMockMethods {
     ) thenReturn status
   }
 
+
+  def stubAllocateEnrolmentWithoutKnownFactsFailure(vatNumber: String, groupId: String, credentialId: String)(status: Int, failureBody: JsValue): Unit = {
+    val allocateEnrolmentJsonBody = Json.obj(
+      "userId" -> credentialId,
+      "type" -> "principal",
+      "action" -> "enrolAndActivate"
+    )
+
+    val enrolmentKey = s"HMRC-MTD-VAT~VRN~$vatNumber"
+
+    when(
+      method = POST,
+      uri = allocateEnrolmentUrl(
+        groupId = groupId,
+        enrolmentKey = enrolmentKey
+      ),
+      body = allocateEnrolmentJsonBody
+    ) thenReturn(status, failureBody)
+  }
+
   def verifyAllocateEnrolmentWithoutKnownFacts(vatNumber: String, groupId: String, credentialId: String): Unit = {
     val allocateEnrolmentJsonBody = Json.obj(
       "userId" -> credentialId,

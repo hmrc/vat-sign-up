@@ -38,7 +38,7 @@ class BulkMigrationAutoClaimEnrolmentController @Inject()(autoClaimEnrolmentServ
       if (getBasicAuth(request).contains(appConfig.expectedAuth)) {
         autoClaimEnrolmentService.autoClaimEnrolment(vatNumber, bulkMigration).map {
           case Right(EnrolmentAssigned) => NoContent
-          case Left(EnrolmentNotAllocated) | Left(NoUsersFound) | Left(EnrolmentAlreadyAllocated) => NoContent
+          case Left(EnrolmentNotAllocated) | Left(NoUsersFound) | Left(EnrolmentAlreadyAllocated) | Left(MultipleEnrolmentInvalid) => NoContent
           case reason => throw new InternalServerException(s"Unexpected failure when trying to automatically claim an enrolment due to $reason")
         }
       }

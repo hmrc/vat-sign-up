@@ -185,7 +185,9 @@ class AutoClaimEnrolmentService @Inject()(enrolmentStoreProxyConnector: Enrolmen
     )).transform {
       case Right(AllocateEnrolmentResponseHttpParser.EnrolSuccess) =>
         Right(AutoClaimEnrolmentService.EnrolSuccess)
-      case Left(AllocateEnrolmentResponseHttpParser.EnrolFailure(message)) =>
+      case Left(AllocateEnrolmentResponseHttpParser.MultipleEnrolmentsInvalid) =>
+        Left(AutoClaimEnrolmentService.MultipleEnrolmentInvalid)
+      case Left(AllocateEnrolmentResponseHttpParser.UnexpectedEnrolFailure(message)) =>
         throw new InternalServerException(s"Failed to enrol user with CredentialId: $credentialId, due to $message")
     }
 
@@ -238,6 +240,8 @@ object AutoClaimEnrolmentService {
   case object KnownFactsFailure extends AutoClaimEnrolmentFailure
 
   case object VatNumberNotFound extends AutoClaimEnrolmentFailure
+
+  case object MultipleEnrolmentInvalid extends AutoClaimEnrolmentFailure
 
   case class EnrolmentStoreProxyFailure(status: Int) extends AutoClaimEnrolmentFailure
 
