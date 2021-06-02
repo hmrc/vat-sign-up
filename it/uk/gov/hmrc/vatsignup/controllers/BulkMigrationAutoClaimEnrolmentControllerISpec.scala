@@ -74,6 +74,24 @@ class BulkMigrationAutoClaimEnrolmentControllerISpec extends ComponentSpecBase w
       )
     }
 
+    "return NO_CONTENT if the found user group already has an enrolment of the same type" in {
+      EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
+      EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
+      EnrolmentStoreProxyStub.stubGetUserId(testVatNumber)(OK)
+      UsersGroupsSearchStub.stubGetUsersForGroup(testGroupId)(NON_AUTHORITATIVE_INFORMATION, UsersGroupsSearchStub.successfulResponseBody)
+      KnownFactsStub.stubSuccessGetKnownFacts(testVatNumber)
+      EnrolmentStoreProxyStub.stubUpsertEnrolment(testVatNumber, Some(testPostCode), testDateOfRegistration.toTaxEnrolmentsFormat)(NO_CONTENT)
+      EnrolmentStoreProxyStub.stubAllocateEnrolmentWithoutKnownFactsFailure(testVatNumber, testGroupId, testCredentialId)(
+        CONFLICT,
+        Json.obj("code" -> "MULTIPLE_ENROLMENTS_INVALID")
+      )
+
+      val res = post(s"/migration-notification/vat-number/$testVatNumber")(Json.obj(), basicAuthHeader)
+      res should have(
+        httpStatus(NO_CONTENT)
+      )
+    }
+
     "throw an exception" in {
       EnrolmentStoreProxyStub.stubGetAllocatedMtdVatEnrolmentStatus(testVatNumber, ignoreAssignments = true)(NO_CONTENT)
       EnrolmentStoreProxyStub.stubGetAllocatedLegacyVatEnrolmentStatus(testVatNumber, ignoreAssignments = false)(OK)
